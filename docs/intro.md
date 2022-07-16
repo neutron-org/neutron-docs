@@ -21,6 +21,5 @@ Interchain Queries (aka ICQs) are an essential building block enabling devs to s
 Neutron is bringing Interchain Accounts (ICA) to CosmWasm smart-contracts.
 ICAs allow modules and smart contracts to execute and track transactions on foreign zones, without deploying additional code. With ICQs, they're the Interchain's secret DeFi sauce.
 
-
 ### CosmWasm
 CosmWasm is a smart contracting platform built for the Cosmos ecosystem. TODO
