@@ -21,7 +21,7 @@ The ICQ module stores one [RegisteredQuery](https://github.com/neutron-org/neutr
 
 Results for interchain queries are stored in two ways:
 1. [QueryResult](https://github.com/neutron-org/neutron/blob/c8503c3c17df3c5ca24abeeafaba9123c28395ac/proto/interchainqueries/tx.proto#L41) structure is stored under unique key containing identifier of `RegisteredQuery`;
-2. Transaction's data from [TxValue](https://github.com/neutron-org/neutron/blob/c8503c3c17df3c5ca24abeeafaba9123c28395ac/proto/interchainqueries/tx.proto#L67) is packed in [`Transaction`](https://github.com/neutron-org/neutron/blob/c8503c3c17df3c5ca24abeeafaba9123c28395ac/proto/interchainqueries/query.proto#L87) structure and stored under a composite key `[]byte`([`SubmittedTxKey`](https://github.com/neutron-org/neutron/blob/c8503c3c17df3c5ca24abeeafaba9123c28395ac/x/interchainqueries/types/keys.go#L33)` + bigEndianBytes(queryID) + bigEndianBytes(txID)`
+2. Transaction's data from [TxValue](https://github.com/neutron-org/neutron/blob/c8503c3c17df3c5ca24abeeafaba9123c28395ac/proto/interchainqueries/tx.proto#L67) is packed in [`Transaction`](https://github.com/neutron-org/neutron/blob/c8503c3c17df3c5ca24abeeafaba9123c28395ac/proto/interchainqueries/query.proto#L87) structure and stored under a composite key `bigEndianBytes(queryID) + bigEndianBytes(txID)` prefixed by [`SubmittedTxKey`](https://github.com/neutron-org/neutron/blob/c8503c3c17df3c5ca24abeeafaba9123c28395ac/x/interchainqueries/types/keys.go#L33);
 
 ## Events
 
@@ -116,9 +116,7 @@ message TxValue {
 Returns just an empty [`MsgSubmitQueryResultResponse`](https://github.com/neutron-org/neutron/blob/c8503c3c17df3c5ca24abeeafaba9123c28395ac/proto/interchainqueries/tx.proto#L74) on success:
 
 ```protobuf
-message MsgSubmitQueryResultResponse {
-
-}
+message MsgSubmitQueryResultResponse {}
 ```
 
 #### State modifications
@@ -138,6 +136,6 @@ message MsgSubmitQueryResultResponse {
   * read `last_submitted_transaction_id` for `registered_query`;
   * generate [`Transaction`](https://github.com/neutron-org/neutron/blob/c8503c3c17df3c5ca24abeeafaba9123c28395ac/proto/interchainqueries/query.proto#L87) structure where `id` is `last_submitted_transaction_id`, `height` is a `block.height` and `data` is `transaction.data`;
   * increment `last_submitted_transaction_id`;
-  * save generated record to the storage with composite key `[]byte`([`SubmittedTxKey`](https://github.com/neutron-org/neutron/blob/c8503c3c17df3c5ca24abeeafaba9123c28395ac/x/interchainqueries/types/keys.go#L33)` + bigEndianBytes(registered_query.id) + bigEndianBytes(last_submitted_transaction_id)`;
+  * save generated record to the storage with composite key `bigEndianBytes(registered_query.id) + bigEndianBytes(last_submitted_transaction_id` prefixed by [`SubmittedTxKey`](https://github.com/neutron-org/neutron/blob/c8503c3c17df3c5ca24abeeafaba9123c28395ac/x/interchainqueries/types/keys.go#L33);
   * set `registered_query.last_submitted_result_remote_height` to a max `block.Header.height` among all submitted `blocks`;
   * set `registered_query.last_submitted_result_local_height` to the current Neutron height;
