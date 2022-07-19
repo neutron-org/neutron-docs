@@ -49,13 +49,42 @@ message MsgRegisterInterchainQuery {
  string query_data = 1; // JSON encoded data of query
  string query_type = 2; // is used to identify the query (i.e. /cosmos.staking.v1beta1.Query/AllDelegations)
  string zone_id = 3; // is used to identify the chain of interest
- string connection_id = 4; // is IBC connection ID for getting ConsensusState to verify proofs
+ string connection_id = 4; // is IBC connection ID between some remote chain and Neutron (is used to verify Merkle Proofs)
  uint64 update_period = 5; // is used to say how often the query must be updated
  string sender = 6; // is the signer of the message
 }
 ```
 
-Returns [`MsgRegisterInterchainQueryResponse`](https://github.com/neutron-org/neutron/blob/c8503c3c17df3c5ca24abeeafaba9123c28395ac/proto/interchainqueries/tx.proto#L32) where `id` is unique identifier of newly registered interchain query on success:
+Currently `query_type` can take the following values:
+* `x/staking/DelegatorDelegations` - query to get all delegations of delegator on remote chain. `query_data` in this case must be in the following format:
+```json
+{
+  "delegator": "<address>"
+}
+```
+where `delegator` is the address of delegator you are interested in.
+
+* `x/bank/GetBalance` - query to get balance of account on remote chain. `query_data` in this case must be in the following format:
+```json
+{
+  "addr": "<address>",
+  "denom": "<denom>"
+}
+```
+where `addr` is the address of account you interested in on o remote chain and denom is denomination of the coin whose balance you want to know.
+
+* `x/tx/RecipientTransactions` - query to search for transactions on remote chain. `query_data` describes a filter by which the [ICQ relayer](/relaying/icq-relayer-guide) will perform the transactions search. It has the following format which is very similar to [Cosmos-SDK typed events](https://docs.cosmos.network/master/core/events.html#typed-events):
+```json
+"{eventType}.{attributeKey}": "{attributeValue}"
+```
+For example, if you want to find all bank transfer transactions, your `query_data` should look like this:
+```json
+{
+  "message.module": "bank"
+}
+```
+
+`MsgRegisterInterchainQuery` returns [`MsgRegisterInterchainQueryResponse`](https://github.com/neutron-org/neutron/blob/c8503c3c17df3c5ca24abeeafaba9123c28395ac/proto/interchainqueries/tx.proto#L32) where `id` is unique identifier of newly registered interchain query on success:
 ```protobuf
 message MsgRegisterInterchainQueryResponse { 
   uint64 id = 1; 
