@@ -38,7 +38,17 @@ const sidebars = {
                     type: 'category',
                     label: 'Modules',
                     items: [
-                        'neutron-core/ica',
+                        {
+                            type: 'category',
+                            label: 'Interchain Transactions',
+                            items: [
+                                'neutron-core/interchain-txs/overview',
+                                'neutron-core/interchain-txs/messages',
+                                'neutron-core/interchain-txs/client',
+                                'neutron-core/interchain-txs/state',
+                                'neutron-core/interchain-txs/events'
+                            ]
+                        },
                         'neutron-core/icq'
                     ],
                 },
