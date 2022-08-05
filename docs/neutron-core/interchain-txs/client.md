@@ -2,8 +2,8 @@
 
 ## Transactions
 
-The `tx` commands allow users to interact with the `interchaintxs` module.
+The Interchain Transactions module only processes messages from smart contract addresses and does not have any `tx` CLI entry points.
 
-```shell
-neutrond tx interchaintxs --help
-```
+## Queries
+
+The Interchain Transactions module does not store any data and does not have any `query` CLI entry points.
