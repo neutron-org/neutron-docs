@@ -29,4 +29,4 @@ list = [
 
 > Note: you can have a look at the `MsgRegisterInterchainQuery` documentation in the [Messages](./messages.md) chapter to learn how IBC port naming works.
 
-Please refer to the [Relaying](../../relaying/ibc-relayer-guide.md) section for full IBC relaying documentation.
+Please refer to the [IBC Relaying](../../relaying/ibc-relayer-guide.md) section for full IBC relaying documentation.
