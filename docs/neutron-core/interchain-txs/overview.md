@@ -14,4 +14,17 @@ Registering an interchain account or executing an interchain transaction are asy
 
 A smart contract that tries to register an interchain account or to execute an interchain transaction naturally expects to receive the IBC events related to these actions. The Interchain Transactions module solves this task by passing these IBC events to the smart contract using a [Sudo() call](https://github.com/CosmWasm/wasmd/blob/288609255ad92dfe5c54eae572fe7d6010e712eb/x/wasm/keeper/keeper.go#L453) and a custom [message scheme](https://github.com/neutron-org/neutron/blob/master/internal/sudo/sudo.go). You can find a complete list of IBC events for each module message in the [messages](./messages) section.
 
-RELAYER FILTERING & SHIT.
+## Relaying
+
+Neutron introduces smart-contract level callbacks for IBC packets. From an IBC relayer's perspective, this means that custom application logic can be executed when a packet is submitted to Neutron, which can potentially drain the relayer's funds. This naturally brings us to a situation in which protocols would prefer to set up their own relayers and restrict the channels they are willing to relay for. For example, in [Hermes](https://github.com/informalsystems/ibc-rs) you can do this by adding a `chains.packet_filter` config:
+
+```toml
+[chains.packet_filter]
+policy = 'allow'
+list = [
+    # allow relaying only for chanels created by a certain contract  
+    ['icacontroller-neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq*', '*'],
+]
+```
+
+> Note: you can have a look at the `MsgRegisterInterchainQuery` section in the [Messages](./messages.md) chapter to learn how IBC port naming works.
