@@ -27,4 +27,6 @@ list = [
 ]
 ```
 
-> Note: you can have a look at the `MsgRegisterInterchainQuery` section in the [Messages](./messages.md) chapter to learn how IBC port naming works.
+> Note: you can have a look at the `MsgRegisterInterchainQuery` documentation in the [Messages](./messages.md) chapter to learn how IBC port naming works.
+
+Please refer to the [Relaying](../../relaying/ibc-relayer-guide.md) section for full IBC relaying documentation.

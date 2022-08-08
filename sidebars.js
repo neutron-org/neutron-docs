@@ -49,7 +49,17 @@ const sidebars = {
                                 'neutron-core/interchain-txs/events'
                             ]
                         },
-                        'neutron-core/icq'
+                        {
+                            type: 'category',
+                            label: 'Interchain Queries [KV]',
+                            items: [
+                                'neutron-core/interchain-queries/overview',
+                                'neutron-core/interchain-queries/messages',
+                                'neutron-core/interchain-queries/client',
+                                'neutron-core/interchain-queries/state',
+                                'neutron-core/interchain-queries/events'
+                            ]
+                        },
                     ],
                 },
                 'neutron-core/contribute',
