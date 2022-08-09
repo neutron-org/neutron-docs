@@ -83,7 +83,9 @@ message MsgSubmitTx {
 * `from_address` must be a smart contract address, otherwise the message will fail;
 * `interchain_account_id` is described as `MsgRegisterInterchainQuery.interchain_account_id`;
 * `connection_id` must be the identifier of a valid IBC connection, otherwise the message will fail;
-* `memo` is the transaction [memo](https://docs.cosmos.network/master/core/transactions.html). Please note that most networks reject memos longer than 256 bytes.
+* `memo` is the transaction [memo](https://docs.cosmos.network/master/core/transactions.html).
+
+> **Note:** that most networks reject memos longer than 256 bytes.
 
 ### Response
 
