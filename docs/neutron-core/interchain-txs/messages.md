@@ -85,7 +85,7 @@ message MsgSubmitTx {
 * `connection_id` must be the identifier of a valid IBC connection, otherwise the message will fail;
 * `memo` is the transaction [memo](https://docs.cosmos.network/master/core/transactions.html).
 
-> **Note:** that most networks reject memos longer than 256 bytes.
+> **Note:** most networks reject memos longer than 256 bytes.
 
 ### Response
 
