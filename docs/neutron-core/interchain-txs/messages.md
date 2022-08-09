@@ -81,7 +81,7 @@ message MsgSubmitTx {
 ```
 
 * `from_address` must be a smart contract address, otherwise the message will fail;
-* `interchain_account_id` is used to generate the [owner](https://github.com/cosmos/ibc-go/blob/v3.1.1/modules/apps/27-interchain-accounts/controller/keeper/account.go#L17) parameter for ICA's `RegisterInterchainAccount()` call, which is later used for port identifier generation;
+* `interchain_account_id` is identical to `MsgRegisterInterchainAccount.interchain_account_id`;
 * `connection_id` must be the identifier of a valid IBC connection, otherwise the message will fail;
 * `memo` is the transaction [memo](https://docs.cosmos.network/master/core/transactions.html).
 
