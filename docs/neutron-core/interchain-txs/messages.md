@@ -45,7 +45,7 @@ message MsgRegisterInterchainAccountResponse {}
 ### IBC Events
 
 ```go
-type SudoMessageOpenAck struct {
+type MessageOnChanOpenAck struct {
 	OpenAck OpenAckDetails `json:"open_ack"`
 }
 
@@ -58,6 +58,8 @@ type OpenAckDetails struct {
 ```
 
 The data from an `OnChanOpenAck` event is passed to the contract using a [Sudo() call](https://github.com/CosmWasm/wasmd/blob/288609255ad92dfe5c54eae572fe7d6010e712eb/x/wasm/keeper/keeper.go#L453). You can have a look at an example handler implementation in the [neutron-contracts](https://github.com/neutron-org/neutron-contracts/tree/main/contracts) repository. 
+
+> Note: you can find the interchain account address in the stored in the `CounterpartyVersion` field as part of [metadata](https://github.com/cosmos/ibc-go/blob/main/modules/apps/27-interchain-accounts/host/keeper/handshake.go#L78).
 
 ### State modifications
 
