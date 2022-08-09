@@ -36,6 +36,8 @@ func GenerateAddress(moduleAccAddr sdk.AccAddress, connectionID, portID string) 
 ```
 </details>
 
+> **Note:** your contract needs to implement the `sudo()` entrypoint on order to successfully process the IBC events associated with this message. You can find an example in the [neutron-contracts](https://github.com/neutron-org/neutron-contracts/tree/main/contracts) repository. 
+
 ### Response
 
 ```protobuf
@@ -88,6 +90,8 @@ message MsgSubmitTx {
 * `memo` is the transaction [memo](https://docs.cosmos.network/master/core/transactions.html).
 
 > **Note:** most networks reject memos longer than 256 bytes.
+
+> **Note:** your contract needs to implement the `sudo()` entrypoint on order to successfully process the IBC events associated with this message. You can find an example in the [neutron-contracts](https://github.com/neutron-org/neutron-contracts/tree/main/contracts) repository.
 
 ### Response
 
