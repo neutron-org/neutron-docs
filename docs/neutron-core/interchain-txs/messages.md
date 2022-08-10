@@ -93,6 +93,8 @@ message MsgSubmitTx {
 
 > **Note:** your contract needs to implement the `sudo()` entrypoint on order to successfully process the IBC events associated with this message. You can find an example in the [neutron-contracts](https://github.com/neutron-org/neutron-contracts/tree/main/contracts) repository.
 
+> **Note:** the timeout for outgoing packets is hard coded as `time.Hour * 24 * 30` (thirty days). ICA creates ordered channels, and a single timeout will close the channel; setting a long timeout and monitoring the IBC relayer is the best option. 
+
 ### Response
 
 ```protobuf
