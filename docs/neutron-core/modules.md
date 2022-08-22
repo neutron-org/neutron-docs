@@ -2,4 +2,4 @@
 
 ## Interchain Queries Module
 
-## Interchain Accounts Module
+## Interchain Transactions Module
