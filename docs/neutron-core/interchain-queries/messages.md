@@ -39,16 +39,26 @@ message KVKey {
 Currently `query_type` can take the following values:
 * `kv` - query **values** from Cosmos-SDK KV-storage on remote chain which are stored under some **keys**. In this case `kv_keys` must be filled in.
 
-* `tx` - query to search for transactions on remote chain. `transactions_filter` describes a filter by which the [ICQ relayer](/relaying/icq-relayer-guide) will perform the transactions search. It has the following format which is very similar to [Cosmos-SDK typed events](https://docs.cosmos.network/master/core/events.html#typed-events):
+* `tx` - query to search for transactions on remote chain. `transactions_filter` describes a filter by which the [ICQ relayer](/relaying/icq-relayer-guide) will perform the transactions search. It has the following format:
 ```json
-"{eventType}.{attributeKey}": "{attributeValue}"
+[{"field": "{eventType}.{attributeKey}", "val": "{attributeValue}", "op": "gte"}, ...]
 ```
+Supported operators:
+* `eq`
+* `lt`
+* `gt`
+* `lte`
+* `gte`
 
-For example, if you want to find all bank transfer transactions, your `query_data` should look like this:
+The ICQ relayer can easily parse this format and compose it into usual [Tendermint syntax](https://docs.tendermint.com/v0.33/app-dev/indexing-transactions.html#querying-transactions) for searching transactions.
+
+For instance, this query to search all transfer transactions with amount greater than 42:
 ```json
-{
-  "message.module": "bank"
-}
+[{"field": "transfer.amount", "op": "gt", "val": 42}, {"field": "message.module", "op": "eq", "val": "bank"}]
+```
+will be converted by the ICQ relayer into a usual Tendermint search string:
+```
+"transfer.amount" > 42 AND "message.module" = "bank"
 ```
 
 `MsgRegisterInterchainQuery` returns [`MsgRegisterInterchainQueryResponse`](https://github.com/neutron-org/neutron/blob/4313d35f8082dc124c5fe9491870720bbd3a5052/proto/interchainqueries/tx.proto#L42) where `id` is unique identifier of newly registered interchain query on success:
