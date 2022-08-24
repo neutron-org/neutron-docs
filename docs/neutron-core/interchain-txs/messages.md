@@ -127,6 +127,12 @@ type SudoMessageError struct {
 
 While trying to execute an interchain transaction, you can receive an IBC `Timeout` or an IBC `Acknowledgement`, and the latter can contain either a valid response or an error. These three types of transaction results are passed to the contract as distinct messages using a [Sudo() call](https://github.com/CosmWasm/wasmd/blob/288609255ad92dfe5c54eae572fe7d6010e712eb/x/wasm/keeper/keeper.go#L453). You can have a look at an example handler implementation in the [neutron-contracts](https://github.com/neutron-org/neutron-contracts/tree/main/contracts) repository.
 
+**But be careful**: if your Sudo Handler fails, acknoledgment won't be marked as processed inside the IBC module, so the IBC relayer will try to submit ack's over and over again. And since the ICA channels are `ORDERED`, ACKs must be processed in the same order as corresponding transactions were sent, meaning no further acknowledgments will be process until the previous one processed successfully.
+
+We strongly recommend developers to write Sudo Handlers very carefully and to not implement a very complicated logic there which can fails often.
+
+You can more find info, recommendations and examples about how process acknowledgements [here](TODO_LINK).
+
 ### State modifications
 
 None.
