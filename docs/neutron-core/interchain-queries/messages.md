@@ -21,7 +21,7 @@ message MsgRegisterInterchainQuery {
   // is IBC connection ID for getting ConsensusState to verify proofs
   string connection_id = 5;
 
-  // is used to say how often the query must be updated
+  // is used to specify how often (in neutron blocks) the query must be updated
   uint64 update_period = 6;
 
   // is the signer of the message
@@ -43,6 +43,7 @@ Currently `query_type` can take the following values:
 ```json
 "{eventType}.{attributeKey}": "{attributeValue}"
 ```
+
 For example, if you want to find all bank transfer transactions, your `query_data` should look like this:
 ```json
 {

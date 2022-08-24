@@ -51,7 +51,7 @@ const sidebars = {
                         },
                         {
                             type: 'category',
-                            label: 'Interchain Queries [KV]',
+                            label: 'Interchain Queries',
                             items: [
                                 'neutron-core/interchain-queries/overview',
                                 'neutron-core/interchain-queries/messages',
