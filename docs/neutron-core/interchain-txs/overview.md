@@ -18,6 +18,10 @@ A smart contract that tries to register an interchain account or to execute an i
 >
 > We strongly recommend developers to write Sudo Handlers very carefully and keep them as simple as possible. If you do want to have elaborate logic in your handler, you should verify the acknowledgement data before making any state changes; that way you can, if the data received with the acknowledgement is incompatible with executing the handler logic normally, return an `Ok()` response immediately, which will prevent the acknowledgement from being resubmitted.
 
+> **Note**: there is no dedicated event for a closed channel (ICA disables all messages related to closing the channels). Your channel, however, can still be closed if a packet timeout occurs; thus, if you are notified about a packet timeout, you can be sure that the affected channel was closed. Please note that it is generally a good practice to set the packet timeout for your interchain transactions to a really large value.
+> 
+>  If the timeout occurs anyway, you can use [this mechanism](TODO_LINK) to recover access to your interchain account. 
+
 ## Relaying
 
 Neutron introduces smart-contract level callbacks for IBC packets. From an IBC relayer's perspective, this means that custom application logic can be executed when a packet is submitted to Neutron, which can potentially drain the relayer's funds. This naturally brings us to a situation in which protocols would prefer to set up their own relayers and restrict the channels they are willing to relay for. For example, in [Hermes](https://github.com/informalsystems/ibc-rs) you can do this by adding a `chains.packet_filter` config:
