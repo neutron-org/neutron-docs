@@ -38,8 +38,28 @@ const sidebars = {
                     type: 'category',
                     label: 'Modules',
                     items: [
-                        'neutron-core/ica',
-                        'neutron-core/icq'
+                        {
+                            type: 'category',
+                            label: 'Interchain Transactions',
+                            items: [
+                                'neutron-core/interchain-txs/overview',
+                                'neutron-core/interchain-txs/messages',
+                                'neutron-core/interchain-txs/client',
+                                'neutron-core/interchain-txs/state',
+                                'neutron-core/interchain-txs/events'
+                            ]
+                        },
+                        {
+                            type: 'category',
+                            label: 'Interchain Queries',
+                            items: [
+                                'neutron-core/interchain-queries/overview',
+                                'neutron-core/interchain-queries/messages',
+                                'neutron-core/interchain-queries/client',
+                                'neutron-core/interchain-queries/state',
+                                'neutron-core/interchain-queries/events'
+                            ]
+                        },
                     ],
                 },
                 'neutron-core/contribute',
