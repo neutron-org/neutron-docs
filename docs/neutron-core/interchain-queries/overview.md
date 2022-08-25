@@ -32,9 +32,13 @@ Neutron verifies the data and processes the query result depending on the interc
 * in case of a TX-query, the ICQ module **does not** save the result to the storage, finds the contract that registered the query,
 and passes the full result to the contract's [SudoTXQueryResult](https://github.com/neutron-org/neutron/blob/4313d35f8082dc124c5fe9491870720bbd3a5052/internal/sudo/sudo.go#L227) [handler](https://github.com/neutron-org/neutron-contracts/blob/c197ceacc1c23d2f1283be91f8f90c2be1328db0/contracts/neutron_interchain_queries/src/contract.rs#L141).
 
-**IMPORTANT NOTICE:** Since events itself are not included in the transaction result, it's necessary to
+## Transaction filters
+
+Since events themselves are not part of the consensus and are not included in the transaction result, it's necessary to
 [implement additional checks](https://github.com/neutron-org/neutron-contracts/blob/c197ceacc1c23d2f1283be91f8f90c2be1328db0/contracts/neutron_interchain_queries/src/contract.rs#L197)
 in your `SudoTXQueryResult` handler to check that result transactions satisfies your transactions filter. For instance, you can check that messages in the transactions have proper types, payload, etc.
 If your contract does not have such checks, malicious relayer can send a fully valid Tendermint transaction which does not satisfy your defined transactions filter, and your business-logic can be broken.
+
+> NOTE: when registering a TX-query, you write the transaction filters as filters for transaction events. When you check the submitted transaction in your contracts, though, you can only check the information that is stored on-chain (i.e., message fields for messages in a transaction). To put it another way, the set of values that you can use to filter transactions is the intersection of the values that are added to transaction events (used by the ICQ relayer can perform the search) and the values included directly to sdk.Msgs (can be used by your code to check whether the submitted transaction matches your query).  
 
 You can see more info, examples and recommendations about proper transactions result handling [here](TODO_LINK).
