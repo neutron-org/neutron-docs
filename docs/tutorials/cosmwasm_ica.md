@@ -39,14 +39,12 @@ cosmwasm-std = { version = "1.0.0", features = ["staking"] }
 
 # Other standard dependencies...
 
-# Various helpers
-interchain_txs = { path = "github.com/neutron-org/neutron/packages/interchain_txs", default-features = false, version = "0.1.0" }
-
-# Bindings for the Neutron ICA adapter module (messages, responses, etc.)
 neutron_bindings = { path = "github.com/neutron-org/neutron/packages/bindings" }
 
-# This is a library that simplifies working with IBC response packets (acknowledgments, timeouts)
-neutron_sudo = { path = "github.com/neutron-org/neutron/packages/neutron_sudo" }
+# This is a library that simplifies working with IBC response packets (acknowledgments, timeouts),
+# contains bindings for the Neutron ICA adapter module (messages, responses, etc.) and provides
+# various helper functions.
+neutron-sdk = { path = "github.com/neutron-org/neutron/packages/neutron-sdk", default-features = false, version = "0.1.0" }
 
 # Required to marshal skd.Msg values; the marshalled messsages will be attached to the IBC packets
 # and executed as a transaction on the host chain.
@@ -57,13 +55,12 @@ protobuf = { version = "3", features = ["with-bytes"] }
 Now you can import the libraries:
 
 ```rust
-use interchain_txs::helpers::{parse_item, parse_response, parse_sequence};
-use neutron_bindings::msg::NeutronMsg;
-use neutron_bindings::ProtobufAny;
-use neutron_bindings::query::InterchainQueries;
-use neutron_bindings::query::QueryInterchainAccountAddressResponse;
-use neutron_sudo::msg::RequestPacket;
-use neutron_sudo::msg::SudoMsg;
+use neutron_sdk::bindings::msg::NeutronMsg;
+use neutron_sdk::bindings::query::{InterchainQueries, QueryInterchainAccountAddressResponse};
+use neutron_sdk::bindings::types::ProtobufAny;
+use neutron_sdk::interchain_txs::helpers::{parse_item, parse_response, parse_sequence, get_port_id};
+use neutron_sdk::sudo::msg::{RequestPacket, SudoMsg};
+use neutron_sdk::NeutronResult;
 ```
 
 ## 2. Register an interchain account
@@ -110,7 +107,7 @@ fn execute_register_ica(
 ) -> StdResult<Response<NeutronMsg>> {
     let register =
         NeutronMsg::register_interchain_account(connection_id, interchain_account_id.clone());
-    let key = helpers::get_port_id(env.contract.address.to_string(), &interchain_account_id);
+    let key = get_port_id(env.contract.address.to_string(), &interchain_account_id);
     INTERCHAIN_ACCOUNTS.save(deps.storage, key, &None)?;
     Ok(Response::new().add_message(register))
 }
