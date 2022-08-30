@@ -194,10 +194,19 @@ Interchain Account that was created for you.
 
 ## 3. Execute an interchain transaction
 
+### Sending the transaction
+
 ```rust
 use cosmos_sdk_proto::cosmos::staking::v1beta1::{
     MsgDelegate, MsgDelegateResponse
 };
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct SudoPayload {
+    pub message: String,
+    pub port_id: String,
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -292,16 +301,16 @@ fn execute_delegate(
 }
 
 fn msg_with_sudo_callback<C: Into<CosmosMsg<T>>, T>(
-   deps: DepsMut,
-   msg: C,
-   payload: SudoPayload,
+    deps: DepsMut,
+    msg: C,
+    payload: SudoPayload,
 ) -> StdResult<SubMsg<T>> {
-   save_reply_payload(deps.storage, payload)?;
-   Ok(SubMsg::reply_on_success(msg, SUDO_PAYLOAD_REPLY_ID))
+    save_reply_payload(deps.storage, payload)?;
+    Ok(SubMsg::reply_on_success(msg, SUDO_PAYLOAD_REPLY_ID))
 }
 
 pub fn save_reply_payload(store: &mut dyn Storage, payload: SudoPayload) -> StdResult<()> {
-   REPLY_ID_STORAGE.save(store, &to_vec(&payload)?)
+    REPLY_ID_STORAGE.save(store, &to_vec(&payload)?)
 }
 ```
 
@@ -329,6 +338,8 @@ pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> StdResult<Response> {
     }
 }
 ```
+
+### IBC Events
 
 After we saved the IBC packet identifier, we are ready for processing the IBC events that can be triggered by an IBC
 relayer: an acknowledgement or a timeout. In order to process them, we need to add a couple of new handlers to
@@ -365,3 +376,138 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> StdResult<Response> {
 }
 ```
 
+#### Successful Response
+
+Let's have a look at how to handle a successful Response event (a non-error IBC Acknowledgement):
+
+```rust
+fn sudo_response(deps: DepsMut, request: RequestPacket, data: Binary) -> StdResult<Response> {
+    // Get the channel identifier and the sequence identifier to be able to understand
+    // which transaction is acknowledged by this packet, and for which Interchain Account.
+    let seq_id = request
+        .sequence
+        .ok_or_else(|| StdError::generic_err("sequence not found"))?;
+    let channel_id = request
+        .source_channel
+        .ok_or_else(|| StdError::generic_err("channel_id not found"))?;
+
+    // Read the information about the transaction that we previously executed and saved to state.
+    let payload = read_sudo_payload(deps.storage, channel_id, seq_id)?;
+
+    // Parse the response to Vec<MsgData>.
+    let parsed_data = parse_response(data)?;
+
+    // Iterate over the messages, parse them depending on their type & process them.
+    let mut item_types = vec![];
+    for item in parsed_data {
+        let item_type = item.msg_type.as_str();
+        item_types.push(item_type.to_string());
+        match item_type {
+            // Not too much happening here: the Delegate message response is empty.
+            "/cosmos.staking.v1beta1.MsgDelegate" => {
+                let _out: MsgDelegateResponse = parse_item(&item.data)?;
+            }
+            _ => {
+                deps.api.debug(
+                    format!(
+                        "This type of acknowledgement is not implemented: {:?}",
+                        payload
+                    )
+                        .as_str(),
+                );
+            }
+        }
+    }
+
+    Ok(Response::default())
+}
+
+pub fn read_sudo_payload(
+    store: &mut dyn Storage,
+    channel_id: String,
+    seq_id: u64,
+) -> StdResult<SudoPayload> {
+    let data = SUDO_PAYLOAD.load(store, (channel_id, seq_id))?;
+    from_binary(&Binary(data))
+}
+
+/// Parse acknowledgement into Vec<MsgData> structure
+pub fn parse_response(data: Binary) -> StdResult<Vec<MsgData>> {
+    let result = Binary::from_base64(&data.to_string())?;
+    let msg_data: Result<TxMsgData, DecodeError> = TxMsgData::decode(result.as_slice());
+    match msg_data {
+        Err(e) => {
+            return Err(StdError::generic_err(format!(
+                "Can't decode response: {}",
+                e
+            )));
+        }
+        Ok(msg) => Ok(msg.data),
+    }
+}
+
+/// Parse a protobuf Any value into a T structure
+pub fn parse_item<T: prost::Message + Default>(item: &Vec<u8>) -> StdResult<T> {
+    let res = T::decode(item.as_slice());
+    match res {
+        Err(e) => return Err(StdError::generic_err(format!("Can't decode item: {}", e))),
+        Ok(data) => Ok(data),
+    }
+}
+```
+
+1. We get the sequence and channel identifiers to retrieve the information about the interchain transaction from our
+   local storage. _Note_: we could instead parse the raw data from the `RequestPacket`, but it feels more natural to
+   save
+   the required information when sending the transaction and to retrieve it from the state when processing the response;
+2. We parse the response data and start iterating over the message responses, determining the message type for each of
+   them and (potentially) executing custom logic for each message.
+
+#### Error
+
+```rust
+fn sudo_error(deps: DepsMut, request: RequestPacket, details: String) -> StdResult<Response> {
+    deps.api
+        .debug(format!("WASMDEBUG: sudo error: {}", details).as_str());
+    let seq_id = request
+        .sequence
+        .ok_or_else(|| StdError::generic_err("sequence not found"))?;
+    let channel_id = request
+        .source_channel
+        .ok_or_else(|| StdError::generic_err("channel_id not found"))?;
+    let payload = read_sudo_payload(deps.storage, channel_id, seq_id)?;
+
+    ACKNOWLEDGEMENT_RESULTS.save(
+        deps.storage,
+        payload.port_id,
+        &AcknowledgementResult::Error((payload.message, details)),
+    )?;
+
+    Ok(Response::default())
+}
+```
+
+#### Timeout
+
+```rust
+fn sudo_timeout(deps: DepsMut, _env: Env, request: RequestPacket) -> StdResult<Response> {
+    deps.api
+        .debug(format!("WASMDEBUG: sudo timeout request: {:?}", request).as_str());
+
+    let seq_id = request
+        .sequence
+        .ok_or_else(|| StdError::generic_err("sequence not found"))?;
+    let channel_id = request
+        .source_channel
+        .ok_or_else(|| StdError::generic_err("channel_id not found"))?;
+    let payload = read_sudo_payload(deps.storage, channel_id, seq_id)?;
+
+    ACKNOWLEDGEMENT_RESULTS.save(
+        deps.storage,
+        payload.port_id,
+        &AcknowledgementResult::Timeout(payload.message),
+    )?;
+
+    Ok(Response::default())
+}
+```
