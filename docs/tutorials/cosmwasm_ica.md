@@ -274,6 +274,7 @@ fn execute_delegate(
         interchain_account_id.clone(),
         vec![any_msg],
         "".to_string(),
+        timeout.unwrap_or(DEFAULT_TIMEOUT_SECONDS),
     );
 
     // We use a submessage here because we need the process message reply to save
@@ -289,6 +290,19 @@ fn execute_delegate(
 
     Ok(Response::default().add_submessages(vec![submsg]))
 }
+
+fn msg_with_sudo_callback<C: Into<CosmosMsg<T>>, T>(
+   deps: DepsMut,
+   msg: C,
+   payload: SudoPayload,
+) -> StdResult<SubMsg<T>> {
+   save_reply_payload(deps.storage, payload)?;
+   Ok(SubMsg::reply_on_success(msg, SUDO_PAYLOAD_REPLY_ID))
+}
+
+pub fn save_reply_payload(store: &mut dyn Storage, payload: SudoPayload) -> StdResult<()> {
+   REPLY_ID_STORAGE.save(store, &to_vec(&payload)?)
+}
 ```
 
 1. First we need to import the `MsgDelegate` type from the `cosmos_sdk_proto` library. This is required to marshal the
@@ -296,7 +310,8 @@ fn execute_delegate(
 2. Then we implement a handler for the new `ExecuteMsg::Delegate` handler, `execute_delegate()`, and add it to
    our `execute()` entrypoint;
 3. Inside the `execute_delegate()` handler, we get the interchain account address from the storage, form a `Delegate`
-   message, put it inside Neutron's `SubmitTx` message and execute it as a submessage.
+   message, put it inside Neutron's `SubmitTx` message and execute it as a submessage. Inside
+   the `msg_with_sudo_callback()` function, we set up the reply payload using the `SUDO_PAYLOAD_REPLY_ID` value.
 
 We need to execute the `SubmitTx` message as a submessage because Neutron returns the outgoing IBC packet identifier for
 us as a message reply. This IBC packet identifier is necessary to later determine which To process it, we need to
@@ -306,7 +321,7 @@ implement the `reply()` handler:
 #[entry_point]
 pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> StdResult<Response> {
     match msg.id {
-        IBC_SUDO_ID_RANGE_START..=IBC_SUDO_ID_RANGE_END => prepare_sudo_payload(deps, env, msg),
+        SUDO_PAYLOAD_REPLY_ID => prepare_sudo_payload(deps, env, msg),
         _ => Err(StdError::generic_err(format!(
             "unsupported reply message id {}",
             msg.id
@@ -314,8 +329,6 @@ pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> StdResult<Response> {
     }
 }
 ```
-
-TODO: what is this replies id range? Why do we need it?
 
 After we saved the IBC packet identifier, we are ready for processing the IBC events that can be triggered by an IBC
 relayer: an acknowledgement or a timeout. In order to process them, we need to add a couple of new handlers to
@@ -327,13 +340,13 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> StdResult<Response> {
     match msg {
         // For handling successful (non-error) acknowledgements.
         SudoMsg::Response { request, data } => sudo_response(deps, request, data),
-        
+
         // For handling error acknowledgements.
         SudoMsg::Error { request, details } => sudo_error(deps, request, details),
 
-       // For handling error timeouts.
+        // For handling error timeouts.
         SudoMsg::Timeout { request } => sudo_timeout(deps, env, request),
-       
+
         SudoMsg::OpenAck {
             port_id,
             channel_id,
@@ -351,3 +364,4 @@ pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> StdResult<Response> {
     }
 }
 ```
+
