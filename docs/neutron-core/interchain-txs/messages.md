@@ -1,6 +1,6 @@
 # Messages
 
-## MsgRegisterInterchainQuery
+## MsgRegisterInterchainAccount
 
 Attempts to register an interchain account by sending an IBC packet over an IBC connection.
 
@@ -81,19 +81,19 @@ message MsgSubmitTx {
   string connection_id = 3;
   repeated google.protobuf.Any msgs = 4;
   string memo = 5;
+  uint64 timeout = 6;
 }
 ```
 
 * `from_address` must be a smart contract address, otherwise the message will fail;
 * `interchain_account_id` is identical to `MsgRegisterInterchainAccount.interchain_account_id`;
 * `connection_id` must be the identifier of a valid IBC connection, otherwise the message will fail;
-* `memo` is the transaction [memo](https://docs.cosmos.network/master/core/transactions.html).
+* `memo` is the transaction [memo](https://docs.cosmos.network/master/core/transactions.html);
+* `timeout` is a timeout in seconds after which the packet times out.
 
 > **Note:** most networks reject memos longer than 256 bytes.
 
 > **Note:** your contract needs to implement the `sudo()` entrypoint on order to successfully process the IBC events associated with this message. You can find an example in the [neutron-contracts](https://github.com/neutron-org/neutron-contracts/tree/main/contracts) repository.
-
-> **Note:** the timeout for outgoing packets is hard coded as `time.Hour * 24 * 30` (thirty days). ICA creates ordered channels, and a single timeout will close the channel; setting a long timeout and monitoring the IBC relayer is the best option. 
 
 ### Response
 

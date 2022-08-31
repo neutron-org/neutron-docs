@@ -20,7 +20,7 @@ A smart contract that tries to register an interchain account or to execute an i
 
 > **Note**: there is no dedicated event for a closed channel (ICA disables all messages related to closing the channels). Your channel, however, can still be closed if a packet timeout occurs; thus, if you are notified about a packet timeout, you can be sure that the affected channel was closed. Please note that it is generally a good practice to set the packet timeout for your interchain transactions to a really large value.
 > 
->  If the timeout occurs anyway, you can use [this mechanism](TODO_LINK) to recover access to your interchain account. 
+>  If the timeout occurs anyway, you can just execute [RegisterInterchainAccount message](http://localhost:3000/neutron-core/interchain-txs/messages#msgregisterinterchainquery) again to recover access to your interchain account. 
 
 ## Relaying
 
