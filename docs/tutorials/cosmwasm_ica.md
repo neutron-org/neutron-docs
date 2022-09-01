@@ -463,29 +463,42 @@ pub fn parse_item<T: prost::Message + Default>(item: &Vec<u8>) -> StdResult<T> {
 2. We parse the response data and start iterating over the message responses, determining the message type for each of
    them and (potentially) executing custom logic for each message.
 
+> **Note**: if your Sudo handler fails, the acknowledgment won't be marked as processed inside the IBC module. This will
+> make most IBC relayers try to submit the acknowledgment over and over again. And since the ICA channels are `ORDERED`,
+> ACKs must be processed in the same order as corresponding transactions were sent, meaning no further acknowledgments
+> will be process until the previous one processed successfully.
+>
+> We strongly recommend developers to write Sudo handlers very carefully and keep them as simple as possible. If you do
+> want to have elaborate logic in your handler, you should verify the acknowledgement data before making any state
+> changes; that way you can, if the data received with the acknowledgement is incompatible with executing the handler
+> logic normally, return an `Ok()` response immediately, which will prevent the acknowledgement from being resubmitted.
+
 #### Error
 
 ```rust
 fn sudo_error(deps: DepsMut, request: RequestPacket, details: String) -> StdResult<Response> {
-    deps.api
-        .debug(format!("WASMDEBUG: sudo error: {}", details).as_str());
+    // Get the channel identifier and the sequence identifier to be able to understand
+    // which transaction is acknowledged by this packet, and for which Interchain Account.
     let seq_id = request
         .sequence
         .ok_or_else(|| StdError::generic_err("sequence not found"))?;
     let channel_id = request
         .source_channel
         .ok_or_else(|| StdError::generic_err("channel_id not found"))?;
-    let payload = read_sudo_payload(deps.storage, channel_id, seq_id)?;
 
-    ACKNOWLEDGEMENT_RESULTS.save(
-        deps.storage,
-        payload.port_id,
-        &AcknowledgementResult::Error((payload.message, details)),
-    )?;
+    // Read the information about the transaction that we previously executed and saved to state.
+    let payload = read_sudo_payload(deps.storage, channel_id, seq_id)?;
+   
+    // Process the error (add en entry to the errors queue for later manual processing,
+    // roll back the state if required, etc.)  
 
     Ok(Response::default())
 }
 ```
+
+This handler is very similar to `sudo_response()`. Unfortunately, current ICA implementation does not allow you to get
+the exact error string that was returned by the host chain; your controller code can only know that something went
+wrong on the other side.
 
 #### Timeout
 
