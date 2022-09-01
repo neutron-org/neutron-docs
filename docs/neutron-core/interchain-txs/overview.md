@@ -38,7 +38,9 @@ complete list of IBC events for each module message in the [messages](./messages
 > timeout, you can be sure that the affected channel was closed. Please note that it is generally a good practice to set
 > the packet timeout for your interchain transactions to a really large value.
 >
->  If the timeout occurs anyway, you can use [this mechanism](TODO_LINK) to recover access to your interchain account.
+>  If the timeout occurs anyway, you can just
+> execute [RegisterInterchainAccount message](/neutron-core/interchain-txs/messages#msgregisterinterchainaccount) again to
+> recover access to your interchain account.
 
 ## Relaying
 
