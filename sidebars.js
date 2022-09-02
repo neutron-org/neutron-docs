@@ -23,13 +23,6 @@ const sidebars = {
         },
         {
             type: 'category',
-            label: 'Building dApps',
-            items: [
-                'tutorials/main'
-            ],
-        },
-        {
-            type: 'category',
             label: 'Neutron Core',
             items: [
                 'neutron-core/build',
@@ -72,7 +65,17 @@ const sidebars = {
                 'relaying/ibc-relayer-guide',
                 'relaying/icq-relayer-guide',
             ],
-        }
+        },
+        {
+            type: 'category',
+            label: 'Tutorials',
+            items: [
+                'tutorials/overview',
+                'tutorials/cosmwasm_ica',
+                'tutorials/cosmwasm_icq',
+                'tutorials/integration_tests'
+            ],
+        },
     ]
 };
 
