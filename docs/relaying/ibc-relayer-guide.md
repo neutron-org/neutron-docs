@@ -14,8 +14,6 @@ If running many nodes on a single VM, [ensure your open files limit is increased
 
 In this guide, we will be relaying between Neutron and Cosmos Hub. When setting up your Cosmos Hub and Neutron full nodes, be sure to offset the ports being used in both the app.toml and config.toml files of the respective chains (we will show how to do this below).
 
-In this example, we will be using the default ports for Neutron and will manually change the ports of the Cosmos Hub node.
-
 ## Neutron Node Settings
 
 Here we will leave `grpc server` on port 9090 in the `app.toml` directory:
@@ -119,7 +117,7 @@ Make the directory where you'll place the binary, clone the hermes source reposi
 mkdir -p $HOME/hermes
 git clone https://github.com/informalsystems/ibc-rs.git hermes
 cd hermes
-git checkout v0.12.0
+git checkout v1.0.0
 cargo install ibc-relayer-cli --bin hermes --locked
 ```
 
@@ -134,7 +132,7 @@ Check hermes version & config dir setup
 ```sh
 hermes version
 INFO ThreadId(01) using default configuration from '/home/relay/.hermes/config.toml'
-hermes 0.12.0
+hermes 1.0.0
 ```
 
 Edit hermes config (use ports according to the port configuration we set above, add only chains you want to relay)
@@ -142,7 +140,10 @@ Edit hermes config (use ports according to the port configuration we set above, 
 ```
 nano $HOME/.hermes/config/config.toml
 ```
-In this example, we will set `channel-141` on the cosmoshub-4 chain settings and `channel-0` on the Neutron chain settings:
+Neutron introduces smart-contract level callbacks for IBC packets. From an IBC relayer's perspective, this means that
+custom application logic can be executed when a packet is submitted to Neutron, which can potentially drain the
+relayer's funds. This naturally brings us to a situation in which protocols would prefer to set up their own relayers
+and restrict the channels they are willing to relay for. For example, you can do this by adding a `chains.packet_filter` config:
 
 ```toml
 [[chains]]
@@ -169,7 +170,8 @@ trust_threshold = { numerator = '1', denominator = '3' }
 [chains.packet_filter]
 policy = 'allow'
 list = [
-   ['transfer', 'channel-141'], # neutron
+    # allow relaying only for chanels created by a certain contract  
+    ['icacontroller-neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq*', '*'],
 ]
 
 [[chains]]
@@ -196,7 +198,8 @@ trust_threshold = { numerator = '1', denominator = '3' }
 [chains.packet_filter]
 policy = 'allow'
 list = [
-  ['transfer', 'channel-0'], # cosmoshub-4
+    # allow relaying only for chanels created by a certain contract  
+    ['icacontroller-neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq*', '*'],
 ]
 
 ```
