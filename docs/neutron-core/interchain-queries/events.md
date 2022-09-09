@@ -10,7 +10,7 @@ The ICQ module emits the following event:
 | action        | query                              |
 | query_id      | `{identifier_of_registered_query}` |
 | owner         | `{query_owner}`                    |
-| zone_id       | `{identifier_of_remote_zone}`      |
+| connection_id | `{connection_id_for_query}`        |
 | type          | `{query_type}`                     |
 | tx_filter     | `{transactions_search_filter}`     |
 | kv_key        | `{kv_keys}`                        |

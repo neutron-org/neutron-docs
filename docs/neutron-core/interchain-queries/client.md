@@ -17,7 +17,7 @@ neutrond tx interchainqueries submit-query-result [query-id] [result-file]
 neutrond tx interchainqueries submit-query-result result.json --from demowallet1 --gas 10000000 --gas-adjustment 1.4 --gas-prices 0.5stake --broadcast-mode block --chain-id test-1
 ```
 
-Example ontent of `result.json` file:
+Example content of `result.json` file:
 ```json
 {
     "kv_results": [
@@ -128,10 +128,8 @@ Output:
     keys:
     - path: "staking"
       key: "MRQE7KnWf7BcUyQTX/rb+q7XJL590xQE7KnWf7BcUyQTX/rb+q7XJL590w==" 
-    query_type: 'kv'
+    query_type: kv
     update_period: "1"
-    zone_id: test-2
-
   ```
 
 </details>
@@ -165,18 +163,16 @@ Output:
     keys:
     - path: "staking"
       key: "MRQE7KnWf7BcUyQTX/rb+q7XJL590xQE7KnWf7BcUyQTX/rb+q7XJL590w==" 
-    query_type: 'kv'
+    query_type: kv
     update_period: "1"
-    zone_id: test-2
   - connection_id: connection-0
     id: "2"
     last_emitted_height: "217"
     last_submitted_result_local_height: "199"
     last_submitted_result_remote_height: "188"
     transactions_filter: '{"message.module": "bank"}'
-    query_type: 'tx'
+    query_type: tx
     update_period: "5"
-    zone_id: test-2
   ```
 
 </details>
