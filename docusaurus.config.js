@@ -8,7 +8,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 const config = {
   title: 'Neutron Docs',
   tagline: 'Neutron',
-  url: 'docs.neutron.org',
+  url: 'https://neutron-org.github.io',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
