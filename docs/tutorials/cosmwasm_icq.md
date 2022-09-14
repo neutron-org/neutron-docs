@@ -213,7 +213,7 @@ pub fn register_transfers_query_msg(...) -> NeutronResult<NeutronMsg> {
 }
 ```
 
-> **Note:** Neutron SDK is shipped with a lot of helpers to register different Interchain Queries (you can find a full list [here](TODO_LINK)).
+> **Note:** Neutron SDK is shipped with a lot of helpers to register different Interchain Queries (you can find a full list [here](https://github.com/neutron-org/neutron-contracts/blob/main/contracts/neutron_interchain_queries/src/contract.rs#L78)).
 > But if you don't find some particular register query helper in the SDK, you can always implement your own using implementations from SDK as a reference.
 > We encourage you to open pull requests with your query implementations to make Neutron SDK better and better!
 
@@ -306,7 +306,7 @@ impl KVReconstruct for Balances {
 }
 ```
 
-> **Note:** Neutron SDK is shipped with a lot of query structures to reconstruct different Interchain Queries (you can find a full list [here](TODO_LINK)).
+> **Note:** Neutron SDK is shipped with a lot of query structures to reconstruct different Interchain Queries (you can find a full list [here](https://github.com/neutron-org/neutron-contracts/blob/main/contracts/neutron_interchain_queries/src/contract.rs#L78)).
 > But if you don't find some particular structure in the SDK, you can always implement your own using implementations from SDK as a reference.
 > All you need to do is just implement the `KVReconstruct` trait for your structure, and after that you can easily use this with `query_kv_result` helper like this:
 > `let response: YourStructure = query_kv_result(deps, query_id)?`
