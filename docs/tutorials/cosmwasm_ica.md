@@ -17,7 +17,7 @@ We are going to learn how to:
 > can
 > use raw IBC packets to imitate
 > the [ibc-go](https://github.com/cosmos/ibc-go/tree/main/modules/apps/27-interchain-accounts) implementation, or use
-> a [framework](TODO_LINK) that already implements the same logic on smart contracts level.
+> a framework that already implements the same logic on smart contracts level.
 
 > **Note:** this section assumes that you have basic knowledge of CosmWasm and have some experience in writing smart
 > contracts. You can check out CosmWasm [docs](https://docs.cosmwasm.com/docs/1.0/)

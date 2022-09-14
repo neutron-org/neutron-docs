@@ -77,8 +77,8 @@ const config = {
             title: 'Docs',
             items: [
               {
-                label: 'Into',
-                to: '/docs/intro',
+                label: 'Intro',
+                to: '/',
               },
             ],
           },
@@ -102,10 +102,6 @@ const config = {
           {
             title: 'More',
             items: [
-              {
-                label: 'Blog',
-                to: '/blog',
-              },
               {
                 label: 'GitHub',
                 href: 'https://github.com/neutron-org/neutron',

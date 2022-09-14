@@ -41,4 +41,4 @@ If your contract does not have such checks, malicious relayer can send a fully v
 
 > NOTE: when registering a TX-query, you write the transaction filters as filters for transaction events. When you check the submitted transaction in your contracts, though, you can only check the information that is stored on-chain (i.e., message fields for messages in a transaction). To put it another way, the set of values that you can use to filter transactions is the intersection of the values that are added to transaction events (used by the ICQ relayer can perform the search) and the values included directly to sdk.Msgs (can be used by your code to check whether the submitted transaction matches your query).  
 
-You can see more info, examples and recommendations about proper transactions result handling [here](TODO_LINK).
+You can see more info, examples and recommendations about proper transactions result handling [here](https://github.com/neutron-org/neutron-contracts/blob/main/contracts/neutron_interchain_txs/src/contract.rs#L335).
