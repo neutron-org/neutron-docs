@@ -180,7 +180,7 @@ In the snippet above, we create the `ExecuteMsg` enum that contains two `Registe
 > **Note:** in a real-world scenario you wouldn't want just anyone to be able to make your contract register interchain
 > query, so it might make sense to add ownership checks
 
-And implement a simple handlers `register_balance_query` and `register_transfers_query` for these messages. Each handler
+And implement simple handlers `register_balance_query` and `register_transfers_query` for these messages. Each handler
 uses built-in helpers from Neutron-SDK to create necessary register messages: `register_balance_query_msg` and `register_transfers_query_msg`:
 * `register_balance_query_msg` - is a KV-query, therefore it creates an Interchain Query with necessary KV-keys to read
 from remote chain and build a full `Balance` response from KV-values (you can see a full implementation of the helper in the [SDK source code](https://github.com/neutron-org/neutron-contracts/blob/a47bfac69667da57f8bf6ea81c9f16240e145c6d/packages/neutron-sdk/src/interchain_queries/register_queries.rs#L61)):
@@ -215,6 +215,7 @@ pub fn register_transfers_query_msg(...) -> NeutronResult<NeutronMsg> {
 
 > **Note:** Neutron SDK is shipped with a lot of helpers to register different Interchain Queries (you can find a full list [here](TODO_LINK)).
 > But if you don't find some particular register query helper in the SDK, you can always implement your own using implementations from SDK as a reference.
+> We encourage you to open pull requests with your query implementations to make Neutron SDK better and better!
 
 ## 3. Get results from the registered Interchain Queries
 
@@ -308,9 +309,7 @@ impl KVReconstruct for Balances {
 > **Note:** Neutron SDK is shipped with a lot of query structures to reconstruct different Interchain Queries (you can find a full list [here](TODO_LINK)).
 > But if you don't find some particular structure in the SDK, you can always implement your own using implementations from SDK as a reference.
 > All you need to do is just implement the `KVReconstruct` trait for your structure, and after that you can easily use this with `query_kv_result` helper like this:
-> ```rust
-let response: YourStructure = query_kv_result(deps, query_id)?
-> ```
+> `let response: YourStructure = query_kv_result(deps, query_id)?`
 
 Sometimes you might want to get KV Interchain Queries result immediately after it was published by the [ICQ relayer](/relaying/icq-relayer-guide).
 That's why we've implemented **KV Queries Callbacks**, which allows you to get a callback in your contract with the query result when the relayer submits it.
