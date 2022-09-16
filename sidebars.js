@@ -53,6 +53,15 @@ const sidebars = {
                                 'neutron-core/interchain-queries/events'
                             ]
                         },
+                        {
+                            type: 'category',
+                            label: 'Transfer',
+                            items: [
+                                'neutron-core/transfer/overview',
+                                'neutron-core/transfer/state',
+                                'neutron-core/transfer/messages'
+                            ]
+                        },
                     ],
                 },
                 'neutron-core/contribute',
