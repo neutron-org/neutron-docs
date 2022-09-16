@@ -15,6 +15,8 @@ We are going to learn how to:
 > contracts. You can check out CosmWasm [docs](https://docs.cosmwasm.com/docs/1.0/)
 > and [blog posts](https://medium.com/cosmwasm/writing-a-cosmwasm-contract-8fb946c3a516) for entry-level tutorials.
 
+> **Note:** before running any query creation transaction you need to top up your contract address. See [Interchain Queries Overview](../neutron-core/interchain-queries/overview.md), "Query creation deposit" section.
+
 ## The complete example
 
 In the snippets below some details might be omitted. Please check out the complete smart contract
