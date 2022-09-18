@@ -10,7 +10,7 @@
 
 ## Proposal
 
-Location: off-chain as json object stored on IPFS (mirrors [group proposal](../../group/spec/06_metadata.md#proposal))
+Location: off-chain as json object stored on IPFS (mirrors group proposal):
 
 ```json
 {
@@ -25,7 +25,7 @@ Location: off-chain as json object stored on IPFS (mirrors [group proposal](../.
 
 ## Vote
 
-Location: on-chain as json within 255 character limit (mirrors [group vote](../../group/spec/06_metadata.md#vote))
+Location: on-chain as json within 255 character limit (mirrors group vote):
 
 ```json
 {
