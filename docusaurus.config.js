@@ -54,7 +54,7 @@ const config = {
       navbar: {
         title: 'Neutron',
         logo: {
-          alt: 'My Site Logo',
+          alt: 'Neutron Logo',
           src: 'img/logo.jpeg',
         },
         items: [

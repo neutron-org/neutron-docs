@@ -1,30 +1,36 @@
 # Overview
 
-This document describes the governance module for the Neutron network.
+> **NOTE: THE IMPLEMENTATION DESCRIBED IN THIS SECTION IS NOT FINALISED AND MIGHT BE CHANGED BEFORE THE LAUNCH.**
 
-The Neutron's governance is a wrapper over original cosmos sdk `gov` module with a some key difference. For the modules are very similar, overview section describes only the differences. Learn more about the gov module (and therefore about the Neutron's one) by the link to the cosmos documentation site: https://docs.cosmos.network/master/modules/gov/
+This document describes Neutron's governance module.
 
-What makes this module different from the original one:
-- Staking no more affects user's voting power
-- Voting power is now calculates and stores in smart-contract
-- Tally logic is modified 
+Neutron's governance module is a wrapper for the original Cosmos SDK `gov` module with some key differences, which are
+described in this section:
 
-Read about these features below to make a better understanding.
+* There is a special DAO contract that is deployed during chain initialisation;
+* Voting power is retrieved from the DAO contract based on the amount of tokens locked;
+* Funds staked using the standard `staking` module do not contribute to voting power;
+* Tally logic is modified to get the voting power from the DAO contract.
 
-## Staking no more affects user's voting power
+## Delegations do not contribute to voting power
 
-The original gov module computes voting power on proposals using each user's delegations. Since the Neutron's plan is to not use standard staking & validators, it's necessary to remove rudimentary usage of staking module. Instead of this, however, we are introduced an alternative
-## Voting power is now calculated and stored in smart-contract
+The original `gov` module computes voting power based on user's delegations. Since Neutron is an interchain-secured
+network, native staking does not play an important role; users have to lock their `$NTRN` tokens in the chain's DAO
+contract in order to be able to vote for proposals.
 
-We use cosm-wasm contract which implements several methods:
+## Voting power is retrieved from the DAO contract
+
+The DAO contract should only implement two handlers:
+
 ```rust
-pub fn query_voting_power(deps: Deps, user_addr: Addr) -> StdResult<VotingPowerResponse> {...}
+pub fn query_voting_power(deps: Deps, user_addr: Addr) -> StdResult<VotingPowerResponse> { ... }
 ```
 
 ```rust
-pub fn query_voting_powers(deps: Deps) -> StdResult<Vec<VotingPowerResponse>>  {...}  
+pub fn query_voting_powers(deps: Deps) -> StdResult<Vec<VotingPowerResponse>> { ... }  
 ```
-where ```VotingPowerResponse``` is
+
+where ```VotingPowerResponse``` is defined as:
 
 ```rust
 pub struct VotingPowerResponse {
@@ -34,12 +40,11 @@ pub struct VotingPowerResponse {
     pub voting_power: Uint128,
 }
 ```
-currently neutron-core uses only `query_voting_powers`, but `query_voting_power` seems to be useful in future
 
-## Tally logic is modified 
-Tally interface hasn't changed, but instead of calculating voting results by staked tokens, it uses an above contract's query
-```golang
-// GetTokensInDao queries the voting contract for an array of users who have tokens locked in the
-// contract and their respective amount, as well as computing the total amount of locked tokens.
-func GetTokensInDao(ctx sdk.Context, k wasmtypes.ViewKeeper, contractAddr sdk.AccAddress) (map[string]sdk.Int, sdk.Int, error) {...}
-```
+> Note: currently `neutron-core` only uses the `query_voting_powers` handler.
+
+## Tally logic is modified
+
+Tally interface hasn't changed, but instead of calculating voting results based on the delegation amounts, it uses the
+above contract calls to get the voting power. This means that in order to vote, a user must first lock their tokens in
+the DAO contract, and then use the standard `gov` module interface as usual.

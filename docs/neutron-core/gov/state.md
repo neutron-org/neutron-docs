@@ -1,3 +1,3 @@
 # State
 
-The Neutron's `x/gov` module has no changes in compration of cosmos `gov` module
+Neutron's `x/gov` state modifications are identical to the original `x/gov` state modifications.

@@ -62,6 +62,17 @@ const sidebars = {
                                 'neutron-core/transfer/messages'
                             ]
                         },
+                        {
+                            type: 'category',
+                            label: 'Governance',
+                            items: [
+                                'neutron-core/gov/overview',
+                                'neutron-core/gov/messages',
+                                'neutron-core/gov/client',
+                                'neutron-core/gov/state',
+                                'neutron-core/gov/events'
+                            ]
+                        },
                     ],
                 },
                 'neutron-core/contribute',

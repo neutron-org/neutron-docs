@@ -1,5 +1,5 @@
 # Client
-> NOTE: Client interactions are similar to vanilla cosmos gov module
+
 ## CLI
 
 A user can query and interact with the `gov` module using the CLI.
