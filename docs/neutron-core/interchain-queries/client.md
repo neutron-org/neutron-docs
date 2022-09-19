@@ -104,7 +104,7 @@ service Query {
 Returns registered query by id.
 
 ```bash
-netrond query interchainqueries registered-query [id]
+neutrond query interchainqueries registered-query [id]
 ```
 
 <details>
@@ -139,7 +139,7 @@ Output:
 Returns all registered interchain queries in the module.
 
 ```bash
-netrond query interchainqueries registered-queries
+neutrond query interchainqueries registered-queries
 ```
 
 <details>

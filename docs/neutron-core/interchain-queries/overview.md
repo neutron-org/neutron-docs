@@ -42,3 +42,12 @@ If your contract does not have such checks, malicious relayer can send a fully v
 > NOTE: when registering a TX-query, you write the transaction filters as filters for transaction events. When you check the submitted transaction in your contracts, though, you can only check the information that is stored on-chain (i.e., message fields for messages in a transaction). To put it another way, the set of values that you can use to filter transactions is the intersection of the values that are added to transaction events (used by the ICQ relayer to perform the search) and the values included directly to sdk.Msgs (can be used by your code to check whether the submitted transaction matches your query).  
 
 You can see more info, examples and recommendations about proper transactions result handling [here](https://github.com/neutron-org/neutron-contracts/blob/main/contracts/neutron_interchain_txs/src/contract.rs#L335).
+
+## Query creation deposit
+In order to clean up ledger from not used, outdated queries special deposit mechanism is used. [RegisteredQuery](https://github.com/neutron-org/neutron/blob/4313d35f8082dc124c5fe9491870720bbd3a5052/proto/interchainqueries/genesis.proto#L9) contains `deposit` field, this field is used to collect escrow payment for query creation. In order to return escrow payment a `RemoveInterchainQuery` message should be issued. 
+
+Permissions to perform `RemoveInterchainQuery` message is based on `query_submit_timeout` module parameter. If `last_submitted_result_local_height` + `query_submit_timeout` is less then current block height then `RemoveInterchainQuery` message can be performed only by query owner, in other case it can be performed by any address.
+
+Amount of coins to deposit is defined via parameter (`query_deposit`) controlled by governance proposal.
+
+In other words, it is expected of the query owner to remove its queries when they are not needed anymore. If a query hasn't been in use for the `query_submit_timeout` and owner hasn't removed it, network users are granted with an opportunity to clean the chain up and raise assets for it.
