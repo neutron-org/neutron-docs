@@ -98,8 +98,14 @@ message MsgSubmitTx {
 ### Response
 
 ```protobuf
-message MsgSubmitTxResponse {}
+message MsgSubmitTxResponse {
+  uint64 sequence_id = 1;
+  string channel = 2;
+}
 ```
+
+* `sequence_id` is a channel's sequence_id for outgoing ibc packet. Unique per a channel;
+* `channel` is the src channel name on neutron's side trasaction was submitted from;
 
 ### IBC Events
 
