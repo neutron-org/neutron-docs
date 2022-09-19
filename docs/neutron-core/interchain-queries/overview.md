@@ -12,10 +12,8 @@ A smart-contract can register two types of Interchain Query for particular chain
 * Key-Value query (KV-query) - to read **values** from Cosmos-SDK KV-storage on remote chain which are stored under a set of **keys**;
 * Transactions query (TX-query) - find transactions on remote chain under by condition (transactions filter).
 
-The ICQ module emits an event that contains information about the registered interchain query every `update_period` blocks
-in module's [EndBlocker](https://github.com/neutron-org/neutron/blob/4313d35f8082dc124c5fe9491870720bbd3a5052/x/interchainqueries/keeper/abci.go#L14).
-
-When [ICQ Relayer](/relaying/icq-relayer-guide) receives such an event, it comes into play and performs its own set of actions. Read more about them in the ICQ Relayer's section. In short, it performs needed queries and makes the results available for the Neutron's smart contracts by submitting the result to the module.
+[ICQ Relayer](/relaying/icq-relayer-guide) keeps track of registered Interchain Queries by querying all existed ICQs at the start of work and by subscribing on [Update](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/x/interchainqueries/keeper/msg_server.go#L271) and [Delete](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/x/interchainqueries/keeper/msg_server.go#L287) events which are emitted in corresponding Neutron handlers.
+When the ICQ Relayer sees that it's time to perform an interchain query, it makes a necessary RPC call to a remote chain and makes the results available for the Neutron's smart contracts by submitting the result to the module.
 
 Neutron verifies the data and processes the query result depending on the interchain query type:
 * in case of a KV-query, the ICQ module saves the result into module's storage, and passed the query id to the contract's
