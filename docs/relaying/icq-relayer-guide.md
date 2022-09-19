@@ -26,7 +26,7 @@ to search transactions by message types, events and attributes which were emitte
 
 ### Results submission
 
-Relayer submits a query result al following depending on the Relayer's configuration:
+Relayer submits a query result as the following depending on the Relayer's configuration:
 - simply sending it to the Neutron's Interchain Queries module which handles it by storing the result in the blockchain state (KV queries with `RELAYER_ALLOW_KV_CALLBACKS`=false);
 - sending it to the Neutron's Interchain Queries module which handles it by storing the result in the blockchain state and passing the result to the owner smart contract (KV queries with `RELAYER_ALLOW_KV_CALLBACKS`=true);
 - passing it to the smart contract that has registered the query (TX queries).
@@ -74,12 +74,12 @@ This section contains description for all the possible config values that the Re
 ### Relayer application settings
 
 - `RELAYER_REGISTRY_ADDRESSES` — a list of comma-separated smart-contract addresses (registered query owners) for which the Relayer processes interchain queries. If empty, literally all registered queries are processed which is usable if you are up to deploy a public Relayer;
-- `RELAYER_ALLOW_TX_QUERIES` — if true, Relayer will process tx queries (if `false`, relayer will ignore them). A true value here is mostly usable for a private Relayer because TX queries submission is quite expensive;
+- `RELAYER_ALLOW_TX_QUERIES` — if true, Relayer will process tx queries (if `false`, Relayer will ignore them). A true value here is mostly usable for a private Relayer because TX queries submission is quite expensive;
 - `RELAYER_ALLOW_KV_CALLBACKS` — if `true`, will pass proofs as sudo callbacks to contracts. A true value here is mostly usable for a private Relayer because KV query callbacks execution is quite expensive. If false, results will simply be submitted to Neutron and become available for smart contracts retrieval;
 - `RELAYER_MIN_KV_UPDATE_PERIOD` — minimal period of queries execution and submission. This value is usable for a public Relayer as a rate limiter because it roughly overrides the queries `update_period` and force queries execution not more often than `N` blocks;
-- `RELAYER_STORAGE_PATH` — path to leveldb storage, will be created on the given path if doesn't exists. It is required if `RELAYER_ALLOW_TX_QUERIES` is `true`;
+- `RELAYER_STORAGE_PATH` — path to leveldb storage, will be created on the given path if it doesn't exist. It is required if `RELAYER_ALLOW_TX_QUERIES` is `true`;
 - `RELAYER_CHECK_SUBMITTED_TX_STATUS_DELAY` — delay in seconds between TX query submission and the result handling checking (more about this in the [TX submission section](#a-bit-of-technical-details-about-tx-submission));
-- `RELAYER_QUERIES_TASK_QUEUE_CAPACITY` — capacity of the channel that is used to send messages from subscriber to relayer. Better set to a higher value to avoid problems with Tendermint websocket subscriptions.
+- `RELAYER_QUERIES_TASK_QUEUE_CAPACITY` — capacity of the channel that is used to send messages from subscriber to Relayer. Better set to a higher value to avoid problems with Tendermint websocket subscriptions.
 
 ## Prerequisites
 
@@ -104,12 +104,12 @@ Global Flags:
 
 2. Then execute `neutrond keys add relayer --keyring-backend test` to create an account in the default keyring directory;
 3. Use `relayer` as the `RELAYER_NEUTRON_CHAIN_SIGN_KEY_NAME`, `test` as the `RELAYER_NEUTRON_CHAIN_KEYRING_BACKEND`, and pass the keyring directory as a volume to the Relayer's docker container using the keyring path in the container as the `RELAYER_NEUTRON_CHAIN_HOME_DIR`;
-4. Get the relayer's wallet address and top its balance up. If you're running the Relayer on the testnet, use the official Neutron faucet. For the mainnet, get some NTRN for the address.
+4. Get the Relayer's wallet address and top its balance up. If you're running the Relayer on the testnet, use the official Neutron faucet. For the mainnet, get some NTRN for the address.
 
 ## Running the Relayer
 
 1. Make sure you've finished the [Configuration](#configuration) part;
-2. Build Relayer's docker image from the relayer's folder:
+2. Build Relayer's docker image from the Relayer's folder:
 
 ```
 make build-docker
@@ -122,8 +122,8 @@ docker run --env-file .env.example -p 9999:9999 neutron-org/neutron-query-relaye
 ```
 
 Notes:
-- `-p 9999:9999` exposes port that allows access to the Relayer's metrics;
-- add keyring passing to the volumes list. For example, assing `RELAYER_NEUTRON_CHAIN_HOME_DIR=/keyring` and run the app as:
+- `-p 9999:9999` exposes the port that allows access to the Relayer's metrics;
+- add keyring passing to the volumes list. For example, assign `RELAYER_NEUTRON_CHAIN_HOME_DIR=/keyring` and run the app as:
 
 ```
 docker run --env-file .env.example -v /Users/your-user/.neutrond:/keyring -p 9999:9999 neutron-org/neutron-query-relayer
