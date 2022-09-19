@@ -36,7 +36,7 @@ message KVKey {
 Currently `query_type` can take the following values:
 * `kv` - query **values** from Cosmos-SDK KV-storage on remote chain which are stored under some **keys**. In this case `kv_keys` must be filled in.
 
-* `tx` - query to search for transactions on remote chain. `transactions_filter` describes a filter by which the [ICQ relayer](/relaying/icq-relayer-guide) will perform the transactions search. It has the following format:
+* `tx` - query to search for transactions on remote chain. `transactions_filter` describes a filter by which the [ICQ relayer](/relaying/icq-relayer) will perform the transactions search. It has the following format:
 ```json
 [{"field": "{eventType}.{attributeKey}", "val": "{attributeValue}", "op": "gte"}, ...]
 ```
@@ -71,7 +71,7 @@ message MsgRegisterInterchainQueryResponse {
 * save the record in storage under incremented query id;
 
 #### Events
-Emits [`EventTypeNeutonMessage`](/neutron-docs/neutron-core/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_updated`.
+Emits [`EventTypeNeutonMessage`](/neutron-docs/neutron/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_updated`.
 
 ### Update Interchain Query
 
@@ -95,7 +95,7 @@ message MsgUpdateInterchainQueryResponse {
 * [Updates](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/x/interchainqueries/keeper/msg_server.go#L130) a corresponding `RegisteredQuery` structure.
 
 #### Events
-Emits [`EventTypeNeutonMessage`](/neutron-docs/neutron-core/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_updated`.
+Emits [`EventTypeNeutonMessage`](/neutron-docs/neutron/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_updated`.
 
 
 ### Remove Interchain Query
@@ -119,7 +119,7 @@ message MsgRemoveInterchainQueryResponse {
 * Also [removes](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/x/interchainqueries/keeper/msg_server.go#L94) result for the ICQ if it's a KV type.
 
 #### Events
-Emits [`EventTypeNeutonMessage`](/neutron-docs/neutron-core/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_removed`.
+Emits [`EventTypeNeutonMessage`](/neutron-docs/neutron/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_removed`.
 
 
 ### Submit Query Result

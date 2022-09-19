@@ -2,7 +2,7 @@
 slug: /
 ---
 
-# Neutron Documentation
+# Overview
 
 ## What is Neutron and why is it needed?
 Neutron is a blockchain network that brings Smart Contracts into the Cosmos-family blockchains using [CosmWasm](https://cosmwasm.com). Neutron works with networks using the IBC protocol. Neutron security (block validation) is provided by the [Cosmos Hub network](https://hub.cosmos.network) using [Interchain Security](https://github.com/cosmos/interchain-security).

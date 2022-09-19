@@ -41,7 +41,7 @@ pub struct VotingPowerResponse {
 }
 ```
 
-> Note: currently `neutron-core` only uses the `query_voting_powers` handler.
+> Note: currently `neutron` only uses the `query_voting_powers` handler.
 
 ## Tally logic is modified
 
