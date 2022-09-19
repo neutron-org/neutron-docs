@@ -2,7 +2,7 @@
 
 ### Register Interchain Query
 
-[`MsgRegisterInterchainQuery`](https://github.com/neutron-org/neutron/blob/4313d35f8082dc124c5fe9491870720bbd3a5052/proto/interchainqueries/genesis.proto#L9) can be submitted by smart-contract only via `MsgRegisterInterchainQuery` transaction:
+[`MsgRegisterInterchainQuery`](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/proto/interchainqueries/tx.proto#L23) can be submitted by smart-contract only via `MsgRegisterInterchainQuery` transaction:
 
 ```protobuf
 message MsgRegisterInterchainQuery {
@@ -69,6 +69,58 @@ message MsgRegisterInterchainQueryResponse {
 * increments last registered query id;
 * generates new [RegisteredQuery](https://github.com/neutron-org/neutron/blob/c8503c3c17df3c5ca24abeeafaba9123c28395ac/proto/interchainqueries/genesis.proto#L10);
 * save the record in storage under incremented query id;
+
+#### Events
+Emits [`EventTypeNeutonMessage`](/neutron-docs/neutron-core/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_updated`.
+
+### Update Interchain Query
+
+[`MsgUpdateInterchainQueryRequest`](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/proto/interchainqueries/tx.proto#L111) can be submitted only by the owner of corresponding Interchain Query:
+```protobuf
+message MsgUpdateInterchainQueryRequest {
+  uint64 query_id = 1;
+  repeated KVKey new_keys = 2;
+  uint64 new_update_period = 3;
+  string sender = 4; // is the signer of the message and owner of the corresponding ICQ
+}
+```
+
+Returns just an empty [`MsgUpdateInterchainQueryResponse`](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/proto/interchainqueries/tx.proto#L117) on success:
+```protobuf
+message MsgUpdateInterchainQueryResponse {
+}
+```
+
+#### State modifications
+* [Updates](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/x/interchainqueries/keeper/msg_server.go#L130) a corresponding `RegisteredQuery` structure.
+
+#### Events
+Emits [`EventTypeNeutonMessage`](/neutron-docs/neutron-core/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_updated`.
+
+
+### Remove Interchain Query
+
+[`MsgRemoveInterchainQueryRequest`](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/proto/interchainqueries/tx.proto#L104) can be submitted only by the owner of corresponding Interchain Query:
+```protobuf
+message MsgRemoveInterchainQueryRequest {
+  uint64 query_id = 1;
+  string sender = 2; // is the signer of the message and the owner of corresponding ICQ
+}
+```
+
+Returns just an empty [`MsgRemoveInterchainQueryResponse`](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/proto/interchainqueries/tx.proto#L108) on success:
+```protobuf
+message MsgRemoveInterchainQueryResponse {
+}
+```
+
+#### State modifications
+* [Removes](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/x/interchainqueries/keeper/msg_server.go#L93) a corresponding `RegisteredQuery` structure.
+* Also [removes](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/x/interchainqueries/keeper/msg_server.go#L94) result for the ICQ if it's a KV type.
+
+#### Events
+Emits [`EventTypeNeutonMessage`](/neutron-docs/neutron-core/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_removed`.
+
 
 ### Submit Query Result
 

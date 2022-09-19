@@ -73,7 +73,7 @@ In this section we describe the queries required on grpc server.
 ```protobuf
 // Query defines the gRPC querier service.
 service Query {
-  // returns all registered queries in the module
+  // returns all the registered queries in the module with filtration by owner or connection id
   rpc RegisteredQueries(QueryRegisteredQueriesRequest)
       returns (QueryRegisteredQueriesResponse) {
     option (google.api.http).get =
@@ -92,9 +92,9 @@ service Query {
     option (google.api.http).get = "/neutron/interchainqueries/interchainqueries/query_result";
   }
 
-  // returns submitted transactions as query result for a particular registered interchain query by id
-  rpc QueryTransactions(QuerySubmittedTransactionsRequest) returns (QuerySubmittedTransactionsResponse) {
-    option (google.api.http).get = "/neutron/interchainqueries/interchainqueries/query_transactions";
+  // returns last height about which Neutron knows for the particular remote chain
+  rpc LastRemoteHeight(QueryLastRemoteHeight) returns (QueryLastRemoteHeightResponse) {
+    option (google.api.http).get = "/neutron/interchainqueries/interchainqueries/remote_height";
   }
 }
 ```
@@ -121,7 +121,7 @@ Output:
   registered_query:
     connection_id: connection-0
     id: "1"
-    last_emitted_height: "48"
+    owner: "neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq"
     last_submitted_result_local_height: "0"
     last_submitted_result_remote_height: "0"
     transactions_filter: "{}"
@@ -136,7 +136,7 @@ Output:
 
 ### registered-queries
 
-Returns all registered interchain queries in the module.
+Returns all the registered queries in the module with filtration by owner or connection id.
 
 ```bash
 neutrond query interchainqueries registered-queries
@@ -144,10 +144,10 @@ neutrond query interchainqueries registered-queries
 
 <details>
   <summary>Example</summary>
-  Returns all registered interchain queries in the module.:
+  Returns all registered interchain queries in the module with connection id `connection-0` and owner `neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq`:
 
   ```shell
-  neutrond query interchainqueries registered-queries
+  neutrond query interchainqueries registered-queries --connection-id connection-0 --owners neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq
   ```
 
 Output:
@@ -156,7 +156,7 @@ Output:
   registered_queries:
   - connection_id: connection-0
     id: "1"
-    last_emitted_height: "218"
+    owner: "neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq"
     last_submitted_result_local_height: "206"
     last_submitted_result_remote_height: "203"
     transactions_filter: "{}"
@@ -167,7 +167,7 @@ Output:
     update_period: "1"
   - connection_id: connection-0
     id: "2"
-    last_emitted_height: "217"
+    owner: "neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq"
     last_submitted_result_local_height: "199"
     last_submitted_result_remote_height: "188"
     transactions_filter: '{"message.module": "bank"}'
@@ -209,6 +209,30 @@ Output:
       storage_prefix: staking
       value: CjVuZXV0cm9udmFsb3BlcjFxbmsybjRubGtwdzl4ZnFudGxhZGg3NHc2dWp0dWx3bnFzaGVweBJDCh0vY29zbW9zLmNyeXB0by5lZDI1NTE5LlB1YktleRIiCiCGVtQII4Ok0ieJqHiQcBkW42FKCSKPv+3poD5Me4zh1SADKgo3MDAwMDAwMDAwMhw3MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwOgYKBHRlc3RKAFJKCjsKEjEwMDAwMDAwMDAwMDAwMDAwMBISMjAwMDAwMDAwMDAwMDAwMDAwGhExMDAwMDAwMDAwMDAwMDAwMBILCKLo1pYGEKjc/G1aATE=
     revision: "0"
+  ```
+
+</details>
+
+### query-last-remote-height
+
+Returns last height about which Neutron knows for the particular remote chain by connection id.
+
+```bash
+neutrond query interchainqueries query-last-remote-height [connection-id]
+```
+
+<details>
+  <summary>Example</summary>
+  Returns last height remote chain by connection id `connection-0`:
+
+  ```shell
+  neutrond query interchainqueries query-last-remote-height connection-0
+  ```
+
+Output:
+
+  ```shell
+  height: "29"
   ```
 
 </details>

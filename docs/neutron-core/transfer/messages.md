@@ -16,4 +16,4 @@ message MsgTransferResponse {
 ```
 
 - `sequence_id` — a channel's sequence_id for outgoing ibc packet. Unique per a channel;
-- `channel` — the src channel name on neutron's side trasaction was submitted from.
+- `channel` — the src channel name on neutron's side transaction was submitted from.
