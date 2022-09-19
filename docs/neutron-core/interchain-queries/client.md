@@ -73,7 +73,7 @@ In this section we describe the queries required on grpc server.
 ```protobuf
 // Query defines the gRPC querier service.
 service Query {
-  // returns all the registered queries in the module with filtration by owner or connection id
+  // returns all the registered queries in the module with filtration by owner and/or connection id
   rpc RegisteredQueries(QueryRegisteredQueriesRequest)
       returns (QueryRegisteredQueriesResponse) {
     option (google.api.http).get =
@@ -136,7 +136,7 @@ Output:
 
 ### registered-queries
 
-Returns all the registered queries in the module with filtration by owner or connection id.
+Returns all the registered queries in the module with filtration by owner and/or connection id.
 
 ```bash
 neutrond query interchainqueries registered-queries
