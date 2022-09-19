@@ -71,7 +71,7 @@ message MsgRegisterInterchainQueryResponse {
 * save the record in storage under incremented query id;
 
 #### Events
-Emits [`EventTypeNeutonMessage`](/neutron-docs/neutron/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_updated`.
+Emits [`EventTypeNeutonMessage`](/neutron/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_updated`.
 
 ### Update Interchain Query
 
@@ -95,7 +95,7 @@ message MsgUpdateInterchainQueryResponse {
 * [Updates](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/x/interchainqueries/keeper/msg_server.go#L130) a corresponding `RegisteredQuery` structure.
 
 #### Events
-Emits [`EventTypeNeutonMessage`](/neutron-docs/neutron/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_updated`.
+Emits [`EventTypeNeutonMessage`](/neutron/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_updated`.
 
 
 ### Remove Interchain Query
@@ -119,7 +119,7 @@ message MsgRemoveInterchainQueryResponse {
 * Also [removes](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/x/interchainqueries/keeper/msg_server.go#L94) result for the ICQ if it's a KV type.
 
 #### Events
-Emits [`EventTypeNeutonMessage`](/neutron-docs/neutron/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_removed`.
+Emits [`EventTypeNeutonMessage`](/neutron/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_removed`.
 
 
 ### Submit Query Result
