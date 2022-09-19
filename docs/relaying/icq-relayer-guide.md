@@ -11,7 +11,7 @@ If you are a smart contracts developer and up to develop your dApp on Neutron, y
 All registered Interchain Queries and their parameters are stored in the eponymous module and available by its [query interface](/neutron-core/interchain-queries/client#queries). The Relayer utilises the module's interface in order to initialise the performing list of queries. This is how the Relayer maintains the list of queries to be executed:
 
 - on initialisation, the ICQ module `RegisteredQueries` query is executed with the `RELAYER_REGISTRY_ADDRESSES` parameter used for the `Owners` field;
-- during the rest of the run, the Relayer listens to the ICQ module's `query_update` and `query_removed` events and modifies the queries list and parameters correspondingly.
+- during the rest of the run, the Relayer listens to the ICQ module's `query_update` and `query_removed` [events](/neutron-core/interchain-queries/events) and modifies the queries list and parameters correspondingly.
 
 The Relayer also listens to the Neutron's `NewBlockHeader` events that are used as a trigger for queries execution. Since each query has its own `update_period`, the Relayer tracks queries execution height and executes only the queries which update time has come.
 
