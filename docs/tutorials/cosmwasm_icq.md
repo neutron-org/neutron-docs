@@ -15,7 +15,7 @@ We are going to learn how to:
 > contracts. You can check out CosmWasm [docs](https://docs.cosmwasm.com/docs/1.0/)
 > and [blog posts](https://medium.com/cosmwasm/writing-a-cosmwasm-contract-8fb946c3a516) for entry-level tutorials.
 
-> **Note:** before running any query creation transaction you need to top up your contract address. See [Interchain Queries Overview](../neutron-core/interchain-queries/overview.md), "Query creation deposit" section.
+> **Note:** before running any query creation transaction you need to top up your contract address. See [Interchain Queries Overview](../neutron/interchain-queries/overview.md), "Query creation deposit" section.
 
 ## The complete example
 
@@ -171,7 +171,7 @@ pub fn register_transfers_query(
 }
 ```
 
-> **Note:** the ICQ module's `RegisterInterchainQueryMsg` message [returns](/neutron-core/interchain-queries/messages#register-interchain-query)
+> **Note:** the ICQ module's `RegisterInterchainQueryMsg` message [returns](/neutron/interchain-queries/messages#register-interchain-query)
 > an identifier of newly registered Interchain Query in response. So in a real world scenario you should implement a `reply` handler in your contract
 > to catch the identifier after the registration, so you'll be able to work with the registered query later.
 
@@ -313,7 +313,7 @@ impl KVReconstruct for Balances {
 > All you need to do is just implement the `KVReconstruct` trait for your structure, and after that you can easily use this with `query_kv_result` helper like this:
 > `let response: YourStructure = query_kv_result(deps, query_id)?`
 
-Sometimes you might want to get KV Interchain Queries result immediately after it was published by the [ICQ relayer](/relaying/icq-relayer-guide).
+Sometimes you might want to get KV Interchain Queries result immediately after it was published by the [ICQ relayer](/relaying/icq-relayer).
 That's why we've implemented **KV Queries Callbacks**, which allows you to get a callback in your contract with the query result when the relayer submits it.
 KV callbacks are implemented via **Sudo** calls in your smart-contract:
 ```rust

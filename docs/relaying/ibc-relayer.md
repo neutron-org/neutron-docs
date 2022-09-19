@@ -1,4 +1,4 @@
-# IBC Relayer Guide
+# IBC Relayer
 
 The following information is based off of [this guide](https://docs.osmosis.zone/developing/relaying/relay.html#prerequisites) created by [Osmosis Team](https://osmosis.zone).
 

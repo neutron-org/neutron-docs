@@ -18,14 +18,7 @@ const sidebars = {
             type: 'category',
             label: 'Neutron',
             items: [
-                'intro'
-            ],
-        },
-        {
-            type: 'category',
-            label: 'Neutron Core',
-            items: [
-                'neutron-core/build',
+                'neutron/overview',
                 {
                     type: 'category',
                     label: 'Modules',
@@ -34,55 +27,57 @@ const sidebars = {
                             type: 'category',
                             label: 'Interchain Transactions',
                             items: [
-                                'neutron-core/interchain-txs/overview',
-                                'neutron-core/interchain-txs/messages',
-                                'neutron-core/interchain-txs/client',
-                                'neutron-core/interchain-txs/state',
-                                'neutron-core/interchain-txs/events'
+                                'neutron/interchain-txs/overview',
+                                'neutron/interchain-txs/messages',
+                                'neutron/interchain-txs/client',
+                                'neutron/interchain-txs/state',
+                                'neutron/interchain-txs/events'
                             ]
                         },
                         {
                             type: 'category',
                             label: 'Interchain Queries',
                             items: [
-                                'neutron-core/interchain-queries/overview',
-                                'neutron-core/interchain-queries/messages',
-                                'neutron-core/interchain-queries/client',
-                                'neutron-core/interchain-queries/state',
-                                'neutron-core/interchain-queries/events'
+                                'neutron/interchain-queries/overview',
+                                'neutron/interchain-queries/messages',
+                                'neutron/interchain-queries/client',
+                                'neutron/interchain-queries/state',
+                                'neutron/interchain-queries/events'
                             ]
                         },
                         {
                             type: 'category',
                             label: 'Transfer',
                             items: [
-                                'neutron-core/transfer/overview',
-                                'neutron-core/transfer/state',
-                                'neutron-core/transfer/messages'
+                                'neutron/transfer/overview',
+                                'neutron/transfer/state',
+                                'neutron/transfer/messages'
                             ]
                         },
                         {
                             type: 'category',
                             label: 'Governance',
                             items: [
-                                'neutron-core/gov/overview',
-                                'neutron-core/gov/messages',
-                                'neutron-core/gov/client',
-                                'neutron-core/gov/state',
-                                'neutron-core/gov/events'
+                                'neutron/gov/overview',
+                                'neutron/gov/messages',
+                                'neutron/gov/client',
+                                'neutron/gov/state',
+                                'neutron/gov/events'
                             ]
                         },
                     ],
                 },
-                'neutron-core/contribute',
+                'neutron/build',
+                'neutron/contribute',
             ],
         },
         {
             type: 'category',
             label: 'Relaying',
             items: [
-                'relaying/ibc-relayer-guide',
-                'relaying/icq-relayer-guide',
+                'relaying/ibc-relayer',
+                'relaying/icq-relayer',
+                'relaying/target-chain',
             ],
         },
         {
