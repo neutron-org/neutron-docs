@@ -26,7 +26,6 @@ const sidebars = {
             label: 'Neutron Core',
             items: [
                 'neutron-core/build',
-                'neutron-core/sdk',
                 {
                     type: 'category',
                     label: 'Modules',
@@ -90,7 +89,6 @@ const sidebars = {
             type: 'category',
             label: 'Tutorials',
             items: [
-                'tutorials/overview',
                 'tutorials/cosmwasm_ica',
                 'tutorials/cosmwasm_icq',
                 'tutorials/integration_tests'
