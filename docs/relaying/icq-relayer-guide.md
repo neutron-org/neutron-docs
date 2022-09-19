@@ -79,7 +79,8 @@ This section contains description for all the possible config values that the Re
 - `RELAYER_MIN_KV_UPDATE_PERIOD` — minimal period of queries execution and submission. This value is usable for a public Relayer as a rate limiter because it roughly overrides the queries `update_period` and force queries execution not more often than `N` blocks;
 - `RELAYER_STORAGE_PATH` — path to leveldb storage, will be created on the given path if it doesn't exist. It is required if `RELAYER_ALLOW_TX_QUERIES` is `true`;
 - `RELAYER_CHECK_SUBMITTED_TX_STATUS_DELAY` — delay in seconds between TX query submission and the result handling checking (more about this in the [TX submission section](#a-bit-of-technical-details-about-tx-submission));
-- `RELAYER_QUERIES_TASK_QUEUE_CAPACITY` — capacity of the channel that is used to send messages from subscriber to Relayer. Better set to a higher value to avoid problems with Tendermint websocket subscriptions.
+- `RELAYER_QUERIES_TASK_QUEUE_CAPACITY` — capacity of the channel that is used to send messages from subscriber to Relayer. Better set to a higher value to avoid problems with Tendermint websocket subscriptions;
+- `RELAYER_PROMETHEUS_PORT` — the port on which Prometheus metrics API is available.
 
 ## Prerequisites
 
@@ -122,7 +123,7 @@ docker run --env-file .env.example -p 9999:9999 neutron-org/neutron-query-relaye
 ```
 
 Notes:
-- `-p 9999:9999` exposes the port that allows access to the Relayer's metrics;
+- `-p 9999:9999` exposes the port that allows access to the Relayer's metrics powered using Prometheus. The container's port will be the same as the `RELAYER_PROMETHEUS_PORT` value that is `9999` by default. Use another value if you are up to use a different port;
 - add keyring passing to the volumes list. For example, assign `RELAYER_NEUTRON_CHAIN_HOME_DIR=/keyring` and run the app as:
 
 ```
