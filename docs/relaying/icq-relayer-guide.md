@@ -83,7 +83,7 @@ This section contains description for all the possible config values that the Re
 
 ## Prerequisites
 
-Before running the Relayer application for production purposes, you need to create a wallet for the Relayer, top it up, and set up the configuration (refer to the [Configuration](#configuration) section).
+Before running the Relayer application for production purposes, you need to create a wallet for the Relayer, top it up, and set up the configuration (refer to the [Configuration](#configuration) section). Also you will most likely need to deploy your own PRC nodes of Neutron and the chain of interest. Read about how to deploy your own Neutron node in the [dedicated section](/neutron-core/build).
 
 ### Setting up Relayer wallet
 
