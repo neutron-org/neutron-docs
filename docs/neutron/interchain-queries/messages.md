@@ -40,6 +40,9 @@ Currently `query_type` can take the following values:
 ```json
 [{"field": "{eventType}.{attributeKey}", "val": "{attributeValue}", "op": "gte"}, ...]
 ```
+
+Maximum allowed amount of filters is 32. Supplying more filters than allowed will return an error.
+
 Supported operators:
 * `eq`
 * `lt`
