@@ -10,9 +10,13 @@ There is a set of integration tests which cover main Neutron features. If you de
 * `git clone git@github.com:neutron-org/neutron-integration-tests.git`
 * `git clone git@github.com:neutron-org/neutron.git`
 * `git clone git@github.com:neutron-org/cosmos-query-relayer.git`
+* `git clone git@github.com:cosmos/gaia.git && cd gaia && git checkout v7.0.3 && cd ..`
 * `cd neutron-integration-tests`
+* \* `cd setup && make build-all && cd ..`
 * `yarn`
 * Make sure you have docker installed and docker daemon running
+
+\* Only for the first run, to build hermes ibc relayer and gaiad containers
 
 ## Running the tests
 
@@ -21,14 +25,17 @@ yarn test # all tests
 yarn test:simple # basic tests
 yarn test:interchaintx # interchain txs test
 yarn test:interchain_tx_query # interchain tx query test
+yarn test:interchain_kv_query # interchain kv query test
 ```
 ## Environment variables you can redefine
 
 ```
 NEUTRON_DIR - directory where Neutron is located
-DENOM - denom used for tests
+NEUTRON_DENOM - neutron network denom
+COSMOS_DENOM - gaia (cosmoshub) network denom
 CONTRACTS_PATH - path to contracts that will be used in tests
-ADDRESS_PREFIX - address prefix
+NEUTRON_ADDRESS_PREFIX - address prefix for neutron controller network
+COSMOS_ADDRESS_PREFIX - address prefix for gaia (cosmoshub) host network
 NODE1_URL - url to the first node
 NODE2_URL - url to the second node
 BLOCKS_COUNT_BEFORE_START - how many blocks we wait before start first test

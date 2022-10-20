@@ -49,8 +49,8 @@ use neutron_sdk::interchain_queries::queries::{
     query_balance, query_registered_query,
 };
 use neutron_sdk::interchain_queries::{
-    register_balance_query_msg,
-    register_transfers_query_msg,
+    new_register_balance_query_msg,
+    new_register_transfers_query_msg,
 };
 use neutron_sdk::sudo::msg::SudoMsg;
 use neutron_sdk::{NeutronError, NeutronResult};
@@ -123,7 +123,7 @@ pub fn register_balance_query(
     denom: String,
     update_period: u64,
 ) -> NeutronResult<Response<NeutronMsg>> {
-    let msg = register_balance_query_msg(
+    let msg = new_register_balance_query_msg(
         deps,
         env,
         connection_id.clone(),
@@ -151,7 +151,7 @@ pub fn register_transfers_query(
     update_period: u64,
     min_height: Option<u128>,
 ) -> NeutronResult<Response<NeutronMsg>> {
-    let msg = register_transfers_query_msg(
+    let msg = new_register_transfers_query_msg(
         deps,
         env,
         connection_id.clone(),
@@ -183,11 +183,11 @@ In the snippet above, we create the `ExecuteMsg` enum that contains two `Registe
 > query, so it might make sense to add ownership checks
 
 And implement simple handlers `register_balance_query` and `register_transfers_query` for these messages. Each handler
-uses built-in helpers from Neutron-SDK to create necessary register messages: `register_balance_query_msg` and `register_transfers_query_msg`:
-* `register_balance_query_msg` - is a KV-query, therefore it creates an Interchain Query with necessary KV-keys to read
+uses built-in helpers from Neutron-SDK to create necessary register messages: `new_register_balance_query_msg` and `new_register_transfers_query_msg`:
+* `new_register_balance_query_msg` - is a KV-query, therefore it creates an Interchain Query with necessary KV-keys to read
 from remote chain and build a full `Balance` response from KV-values (you can see a full implementation of the helper in the [SDK source code](https://github.com/neutron-org/neutron-contracts/blob/a47bfac69667da57f8bf6ea81c9f16240e145c6d/packages/neutron-sdk/src/interchain_queries/register_queries.rs#L61)):
 ```rust
-pub fn register_balance_query_msg(...) -> NeutronResult<NeutronMsg> {
+pub fn new_register_balance_query_msg(...) -> NeutronResult<NeutronMsg> {
     // convert bech32 encoded address to a bytes representation
     let converted_addr_bytes = decode_and_convert(addr.as_str())?;
 
@@ -201,10 +201,10 @@ pub fn register_balance_query_msg(...) -> NeutronResult<NeutronMsg> {
     ...
 }
 ```
-* `register_transfers_query_msg` - is a TX-query, therefore it creates an Interchain Query with necessary TX-filter 
+* `new_register_transfers_query_msg` - is a TX-query, therefore it creates an Interchain Query with necessary TX-filter 
 to receive only required transactions from remote chain (you can see a full implementation of the helper in the [SDK source code](https://github.com/neutron-org/neutron-contracts/blob/a47bfac69667da57f8bf6ea81c9f16240e145c6d/packages/neutron-sdk/src/interchain_queries/register_queries.rs#L95)):
 ```rust
-pub fn register_transfers_query_msg(...) -> NeutronResult<NeutronMsg> {
+pub fn new_register_transfers_query_msg(...) -> NeutronResult<NeutronMsg> {
     // in this case the function creates filter to receive only transactions with transfer msg in it with a particular recipient
     let mut query_data: Vec<TransactionFilterItem> = vec![TransactionFilterItem {
         field: RECIPIENT_FIELD.to_string(),
