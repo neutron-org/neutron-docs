@@ -48,7 +48,7 @@ This section contains description for all the possible config values that the Re
 - `RELAYER_NEUTRON_CHAIN_CHAIN_ID` — Neutron chain ID;
 - `RELAYER_NEUTRON_CHAIN_HOME_DIR` — path to keys directory;
 - `RELAYER_NEUTRON_CHAIN_SIGN_KEY_NAME` — name of the key pair to be used by the Relayer;
-- `RELAYER_NEUTRON_CHAIN_TIMEOUT` — timeout for Neutron RPC calls;
+- `RELAYER_NEUTRON_CHAIN_TIMEOUT` — timeout for Neutron RPC and REST calls;
 - `RELAYER_NEUTRON_CHAIN_GAS_PRICES` — the price for a unit of gas used by the Relayer;
 - `RELAYER_NEUTRON_CHAIN_GAS_LIMIT` — the maximum price to be paid for a single submission;
 - `RELAYER_NEUTRON_CHAIN_GAS_ADJUSTMENT` — gas multiplier used in order to avoid underestimating;
@@ -132,3 +132,7 @@ Notes:
 ```
 docker run --env-file .env.example -v /Users/your-user/.neutrond:/keyring -p 9999:9999 neutron-org/neutron-query-relayer
 ```
+
+## Shutting the Relayer down
+
+During the execution the Neutron ICQ Relayer receives events from Neutron, reads remote chain's state, and modifies its own state and the Neutron' one. In order to reach a reliable and consistent flow the Relayer is designed the way it finishes initialised interactions with its local storage on received `SIGINT` and `SIGTERM`. It usually takes a fraction of a second.
