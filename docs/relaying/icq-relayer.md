@@ -82,6 +82,10 @@ This section contains description for all the possible config values that the Re
 - `RELAYER_QUERIES_TASK_QUEUE_CAPACITY` — capacity of the channel that is used to send messages from subscriber to Relayer. Better set to a higher value to avoid problems with Tendermint websocket subscriptions;
 - `RELAYER_PROMETHEUS_PORT` — the port on which Prometheus metrics API is available.
 
+### Logger configuration
+
+As it is said in the Relayer's [readme](https://github.com/neutron-org/neutron-query-relayer#logging), the Relayer uses a little bit modified version of Uber's [zap.Logger](https://github.com/uber-go/zap). This modification allows logger configuration via env parameters. See the [logger configuration guide](https://github.com/neutron-org/neutron-logger#configuration-via-env-variables) readme for more information.
+
 ## Prerequisites
 
 Before running the Relayer application for production purposes, you need to create a wallet for the Relayer, top it up, and set up the configuration (refer to the [Configuration](#configuration) section). Also you will most likely need to deploy your own RPC nodes of Neutron and the chain of interest.
