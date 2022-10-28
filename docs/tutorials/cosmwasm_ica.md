@@ -213,6 +213,9 @@ use cosmos_sdk_proto::cosmos::staking::v1beta1::{
     MsgDelegate, MsgDelegateResponse
 };
 
+// Default timeout for SubmitTX is two weeks
+const DEFAULT_TIMEOUT_SECONDS: u64 = 60 * 60 * 24 * 7 * 2;
+
 /// SudoPayload is a type that stores information about a transaction that we try to execute
 /// on the host chain. This is a type introduced for our convenience.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -233,6 +236,8 @@ pub enum ExecuteMsg {
         interchain_account_id: String,
         validator: String,
         amount: u128,
+        denom: String,
+        timeout: Option<u64>,
     }
 }
 
@@ -255,7 +260,17 @@ pub fn execute(
             validator,
             interchain_account_id,
             amount,
-        } => execute_delegate(deps, env, interchain_account_id, validator, amount),
+            denom,
+            timeout,
+        } => execute_delegate(
+            deps,
+            env,
+            interchain_account_id,
+            validator,
+            amount,
+            denom,
+            timeout,
+        ),
     }
 }
 
@@ -265,6 +280,8 @@ fn execute_delegate(
     interchain_account_id: String,
     validator: String,
     amount: u128,
+    denom: String,
+    timeout: Option<u64>,
 ) -> StdResult<Response<NeutronMsg>> {
     // Get the delegator address from the storage & form the Delegate message.
     let (delegator, connection_id) = get_ica(deps.as_ref(), &env, &interchain_account_id)?;
@@ -272,7 +289,7 @@ fn execute_delegate(
         delegator_address: delegator,
         validator_address: validator,
         amount: Some(Coin {
-            denom: "stake".to_string(),
+            denom,
             amount: amount.to_string(),
         }),
     };
