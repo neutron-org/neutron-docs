@@ -55,6 +55,15 @@ const sidebars = {
                         },
                         {
                             type: 'category',
+                            label: 'Contract Manager',
+                            items: [
+                                'neutron-core/contract-manager/overview',
+                                'neutron-core/contract-manager/client',
+                                'neutron-core/contract-manager/state'                                
+                            ]
+                        },                        
+                        {
+                            type: 'category',
                             label: 'Transfer',
                             items: [
                                 'neutron-core/transfer/overview',
