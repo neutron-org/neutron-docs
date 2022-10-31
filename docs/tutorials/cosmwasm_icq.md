@@ -49,8 +49,8 @@ use neutron_sdk::interchain_queries::queries::{
     query_balance, query_registered_query,
 };
 use neutron_sdk::interchain_queries::{
-    register_balance_query_msg,
-    register_transfers_query_msg,
+    new_register_balance_query_msg,
+    new_register_transfers_query_msg,
 };
 use neutron_sdk::sudo::msg::SudoMsg;
 use neutron_sdk::{NeutronError, NeutronResult};
@@ -123,24 +123,9 @@ pub fn register_balance_query(
     denom: String,
     update_period: u64,
 ) -> NeutronResult<Response<NeutronMsg>> {
-    let msg = register_balance_query_msg(
-        deps,
-        env,
-        connection_id.clone(),
-        addr.clone(),
-        denom.clone(),
-        update_period,
-    )?;
+    let msg = new_register_balance_query_msg(deps, env, connection_id, addr, denom, update_period)?;
 
-    let attrs: Vec<Attribute> = vec![
-        attr("action", "register_interchain_balance_query"),
-        attr("connection_id", connection_id.as_str()),
-        attr("update_period", update_period.to_string()),
-        attr("denom", denom),
-        attr("addr", addr),
-    ];
-
-    Ok(Response::new().add_message(msg).add_attributes(attrs))
+    Ok(Response::new().add_message(msg))
 }
 
 pub fn register_transfers_query(
@@ -151,23 +136,16 @@ pub fn register_transfers_query(
     update_period: u64,
     min_height: Option<u128>,
 ) -> NeutronResult<Response<NeutronMsg>> {
-    let msg = register_transfers_query_msg(
+    let msg = new_register_transfers_query_msg(
         deps,
         env,
-        connection_id.clone(),
-        recipient.clone(),
+        connection_id,
+        recipient,
         update_period,
         min_height,
     )?;
 
-    let attrs: Vec<Attribute> = vec![
-        attr("action", "register_interchain_transfers_query"),
-        attr("connection_id", connection_id.as_str()),
-        attr("update_period", update_period.to_string()),
-        attr("recipient", recipient),
-    ];
-
-    Ok(Response::new().add_message(msg).add_attributes(attrs))
+    Ok(Response::new().add_message(msg))
 }
 ```
 
@@ -183,11 +161,11 @@ In the snippet above, we create the `ExecuteMsg` enum that contains two `Registe
 > query, so it might make sense to add ownership checks
 
 And implement simple handlers `register_balance_query` and `register_transfers_query` for these messages. Each handler
-uses built-in helpers from Neutron-SDK to create necessary register messages: `register_balance_query_msg` and `register_transfers_query_msg`:
-* `register_balance_query_msg` - is a KV-query, therefore it creates an Interchain Query with necessary KV-keys to read
+uses built-in helpers from Neutron-SDK to create necessary register messages: `new_register_balance_query_msg` and `new_register_transfers_query_msg`:
+* `new_register_balance_query_msg` - is a KV-query, therefore it creates an Interchain Query with necessary KV-keys to read
 from remote chain and build a full `Balance` response from KV-values (you can see a full implementation of the helper in the [SDK source code](https://github.com/neutron-org/neutron-contracts/blob/a47bfac69667da57f8bf6ea81c9f16240e145c6d/packages/neutron-sdk/src/interchain_queries/register_queries.rs#L61)):
 ```rust
-pub fn register_balance_query_msg(...) -> NeutronResult<NeutronMsg> {
+pub fn new_register_balance_query_msg(...) -> NeutronResult<NeutronMsg> {
     // convert bech32 encoded address to a bytes representation
     let converted_addr_bytes = decode_and_convert(addr.as_str())?;
 
@@ -198,24 +176,26 @@ pub fn register_balance_query_msg(...) -> NeutronResult<NeutronMsg> {
         path: BANK_STORE_KEY.to_string(),
         key: Binary(balance_key),
     };
+
     ...
 }
 ```
-* `register_transfers_query_msg` - is a TX-query, therefore it creates an Interchain Query with necessary TX-filter 
+* `new_register_transfers_query_msg` - is a TX-query, therefore it creates an Interchain Query with necessary TX-filter 
 to receive only required transactions from remote chain (you can see a full implementation of the helper in the [SDK source code](https://github.com/neutron-org/neutron-contracts/blob/a47bfac69667da57f8bf6ea81c9f16240e145c6d/packages/neutron-sdk/src/interchain_queries/register_queries.rs#L95)):
 ```rust
-pub fn register_transfers_query_msg(...) -> NeutronResult<NeutronMsg> {
+pub fn new_register_transfers_query_msg(...) -> NeutronResult<NeutronMsg> {
     // in this case the function creates filter to receive only transactions with transfer msg in it with a particular recipient
     let mut query_data: Vec<TransactionFilterItem> = vec![TransactionFilterItem {
         field: RECIPIENT_FIELD.to_string(),
         op: TransactionFilterOp::Eq,
         value: TransactionFilterValue::String(recipient),
     }];
+
     ...
 }
 ```
 
-> **Note:** Neutron SDK is shipped with a lot of helpers to register different Interchain Queries (you can find a full list [here](https://github.com/neutron-org/neutron-contracts/blob/main/contracts/neutron_interchain_queries/src/contract.rs#L78)).
+> **Note:** Neutron SDK is shipped with a lot of helpers to register different Interchain Queries (you can find a full list [here](https://github.com/neutron-org/neutron-contracts/blob/main/packages/neutron-sdk/src/interchain_queries/register_queries.rs)).
 > But if you don't find some particular register query helper in the SDK, you can always implement your own using implementations from SDK as a reference.
 > We encourage you to open pull requests with your query implementations to make Neutron SDK better and better!
 
@@ -236,16 +216,20 @@ pub fn query(deps: Deps<InterchainQueries>, env: Env, msg: QueryMsg) -> NeutronR
         QueryMsg::GetRegisteredQuery { query_id } => {
             Ok(to_binary(&get_registered_query(deps, query_id)?)?)
         },
-        QueryMsg::Balance { query_id } => Ok(to_binary(&query_balance(deps, env, query_id)?)?)
+        QueryMsg::Balance { query_id } => Ok(to_binary(&query_balance(deps, env, query_id)?)?),
+        QueryMsg::GetTransfersNumber {} => query_transfers_number(deps),
     }
 }
 ```
 
-In the snippet above we create the `QueryMsg` enum that contains two msgs `Balance` and `GetRegisteredQuery` and a `query`
-entrypoint which handles the defined query msgs:
+In the snippet above we create the `QueryMsg` enum that contains three msgs: `GetRegisteredQuery`, `Balance`, `GetTransfersNumber`, and a `query`
+entrypoint which handles the defined query msgs. 
+
 * the handler of `GetRegisteredQuery` uses [built-in SDK helper](https://github.com/neutron-org/neutron-contracts/blob/a47bfac69667da57f8bf6ea81c9f16240e145c6d/packages/neutron-sdk/src/interchain_queries/queries.rs#L51) `get_registered_query` to get all the information about
 any registered query by its id;
 * the handler of `Balance` is much more interesting. It uses [built-in SDK helper](https://github.com/neutron-org/neutron-contracts/blob/a47bfac69667da57f8bf6ea81c9f16240e145c6d/packages/neutron-sdk/src/interchain_queries/queries.rs#L87) `query_balance` to query interchain balance:
+* the handler of `GetTransfersNumber` will be below in the [section about tx queries handling](#get-results-from-tx-queries).
+
 ```rust
 pub fn query_balance(
     deps: Deps<InterchainQueries>,
@@ -257,7 +241,7 @@ pub fn query_balance(
     // check that query type is KV
     check_query_type(registered_query.registered_query.query_type, QueryType::KV)?;
     // reconstruct a nice Balances structure from raw KV-storage values
-    let balances: Balances = query_kv_result(deps, registered_query.registered_query.id)?;
+    let balances: Balances = query_kv_result(deps, registered_query_id)?;
 
     Ok(BalanceResponse {
         // last_submitted_height tells us when the query result was updated last time (block height)
@@ -295,7 +279,7 @@ pub struct Balances {
 
 impl KVReconstruct for Balances {
     fn reconstruct(storage_values: &[StorageValue]) -> NeutronResult<Balances> {
-        let mut coins: Vec<Coin> = vec![];
+        let mut coins: Vec<Coin> = Vec::with_capacity(storage_values.len());
 
         for kv in storage_values {
             let balance: CosmosCoin = CosmosCoin::decode(kv.value.as_slice())?;
@@ -308,7 +292,7 @@ impl KVReconstruct for Balances {
 }
 ```
 
-> **Note:** Neutron SDK is shipped with a lot of query structures to reconstruct different Interchain Queries (you can find a full list [here](https://github.com/neutron-org/neutron-contracts/blob/main/contracts/neutron_interchain_queries/src/contract.rs#L78)).
+> **Note:** Neutron SDK is shipped with a lot of query structures to reconstruct different Interchain Queries (you can find a full list [here](https://github.com/neutron-org/neutron-contracts/blob/main/packages/neutron-sdk/src/interchain_queries/types.rs) by looking for structs implementing the KVReconstruct trait).
 > But if you don't find some particular structure in the SDK, you can always implement your own using implementations from SDK as a reference.
 > All you need to do is just implement the `KVReconstruct` trait for your structure, and after that you can easily use this with `query_kv_result` helper like this:
 > `let response: YourStructure = query_kv_result(deps, query_id)?`
@@ -348,7 +332,7 @@ In the snippet above we implement a `sudo` entrypoint to catch all the `KVQueryR
 But there could be any logic you want.
 
 ### Get results from TX-queries
-Unlike KV-queries result, TX-queries results are not saved to the storage by the Neutron ICQ Module (on Cosmos-SDK level).
+Unlike KV-queries result, TX-queries results are not saved to the module storage by the Neutron ICQ Module (on Cosmos-SDK level).
 TX-queries are supported only in _callback way_, so to get result from TX-queries you have to work with `sudo` callbacks and save results to the storage by yourself if you need:
 ```rust
 #[entry_point]
@@ -384,7 +368,7 @@ pub fn sudo_tx_query_result(
     // Depending of the query type, check the transaction data to see whether is satisfies
     // the original query. If you don't write specific checks for a transaction query type,
     // all submitted results will be treated as valid.
-    match registered_query.registered_query.query_type.as_str() {
+    match registered_query.registered_query.query_type {
         _ => {
             // For transfer queries, query data looks like `[{"field:"transfer.recipient", "op":"eq", "value":"some_address"}]`
             let query_data: Vec<TransactionFilterItem> =
@@ -426,11 +410,21 @@ pub fn sudo_tx_query_result(
 In the snippet above we implement a `sudo` entrypoint to catch all the `TXQueryResult` callbacks, and we define
 `sudo_tx_query_result` handler to process the callback.
 In the handler we decode the transaction data at first, try to parse messages in the transaction, check that transaction really satisfies our defined filter
-and do some business logic (in our case we just save transfer to the storage).
+and do some business logic (in our case we just save transfer to the storage and increase the total incoming transfers number).
 
-> **IMPORTANT NOTICE:** It's necessary to check that then result transaction satisfies your filter. Although Neutron guarantees that transaction is valid
+> **IMPORTANT NOTICE:** It's necessary to check that the result transaction satisfies your filter. Although Neutron guarantees that transaction is valid
 > (meaning transaction is really included in a block on remote chain, it was executed successfully, signed properly, etc.), Neutron *can not* guarantee you
 > that result transaction satisifies defined filter. You must always check this in your contract!
+
+Just like with the KV query (the Balance one), TX query results can be retrieved by the contract state. In this respect there is no difference between query types, it's only matter of the way you design your contracts.
+
+```rust
+/// Returns the number of transfers made on remote chain and queried with ICQ
+fn query_transfers_number(deps: Deps<InterchainQueries>) -> NeutronResult<Binary> {
+    let transfers_number = TRANSFERS.load(deps.storage).unwrap_or_default();
+    Ok(to_binary(&GetTransfersAmountResponse { transfers_number })?)
+}
+```
 
 ## 4. Manage registered Interchain Queries
 
@@ -438,6 +432,8 @@ In some cases you may need to update Interchain Queries parameters (update perio
 query from the Neutron.
 Neutron allows you to do these actions via `Update` and `Remove` messages:
 ```rust
+use neutron_sdk::bindings::msg::NeutronMsg;
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
@@ -477,31 +473,16 @@ pub fn update_interchain_query(
     new_keys: Option<Vec<KVKey>>,
     new_update_period: Option<u64>,
 ) -> NeutronResult<Response<NeutronMsg>> {
-    let mut attributes = vec![
-        attr("action", "update_interchain_query"),
-        attr("query_id", query_id.to_string()),
-    ];
-    if let Some(keys) = new_keys.clone() {
-        attributes.push(attr("new_keys", KVKeys(keys)))
-    }
-    if let Some(update_period) = new_update_period {
-        attributes.push(attr("new_update_period", update_period.to_string()))
-    }
     let update_msg = NeutronMsg::update_interchain_query(query_id, new_keys, new_update_period);
-    Ok(Response::new()
-        .add_message(update_msg)
-        .add_attributes(attributes))
+    Ok(Response::new().add_message(update_msg))
 }
 
 pub fn remove_interchain_query(query_id: u64) -> NeutronResult<Response<NeutronMsg>> {
     let remove_msg = NeutronMsg::remove_interchain_query(query_id);
-    Ok(Response::new().add_message(remove_msg).add_attributes(vec![
-        attr("action", "remove_interchain_query"),
-        attr("query_id", query_id.to_string()),
-    ]))
+    Ok(Response::new().add_message(remove_msg))
 }
 ```
 
 In the snippet above we add `UpdateInterchainQuery` and `RemoveInterchainQuery` to our `ExecuteMsg` enum and define corresponding
-handlers `update_interchain_query` and `remove_interchain_query` which basically just issue proper Neutron msgs to update and remove interchain query.
+handlers `update_interchain_query` and `remove_interchain_query` which, in short, just issue proper [Neutron msgs](/neutron/interchain-queries/messages) to update and remove interchain query.
 In a real world scenario such handlers must have ownership checks.
