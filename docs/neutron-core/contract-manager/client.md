@@ -24,12 +24,12 @@ service Query {
 }
 ```
 
-### all-failures
+### failures [address]
 
 Returns list of all failures.
 
-```bash
-neutrond query contractmanager all-failures
+```shell
+neutrond query contractmanager failures
 ```
 
 <details>
@@ -37,12 +37,12 @@ neutrond query contractmanager all-failures
   Returns info about all failures:
 
   ```shell
-  neutrond query contractmanager all-failures
+  neutrond query contractmanager failures
   ```
 
 Output:
 
-  ```shell
+  ```yaml
   failures:
     - address: neutron1nc5tatafv6eyq7llkr2gv50ff9e22mnf70qgjlv737ktmt4eswrqcd0mrx
       id: 0
@@ -60,12 +60,11 @@ Output:
 </details>
 
 
-### contract-failures [address]
 
 Returns list of all failures for specific contract address.
 
 ```bash
-neutrond query contractmanager contract-failures [address]
+neutrond query contractmanager failures [address]
 ```
 
 <details>
@@ -73,12 +72,12 @@ neutrond query contractmanager contract-failures [address]
   Returns failures for specific contract address:
 
   ```shell
-  neutrond query contractmanager contract-failures neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq
+  neutrond query contractmanager failures neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq
   ```
 
 Output:
 
-  ```shell
+  ```yaml
   failures:
     - address: neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq
       id: 0
@@ -94,3 +93,4 @@ Output:
   ```
 
 </details>
+
