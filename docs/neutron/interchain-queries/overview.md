@@ -32,7 +32,7 @@ If your contract does not have such checks, malicious relayer can send a fully v
 You can see more info, examples and recommendations about proper transactions result handling [here](https://github.com/neutron-org/neutron-contracts/blob/main/contracts/neutron_interchain_txs/src/contract.rs#L335).
 
 ## Query creation deposit
-In order to clean up ledger from not used, outdated queries special deposit mechanism is used. [RegisteredQuery](https://github.com/neutron-org/neutron/blob/4313d35f8082dc124c5fe9491870720bbd3a5052/proto/interchainqueries/genesis.proto#L9) contains `deposit` field, this field is used to collect escrow payment for query creation. In order to return escrow payment a `RemoveInterchainQuery` message should be issued. 
+In order to clean up ledger from not used, outdated queries special deposit mechanism is used. [RegisteredQuery](https://github.com/neutron-org/neutron/blob/main/proto/interchainqueries/genesis.proto#L39) contains `deposit` field, this field is used to collect escrow payment for query creation. In order to return escrow payment a `RemoveInterchainQuery` message should be issued. 
 
 Permissions to perform `RemoveInterchainQuery` message is based on `query_submit_timeout` module parameter. If `last_submitted_result_local_height` + `query_submit_timeout` is less then current block height then `RemoveInterchainQuery` message can be performed only by query owner, in other case it can be performed by any address.
 

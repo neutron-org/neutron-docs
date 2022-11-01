@@ -88,12 +88,22 @@ message MsgSubmitTx {
 * `from_address` must be a smart contract address, otherwise the message will fail;
 * `interchain_account_id` is identical to `MsgRegisterInterchainAccount.interchain_account_id`;
 * `connection_id` must be the identifier of a valid IBC connection, otherwise the message will fail;
+* `msgs` must contain not more than it is defined in the module params;
 * `memo` is the transaction [memo](https://docs.cosmos.network/master/core/transactions.html);
 * `timeout` is a timeout in seconds after which the packet times out.
 
 > **Note:** most networks reject memos longer than 256 bytes.
 
 > **Note:** your contract needs to implement the `sudo()` entrypoint on order to successfully process the IBC events associated with this message. You can find an example in the [neutron-contracts](https://github.com/neutron-org/neutron-contracts/tree/main/contracts) repository.
+
+> **Note:** to see the currently available messages amount in a single MsgSubmitTx, query the module parameters:
+
+```shell
+neutrond query interchaintxs params
+
+params:
+  msg_submit_tx_max_messages: "16"
+```
 
 ### Response
 
