@@ -33,6 +33,8 @@ message KVKey {
 }
 ```
 
+> **Note:** the maximum allowed number of KVKey values for a single InterchainQuery equals to 32.
+
 Currently `query_type` can take the following values:
 * `kv` - query **values** from Cosmos-SDK KV-storage on remote chain which are stored under some **keys**. In this case `kv_keys` must be filled in.
 
@@ -40,6 +42,9 @@ Currently `query_type` can take the following values:
 ```json
 [{"field": "{eventType}.{attributeKey}", "val": "{attributeValue}", "op": "gte"}, ...]
 ```
+
+Maximum allowed amount of filters is 32. Supplying more filters than allowed will return an error.
+
 Supported operators:
 * `eq`
 * `lt`
@@ -74,6 +79,8 @@ message MsgRegisterInterchainQueryResponse {
 Emits [`EventTypeNeutonMessage`](/neutron/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_updated`.
 
 ### Update Interchain Query
+
+> **Note:** as well as for query registration, for query updates the maximum allowed number of KVKey values for a single InterchainQuery equals to 32.
 
 [`MsgUpdateInterchainQueryRequest`](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/proto/interchainqueries/tx.proto#L111) can be submitted only by the owner of corresponding Interchain Query:
 ```protobuf
