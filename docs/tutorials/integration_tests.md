@@ -12,7 +12,7 @@ There is a set of integration tests which cover main Neutron features. If you de
 * `git clone git@github.com:neutron-org/cosmos-query-relayer.git`
 * `git clone -b v7.0.3 git@github.com:cosmos/gaia.git`
 * `cd neutron-integration-tests`
-* \* `cd setup && make build-all && cd ..`
+* \* `make -C setup build-all`
 * `yarn`
 * Make sure you have docker installed and docker daemon running
 
