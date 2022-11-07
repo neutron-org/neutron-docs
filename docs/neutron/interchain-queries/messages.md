@@ -88,7 +88,8 @@ message MsgUpdateInterchainQueryRequest {
   uint64 query_id = 1;
   repeated KVKey new_keys = 2;
   uint64 new_update_period = 3;
-  string sender = 4; // is the signer of the message and owner of the corresponding ICQ
+  string new_transactions_filter = 4;
+  string sender = 5; // is the signer of the message and owner of the corresponding ICQ
 }
 ```
 

@@ -33,9 +33,17 @@ Relayer submits a query result as the following depending on the Relayer's confi
 
 This means that it's the Relayer who pays gas for these actions. Note that KV queries submission are straightforward and therefore cheap whereas TX ones and KV callbacks also include smart contract call and their cost may vary significantly.
 
-#### A bit of technical details about TX submission
+#### A bit of technical details about queries
 
-The KV queries are submitted in a fire-and-forget way, i.e. they are submitted once per `update_period` span and never retried forcibly (e.g. on a submission error). The TX queries are a bit more tricky: since they are not stored in the Neutron chain and simply passed to smart contracts, it's needed that each tx is passed and handled by the smart contract only once. The Relayer uses the `BroadcastTxSync` messages broadcast type to maintain balance between performance and submission detalisation, but this means that the submission result is not waited for. To achieve both submission speed and only one submission handling, the Relayer fires submission messages, remembers the query result as sent, and then in the background retrieves the submission result for the query. If it turns to be a success, the TX is saved as fully processed and will not be sent to the smart contract again. Otherwise, this tx will be marked as failed and will not be sent to the smart contract again during this run. Instead, to prevent repeated submission of transactions which can't be successfully handled by the smart contract, the retry will only be possible on Relayer restart.
+##### Queries submission
+
+The KV queries are submitted in a fire-and-forget way, i.e. they are submitted once per `update_period` span and never retried forcibly (e.g. on a submission error). The TX queries are a bit more tricky: since they are not stored in the Neutron chain and simply passed to smart contracts, it's needed that each tx is passed and handled by the smart contract only once.
+
+The Relayer uses the `BroadcastTxSync` messages broadcast type to maintain balance between performance and submission control, but this means that the submission result is not waited for. And here comes an important part related to TX queries. To achieve both submission speed and sequential submission handling, the Relayer fires TX submission messages, remembers the query result as sent, and then in the background retrieves the submission result for the query. If it turns to be a success, the TX is saved as fully processed and will not be sent to the smart contract again. Otherwise, this tx will be marked as failed and will not be sent to the smart contract again during this run. Instead, to prevent repeated submission of transactions which can't be successfully handled by the smart contract, the retry will only be possible on Relayer restart.
+
+##### Beacons in TX queries
+
+Transactions for a TX query are retrieved from a target chain in ascending order. Since the TX query results aren't submitted to the Neutron chain storage (they are processed by smart contracts via Sudo calls right away) there is no way to get the last processed height from the Neutron for a TX query. In order to keep a TX query progress in terms of already processed heights (make further queries, or restart the Relayer and start from the point where the Relayer stopped during the previous run) the Relayer saves progress for each TX query in its own storage. One of the things it stores is the remote chain height, and it gets updated when all transactions from the given height have been submitted to the chain (i.e. submission messages with these transactions have been broadcast). When the next time to execute the query comes, or when the Relayer restarts, this height will be used to retrieve the next batch of transactions. The `RELAYER_INITIAL_TX_SEARCH_OFFSET` config parameter is tightly coupled with this part of documentation. Read more about it in the [Relayer application configuration section](#relayer-application-settings).
 
 ## Configuration
 
@@ -81,7 +89,7 @@ This section contains description for all the possible config values that the Re
 - `RELAYER_CHECK_SUBMITTED_TX_STATUS_DELAY` — delay in seconds between TX query submission and the result handling checking (more about this in the [TX submission section](#a-bit-of-technical-details-about-tx-submission));
 - `RELAYER_QUERIES_TASK_QUEUE_CAPACITY` — capacity of the channel that is used to send messages from subscriber to Relayer. Better set to a higher value to avoid problems with Tendermint websocket subscriptions;
 - `RELAYER_PROMETHEUS_PORT` — the port on which Prometheus metrics API is available.
-- `RELAYER_INITIAL_TX_SEARCH_OFFSET` - Only for transaction queries. If set to non zero and no prior search height exists, it will initially set search height to (last_height - X). One example of usage of it will be if you have lots of old tx's on first start you don't need. Keep in mind that it will affect each newly created transaction query.
+- `RELAYER_INITIAL_TX_SEARCH_OFFSET` - Only for transaction queries. If set to non zero and no prior search height exists, it will initially set search height to (last_height - X). One example of usage of it will be if you have lots of old tx's on first start you don't need. Keep in mind that it will affect each newly created transaction query. To get a better understanding about how this works read the [dedicated section](#beacons-in-tx-queries).
 - `RELAYER_WEBSERVER_PORT` - the port on which webserver api is available.
 
 ### Logger configuration
