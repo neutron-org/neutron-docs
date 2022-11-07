@@ -82,6 +82,7 @@ This section contains description for all the possible config values that the Re
 - `RELAYER_QUERIES_TASK_QUEUE_CAPACITY` — capacity of the channel that is used to send messages from subscriber to Relayer. Better set to a higher value to avoid problems with Tendermint websocket subscriptions;
 - `RELAYER_PROMETHEUS_PORT` — the port on which Prometheus metrics API is available.
 - `RELAYER_INITIAL_TX_SEARCH_OFFSET` - Only for transaction queries. If set to non zero and no prior search height exists, it will initially set search height to (last_height - X). One example of usage of it will be if you have lots of old tx's on first start you don't need. Keep in mind that it will affect each newly created transaction query.
+- `RELAYER_WEBSERVER_PORT` - the port on which webserver api is available.
 
 ### Logger configuration
 
