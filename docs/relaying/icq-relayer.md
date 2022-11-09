@@ -53,15 +53,13 @@ This section contains description for all the possible config values that the Re
 
 - `RELAYER_NEUTRON_CHAIN_RPC_ADDR` — RPC address of a Neutron node to interact with (e.g. get events and to submit results);
 - `RELAYER_NEUTRON_CHAIN_REST_ADDR` — REST address of a Neutron node to interact with (e.g. get registered queries list);
-- `RELAYER_NEUTRON_CHAIN_CHAIN_ID` — Neutron chain ID;
 - `RELAYER_NEUTRON_CHAIN_HOME_DIR` — path to keys directory;
 - `RELAYER_NEUTRON_CHAIN_SIGN_KEY_NAME` — name of the key pair to be used by the Relayer;
 - `RELAYER_NEUTRON_CHAIN_TIMEOUT` — timeout for Neutron RPC calls;
 - `RELAYER_NEUTRON_CHAIN_GAS_PRICES` — the price for a unit of gas used by the Relayer;
 - `RELAYER_NEUTRON_CHAIN_GAS_LIMIT` — the maximum price to be paid for a single submission;
 - `RELAYER_NEUTRON_CHAIN_GAS_ADJUSTMENT` — gas multiplier used in order to avoid underestimating;
-- `RELAYER_NEUTRON_CHAIN_CONNECTION_ID` — Neutron chain connection ID;
-- `RELAYER_NEUTRON_CHAIN_CLIENT_ID` — IBC client ID for an IBC connection between the Neutron chain and the target chain;
+- `RELAYER_NEUTRON_CHAIN_CONNECTION_ID` — Neutron chain connection ID; Relayer will only relay events for this connection;
 - `RELAYER_NEUTRON_CHAIN_DEBUG` — flag to run neutron chain provider in debug mode;
 - `RELAYER_NEUTRON_CHAIN_KEYRING_BACKEND` — described [here](https://docs.cosmos.network/master/run-node/keyring.html#the-kwallet-backend);
 - `RELAYER_NEUTRON_CHAIN_OUTPUT_FORMAT` — Neutron chain provider output format;
@@ -70,12 +68,9 @@ This section contains description for all the possible config values that the Re
 ### Target chain node settings
 
 - `RELAYER_TARGET_CHAIN_RPC_ADDR` — RPC address of a target chain node to interact with (e.g. send queries);
-- `RELAYER_TARGET_CHAIN_CHAIN_ID` — target chain ID;
 - `RELAYER_TARGET_CHAIN_ACCOUNT_PREFIX` — target chain account prefix;
 - `RELAYER_TARGET_CHAIN_VALIDATOR_ACCOUNT_PREFIX` — target chain validator account prefix;
 - `RELAYER_TARGET_CHAIN_TIMEOUT` — timeout for target chain RPC calls;
-- `RELAYER_TARGET_CHAIN_CONNECTION_ID` — target chain connection ID;
-- `RELAYER_TARGET_CHAIN_CLIENT_ID` — IBC client ID for an IBC connection between the Neutron chain and the target chain;
 - `RELAYER_TARGET_CHAIN_DEBUG` — flag to run neutron chain provider in debug mode;
 - `RELAYER_TARGET_CHAIN_OUTPUT_FORMAT` — target chain provider output format.
 
