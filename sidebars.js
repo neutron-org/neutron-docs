@@ -49,11 +49,11 @@ const sidebars = {
                             type: 'category',
                             label: 'Contract Manager',
                             items: [
-                                'neutron-core/contract-manager/overview',
-                                'neutron-core/contract-manager/client',
-                                'neutron-core/contract-manager/state'                                
+                                'neutron/contract-manager/overview',
+                                'neutron/contract-manager/client',
+                                'neutron/contract-manager/state'
                             ]
-                        },                        
+                        },
                         {
                             type: 'category',
                             label: 'Transfer',
