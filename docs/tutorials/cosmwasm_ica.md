@@ -56,12 +56,13 @@ protobuf = { version = "3", features = ["with-bytes"] }
 Now you can import the libraries:
 
 ```rust
-use neutron_sdk::bindings::msg::NeutronMsg;
+use neutron_sdk::bindings::msg::{IbcFee, NeutronMsg};
 use neutron_sdk::bindings::query::{InterchainQueries, QueryInterchainAccountAddressResponse};
 use neutron_sdk::bindings::types::ProtobufAny;
 use neutron_sdk::interchain_txs::helpers::get_port_id;
 use neutron_sdk::sudo::msg::{RequestPacket, SudoMsg};
 use neutron_sdk::NeutronResult;
+use cosmwasm_std::Coin;
 ```
 
 ## 2. Register an Interchain Account
@@ -308,6 +309,16 @@ fn execute_delegate(
         value: Binary::from(buf),
     };
 
+    // specify fees to refund relayers for submission of ack and timeout messages
+    //
+    // The contract MUST HAVE recv_fee + ack_fee + timeout_fee coins on its balance!
+    // See more info here: https://docs.neutron.org/neutron/interchain-txs/messages#msgsubmittx
+    let fee = IbcFee {
+        recv_fee: vec![], // must be empty
+        ack_fee: vec![CosmosCoin::new(1000u128, "untrn")],
+        timeout_fee: vec![CosmosCoin::new(1000u128, "untrn")],
+    };
+
     // Form the neutron SubmitTx message containing the binary Delegate message.
     let cosmos_msg = NeutronMsg::submit_tx(
         connection_id,
@@ -315,6 +326,7 @@ fn execute_delegate(
         vec![any_msg],
         "".to_string(),
         timeout.unwrap_or(DEFAULT_TIMEOUT_SECONDS),
+        fee
     );
 
     // We use a submessage here because we need the process message reply to save
