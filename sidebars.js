@@ -47,6 +47,15 @@ const sidebars = {
                         },
                         {
                             type: 'category',
+                            label: 'Transfer',
+                            items: [
+                                'neutron/transfer/overview',
+                                'neutron/transfer/state',
+                                'neutron/transfer/messages'
+                            ]
+                        },
+                        {
+                            type: 'category',
                             label: 'Contract Manager',
                             items: [
                                 'neutron/contract-manager/overview',
@@ -56,11 +65,11 @@ const sidebars = {
                         },
                         {
                             type: 'category',
-                            label: 'Transfer',
+                            label: 'Fee Refunder',
                             items: [
-                                'neutron/transfer/overview',
-                                'neutron/transfer/state',
-                                'neutron/transfer/messages'
+                                'neutron/feerefunder/overview',
+                                'neutron/feerefunder/client',
+                                'neutron/feerefunder/state'
                             ]
                         },
                         {
