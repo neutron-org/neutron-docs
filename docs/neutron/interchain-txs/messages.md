@@ -82,6 +82,8 @@ message MsgSubmitTx {
   repeated google.protobuf.Any msgs = 4;
   string memo = 5;
   uint64 timeout = 6;
+
+  neutronorg.neutron.feerefunder.Fee fee = 7 [(gogoproto.nullable) = false];
 }
 ```
 
@@ -90,7 +92,10 @@ message MsgSubmitTx {
 * `connection_id` must be the identifier of a valid IBC connection, otherwise the message will fail;
 * `msgs` must contain not more than it is defined in the module params;
 * `memo` is the transaction [memo](https://docs.cosmos.network/master/core/transactions.html);
-* `timeout` is a timeout in seconds after which the packet times out.
+* `timeout` is a timeout in seconds after which the packet times out;
+* `fee` is a fee amount to refund relayer for `ack` and `timeout` messages submission.
+
+> **Note:** your smart-contract **must have** `fee.ack_fee + fee.timeout_fee + fee.recv_fee` coins on its balance, otherwise the message fails. See more info about fee refunding mechanism [here](../feerefunder/overview#general-mechanics).
 
 > **Note:** most networks reject memos longer than 256 bytes.
 
