@@ -365,7 +365,7 @@ pub fn save_reply_payload(store: &mut dyn Storage, payload: SudoPayload) -> StdR
 2. Then we implement a handler for the new `ExecuteMsg::Delegate` handler, `execute_delegate()`, and add it to
    our `execute()` entrypoint;
 3. Inside the `execute_delegate()` handler, we get the interchain account address from the storage, form a `Delegate`
-   message, form an `IBCFee` structure that specifies fees to refund relayers for submission of `ack` and `timeout` messages, put it and the formed `Delegate`message inside Neutron's `SubmitTx` message and execute it as a submessage. Inside
+   message, form an `IBCFee` structure that specifies fees to refund relayers for submission of `ack` and `timeout` messages, put it and the formed `Delegate` message inside Neutron's `SubmitTx` message and execute it as a submessage. Inside
    the `msg_with_sudo_callback()` function, we set up the reply payload using the `SUDO_PAYLOAD_REPLY_ID` value.
 
 We need to execute the `SubmitTx` message as a submessage because Neutron returns the outgoing IBC packet identifier for
