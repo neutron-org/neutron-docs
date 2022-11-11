@@ -141,3 +141,10 @@ Notes:
 ```
 docker run --env-file .env.example -v /Users/your-user/.neutrond:/keyring -p 9999:9999 neutron-org/neutron-query-relayer
 ```
+
+# Webserver API
+Relayer serves it's own JSON API and provides commands for querying info about it.
+
+Print available queries:
+
+`go run ./cmd/neutron_query_relayer query`
