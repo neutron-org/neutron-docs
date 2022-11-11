@@ -103,6 +103,7 @@ const sidebars = {
             label: 'Tutorials',
             items: [
                 'tutorials/cosmwasm_ica',
+                'tutorials/cosmwasm_transfer',
                 'tutorials/cosmwasm_icq',
                 'tutorials/integration_tests'
             ],
