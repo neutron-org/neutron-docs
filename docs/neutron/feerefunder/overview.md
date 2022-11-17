@@ -12,7 +12,7 @@ Due to the fact that contracts are allowed to make calls to the IBC as well as p
 
 In order to avoid such problem, the code in the module forces the contract to pay for all Acknoledgements and Timeout messages it processes.
 
-The mechanism behind the module is inspired by [ICS-29](https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment). ICS-29 itself requires both chains (target and source chains) to support the specifications which is not quite good for Neutron, since we want to connect as many chains as possible, and that's hard with ICS-29, since not so many chains use to the latest [ibc-go](https://github.com/cosmos/ibc-go) version.
+The mechanism behind the module is inspired by [ICS-29](https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment). ICS-29 itself requires both chains (target and source chains) to support the specifications which is not quite good for Neutron, since we want to connect as many chains as possible, and that's hard with ICS-29, since not so many chains use the latest [ibc-go](https://github.com/cosmos/ibc-go) version.
 
 That is why we decided to implement our own IBC Fees module, which allows to refund relayers for their `Ack/Timeout` submission, but with the same interface for the smart-contract developers. So when Neutron will support native ICS-29, there will no need for smart-contract developers to change their contracts, upgrading to the "official" fees module will be very smooth.
 
