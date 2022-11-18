@@ -54,16 +54,31 @@ This section contains description for all the possible config values that the Re
 - `RELAYER_NEUTRON_CHAIN_RPC_ADDR` — RPC address of a Neutron node to interact with (e.g. get events and to submit results);
 - `RELAYER_NEUTRON_CHAIN_REST_ADDR` — REST address of a Neutron node to interact with (e.g. get registered queries list);
 - `RELAYER_NEUTRON_CHAIN_HOME_DIR` — path to keys directory;
-- `RELAYER_NEUTRON_CHAIN_SIGN_KEY_NAME` — name of the key pair to be used by the Relayer;
 - `RELAYER_NEUTRON_CHAIN_TIMEOUT` — timeout for Neutron RPC calls;
 - `RELAYER_NEUTRON_CHAIN_GAS_PRICES` — the price for a unit of gas used by the Relayer;
 - `RELAYER_NEUTRON_CHAIN_GAS_LIMIT` — the maximum price to be paid for a single submission;
 - `RELAYER_NEUTRON_CHAIN_GAS_ADJUSTMENT` — gas multiplier used in order to avoid underestimating;
 - `RELAYER_NEUTRON_CHAIN_CONNECTION_ID` — Neutron chain connection ID; Relayer will only relay events for this connection;
 - `RELAYER_NEUTRON_CHAIN_DEBUG` — flag to run neutron chain provider in debug mode;
-- `RELAYER_NEUTRON_CHAIN_KEYRING_BACKEND` — described [here](https://docs.cosmos.network/master/run-node/keyring.html#the-kwallet-backend);
 - `RELAYER_NEUTRON_CHAIN_OUTPUT_FORMAT` — Neutron chain provider output format;
 - `RELAYER_NEUTRON_CHAIN_SIGN_MODE_STR` — described [here](https://docs.cosmos.network/master/core/transactions.html#signing-transactions), also consider use short variation, e.g. `direct`.
+
+#### Keyring settings
+
+- `RELAYER_NEUTRON_CHAIN_KEYRING_BACKEND` — the type of backend (more about keyring types [here](https://docs.cosmos.network/master/run-node/keyring.html#the-kwallet-backend));
+- `RELAYER_NEUTRON_CHAIN_SIGN_KEY_NAME` — name of the key used by the relayer;
+- `RELAYER_NEUTRON_CHAIN_KEYRING_PASSWORD` — password for accessing the keyring;
+- `RELAYER_NEUTRON_CHAIN_SIGN_KEY_SEED` — mnemonic of the key for `memory` backend;
+- `RELAYER_NEUTRON_CHAIN_SIGN_KEY_HD_PATH` — HD path of the key for `memory` backend.
+
+The table below describes which parameters are required for different backends types.
+
+| Key name                                 | os       | file     | pass     | kwallet  | test     | memory   |
+|------------------------------------------|----------|----------|----------|----------|----------|----------|
+| `RELAYER_NEUTRON_CHAIN_KEYRING_PASSWORD` | required | required | required | required | ignored  | ignored  |
+| `RELAYER_NEUTRON_CHAIN_SIGN_KEY_NAME`    | required | required | required | required | required | ignored  |
+| `RELAYER_NEUTRON_CHAIN_SIGN_KEY_SEED`    | ignored  | ignored  | ignored  | ignored  | ignored  | required |
+| `RELAYER_NEUTRON_CHAIN_SIGN_KEY_HD_PATH` | ignored  | ignored  | ignored  | ignored  | ignored  | optional |
 
 ### Target chain node settings
 
@@ -99,6 +114,35 @@ Before running the Relayer application for production purposes, you need to crea
 
 ### Setting up Relayer wallet
 
+**Recommended keyring backends for production environments are `memory` and `file`**.
+
+However, ICQ relayer supports all the types of keyring backends that are typically supported by cosmos apps.
+Other types of backends are not recommended because of following reasons:
+
+1. `kwallet` and `pass` backends typically request password in an interactive mode which is not suitable for the way ICQ relayer works;
+2. `kwallet` itself is a UI-only thing;
+3. `test` backend stores keys unencrypted;
+4. `os` might require providing an app the os-level secret.
+
+#### Using the `memory` backend
+
+The `memory` keyring in ICQ relayer works in a way where the relayer creates empty in-memory key storage and put there the key based on environment variables (mnemonic and HD Path).
+HD Path default value is `m/44'/118'/0'/0/0`.
+
+`.env` file example for the `memory` backend:
+
+```
+...
+RELAYER_NEUTRON_CHAIN_KEYRING_BACKEND=test
+RELAYER_NEUTRON_CHAIN_SIGN_KEY_SEED="my awesome super secure mnemonic ..."
+RELAYER_NEUTRON_CHAIN_SIGN_KEY_HD_PATH="m/44'/118'/0'/0/1"
+...
+```
+
+#### Using the `test` backend
+
+While not being recommended for using in production deployments, `test` backend is suitable for any types of testing environments.
+
 1. The keyring folder for Relayer's usage is configured by the `RELAYER_NEUTRON_CHAIN_HOME_DIR` variable. The easiest way is to run `neutrond keys` from the cloned [neutron repository](https://github.com/neutron-org/neutron) and get the default value from the `--keyring-dir` flag:
 
 ```
@@ -115,8 +159,36 @@ Global Flags:
 ```
 
 2. Then execute `neutrond keys add relayer --keyring-backend test` to create an account in the default keyring directory;
-3. Use `relayer` as the `RELAYER_NEUTRON_CHAIN_SIGN_KEY_NAME`, `test` as the `RELAYER_NEUTRON_CHAIN_KEYRING_BACKEND`, and pass the keyring directory as a volume to the Relayer's docker container using the keyring path in the container as the `RELAYER_NEUTRON_CHAIN_HOME_DIR`;
+3. Add necessary parameters into `.env` file, for example:
+
+```
+...
+RELAYER_NEUTRON_CHAIN_KEYRING_BACKEND=test
+RELAYER_NEUTRON_CHAIN_SIGN_KEY_NAME=relayer
+RELAYER_NEUTRON_CHAIN_HOME_DIR=/home/user/.neutrond
+...
+```
+
 4. Get the Relayer's wallet address and top its balance up. If you're running the Relayer on the testnet, use the official Neutron faucet. For the mainnet, get some NTRN for the address.
+
+#### Using the `file` backend
+
+The process is almost the same as for `test` backend. The only difference is that `RELAYER_NEUTRON_CHAIN_KEYRING_PASSWORD` has to be specified.
+
+1. Add keys with `neutrond`, e.g.:
+
+`neutrond keys add relayer --keyring-backend file`
+
+2. Add necessary parameters into `.env` file, for example:
+
+```
+...
+RELAYER_NEUTRON_CHAIN_KEYRING_BACKEND=file
+RELAYER_NEUTRON_CHAIN_KEYRING_PASSWORD=P@ssword1
+RELAYER_NEUTRON_CHAIN_SIGN_KEY_NAME=relayer
+RELAYER_NEUTRON_CHAIN_HOME_DIR=/home/user/.neutrond
+...
+```
 
 ## Running the Relayer
 
