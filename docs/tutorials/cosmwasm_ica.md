@@ -56,12 +56,13 @@ protobuf = { version = "3", features = ["with-bytes"] }
 Now you can import the libraries:
 
 ```rust
-use neutron_sdk::bindings::msg::NeutronMsg;
+use neutron_sdk::bindings::msg::{IbcFee, NeutronMsg};
 use neutron_sdk::bindings::query::{InterchainQueries, QueryInterchainAccountAddressResponse};
 use neutron_sdk::bindings::types::ProtobufAny;
 use neutron_sdk::interchain_txs::helpers::get_port_id;
 use neutron_sdk::sudo::msg::{RequestPacket, SudoMsg};
 use neutron_sdk::NeutronResult;
+use cosmwasm_std::Coin;
 ```
 
 ## 2. Register an Interchain Account
@@ -308,6 +309,17 @@ fn execute_delegate(
         value: Binary::from(buf),
     };
 
+    // specify fees to refund relayers for submission of ack and timeout messages
+    //
+    // The contract MUST HAVE recv_fee + ack_fee + timeout_fee coins on its balance!
+    // See more info about fees here: https://docs.neutron.org/neutron/interchain-txs/messages#msgsubmittx
+    // and here: https://docs.neutron.org/neutron/feerefunder/overview
+    let fee = IbcFee {
+        recv_fee: vec![], // must be empty
+        ack_fee: vec![CosmosCoin::new(1000u128, "untrn")],
+        timeout_fee: vec![CosmosCoin::new(1000u128, "untrn")],
+    };
+
     // Form the neutron SubmitTx message containing the binary Delegate message.
     let cosmos_msg = NeutronMsg::submit_tx(
         connection_id,
@@ -315,6 +327,7 @@ fn execute_delegate(
         vec![any_msg],
         "".to_string(),
         timeout.unwrap_or(DEFAULT_TIMEOUT_SECONDS),
+        fee
     );
 
     // We use a submessage here because we need the process message reply to save
@@ -352,7 +365,7 @@ pub fn save_reply_payload(store: &mut dyn Storage, payload: SudoPayload) -> StdR
 2. Then we implement a handler for the new `ExecuteMsg::Delegate` handler, `execute_delegate()`, and add it to
    our `execute()` entrypoint;
 3. Inside the `execute_delegate()` handler, we get the interchain account address from the storage, form a `Delegate`
-   message, put it inside Neutron's `SubmitTx` message and execute it as a submessage. Inside
+   message, form an `IBCFee` structure that specifies fees to refund relayers for submission of `ack` and `timeout` messages, put it and the formed `Delegate` message inside Neutron's `SubmitTx` message and execute it as a submessage. Inside
    the `msg_with_sudo_callback()` function, we set up the reply payload using the `SUDO_PAYLOAD_REPLY_ID` value.
 
 We need to execute the `SubmitTx` message as a submessage because Neutron returns the outgoing IBC packet identifier for
