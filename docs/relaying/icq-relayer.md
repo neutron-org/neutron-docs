@@ -41,9 +41,13 @@ The KV queries are submitted in a fire-and-forget way, i.e. they are submitted o
 
 The Relayer uses the `BroadcastTxSync` messages broadcast type to maintain balance between performance and submission control, but this means that the submission result is not waited for. And here comes an important part related to TX queries. To achieve both submission speed and sequential submission handling, the Relayer fires TX submission messages, remembers the query result as sent, and then in the background retrieves the submission result for the query. If it turns to be a success, the TX is saved as fully processed and will not be sent to the smart contract again. Otherwise, this tx will be marked as failed and will not be sent to the smart contract again during this run. Instead, to prevent repeated submission of transactions which can't be successfully handled by the smart contract, the retry will only be possible on Relayer restart.
 
-When the Relayer submits a TX query result to the Neutron chain and there
-is an error in smart contract on sudo call, the Relayer will ignore this error and will not retry the submission. For any other errors, the Relayer
-will exit with an error. If you need to modify the behaviour, you can do it by changing `RELAYER_IGNORE_ERRORS_REGEX` environment variable.
+As a default when the Relayer submits a TX query result to the Neutron chain and an error occurs in the smart contract during the sudo call, the Relayer will ignore this error and not retry the submission. For all other errors, the Relayer will exit with an error. 
+
+This behaviour cased by the fact that the Relayer is not aware of the smart contract's logic and therefore can't know whether the error is recoverable or not. Also, the Relayer should treat all other errors (network/balance/wallet) as fatal, exit and let itself be restarted by the admin/system.
+
+It is strongly recommended to run the Relayer as a daemon to allow easy restart.
+
+If you want to change the behaviour, you can do so by changing the environment variable `RELAYER_IGNORE_ERRORS_REGEX`. 
 
 ##### Beacons in TX queries
 
