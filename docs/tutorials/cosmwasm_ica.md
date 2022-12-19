@@ -26,7 +26,7 @@ We are going to learn how to:
 ## The complete example
 
 In the snippets below some details might be omitted. Please check out the complete smart contract
-[example](https://github.com/neutron-org/neutron-contracts/tree/main/contracts/neutron_interchain_txs) for a complete
+[example](https://github.com/neutron-org/neutron-sdk/tree/main/contracts/neutron_interchain_txs) for a complete
 implementation.
 
 ## 1. Install dependencies and import the libraries
@@ -188,7 +188,7 @@ fn sudo_open_ack(
 }
 ```
 
-1. All possible message types that can come from Neutron are listed in the [SudoMsg](https://github.com/neutron-org/neutron-contracts/blob/main/packages/neutron-sdk/src/sudo/msg.rs) enum. Here we implement a handler
+1. All possible message types that can come from Neutron are listed in the [SudoMsg](https://github.com/neutron-org/neutron-sdk/blob/main/packages/neutron-sdk/src/sudo/msg.rs) enum. Here we implement a handler
    just for one element of this enum, `SudoMsg::OpenAck`;
 2. If the interchain account was successfully created, you might want to know what account address was generated for you
    on the host zone. This information is contained in

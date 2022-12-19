@@ -36,7 +36,7 @@ func GenerateAddress(moduleAccAddr sdk.AccAddress, connectionID, portID string) 
 ```
 </details>
 
-> **Note:** your contract needs to implement the `sudo()` entrypoint on order to successfully process the IBC events associated with this message. You can find an example in the [neutron-contracts](https://github.com/neutron-org/neutron-contracts/tree/main/contracts) repository. 
+> **Note:** your contract needs to implement the `sudo()` entrypoint on order to successfully process the IBC events associated with this message. You can find an example in the [neutron-sdk](https://github.com/neutron-org/neutron-sdk/tree/main/contracts) repository. 
 
 ### Response
 
@@ -59,7 +59,7 @@ type OpenAckDetails struct {
 }
 ```
 
-The data from an `OnChanOpenAck` event is passed to the contract using a [Sudo() call](https://github.com/CosmWasm/wasmd/blob/288609255ad92dfe5c54eae572fe7d6010e712eb/x/wasm/keeper/keeper.go#L453). You can have a look at an example handler implementation in the [neutron-contracts](https://github.com/neutron-org/neutron-contracts/tree/main/contracts) repository. 
+The data from an `OnChanOpenAck` event is passed to the contract using a [Sudo() call](https://github.com/CosmWasm/wasmd/blob/288609255ad92dfe5c54eae572fe7d6010e712eb/x/wasm/keeper/keeper.go#L453). You can have a look at an example handler implementation in the [neutron-sdk](https://github.com/neutron-org/neutron-sdk/tree/main/contracts) repository. 
 
 > Note: you can find the interchain account address in the stored in the `CounterpartyVersion` field as part of [metadata](https://github.com/cosmos/ibc-go/blob/main/modules/apps/27-interchain-accounts/host/keeper/handshake.go#L78).
 
@@ -99,7 +99,7 @@ message MsgSubmitTx {
 
 > **Note:** most networks reject memos longer than 256 bytes.
 
-> **Note:** your contract needs to implement the `sudo()` entrypoint on order to successfully process the IBC events associated with this message. You can find an example in the [neutron-contracts](https://github.com/neutron-org/neutron-contracts/tree/main/contracts) repository.
+> **Note:** your contract needs to implement the `sudo()` entrypoint on order to successfully process the IBC events associated with this message. You can find an example in the [neutron-sdk](https://github.com/neutron-org/neutron-sdk/tree/main/contracts) repository.
 
 > **Note:** to see the currently available messages amount in a single MsgSubmitTx, query the module parameters:
 
@@ -146,9 +146,9 @@ type SudoMessageError struct {
 }
 ```
 
-While trying to execute an interchain transaction, you can receive an IBC `Timeout` or an IBC `Acknowledgement`, and the latter can contain either a valid response or an error. These three types of transaction results are passed to the contract as distinct messages using a [Sudo() call](https://github.com/CosmWasm/wasmd/blob/288609255ad92dfe5c54eae572fe7d6010e712eb/x/wasm/keeper/keeper.go#L453). You can have a look at an example handler implementation in the [neutron-contracts](https://github.com/neutron-org/neutron-contracts/tree/main/contracts) repository.
+While trying to execute an interchain transaction, you can receive an IBC `Timeout` or an IBC `Acknowledgement`, and the latter can contain either a valid response or an error. These three types of transaction results are passed to the contract as distinct messages using a [Sudo() call](https://github.com/CosmWasm/wasmd/blob/288609255ad92dfe5c54eae572fe7d6010e712eb/x/wasm/keeper/keeper.go#L453). You can have a look at an example handler implementation in the [neutron-sdk](https://github.com/neutron-org/neutron-sdk/tree/main/contracts) repository.
 
-You can more find info, recommendations and examples about how process acknowledgements [here](https://github.com/neutron-org/neutron-contracts/blob/main/contracts/neutron_interchain_txs/src/contract.rs#L335).
+You can more find info, recommendations and examples about how process acknowledgements [here](https://github.com/neutron-org/neutron-sdk/blob/main/contracts/neutron_interchain_txs/src/contract.rs#L335).
 
 ### State modifications
 
