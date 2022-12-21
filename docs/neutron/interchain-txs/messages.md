@@ -148,7 +148,7 @@ type SudoMessageError struct {
 
 While trying to execute an interchain transaction, you can receive an IBC `Timeout` or an IBC `Acknowledgement`, and the latter can contain either a valid response or an error. These three types of transaction results are passed to the contract as distinct messages using a [Sudo() call](https://github.com/CosmWasm/wasmd/blob/288609255ad92dfe5c54eae572fe7d6010e712eb/x/wasm/keeper/keeper.go#L453). You can have a look at an example handler implementation in the [neutron-sdk](https://github.com/neutron-org/neutron-sdk/tree/main/contracts) repository.
 
-You can more find info, recommendations and examples about how process acknowledgements [here](https://github.com/neutron-org/neutron-sdk/blob/main/contracts/neutron_interchain_txs/src/contract.rs#L335).
+You can more find info, recommendations and examples about how process acknowledgements [here](https://github.com/neutron-org/neutron-sdk/blob/cf2295a432ad2577eaea8a95ba89879521a00e38/contracts/neutron_interchain_txs/src/contract.rs#L381).
 
 ### State modifications
 

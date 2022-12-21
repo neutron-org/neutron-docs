@@ -53,7 +53,7 @@ In order to build Neutron SDK you need [the source code](https://github.com/neut
 
 For production builds, run the following:
 ```shell
-cd neutron-contracts
+cd neutron-sdk
 make build
 ```
 
@@ -61,6 +61,6 @@ make build
 Run tests from the source code:
 
 ```shell
-cd neutron-contracts
+cd neutron-sdk
 make test
 ```
