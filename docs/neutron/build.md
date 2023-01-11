@@ -49,11 +49,11 @@ make test
 3. Make sure [Docker](https://www.docker.com/) is installed
 
 ### Build Neutron SDK
-In order to build Neutron SDK you need [the source code](https://github.com/neutron-org/neutron-contracts).
+In order to build Neutron SDK you need [the source code](https://github.com/neutron-org/neutron-sdk).
 
 For production builds, run the following:
 ```shell
-cd neutron-contracts
+cd neutron-sdk
 make build
 ```
 
@@ -61,6 +61,6 @@ make build
 Run tests from the source code:
 
 ```shell
-cd neutron-contracts
+cd neutron-sdk
 make test
 ```

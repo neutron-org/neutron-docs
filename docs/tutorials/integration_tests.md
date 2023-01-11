@@ -51,7 +51,7 @@ src/config.json
 
 ## Creating your own tests
 ### Creating your contract
-To create a new contract you can refer to [Neutron Cosmwasm Contracts Repo](https://github.com/neutron-org/neutron-contracts) to have an idea how to use Neutron SDK.
+To create a new contract you can refer to [Neutron Cosmwasm SDK Repo](https://github.com/neutron-org/neutron-sdk) to have an idea how to use Neutron SDK.
 
 ### Updating artifacts
 You'll need to update artifacts in `./contracts` folder in case you have created a new contract. Place your contract(s) into `./contracts/artifacts` folder. Let's say you have the contract  with name `my_contract.wasm`
