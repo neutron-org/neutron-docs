@@ -41,6 +41,14 @@ The KV queries are submitted in a fire-and-forget way, i.e. they are submitted o
 
 The Relayer uses the `BroadcastTxSync` messages broadcast type to maintain balance between performance and submission control, but this means that the submission result is not waited for. And here comes an important part related to TX queries. To achieve both submission speed and sequential submission handling, the Relayer fires TX submission messages, remembers the query result as sent, and then in the background retrieves the submission result for the query. If it turns to be a success, the TX is saved as fully processed and will not be sent to the smart contract again. Otherwise, this tx will be marked as failed and will not be sent to the smart contract again during this run. Instead, to prevent repeated submission of transactions which can't be successfully handled by the smart contract, the retry will only be possible on Relayer restart.
 
+As a default when the Relayer submits a TX query result to the Neutron chain and an error occurs in the smart contract during the sudo call, the Relayer will ignore this error and not retry the submission. For all other errors, the Relayer will exit with an error. 
+
+This behaviour cased by the fact that the Relayer is not aware of the smart contract's logic and therefore can't know whether the error is recoverable or not. Also, the Relayer should treat all other errors (network/balance/wallet) as fatal, exit and let itself be restarted by the admin/system.
+
+It is strongly recommended to run the Relayer as a daemon to allow easy restart.
+
+If you want to change the behaviour, you can do so by changing the environment variable `RELAYER_IGNORE_ERRORS_REGEX`. 
+
 ##### Beacons in TX queries
 
 Transactions for a TX query are retrieved from a target chain in ascending order. Since the TX query results aren't submitted to the Neutron chain storage (they are processed by smart contracts via Sudo calls right away) there is no way to get the last processed height from the Neutron for a TX query. In order to keep a TX query progress in terms of already processed heights (make further queries, or restart the Relayer and start from the point where the Relayer stopped during the previous run) the Relayer saves progress for each TX query in its own storage. One of the things it stores is the remote chain height, and it gets updated when all transactions from the given height have been submitted to the chain (i.e. submission messages with these transactions have been broadcast). When the next time to execute the query comes, or when the Relayer restarts, this height will be used to retrieve the next batch of transactions. The `RELAYER_INITIAL_TX_SEARCH_OFFSET` config parameter is tightly coupled with this part of documentation. Read more about it in the [Relayer application configuration section](#relayer-application-settings).
@@ -55,7 +63,7 @@ This section contains description for all the possible config values that the Re
 - `RELAYER_NEUTRON_CHAIN_REST_ADDR` — REST address of a Neutron node to interact with (e.g. get registered queries list);
 - `RELAYER_NEUTRON_CHAIN_HOME_DIR` — path to keys directory;
 - `RELAYER_NEUTRON_CHAIN_SIGN_KEY_NAME` — name of the key pair to be used by the Relayer;
-- `RELAYER_NEUTRON_CHAIN_TIMEOUT` — timeout for Neutron RPC calls;
+- `RELAYER_NEUTRON_CHAIN_TIMEOUT` — timeout for Neutron RPC and REST calls;
 - `RELAYER_NEUTRON_CHAIN_GAS_PRICES` — the price for a unit of gas used by the Relayer;
 - `RELAYER_NEUTRON_CHAIN_GAS_LIMIT` — the maximum price to be paid for a single submission;
 - `RELAYER_NEUTRON_CHAIN_GAS_ADJUSTMENT` — gas multiplier used in order to avoid underestimating;
@@ -64,6 +72,7 @@ This section contains description for all the possible config values that the Re
 - `RELAYER_NEUTRON_CHAIN_KEYRING_BACKEND` — described [here](https://docs.cosmos.network/master/run-node/keyring.html#the-kwallet-backend);
 - `RELAYER_NEUTRON_CHAIN_OUTPUT_FORMAT` — Neutron chain provider output format;
 - `RELAYER_NEUTRON_CHAIN_SIGN_MODE_STR` — described [here](https://docs.cosmos.network/master/core/transactions.html#signing-transactions), also consider use short variation, e.g. `direct`.
+- `RELAYER_IGNORE_ERRORS_REGEX` - regular expression to match errors that should be ignored. If the error matches the regex, the Relayer will ignore it and will not retry the submission. For any other errors, the Relayer will exit with an error.
 
 ### Target chain node settings
 
@@ -141,10 +150,12 @@ Notes:
 docker run --env-file .env.example -v /Users/your-user/.neutrond:/keyring -p 9999:9999 neutron-org/neutron-query-relayer
 ```
 
-# Webserver API
+## Webserver API
 Relayer serves it's own JSON API and provides commands for querying info about it.
-It listens on port that is set in `RELAYER_LISTEN_ADDR` env
 
+It listens on port that is set in `RELAYER_LISTEN_ADDR` env.
+
+Commands:
 - Print available queries:
 
 `go run ./cmd/neutron_query_relayer query`
@@ -152,3 +163,8 @@ It listens on port that is set in `RELAYER_LISTEN_ADDR` env
 - Resubmit failed transactions:
 
 `go run ./cmd/neutron_query_relayer exec resubmit-tx <queryId> <transactionHash>`
+
+
+## Shutting the Relayer down
+
+During the execution the Neutron ICQ Relayer receives events from Neutron, reads remote chain's state, and modifies its own state and the Neutron' one. In order to reach a reliable and consistent flow the Relayer is designed the way it finishes initialised interactions with its local storage on received `SIGINT` and `SIGTERM`. It usually takes a fraction of a second.

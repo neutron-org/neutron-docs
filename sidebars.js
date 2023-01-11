@@ -47,20 +47,29 @@ const sidebars = {
                         },
                         {
                             type: 'category',
-                            label: 'Contract Manager',
-                            items: [
-                                'neutron-core/contract-manager/overview',
-                                'neutron-core/contract-manager/client',
-                                'neutron-core/contract-manager/state'                                
-                            ]
-                        },                        
-                        {
-                            type: 'category',
                             label: 'Transfer',
                             items: [
                                 'neutron/transfer/overview',
                                 'neutron/transfer/state',
                                 'neutron/transfer/messages'
+                            ]
+                        },
+                        {
+                            type: 'category',
+                            label: 'Contract Manager',
+                            items: [
+                                'neutron/contract-manager/overview',
+                                'neutron/contract-manager/client',
+                                'neutron/contract-manager/state'
+                            ]
+                        },
+                        {
+                            type: 'category',
+                            label: 'Fee Refunder',
+                            items: [
+                                'neutron/feerefunder/overview',
+                                'neutron/feerefunder/client',
+                                'neutron/feerefunder/state'
                             ]
                         },
                         {
