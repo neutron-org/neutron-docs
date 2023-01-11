@@ -75,6 +75,7 @@ const sidebars = {
                     ],
                 },
                 'neutron/dao',
+                'neutron/tokenomics',
                 'neutron/build',
                 'neutron/contribute',
             ],
