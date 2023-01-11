@@ -1,0 +1,101 @@
+# DAO
+
+## Overview
+
+![Governance.png](/img/governance.png)
+
+Being an Interchain Secured network, Neutron does not use standard Cosmos SDK governance module. Neutron governance
+is based on [DAO DAO](https://github.com/DA0-DA0/dao-contracts) contracts, with some modifications. It consists of two
+parts:
+
+1. The Neutron DAO,
+2. Multiple subDAOs.
+
+## Neutron DAO
+
+The Neutron DAO
+supports [single-choice](https://github.com/DA0-DA0/dao-contracts/tree/main/contracts/proposal/dao-proposal-single)
+and [multiple-choice](https://github.com/DA0-DA0/dao-contracts/tree/main/contracts/proposal/dao-proposal-multiple)
+proposals by registering the corresponding proposal contracts in the core contract, along with a special type of *
+overrule* proposals (see below). In the future, additional types of proposals might be introduced (e.g., gauges).
+
+Each type of proposal can only be submitted through a
+dedicated [pre-propose contract](https://github.com/DA0-DA0/dao-contracts/tree/main/contracts/pre-propose) (separate
+pre-propose contracts for single-, multi-choice and overrule proposals exist), which manages deposits and makes sure
+that only DAO members can submit proposals.
+
+### Voting Power Registry
+
+Instead of a single voting power module, Neutron DAO core contract interacts with the *Voting Power Registry* contract
+that keeps track of multiple *Voting Vaults*. There can be many Voting Vault implementations, but at the launch Neutron
+will only have one vault implementation for bonding native NTRN tokens.
+
+### Neutron Bonding Vault
+
+This vault will allow its users to Bond NTRN tokens without locking them (i.e., you can bond and unbond tokens with this
+vault with no unbonding period). Just as with normal DAO DAO voting modules, for each specific proposal, you can only
+use the voting power that was available to you at the time of proposal submission. No additional restrictions are
+imposed on the vault funds.
+
+### Overrule proposals
+
+*N.B.: you need to read the subDAOs design below to understand this section.*
+
+The *Overrule* proposal type has a low threshold (0.01 of the total voting power). It only allows to call the *
+overrule_proposal()* method of a subDAO proposal contract.
+
+Re-voting should be disabled for such proposals (execute immediately after the threshold is reached).
+
+## subDAOs
+
+The Neutron DAO creates subDAOs by executing Neutron DAO proposals that contain *Instantiate* messages for the subDAO
+contracts. At the launch time, only the *Multisig-type* subDAO will be available, which is similar to the main DAO, but
+uses the [cw4 voting module](https://github.com/DA0-DA0/dao-contracts/tree/main/contracts/voting/dao-voting-cw4)
+implementation for voting power (that’s where the multisig logic is implemented).
+
+One important feature of the subDAOs is that their proposals can be overruled by the Neutron DAO within a specified
+timelock period.
+
+### Timelocks & Overrules
+
+Proposals approved by a subDAO are timelocked. During the timelock period, the Neutron DAO can overrule any proposal by
+creating a new Overrule proposal; this proposal has a lower threshold than the regular proposals, and is executed
+immediately after reaching the threshold.
+
+The timelock mechanism is implemented as follows. When creating a proposal, the user sends a regular proposal message to
+the subDAO pre-propose contract. This contract wraps the messages to be executed in a *TimelockProposal* message that is
+defined by the **Timelock** **contract**. When the proposal passes, the subDAO core contract does not execute the
+original messages; instead, it sends them wrapped in a *TimelockProposal* message to the Timelock contract.
+
+The Timelock contract has 3 handlers:
+
+- `execute_timelock_proposal(proposal_id, msgs)`: timelocks the given proposal messages, (permissioned, only by subDAO
+  core contract);
+- `execute_execute_proposal(proposal_id)`: executes the proposal if the timelock period has passed (permissionless);
+- `execute_overrule_proposal(proposal_id)`: overrules the proposal (permissioned, only by the Neutron DAO).
+
+When a *TimelockProposal* message is processed by the Timelock contract, the submission time is recorded in the state.
+The Timelock contract has a parameter *timelock_period* that defines how much time needs to pass before the proposal can
+be executed.
+
+### Important notes
+
+1. The wasmd-level admin of the Timelock contract is the Neutron DAO core contract;
+2. The owner of the Timelock contract is the Neutron DAO core contract;
+3. The Timelock contract is instantiated by the pre-propose contract;
+4. The subDAO address is queried from the pre-propose module during instantiation.
+
+### Security subDAO
+
+There is a special *Security subDAO* that can only execute *pause()* methods on the following contracts:
+
+1. All other subDAOs;
+2. [Treasury](https://www.notion.so/Treasury-and-Distribution-Technical-Design-44a57336ea11457d880e436c213d5eab)
+   contract;
+3. [Distribution](https://www.notion.so/Treasury-and-Distribution-Technical-Design-44a57336ea11457d880e436c213d5eab)
+   contract;
+4. [Reserve](https://www.notion.so/Treasury-and-Distribution-Technical-Design-44a57336ea11457d880e436c213d5eab)
+   contract.
+
+The Security subDAO implements a modified version of the single-choice proposal that only allows to send *pause()*
+messages to smart contracts.

@@ -71,20 +71,10 @@ const sidebars = {
                                 'neutron/feerefunder/client',
                                 'neutron/feerefunder/state'
                             ]
-                        },
-                        {
-                            type: 'category',
-                            label: 'Governance',
-                            items: [
-                                'neutron/gov/overview',
-                                'neutron/gov/messages',
-                                'neutron/gov/client',
-                                'neutron/gov/state',
-                                'neutron/gov/events'
-                            ]
-                        },
+                        }
                     ],
                 },
+                'neutron/dao',
                 'neutron/build',
                 'neutron/contribute',
             ],
