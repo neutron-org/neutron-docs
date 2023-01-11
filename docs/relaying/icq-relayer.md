@@ -83,9 +83,8 @@ This section contains description for all the possible config values that the Re
 - `RELAYER_STORAGE_PATH` — path to leveldb storage, will be created on the given path if it doesn't exist. It is required if `RELAYER_ALLOW_TX_QUERIES` is `true`;
 - `RELAYER_CHECK_SUBMITTED_TX_STATUS_DELAY` — delay in seconds between TX query submission and the result handling checking (more about this in the [TX submission section](#a-bit-of-technical-details-about-tx-submission));
 - `RELAYER_QUERIES_TASK_QUEUE_CAPACITY` — capacity of the channel that is used to send messages from subscriber to Relayer. Better set to a higher value to avoid problems with Tendermint websocket subscriptions;
-- `RELAYER_PROMETHEUS_PORT` — the port on which Prometheus metrics API is available.
+- `RELAYER_LISTEN_ADDR` — listener address for webserver json api you can query and prometheus metrics.
 - `RELAYER_INITIAL_TX_SEARCH_OFFSET` - Only for transaction queries. If set to non zero and no prior search height exists, it will initially set search height to (last_height - X). One example of usage of it will be if you have lots of old tx's on first start you don't need. Keep in mind that it will affect each newly created transaction query. To get a better understanding about how this works read the [dedicated section](#beacons-in-tx-queries).
-- `RELAYER_WEBSERVER_PORT` - the port on which webserver api is available.
 
 ### Logger configuration
 
@@ -135,7 +134,7 @@ docker run --env-file .env.example -p 9999:9999 neutron-org/neutron-query-relaye
 ```
 
 Notes:
-- `-p 9999:9999` exposes the port that allows access to the Relayer's metrics powered using Prometheus. The container's port will be the same as the `RELAYER_PROMETHEUS_PORT` value that is `9999` by default. Use another value if you are up to use a different port;
+- `-p 9999:9999` exposes the port that allows access to the webserver json api and Relayer's metrics powered using Prometheus. The container's port will be the same as the `RELAYER_LISTEN_ADDR` value that is `9999` by default. Use another value if you are up to use a different port;
 - add keyring passing to the volumes list. For example, assign `RELAYER_NEUTRON_CHAIN_HOME_DIR=/keyring` and run the app as:
 
 ```
@@ -144,7 +143,12 @@ docker run --env-file .env.example -v /Users/your-user/.neutrond:/keyring -p 999
 
 # Webserver API
 Relayer serves it's own JSON API and provides commands for querying info about it.
+It listens on port that is set in `RELAYER_LISTEN_ADDR` env
 
-Print available queries:
+- Print available queries:
 
 `go run ./cmd/neutron_query_relayer query`
+
+- Resubmit failed transactions:
+
+`go run ./cmd/neutron_query_relayer exec resubmit-tx <queryId> <transactionHash>`
