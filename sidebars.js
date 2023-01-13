@@ -71,7 +71,16 @@ const sidebars = {
                                 'neutron/feerefunder/client',
                                 'neutron/feerefunder/state'
                             ]
-                        }
+                        },
+                        {
+                            type: 'category',
+                            label: 'Fee Burner',
+                            items: [
+                                'neutron/feeburner/overview',
+                                'neutron/feeburner/client',
+                                'neutron/feeburner/state'
+                            ]
+                        },
                     ],
                 },
                 'neutron/dao',
