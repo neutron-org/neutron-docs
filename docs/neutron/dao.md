@@ -11,6 +11,11 @@ parts:
 1. The Neutron DAO,
 2. Multiple subDAOs.
 
+For privileged actions (e.g., changing network parameters and making software update proposals) Neutron uses
+the [admin-module](https://github.com/Ethernal-Tech/admin-module) fork managed by the Informal team. This module allows
+to specify a list of admin addresses that are able to submit proposals that are automatically executed. Neutron DAO
+smart contract address is added as an admin during genesis, allowing the DAO to manage the network as it sees fit. 
+
 ## Neutron DAO
 
 The Neutron DAO
