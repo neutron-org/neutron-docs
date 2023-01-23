@@ -1,29 +1,31 @@
 # Messages
 
+## InstantiateMsg
+
 ```rust
-pub enum ExecuteMsg {
-    TransferOwnership(String),
-    SetShares {
-        shares: Vec<(String, Uint128)>,
-    },
-    Fund {},
-    Claim {},
+pub struct InstantiateMsg {
+    /// Denom used for rewards distribution. All funds in any other denoms will be ignored.
+    pub denom: String,
+    /// The address of the main DAO. It's capable of pausing and unpausing the contract
+    pub main_dao_address: String,
+    /// The address of the DAO guardian. The security DAO is capable only of pausing the contract.
+    pub security_dao_address: String,
 }
 ```
 
-## TransferOwnership
+## ExecuteMsg
 
-Transfer the contract's ownership to another account. Can only be executed by owner.
-
-## SetShares
-
-Alter shareholder's weights. Can only be executed by owner.
-
-## Fund
-
-Send money to contract and distribute it between shareholders. Can be executed by anyone.
-
-## Claim
-
-Claim rewards if caller has any. Can be executed by anyone, but only shareholders are able
-to withdraw rewards successfully.
+```rust
+pub enum ExecuteMsg {
+    /// Transfer the contract's ownership to another account [permissioned - executable only by Main DAO]
+    TransferOwnership(String),
+    /// Alter shareholder's weights [permissioned - executable only by Main DAO]
+    SetShares {
+        shares: Vec<(String, Uint128)>,
+    },
+    /// Send money to contract and distribute it between shareholders [permissionless]
+    Fund {},
+    /// Claim rewards if caller has any [permissionless, but only shareholders are able to withdraw rewards]
+    Claim {},
+}
+```
