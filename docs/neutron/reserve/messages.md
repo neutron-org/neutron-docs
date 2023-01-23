@@ -5,8 +5,9 @@ Instantiated with this message:
 
 ```rust
 pub struct InstantiateMsg {
+    /// Denom in which Reserve will hold it's funds.
     pub denom: String,
-    /// The address of the main DAO. It's capable of pausing and unpausing the contract
+    /// The address of the main DAO. It's capable of pausing and unpausing the contract.
     pub main_dao_address: String,
     /// The address of the DAO guardian. The security DAO is capable only of pausing the contract.
     pub security_dao_address: String,
