@@ -3,8 +3,10 @@
 ```rust
 #[pausable_query]
 pub enum QueryMsg {
-    /// The contract's configurations; returns [`ConfigResponse`]
+    /// The contract's configurations; returns [`Config`]
     Config {},
+
+    /// The contract's current stats; returns [`StatsResponse`]
     Stats {},
 }
 ```
