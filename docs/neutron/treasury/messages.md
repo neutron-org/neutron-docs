@@ -1,8 +1,8 @@
 # Messages
 
-## MsgTransfer
+## ExecuteMsg
 
-```protobuf
+```rust
 #[pausable]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
