@@ -27,5 +27,11 @@ pub enum ExecuteMsg {
     Fund {},
     /// Claim rewards if caller has any [permissionless, but only shareholders are able to withdraw rewards]
     Claim {},
+    /// pause contract for specified duration [permissioned - executable only by Main DAO or Security DAO]
+    Pause {
+        duration: u64,
+    },
+    /// Unpause contract if paused [permissioned - executable only by Main DAO]
+    Unpause {},
 }
 ```

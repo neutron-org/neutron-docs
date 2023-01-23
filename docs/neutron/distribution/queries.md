@@ -5,6 +5,7 @@ pub enum QueryMsg {
     Config {},
     Pending {},
     Shares {},
+    PauseInfo {},
 }
 ```
 
@@ -30,3 +31,14 @@ Returns an array of `(address, amount)` pairs of pending rewards to be distribut
 ## Shares
 
 Returns an array of `(address, weight)` pairs of shareholders' weights.
+
+## PauseInfo
+
+Returns enum describing whether contract is paused, and if it is, also returns the height until which it is paused:
+
+```rust
+pub enum PauseInfoResponse {
+    Paused { until_height: u64 },
+    Unpaused {},
+}
+```
