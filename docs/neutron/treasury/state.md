@@ -11,17 +11,20 @@ pub enum QueryMsg {
 
 ## Config
 
-Returns current treasure contract configuration. Return has a following schema:
+Returns current treasury contract configuration. Returns an object with following schema:
 
 
 ```rust
 pub struct Config {
     /// Distribution rate (0-1) which goes to distribution contract
     pub distribution_rate: Decimal,
+
     /// Address of distribution contract, which will receive funds defined but distribution_rate %
     pub distribution_contract: Addr,
+
     /// Address of reserve contract, which will receive funds defined by 100-distribution_rate %
     pub reserve_contract: Addr,
+
     /// Minimum period between distribution calls
     pub min_period: u64,
 
@@ -34,14 +37,14 @@ pub struct Config {
     /// Address of the security DAO contract
     pub security_dao_address: Addr,
 
-    // Denomintator used int the vesting release function
+    // Denominator used in the vesting release function
     pub vesting_denominator: u128,
 }
 ```
 
 ## Stats
 
-Returns contract coins distribution stats. Return has a following schema:
+Returns contract coins distribution stats. Returns an object with following schema:
 
 ```rust
 pub struct StatsResponse {
@@ -58,7 +61,7 @@ pub struct StatsResponse {
 
 ## PauseInfo
 
-Returns pause state info. Return has a following schema:
+Returns pause state info. Returns an object with following schema:
 
 ```rust
 pub enum PauseInfoResponse {

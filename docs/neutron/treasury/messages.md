@@ -3,10 +3,10 @@
 ```rust
 #[pausable]
 pub enum ExecuteMsg {
-    /// Transfer the contract's ownership to another account
+    /// Transfer the contract's ownership to another account [permissioned - executable only by Main DAO]
     TransferOwnership(String),
 
-    /// Distribute pending funds between Bank and Distribution accounts
+    /// Distribute pending funds between Bank and Distribution accounts [permissionless]
     Distribute {},
 
     /// Update config [permissioned - executable only by Main DAO]
@@ -33,6 +33,7 @@ Transfer the contract's ownership to another account. Can be executed by `main_d
 
 
 ## Distribute
+
 Distribute pending funds between Bank and Distribution accounts. Can be executed by any address, but not more than `min_period` of heights between calls.
 
 ## UpdateConfig
@@ -41,13 +42,13 @@ Update treasury contract configuration. Permissioned, can be executed only by Ma
 
 ```rust
 UpdateConfig {
-    /// Distribution rate (0-1) which goes to distribution contract
+    /// Distribution rate [0; 1] which goes to distribution contract
     distribution_rate: Option<Decimal>,
 
     /// Minimum period between distribution calls in amount of blocks
     min_period: Option<u64>,
 
-    /// Address of distribution contract, which will receive funds defined but distribution_rate %
+    /// Address of distribution contract which will receive funds defined by distribution_rate %
     distribution_contract: Option<String>,
 
     /// Address of reserve contract, which will receive funds defined by 100-distribution_rate %
@@ -56,7 +57,7 @@ UpdateConfig {
     /// Address of the security DAO contract
     security_dao_address: Option<String>,
 
-    /// Denomintator used in the vesting release function
+    /// Denominator used in the vesting release function
     vesting_denominator: Option<u128>,
 ```
 
