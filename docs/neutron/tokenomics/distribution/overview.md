@@ -13,3 +13,9 @@ all coins pending for a given shareholder, if they are eligible for any, otherwi
 Contract can only be configured by DAO. DAO can do two things to this contract:
 - transfer ownership to anyone else;
 - alter shareholders' weights.
+
+## Deployment
+
+This is one of contracts that are prebaked and initialized into Neutron genesis.
+
+Initialization message contains Main DAO and Security DAO address.
