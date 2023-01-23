@@ -41,7 +41,7 @@ pub struct Config {
 
 ## Stats
 
-Returns contract coins distrivution stats. Return has a following schema:
+Returns contract coins distribution stats. Return has a following schema:
 
 ```rust
 pub struct StatsResponse {

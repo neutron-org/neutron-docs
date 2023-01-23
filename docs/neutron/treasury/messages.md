@@ -37,7 +37,7 @@ Distribute pending funds between Bank and Distribution accounts. Can be executed
 
 ## UpdateConfig
 
-Update treasury contract configuration. Permissioned can be executed only by Main DAO.
+Update treasury contract configuration. Permissioned, can be executed only by Main DAO.
 
 ```rust
 UpdateConfig {
