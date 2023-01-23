@@ -17,7 +17,6 @@ pub enum QueryMsg {
 Returns the current config for Reserve contract:
 
 ```rust
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct Config {
     /// Denom in which Reserve holds it's funds.
     pub denom: String,
