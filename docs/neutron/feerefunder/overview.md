@@ -21,7 +21,7 @@ The module requires smart-contracts, which use [Transfer](../transfer/messages#m
 * `ack_fee` - amount of coins to refund relayer for submittting ack message for a particular IBC packet (i.e. `500untrn`);
 * `timeout_fee` - amount of coins to refund relayer for submitting timeout message for a particular IBC packet (i.e. `500untrn`);
 * `recv_fee` - currently is used for compatibility with ICS-29 interface only and **must be set to zero** (i.e. `0untrn`), because Neutron's fee module can't refund relayers for submission of `Recv` IBC packets due to compatibility with target chains.
-* `payer` - optional address of the contract which will pay for the fees. Please note that payer must give allowance to the contract to spend fees.
+* `payer` - optional address which will pay for the fees. Please note that payer must give allowance to the contract to spend fees.
 
 > **Note:** the fees can be specified only in native Cosmos-SDK coins. CW-20 coins are not supported!
 
@@ -34,7 +34,7 @@ When a smart-contract issues `Transfer` or `SubmitTx` message, the fee Module de
 
     2. The fee payer can grant an allowance to a contract address, which allows the contract to use tokens from this address for the fees. Optionally, a limit, expire date, and period can be set, please refer to the [feegrant module's documentation in the Cosmos SDK](https://docs.cosmos.network/v0.46/modules/feegrant/) for more information.
 
-    3. When an interchain transaction is requested by a contract, the feerefunder module checks the allowance in general by using the feegrant module's GetAllowance function.
+    3. When an interchain transaction or transfer message is requested by a contract, the feerefunder module checks the allowance in general by using the feegrant module's GetAllowance function.
     
     4. The feerefunder module then calls the Accept method on the returned interface with the total fees as an argument to check if the contract has permission to use the required amount of tokens and to deduct them from the allowance.
     
