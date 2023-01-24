@@ -17,9 +17,9 @@ pub struct InstantiateMsg {
 }
 ```
 
-> Note that uploading and instantiation was already done before the chain start.
+> **Note:** uploading and instantiation was already done before the chain start.
 
-## Messages
+## ExecuteMsg
 
 Contract takes following messages:
 
@@ -34,10 +34,26 @@ pub enum ExecuteMsg {
         recipient: String,
     },
 
-    /// Pause the contract for `duration` amount of blocks [permissioned - executable only by Main DAO or the Security DAO]
+    /// Pause the contract for `duration` amount of blocks [permissioned - executable only by Main DAO or the Security SubDAO]
     Pause { duration: u64 },
 
     /// Unpause the contract [permissioned - executable only by the Main DAO]
     Unpause {},
 }
 ```
+
+### TransferOwnership
+
+Transfer the contract's ownership to another account. Can be executed by `main_dao_address` only.
+
+### Payout
+
+Send specified `amount` of funds to the `recipient` address. Can be executed by `main_dao_address` only.
+
+### Pause
+
+Pause the contract for `duration` amount of blocks. Can be executed only by `main_dao_address` or `security_dao_address`.
+
+### Unpause
+
+Unpause the contract. Can be executed by `main_dao_address_only`.

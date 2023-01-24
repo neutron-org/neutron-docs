@@ -10,7 +10,7 @@ transactions through Neutron’s IBC fee model. Transaction fees are paid in NTR
 
 ## Treasury, Reserve and Distribution Contract
 
-There is 3 contracts that manage Neutron’s funds:
+There are 3 contracts that manage Neutron’s funds:
 
 - [The Treasury](treasury/overview) holds the vested NTRNs and sends them to the Reserve and Distribution contracts. Treasury tokens are
   vested based on on-chain activity: the more NTRN tokens are burned while processing block fees (see above), the more
