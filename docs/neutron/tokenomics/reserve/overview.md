@@ -1,6 +1,8 @@
 # Overview
 
-**The Reserve** contract keeps and distribute funds vested from Treasury in form of one-off payments.
+This document describes the **Reserve contract** for the Neutron network.
+
+**The Reserve** contract keeps and distributes funds vested from Treasury in form of one-off payments.
 
 ## Deployment
 
