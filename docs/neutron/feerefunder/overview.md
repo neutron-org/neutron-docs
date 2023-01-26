@@ -30,19 +30,20 @@ When a smart-contract issues `Transfer` or `SubmitTx` message, the fee Module de
 <details>
     <summary>Details on Fee Payer</summary>
     
-    1. A fee payer is an address that holds tokens that can be used to pay for the interchain transaction fees.
+    * A fee payer is an address that holds tokens that can be used to pay for the interchain transaction fees.
 
-    2. The fee payer can grant an allowance to a contract address, which allows the contract to use tokens from this address for the fees. Optionally, a limit, expire date, and period can be set, please refer to the [feegrant module's documentation in the Cosmos SDK](https://docs.cosmos.network/v0.46/modules/feegrant/) for more information.
+    * The fee payer can grant an allowance to a contract address, which allows the contract to use tokens from this address for the fees. Optionally, a limit, expiration date and period can be set. Please refer to the [feegrant module's documentation in the Cosmos SDK](https://docs.cosmos.network/v0.46/modules/feegrant/) for more information.
 
-    3. When an interchain transaction or transfer message is requested by a contract, the feerefunder module checks the allowance in general by using the feegrant module's GetAllowance function.
+    * When an interchain transaction or transfer message is requested by a contract, the feerefunder module checks the allowance in general by using the feegrant module's GetAllowance function.
     
-    4. The feerefunder module then calls the Accept method on the returned interface with the total fees as an argument to check if the contract has permission to use the required amount of tokens and to deduct them from the allowance.
+    * The feerefunder module then calls the Accept method on the returned interface with the total fees as an argument to check if the contract has permission to use the required amount of tokens and to deduct them from the allowance.
     
-    5. If the allowance is enough for the interchain transaction, the contract can execute the transaction.
+    * If the allowance is enough for spending fee, the feerefunder module transfers fee from fee payer address to the module's escrow address and saves the fee payer address in state by PacketID.
+
+    * Then interchain transaction or transfer message is sent to the IBC module.
+
+    * When the IBC module receives the Ack or Timeout message, the module sends the specified amount of fee to the relayer from the escrow address and return the rest of fees to the fee payer's address.    
     
-    6. The feegrant module is responsible for ensuring that the contract has enough tokens to pay for the fees, if it doesn't have enough tokens, the transaction should return an error message.
-    
-    7. The payer field from the Fee struct is used to specify which address should be used to pay the fees.
 </details>
 
 > **Note:** the minimal amount of fee to be specified for the messages above is defined via parameter [`min_fee`](https://github.com/neutron-org/neutron/blob/9cdd583bd754d0e4d5f2e16d7414cf80151b205d/proto/feerefunder/params.proto#L13) controlled by governance proposal.
