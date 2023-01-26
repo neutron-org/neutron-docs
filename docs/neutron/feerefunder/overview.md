@@ -29,6 +29,8 @@ When a smart-contract issues `Transfer` or `SubmitTx` message, the Fee Refunder 
 
 <details>
     <summary>Details on Fee Payer</summary>
+<p></p>
+
     
 * A fee payer is an address that holds tokens that can be used to pay for the interchain transaction fees.
 
