@@ -27,7 +27,7 @@ The module requires smart-contracts, which use [Transfer](../transfer/messages#m
 
 When a smart-contract issues `Transfer` or `SubmitTx` message, the fee Module deduct the whole specified fee amount (`ack_fee + timeout_fee + recv_fee`) from contract address or from payer address (if it is defined and there is allowance from payer to contract address) and locks that amount in the module's escrow address. When a relayer submits `Ack` message for a particular packet, the module sends the specified amount of `ack_fee` to the relayer from the escrow address and return the specified `timeout_fee` to the contract (or fee payer) which issued the original `Transfer` or `SubmitTx` message. In case when relayer submits `Timeout` message, things go the other way around: the relayer is refunded with `timeout_fee` and the contract gets `ack_fee` back.
 
-<details>
+<details name="feedetails">
     <summary>Details on Fee Payer</summary>
     
 * A fee payer is an address that holds tokens that can be used to pay for the interchain transaction fees.
