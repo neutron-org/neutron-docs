@@ -20,8 +20,6 @@ service Query {
 
 ### fee-info [port-id] [channel-id] [sequence]
 
-Returns list of all failures.
-
 ```shell
 neutrond query feerefunder fee-info [port-id] [channel-id] [sequence]
 ```
