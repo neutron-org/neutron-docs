@@ -21,13 +21,13 @@ The module requires smart-contracts, which use [Transfer](../transfer/messages#m
 * `ack_fee` - amount of coins to refund relayer for submittting ack message for a particular IBC packet (i.e. `500untrn`);
 * `timeout_fee` - amount of coins to refund relayer for submitting timeout message for a particular IBC packet (i.e. `500untrn`);
 * `recv_fee` - currently is used for compatibility with ICS-29 interface only and **must be set to zero** (i.e. `0untrn`), because Neutron's fee module can't refund relayers for submission of `Recv` IBC packets due to compatibility with target chains.
-* `payer` - optional address which will pay for the fees. Please note that payer must give allowance to the contract to spend fees.
+* `payer` - optional address which will pay for the fees. Please note that payer must [give allowance](https://docs.cosmos.network/v0.46/modules/feegrant/01_concepts.html#grant) [#1](#feedetails) to the contract to spend fees.
 
 > **Note:** the fees can be specified only in native Cosmos-SDK coins. CW-20 coins are not supported!
 
-When a smart-contract issues `Transfer` or `SubmitTx` message, the fee Module deduct the whole specified fee amount (`ack_fee + timeout_fee + recv_fee`) from contract address or from payer address (if it is defined and there is allowance from payer to contract address) and locks that amount in the module's escrow address. When a relayer submits `Ack` message for a particular packet, the module sends the specified amount of `ack_fee` to the relayer from the escrow address and return the specified `timeout_fee` to the contract (or fee payer) which issued the original `Transfer` or `SubmitTx` message. In case when relayer submits `Timeout` message, things go the other way around: the relayer is refunded with `timeout_fee` and the contract gets `ack_fee` back.
+When a smart-contract issues `Transfer` or `SubmitTx` message, the Fee Refunder Module deducts the whole specified fee amount (`ack_fee + timeout_fee + recv_fee`) from contract address or from payer address (if it is defined and there is allowance from payer to contract address) and locks that amount in the module's escrow address. When a relayer submits `Ack` message for a particular packet, the module sends the specified amount of `ack_fee` to the relayer from the escrow address and return the specified `timeout_fee` to the contract (or fee payer) which issued the original `Transfer` or `SubmitTx` message. In case when relayer submits `Timeout` message, things go the other way around: the relayer is refunded with `timeout_fee` and the contract (or fee payer) gets `ack_fee` back.
 
-<details name="feedetails">
+<details>
     <summary>Details on Fee Payer</summary>
     
 * A fee payer is an address that holds tokens that can be used to pay for the interchain transaction fees.
