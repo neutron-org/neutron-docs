@@ -21,5 +21,5 @@ anybody.
 
 ## Deployment
 
-This is one of contracts that are initialized at Neutron genesis. Initialization message contains The Neutron DAO and
+This is one of the contracts that are initialized at Neutron genesis. Initialization message contains The Neutron DAO and
 Security DAO addresses.
