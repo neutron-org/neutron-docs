@@ -45,10 +45,12 @@ pub enum ExecuteMsg {
 ### TransferOwnership
 
 Transfer the contract's ownership to another account. Can be executed by `main_dao_address` only.
+This method accepts a single string, which should be an account address of new contract owner.
 
 ### Payout
 
 Send specified `amount` of funds to the `recipient` address. Can be executed by `main_dao_address` only.
+Reserve contract only operates on `denom` set during instantiation, and will only pay out funds in this denom.
 
 ### Pause
 
