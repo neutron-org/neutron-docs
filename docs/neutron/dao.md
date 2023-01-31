@@ -116,7 +116,7 @@ messages to smart contracts.
 3. We use [Voting Registry Contract](/neutron/dao#voting-power-registry) instead of Voting Module Contract;
 4. Vanilla `Response` is replaced with `Response<NeutronMsg>`;
 5. CW20 and CW721 handlers are removed (`ExecuteMsg::Receive`, `ExecuteMsg::ReceiveNft`, `ExecuteMsg::UpdateCw20List`,
-`ExecuteMsg::UpdateCw721List` msg are removed).
+`ExecuteMsg::UpdateCw721List` messages are removed).
 
 ### Pre-Propose Contracts (Single and Multiple)
 1. `CosmosMsg<Empty>` is replaced with `CosmosMsg<NeutronMsg>`;
