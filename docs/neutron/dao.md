@@ -128,7 +128,7 @@ messages to smart contracts.
 ### Proposal Single Contract
 1. Couple of changes in dependency versions;
 2. `CosmosMsg<Empty>` is replaced with `CosmosMsg<NeutronMsg>`;
-3. `only_members_execute` field is removed from `Config` (and all the corresponding checks of the field);
+3. `only_members_execute` field is removed from `Config` with all the corresponding logic;
 4. [`IsActive`](https://github.com/DA0-DA0/dao-contracts/blob/9e496379a1c1e89e00133865c9a1041dfdb20612/contracts/proposal/cwd-proposal-single/src/contract.rs#L173) query to a voting module is removed;
 5. Migration logic from `V1` is removed;
 
