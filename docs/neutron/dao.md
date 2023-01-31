@@ -111,7 +111,7 @@ messages to smart contracts.
 
 ### DAO Core Contract
 1. Admin functionality is removed (`ExecuteMsg::ExecuteAdminMsgs`, `ExecuteMsg::NominateAdmin`, `ExecuteMsg::AcceptAdminNomination`,
-`ExecuteMsg::WithdrawAdminNomination` messages are removed and all the corresponding handlers);
+`ExecuteMsg::WithdrawAdminNomination` messages are removed with all the corresponding handlers);
 2. Some config fields are removed (`image_url`, `automatically_add_cw20s`, `automatically_add_cw721s`);
 3. We use [Voting Registry Contract](/neutron/dao#voting-power-registry) instead of Voting Module Contract;
 4. Vanilla `Response` is replaced with `Response<NeutronMsg>`;
