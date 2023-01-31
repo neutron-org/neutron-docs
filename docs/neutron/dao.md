@@ -144,7 +144,7 @@ but we use vanilla **CW4 Group** and **CW4 Voting** precompiled contract binarie
 and [Bonding Vault Contract](/neutron/dao#neutron-bonding-vault).
 
 ### SubDao contracts
-Generally speaking all **SubDao** contracts has the same functionality and diff as **DAO Core** contracts except:
+Generally speaking, all **SubDao** contracts have the same functionality and diff as **DAO Core** contracts except:
 * [Pausing logic](https://github.com/neutron-org/neutron-dao/blob/448c7c91e85ccd02d13fdaf7cddb66f04abf8ca9/contracts/subdaos/cwd-subdao-core/src/contract.rs#L128) - **SubDAO** contract can be paused by **Core DAO** contract or by special **Security SubDAO** contract.
 But **SubDAO Core** can be unpaused only by main **Core DAO** contract;
 * Completely new [**Timelock contract**](/neutron/dao#timelocks--overrules) is introduced;
