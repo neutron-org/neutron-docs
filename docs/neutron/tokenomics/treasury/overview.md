@@ -2,7 +2,7 @@
 
 This document describes the Treasury contract for the Neutron network.
 
-**The Treasury** contract holds the vested NTRNs, and sends them to the Reserve and Distribution contracts. This contract is owned by the Neutron DAO and is instantiated at genesis. It is responsible for the first step of tokens
+**The Treasury** contract holds the vested NTRNs, and sends them to the [Reserve](../reserve/overview.md) and [Distribution](../distribution/overview.md) contracts. This contract is owned by the Neutron DAO and is instantiated at genesis. It is responsible for the first step of tokens
 distribution.
 
 Treasury contract can be configured only by the Neutron DAO. The `distribute` call is permissionless and can be called by anybody.
@@ -29,5 +29,5 @@ The amount of coins to distribute and the amount of coins to reserve are then ca
 
 ## Deployment
 
-This is one of the contracts that are initialized at Neutron genesis. Initialization message contains The Neutron DAO and
+This is one of the contracts that are initialized at Neutron genesis. [Initialization message](./messages.md) contains The Neutron DAO and
 Security DAO addresses.

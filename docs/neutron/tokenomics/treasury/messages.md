@@ -1,5 +1,35 @@
 # Messages
 
+## InstantiateMsg
+```rust
+pub struct InstantiateMsg {
+    /// Address of the main DAO contract
+    pub main_dao_address: String,
+
+    /// Denom of the main coin
+    pub denom: String,
+
+    /// Distribution rate [0;1] which goes to distribution contract
+    pub distribution_rate: Decimal,
+
+    /// Minimum period between distribution calls
+    pub min_period: u64,
+
+    /// Address of distribution contract
+    pub distribution_contract: String,
+
+    /// Address of reserve contract
+    pub reserve_contract: String,
+
+    /// Address of security DAO contract
+    pub security_dao_address: String,
+
+    /// Vesting release function denominator
+    pub vesting_denominator: u128,
+}
+```
+
+## ExecuteMsg
 ```rust
 #[pausable]
 pub enum ExecuteMsg {
@@ -27,16 +57,16 @@ pub enum ExecuteMsg {
 }
 ```
 
-## TransferOwnership 
+### TransferOwnership 
 
 Transfer the contract's ownership to another account. Can be executed by `main_dao_address` only.
 
 
-## Distribute
+### Distribute
 
 Distribute pending funds between Bank and Distribution accounts. Can be executed by any address, but not more than `min_period` of heights between calls.
 
-## UpdateConfig
+### UpdateConfig
 
 Update treasury contract configuration. Permissioned, can be executed only by Main DAO.
 
@@ -61,10 +91,10 @@ UpdateConfig {
     vesting_denominator: Option<u128>,
 ```
 
-## Pause
+### Pause
 
-Pause contract for `duration` amount of blocks.
+Pause contract for `duration` amount of blocks. Permissioned can be executed only by Main DAO or the Security DAO. If contract is in paused state it disables `exectue` method processing for any message except `Pause` and `Unpause`.
 
-## Unpause
+### Unpause
 
-Unpause paused contract
+Unpause paused contract. Permissioned can be executed only by Main DAO.
