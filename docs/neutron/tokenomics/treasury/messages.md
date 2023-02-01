@@ -93,7 +93,7 @@ UpdateConfig {
 
 ### Pause
 
-Pause contract for `duration` amount of blocks. Permissioned can be executed only by Main DAO or the Security DAO. If contract is in paused state it disables `exectue` method processing for any message except `Pause` and `Unpause`.
+Pause contract for `duration` amount of blocks. Permissioned can be executed only by Main DAO or the Security DAO. If contract is in paused state it disables `execute` method processing for any message except `Pause` and `Unpause`.
 
 ### Unpause
 
