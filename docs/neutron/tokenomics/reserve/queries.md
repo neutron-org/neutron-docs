@@ -21,7 +21,7 @@ pub struct Config {
     /// Denom in which Reserve holds it's funds.
     pub denom: String,
 
-    /// The address of the main DAO. It's capable of pausing and unpausing the contract.
+    /// The address of the Neutron DAO. It's capable of pausing and unpausing the contract.
     pub main_dao_address: Addr,
 
     /// The address of the DAO guardian. The security DAO is capable only of pausing the contract.

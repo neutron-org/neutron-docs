@@ -33,7 +33,7 @@ pub struct Config {
     /// Denom of the main coin
     pub denom: String,
 
-    /// Address of the main DAO contract
+    /// Address of the Neutron DAO contract
     pub main_dao_address: Addr,
 
     /// Address of the security DAO contract

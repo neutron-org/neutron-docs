@@ -3,7 +3,7 @@
 ## InstantiateMsg
 ```rust
 pub struct InstantiateMsg {
-    /// Address of the main DAO contract
+    /// Address of the Neutron DAO contract
     pub main_dao_address: String,
 
     /// Denom of the main coin
@@ -33,13 +33,13 @@ pub struct InstantiateMsg {
 ```rust
 #[pausable]
 pub enum ExecuteMsg {
-    /// Transfer the contract's ownership to another account [permissioned - executable only by Main DAO]
+    /// Transfer the contract's ownership to another account [permissioned - executable only by Neutron DAO]
     TransferOwnership(String),
 
     /// Distribute pending funds between Bank and Distribution accounts [permissionless]
     Distribute {},
 
-    /// Update config [permissioned - executable only by Main DAO]
+    /// Update config [permissioned - executable only by Neutron DAO]
     UpdateConfig {
         distribution_rate: Option<Decimal>,
         min_period: Option<u64>,
@@ -49,10 +49,10 @@ pub enum ExecuteMsg {
         vesting_denominator: Option<u128>,
     },
 
-    /// Pause the contract for `duration` amount of blocks [permissioned - executable only by Main DAO or the Security DAO]
+    /// Pause the contract for `duration` amount of blocks [permissioned - executable only by Neutron DAO or the Security DAO]
     Pause { duration: u64 },
     
-    /// Unpauses the contract [permissioned - executable only by Main DAO]
+    /// Unpauses the contract [permissioned - executable only by Neutron DAO]
     Unpause {},
 }
 ```
@@ -68,7 +68,7 @@ Distribute pending funds between Bank and Distribution accounts. Can be executed
 
 ### UpdateConfig
 
-Update treasury contract configuration. Permissioned, can be executed only by Main DAO.
+Update treasury contract configuration. Permissioned, can be executed only by [Neutron DAO](/docs/neutron/dao.md#neutron-dao).
 
 ```rust
 UpdateConfig {
@@ -93,8 +93,8 @@ UpdateConfig {
 
 ### Pause
 
-Pause contract for `duration` amount of blocks. Permissioned can be executed only by Main DAO or the Security DAO. If contract is in paused state it disables `execute` method processing for any message except `Pause` and `Unpause`.
+Pause contract for `duration` amount of blocks. Permissioned can be executed only by [Neutron DAO](/docs/neutron/dao.md#neutron-dao) or the Security DAO. If contract is in paused state it disables `execute` method processing for any message except `Pause` and `Unpause`.
 
 ### Unpause
 
-Unpause paused contract. Permissioned can be executed only by Main DAO.
+Unpause paused contract. Permissioned can be executed only by [Neutron DAO](/docs/neutron/dao.md#neutron-dao).

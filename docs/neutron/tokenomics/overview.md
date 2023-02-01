@@ -16,7 +16,7 @@ There are 3 contracts that manage Neutron’s funds:
   vested based on on-chain activity: the more NTRN tokens are burned while processing block fees (see above), the more
   tokens get unlocked in the treasury;
 - [The Reserve](reserve/overview) contract keeps the funds that have already vested, but were not sent to the Distribution contract. It
-  is used by the neutron DAO for one-off payouts;
+  is used by the [Neutron DAO](/docs/neutron/dao.md#neutron-dao) for one-off payouts;
 - [The Distribution](distribution/overview) contract is responsible for the second step of token distribution where tokens sent to this
   contract are distributed between `share holders`, where `share holders` are a configurable set of addresses with
   number of shares. This contract allows shareholders to withdraw collected tokens.
