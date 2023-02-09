@@ -52,7 +52,7 @@ Re-voting should be disabled for such proposals (execute immediately after the t
 ## subDAOs
 
 The Neutron DAO creates subDAOs by executing Neutron DAO proposals that contain *Instantiate* messages for the subDAO
-contracts. At the launch time, only the *Multisig-type* subDAO will be available, which is similar to the main DAO, but
+contracts. At the launch time, only the *Multisig-type* subDAO will be available, which is similar to the Neutron DAO, but
 uses the [cw4 voting module](https://github.com/DA0-DA0/dao-contracts/tree/main/contracts/voting/dao-voting-cw4)
 implementation for voting power (that’s where the multisig logic is implemented).
 
@@ -93,12 +93,9 @@ be executed.
 There is a special *Security subDAO* that can only execute *pause()* methods on the following contracts:
 
 1. All other subDAOs;
-2. [Treasury](https://www.notion.so/Treasury-and-Distribution-Technical-Design-44a57336ea11457d880e436c213d5eab)
-   contract;
-3. [Distribution](https://www.notion.so/Treasury-and-Distribution-Technical-Design-44a57336ea11457d880e436c213d5eab)
-   contract;
-4. [Reserve](https://www.notion.so/Treasury-and-Distribution-Technical-Design-44a57336ea11457d880e436c213d5eab)
-   contract.
+2. [Treasury](/docs/neutron/tokenomics/treasury/overview.md) contract;
+3. [Distribution](/docs/neutron/tokenomics/distribution/overview.md) contract;
+4. [Reserve](/docs/neutron/tokenomics/reserve/overview.md) contract.
 
 The Security subDAO implements a modified version of the single-choice proposal that only allows to send `pause()`
 messages to smart contracts.
