@@ -68,7 +68,7 @@ Distribute pending funds between Bank and Distribution accounts. Can be executed
 
 ### UpdateConfig
 
-Update treasury contract configuration. Permissioned, can be executed only by [Neutron DAO](/docs/neutron/dao.md#neutron-dao).
+Update treasury contract configuration. Permissioned, can be executed only by [Neutron DAO](/docs/neutron/dao/overview.md#neutron-dao).
 
 ```rust
 UpdateConfig {
@@ -93,8 +93,8 @@ UpdateConfig {
 
 ### Pause
 
-Pause contract for `duration` amount of blocks. Permissioned can be executed only by [Neutron DAO](/docs/neutron/dao.md#neutron-dao) or the Security DAO. If contract is in paused state it disables `execute` method processing for any message except `Pause` and `Unpause`.
+Pause contract for `duration` amount of blocks. Permissioned can be executed only by [Neutron DAO](/docs/neutron/dao/overview.md#neutron-dao) or the Security DAO. If contract is in paused state it disables `execute` method processing for any message except `Pause` and `Unpause`.
 
 ### Unpause
 
-Unpause paused contract. Permissioned can be executed only by [Neutron DAO](/docs/neutron/dao.md#neutron-dao).
+Unpause paused contract. Permissioned can be executed only by [Neutron DAO](/docs/neutron/dao/overview.md#neutron-dao).
