@@ -2,10 +2,10 @@
 
 This document describes the Treasury contract for the Neutron network.
 
-**The Treasury** contract holds the vested NTRNs, and sends them to the [Reserve](../reserve/overview.md) and [Distribution](../distribution/overview.md) contracts. This contract is owned by the [Neutron DAO](/docs/neutron/dao.md#neutron-dao) and is instantiated at genesis. It is responsible for the first step of tokens
+**The Treasury** contract holds the vested NTRNs, and sends them to the [Reserve](../reserve/overview.md) and [Distribution](../distribution/overview.md) contracts. This contract is owned by the [Neutron DAO](/docs/neutron/dao/overview.md#neutron-dao) and is instantiated at genesis. It is responsible for the first step of tokens
 distribution.
 
-Treasury contract can be configured only by the [Neutron DAO](/docs/neutron/dao.md#neutron-dao). The `distribute` call is permissionless and can be called by anybody.
+Treasury contract can be configured only by the [Neutron DAO](/docs/neutron/dao/overview.md#neutron-dao). The `distribute` call is permissionless and can be called by anybody.
 
 Treasury coins are vested based on on-chain activity: the more NTRN coins are burned while processing block fees (see above), the more tokens distributed from the Treasury.
 

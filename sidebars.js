@@ -117,7 +117,14 @@ const sidebars = {
                         }
                     ]
                 },
-                'neutron/dao',
+                {
+                    type: 'category',
+                    label: 'Neutron DAO',
+                    items: [
+                        'neutron/dao/overview',
+                        'neutron/dao/dao-dao-diff',
+                    ],
+                },
                 'neutron/build',
                 'neutron/contribute',
             ],

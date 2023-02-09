@@ -1,6 +1,4 @@
-# DAO
-
-## Overview
+# Overview
 
 ![Governance.png](/img/governance.png)
 
@@ -14,7 +12,7 @@ parts:
 For privileged actions (e.g., changing network parameters and making software update proposals) Neutron uses
 the [admin-module](https://github.com/Ethernal-Tech/admin-module) fork managed by the Informal team. This module allows
 to specify a list of admin addresses that are able to submit proposals that are automatically executed. Neutron DAO
-smart contract address is added as an admin during genesis, allowing the DAO to manage the network as it sees fit. 
+smart contract address is added as an admin during genesis, allowing the DAO to manage the network as it sees fit.
 
 ## Neutron DAO
 
@@ -99,5 +97,5 @@ There is a special *Security subDAO* that can only execute *pause()* methods on 
 3. [Distribution](/docs/neutron/tokenomics/distribution/overview.md) contract;
 4. [Reserve](/docs/neutron/tokenomics/reserve/overview.md) contract.
 
-The Security subDAO implements a modified version of the single-choice proposal that only allows to send *pause()*
+The Security subDAO implements a modified version of the single-choice proposal that only allows to send `pause()`
 messages to smart contracts.
