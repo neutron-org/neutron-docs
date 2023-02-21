@@ -4,41 +4,37 @@ This contract accepts these query msgs:
 
 ```rust
 pub enum QueryMsg {
-    /// The contract's configuration
-    Config {}, // returns `Config`
+    /// Multiplies a token amount (token that's present in the target pool for the TWAP) by the latest TWAP value for that token.
+    Consult {}, // returns `AssetInfo, Uint256`
 
-    /// The contract's pause info
-    PauseInfo {}, // returns `PauseInfoResponse`
+    /// Returns token TWAP value for given height.
+    TWAPAtHeight {}, // returns `AssetInfo, Uint256`
 }
 ```
 
-## Config
 
-Returns the current config for Reserve contract:
+## Consult
+See [original documentation](https://docs.astroport.fi/docs/develop/smart-contracts/oracle#consult)
 
+## TWAPAtHeight
+Returns token TWAP value for given height.
 ```rust
-pub struct Config {
-    /// Denom in which Reserve holds it's funds.
-    pub denom: String,
-
-    /// The address of the Neutron DAO. It's capable of pausing and unpausing the contract.
-    pub main_dao_address: Addr,
-
-    /// The address of the DAO guardian. The security DAO is capable only of pausing the contract.
-    pub security_dao_address: Addr,
+#[returns(Vec<(AssetInfo, Decimal256)>)]
+TWAPAtHeight {
+/// The asset for which to compute a new TWAP value
+    token: AssetInfo,
+/// The amount of tokens for which to compute the token price
+    height: Uint64,
 }
 ```
 
-## PauseInfo
+ **token**: token for which we getting its historicalTWAP value.
+**height**: height, on which we receive TWAP.
 
-Returns the current pause info for the Reserve contract:
+### returns
 
-```rust
-pub enum PauseInfoResponse {
-    /// Contract is paused until `until_height` block is reached
-    Paused { until_height: u64 },
+_Vec(AssetInfo, Decimal256)_
 
-    /// Contract is not paused
-    Unpaused {},
-}
-```
+- [AssetInfo](https://docs.astroport.fi/docs/develop/smart-contracts/common-types#assetinfo)
+- Decimal256: TWAP value for returned asset
+
