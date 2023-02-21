@@ -8,7 +8,7 @@ pub enum QueryMsg {
     Consult {}, // returns `AssetInfo, Uint256`
 
     /// Returns token TWAP value for given height.
-    TWAPAtHeight {}, // returns `AssetInfo, Uint256`
+    TWAPAtHeight {}, // returns `AssetInfo, Deciimal256`
 }
 ```
 
@@ -28,7 +28,7 @@ TWAPAtHeight {
 }
 ```
 
- **token**: token for which we getting its historicalTWAP value.
+ **token**: token for which we're getting its historical TWAP value.
 **height**: height, on which we receive TWAP.
 
 ### returns
