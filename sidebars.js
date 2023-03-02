@@ -125,6 +125,14 @@ const sidebars = {
                         'neutron/dao/dao-dao-diff',
                     ],
                 },
+                {
+                    type: 'category',
+                    label: 'TGE',
+                    items: [
+                        'neutron/token-generation-event/overview',
+                        'neutron/token-generation-event/credits',
+                    ],
+                },
                 'neutron/build',
                 'neutron/contribute',
             ],
