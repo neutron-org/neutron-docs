@@ -24,7 +24,7 @@ DAO also executes `Mint()` with NTRN's to create CUNTRN funds in 1:1 proportion 
 3. DAO executes `Mint()` along with NTRN's funds, that mints CUNTRNS in 1:1 proportion and assigns them to airdrop contract balance
 
 ### Airdrop distribution
-1. Airdrop calculates amount of needed airdrops for users and uses `Transfer(recipient, amount)` together with `AddVesting(address, amount, start_time, duration)` to transfer funds and set vesting schedule (Always a linear vesting with 0 CLIFF time).
+1. Airdrop calculates the amount of airdrops for users and uses `Transfer(recipient, amount)` together with `AddVesting(address, amount, start_time, duration)` to transfer funds and set vesting schedule (Always a linear vesting with 0 CLIFF time).
 2. Users that have CUNTRN's on balance, have two ways of getting NTRN's:
 - can execute `Withdraw()` to burn CNTRNs and get NTRN's according to the vesting schedule. They can look into how much they can withdraw now using `WithdrawableAmount(address)` query. `Withdraw()` can be called only after `config.when_withdrawable` passed (Should be set to lockdrop phase 2 end).
 - lockdrop can execute `BurnFrom(owner, amount)` to send `amount` of NTRN's to `owner` (This action skips vesting as a reward for lockdrop participation).
