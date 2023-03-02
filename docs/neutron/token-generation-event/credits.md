@@ -12,7 +12,7 @@ Modifications include:
 - `Burn`/`BurnFrom`/`Withdraw` not only burns tokens, but also transfers NTRN's to addresses in 1:1 proportion to burned ucNTRNs
 - `Withdraw` has a vesting mechanism attached (tokens are linearly vested for a given amount of time)
 
-Contract instantiated by DAO and holds airdrop and lockdrop contract addresses for permission purposes.
+The contract is owned by the Neutron DAO and needs to know airdrop and lockdrop contract addresses for permission purposes.
 
 DAO also executes `Mint()` with NTRN's to create CUNTRN funds in 1:1 proportion and assigns CUNTRN funds to the airdrop address.
 
