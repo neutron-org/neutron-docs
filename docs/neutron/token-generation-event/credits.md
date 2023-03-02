@@ -7,7 +7,7 @@ Used as a CW20 token for distributing (vesting) airdropped tokens.
 
 Basically it's a modified for our purposes CW20 token that holds balances for addresses and can transfer them to others.
 Modifications include:
-- mint mints to the airdrop address only and requires NTRN's sent along
+- `Mint` mints to the airdrop address only and requires NTRN's sent along
 - specific permissions for some operations
 - burn/burn_from/withdraw not only burns tokens, but also transfers NTRN's to addresses in 1:1 proportion to burned cuntrns
 - withdraw has a vesting mechanism attached
