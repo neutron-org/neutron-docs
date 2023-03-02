@@ -9,7 +9,7 @@ Basically it's a modified for our purposes CW20 token that holds balances for ad
 Modifications include:
 - `Mint` mints to the airdrop address only and requires NTRN's sent along
 - specific permissions for some operations
-- burn/burn_from/withdraw not only burns tokens, but also transfers NTRN's to addresses in 1:1 proportion to burned cuntrns
+- `Burn`/`BurnFrom`/`Withdraw` not only burns tokens, but also transfers NTRN's to addresses in 1:1 proportion to burned ucNTRNs
 - withdraw has a vesting mechanism attached
 
 Contract instantiated by DAO and holds airdrop and lockdrop contract addresses for permission purposes.
