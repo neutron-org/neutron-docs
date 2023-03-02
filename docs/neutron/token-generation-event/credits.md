@@ -10,7 +10,7 @@ Modifications include:
 - `Mint` mints to the airdrop address only and requires NTRN's sent along
 - specific permissions for some operations
 - `Burn`/`BurnFrom`/`Withdraw` not only burns tokens, but also transfers NTRN's to addresses in 1:1 proportion to burned ucNTRNs
-- withdraw has a vesting mechanism attached
+- `Withdraw` has a vesting mechanism attached (tokens are linearly vested for a given amount of time)
 
 Contract instantiated by DAO and holds airdrop and lockdrop contract addresses for permission purposes.
 
