@@ -127,10 +127,17 @@ const sidebars = {
                 },
                 {
                     type: 'category',
-                    label: 'TGE',
+                    label: 'Token Generation Event',
                     items: [
-                        'neutron/token-generation-event/overview',
-                        'neutron/token-generation-event/credits',
+                        {
+                            type: 'category',
+                            label: 'Credits',
+                            items: [
+                                'neutron/token-generation-event/credits/overview',
+                                'neutron/token-generation-event/credits/messages',
+                                'neutron/token-generation-event/credits/queries',
+                            ]
+                        }
                     ],
                 },
                 'neutron/build',
