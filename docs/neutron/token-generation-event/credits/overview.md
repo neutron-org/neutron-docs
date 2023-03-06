@@ -29,7 +29,7 @@ Users can use query `WithdrawableAmount` to find out how much tokens he can `Wit
 
 ### Airdrop distribution
 1. Airdrop calculates the amount of airdrops for users and uses `Transfer(recipient, amount)` together with `AddVesting(address, amount, start_time, duration)` to transfer funds and set vesting schedule (Always a linear vesting with 0 CLIFF time).
-2. There are two ways of burning cNTRN's and sending untrn to user:
+2. There are two ways of burning cNTRN and sending untrn to user:
 - users can execute `Withdraw()` to burn cNTRN and get untrn according to the vesting schedule. They can look into how much they can withdraw now using `WithdrawableAmount(address)` query. `Withdraw()` can be called only after `config.when_withdrawable` passed (Should be set to lockdrop phase 2 end).
 - lockdrop can execute `BurnFrom(owner, amount)` to send `amount` of untrn to `owner` (This action skips vesting as a reward for lockdrop participation).
 > NOTE: `BurnFrom` does not affect vested amounts. So for example if user can get 200 untrn from `Withdraw()`, he will get exactly 200 untrn even if `BurnFrom` is called just prior to this. `Withdraw()` method also has additional check to ensure that no more than user balance will be withdrawn.
