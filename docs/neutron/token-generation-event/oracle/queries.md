@@ -1,6 +1,6 @@
 # Queries
 
-This contract accepts these query msgs:
+This contract accepts the following query msgs:
 
 ```rust
 pub enum QueryMsg {
