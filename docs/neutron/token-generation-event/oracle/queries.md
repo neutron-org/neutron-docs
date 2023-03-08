@@ -3,12 +3,24 @@
 This contract accepts the following query msgs:
 
 ```rust
+// This structure describes the query messages available in the contract.
 pub enum QueryMsg {
-    /// Multiplies a token amount (token that's present in the target pool for the TWAP) by the latest TWAP value for that token.
-    Consult {}, // returns `AssetInfo, Uint256`
-
-    /// Returns token TWAP value for given height.
-    TWAPAtHeight {}, // returns `AssetInfo, Deciimal256`
+    /// Calculates a new TWAP with updated precision
+    #[returns(Vec<(AssetInfo, Uint256)>)]
+    Consult {
+        /// The asset for which to compute a new TWAP value
+        token: AssetInfo,
+        /// The amount of tokens for which to compute the token price
+        amount: Uint128,
+    },
+    /// Returns token TWAP value for given asset & height.
+    #[returns(Vec<(AssetInfo, Decimal256)>)]
+    TWAPAtHeight {
+        /// The asset for which to compute a new TWAP value
+        token: AssetInfo,
+        /// The amount of tokens for which to compute the token price
+        height: Uint64,
+    },
 }
 ```
 

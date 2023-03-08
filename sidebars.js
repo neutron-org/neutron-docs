@@ -137,6 +137,14 @@ const sidebars = {
                                 'neutron/token-generation-event/credits/messages',
                                 'neutron/token-generation-event/credits/queries',
                             ]
+                        },
+                        {
+                            type: 'category',
+                            label: 'Oracle',
+                            items: [
+                                'neutron/token-generation-event/oracle/overview',
+                                'neutron/token-generation-event/oracle/queries',
+                            ]
                         }
                     ],
                 },
