@@ -19,7 +19,7 @@ DAO executes `Mint()` with untrn sent along to mint cNTRN funds in 1:1 proportio
 
 Vesting algorithm is linear with no cliff.
 
-Users can use query `WithdrawableAmount` to find out how much tokens he can `Withdraw()` now.
+Users can use query `WithdrawableAmount` to find out how many tokens they can `Withdraw()` now.
 
 ## Main usage scenarios
 
