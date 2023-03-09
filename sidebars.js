@@ -125,6 +125,29 @@ const sidebars = {
                         'neutron/dao/dao-dao-diff',
                     ],
                 },
+                {
+                    type: 'category',
+                    label: 'Token Generation Event',
+                    items: [
+                        {
+                            type: 'category',
+                            label: 'Credits',
+                            items: [
+                                'neutron/token-generation-event/credits/overview',
+                                'neutron/token-generation-event/credits/messages',
+                                'neutron/token-generation-event/credits/queries',
+                            ]
+                        },
+                        {
+                            type: 'category',
+                            label: 'Oracle',
+                            items: [
+                                'neutron/token-generation-event/oracle/overview',
+                                'neutron/token-generation-event/oracle/queries',
+                            ]
+                        }
+                    ],
+                },
                 'neutron/build',
                 'neutron/contribute',
             ],
