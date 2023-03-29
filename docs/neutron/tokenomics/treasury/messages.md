@@ -1,100 +1,61 @@
-# Messages
+o# Messages
 
-## InstantiateMsg
+## Instantiate
+
+Instantiated with this message:
+
 ```rust
 pub struct InstantiateMsg {
-    /// Address of the Neutron DAO contract
-    pub main_dao_address: String,
-
-    /// Denom of the main coin
+    /// Denom in which Treasury will hold it's funds.
     pub denom: String,
 
-    /// Distribution rate [0;1] which goes to distribution contract
-    pub distribution_rate: Decimal,
+    /// The address of the Neutron DAO. It's capable of pausing and unpausing the contract.
+    pub main_dao_address: String,
 
-    /// Minimum period between distribution calls
-    pub min_period: u64,
-
-    /// Address of distribution contract
-    pub distribution_contract: String,
-
-    /// Address of reserve contract
-    pub reserve_contract: String,
-
-    /// Address of security DAO contract
+    /// The address of the DAO guardian. The security DAO is capable only of pausing the contract.
     pub security_dao_address: String,
-
-    /// Vesting release function denominator
-    pub vesting_denominator: u128,
 }
 ```
 
+> **Note:** uploading and instantiation was already done before the chain start.
+
 ## ExecuteMsg
+
+Contract takes following messages:
+
 ```rust
-#[pausable]
 pub enum ExecuteMsg {
     /// Transfer the contract's ownership to another account [permissioned - executable only by Neutron DAO]
     TransferOwnership(String),
 
-    /// Distribute pending funds between Bank and Distribution accounts [permissionless]
-    Distribute {},
-
-    /// Update config [permissioned - executable only by Neutron DAO]
-    UpdateConfig {
-        distribution_rate: Option<Decimal>,
-        min_period: Option<u64>,
-        distribution_contract: Option<String>,
-        reserve_contract: Option<String>,
-        security_dao_address: Option<String>,
-        vesting_denominator: Option<u128>,
+    /// Payout specified `amount` of funds to the `recipient` address [permissioned - executable only by Neutron DAO]
+    Payout {
+        amount: Uint128,
+        recipient: String,
     },
 
-    /// Pause the contract for `duration` amount of blocks [permissioned - executable only by Neutron DAO or the Security DAO]
+    /// Pause the contract for `duration` amount of blocks [permissioned - executable only by Neutron DAO or the Security SubDAO]
     Pause { duration: u64 },
-    
-    /// Unpauses the contract [permissioned - executable only by Neutron DAO]
+
+    /// Unpause the contract [permissioned - executable only by the Neutron DAO]
     Unpause {},
 }
 ```
 
-### TransferOwnership 
+### TransferOwnership
 
 Transfer the contract's ownership to another account. Can be executed by `main_dao_address` only.
+This method accepts a single string, which should be an account address of new contract owner.
 
+### Payout
 
-### Distribute
-
-Distribute pending funds between Bank and Distribution accounts. Can be executed by any address, but not more than `min_period` of heights between calls.
-
-### UpdateConfig
-
-Update treasury contract configuration. Permissioned, can be executed only by [Neutron DAO](/docs/neutron/dao/overview.md#neutron-dao).
-
-```rust
-UpdateConfig {
-    /// Distribution rate [0; 1] which goes to distribution contract
-    distribution_rate: Option<Decimal>,
-
-    /// Minimum period between distribution calls in amount of blocks
-    min_period: Option<u64>,
-
-    /// Address of distribution contract which will receive funds defined by distribution_rate %
-    distribution_contract: Option<String>,
-
-    /// Address of reserve contract, which will receive funds defined by 100-distribution_rate %
-    reserve_contract: Option<String>,
-
-    /// Address of the security DAO contract
-    security_dao_address: Option<String>,
-
-    /// Denominator used in the vesting release function
-    vesting_denominator: Option<u128>,
-```
+Send specified `amount` of funds to the `recipient` address. Can be executed by `main_dao_address` only.
+Treasury contract only operates on `denom` set during instantiation, and will only pay out funds in this denom.
 
 ### Pause
 
-Pause contract for `duration` amount of blocks. Permissioned can be executed only by [Neutron DAO](/docs/neutron/dao/overview.md#neutron-dao) or the Security DAO. If contract is in paused state it disables `execute` method processing for any message except `Pause` and `Unpause`.
+Pause the contract for `duration` amount of blocks. Can be executed only by `main_dao_address` or `security_dao_address`.
 
 ### Unpause
 
-Unpause paused contract. Permissioned can be executed only by [Neutron DAO](/docs/neutron/dao/overview.md#neutron-dao).
+Unpause the contract. Can be executed by `main_dao_address_only`.
