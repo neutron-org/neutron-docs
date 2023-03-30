@@ -6,9 +6,9 @@ Transaction fees constitute Neutron’s main source of revenue. They originate f
 transactions through Neutron’s IBC fee model. Transaction fees are paid in NTRN or ATOM tokens.
 
 - 25% of the fees are sent to the hub as payment for ICS;
-- The remaining 75% are either burnt (NTRN) or sent to the Lorem (ATOM, etc.).
+- The remaining 75% are either burnt (NTRN) or sent to the Treasury (ATOM, etc.).
 
-## Lorem, Treasury and Distribution Contract
+## Treasury, Treasury and Distribution Contract
 
 There are 3 contracts that manage Neutron’s funds:
 
