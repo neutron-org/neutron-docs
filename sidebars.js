@@ -88,7 +88,8 @@ const sidebars = {
                             items: [
                                 'neutron/cron/overview',
                                 'neutron/cron/client',
-                                'neutron/cron/state'
+                                'neutron/cron/state',
+                                'neutron/cron/metrics'
                             ]
                         }
                     ],

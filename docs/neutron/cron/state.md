@@ -10,7 +10,7 @@ message Schedule {
 	uint64 period = 2;
 	// Msgs that will be executed every period amount of time
 	repeated MsgExecuteContract msgs = 3 [ (gogoproto.nullable) = false ];
-	// Last block height of execution
+	// Last execution's block height
 	uint64 last_execute_height = 4;
 }
 
