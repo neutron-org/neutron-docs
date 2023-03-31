@@ -81,6 +81,15 @@ const sidebars = {
                                 'neutron/feeburner/client',
                                 'neutron/feeburner/state'
                             ]
+                        },
+                        {
+                            type: 'category',
+                            label: 'Cron',
+                            items: [
+                                'neutron/cron/overview',
+                                'neutron/cron/client',
+                                'neutron/cron/state'
+                            ]
                         }
                     ],
                 },
