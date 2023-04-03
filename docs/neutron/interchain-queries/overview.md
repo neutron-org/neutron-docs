@@ -39,7 +39,7 @@ Permission to perform `RemoveInterchainQuery` message is based on three paramete
 2. `last_submitted_result_local_height` — registered query's property representing the Neutron's height the query was updated last time at;
 3. `registered_at_height` — registered query's property representing the Neutron's height the query was registered at.
 
-The `RemoveInterchainQuery` possesses of the following execution permissions:
+The permissions to execute `RemoveInterchainQuery` are as follows:
 - within the service period (i.e. if `current_height <= last_submitted_result_local_height + query_submit_timeout && current_height <= registered_at_height + query_submit_timeout`) only the query's owner is permissioned to remove it;
 - beyond the service period (i.e. if `current_height > last_submitted_result_local_height + query_submit_timeout || current_height > registered_at_height + query_submit_timeout`) anyone can remove the query and take the deposit as a reward.
 
