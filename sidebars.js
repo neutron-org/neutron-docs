@@ -69,7 +69,8 @@ const sidebars = {
                             items: [
                                 'neutron/feerefunder/overview',
                                 'neutron/feerefunder/client',
-                                'neutron/feerefunder/state'
+                                'neutron/feerefunder/state',
+                                'neutron/feerefunder/events'
                             ]
                         },
                         {

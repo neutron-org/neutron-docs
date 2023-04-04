@@ -17,7 +17,7 @@ message MsgRegisterInterchainAccount {
 
 * `from_address` must be a smart contract address, otherwise the message will fail;
 * `connection_id` must be the identifier of a valid IBC connection, otherwise the message will fail;
-* `interchain_account_id` is used to generate the [owner](https://github.com/cosmos/ibc-go/blob/v3.1.1/modules/apps/27-interchain-accounts/controller/keeper/account.go#L17) parameter for ICA's `RegisterInterchainAccount()` call, which is later used for port identifier generation (see below).
+* `interchain_account_id` is used to generate the [owner](https://github.com/cosmos/ibc-go/blob/v3.1.1/modules/apps/27-interchain-accounts/controller/keeper/account.go#L17) parameter for ICA's `RegisterInterchainAccount()` call, which is later used for port identifier generation (see below). Maximum allowed length of `interchain_account_id` is 47 characters.
 
 <details>
   <summary>IBC ports naming / Interchain Account address derivation</summary>
