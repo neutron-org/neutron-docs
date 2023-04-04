@@ -165,6 +165,27 @@ const sidebars = {
         },
         {
             type: 'category',
+            label: '3rd Party Modules',
+            items: [
+                '3rdparty/overview',
+                {
+                    type: 'category',
+                    label: 'Osmosis',
+                    items: [
+                        {
+                            type: 'category',
+                            label: 'Token Factory',
+                            items: [
+                                '3rdparty/osmosis/tokenfactory/overview',
+                                '3rdparty/osmosis/tokenfactory/messages'
+                            ]
+                        }
+                    ],
+                },
+            ],
+        },
+        {
+            type: 'category',
             label: 'Relaying',
             items: [
                 'relaying/ibc-relayer',
