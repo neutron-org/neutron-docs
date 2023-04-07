@@ -101,20 +101,20 @@ const sidebars = {
                         'neutron/tokenomics/overview',
                         {
                             type: 'category',
-                            label: 'Treasury',
-                            items: [
-                                'neutron/tokenomics/treasury/overview',
-                                'neutron/tokenomics/treasury/messages',
-                                'neutron/tokenomics/treasury/queries'
-                            ]
-                        },
-                        {
-                            type: 'category',
                             label: 'Reserve',
                             items: [
                                 'neutron/tokenomics/reserve/overview',
                                 'neutron/tokenomics/reserve/messages',
                                 'neutron/tokenomics/reserve/queries'
+                            ]
+                        },
+                        {
+                            type: 'category',
+                            label: 'Treasury',
+                            items: [
+                                'neutron/tokenomics/treasury/overview',
+                                'neutron/tokenomics/treasury/messages',
+                                'neutron/tokenomics/treasury/queries'
                             ]
                         },
                         {
