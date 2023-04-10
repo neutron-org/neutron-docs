@@ -34,7 +34,14 @@ You can see more info, examples and recommendations about proper transactions re
 ## Query creation deposit
 In order to clean up ledger from not used, outdated queries special deposit mechanism is used. [RegisteredQuery](https://github.com/neutron-org/neutron/blob/main/proto/interchainqueries/genesis.proto#L39) contains `deposit` field, this field is used to collect escrow payment for query creation. In order to return escrow payment a `RemoveInterchainQuery` message should be issued. 
 
-Permissions to perform `RemoveInterchainQuery` message is based on `query_submit_timeout` module parameter. If `last_submitted_result_local_height` + `query_submit_timeout` is less then current block height then `RemoveInterchainQuery` message can be performed only by query owner, in other case it can be performed by any address.
+Permission to perform `RemoveInterchainQuery` message is based on three parameters:
+1. `query_submit_timeout` — a module parameter which can be thought of as query service period;
+2. `last_submitted_result_local_height` — registered query's property representing the Neutron's height the query was updated last time at;
+3. `registered_at_height` — registered query's property representing the Neutron's height the query was registered at.
+
+The permissions to execute `RemoveInterchainQuery` are as follows:
+- within the service period (i.e. if `current_height <= last_submitted_result_local_height + query_submit_timeout && current_height <= registered_at_height + query_submit_timeout`) only the query's owner is permissioned to remove it;
+- beyond the service period (i.e. if `current_height > last_submitted_result_local_height + query_submit_timeout || current_height > registered_at_height + query_submit_timeout`) anyone can remove the query and take the deposit as a reward.
 
 Amount of coins to deposit is defined via parameter (`query_deposit`) controlled by governance proposal.
 
