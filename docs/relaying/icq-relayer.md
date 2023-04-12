@@ -72,7 +72,6 @@ This section contains description for all the possible config values that the Re
 - `RELAYER_NEUTRON_CHAIN_KEYRING_BACKEND` — described [here](https://docs.cosmos.network/master/run-node/keyring.html#the-kwallet-backend);
 - `RELAYER_NEUTRON_CHAIN_OUTPUT_FORMAT` — Neutron chain provider output format;
 - `RELAYER_NEUTRON_CHAIN_SIGN_MODE_STR` — described [here](https://docs.cosmos.network/master/core/transactions.html#signing-transactions), also consider use short variation, e.g. `direct`.
-- `RELAYER_IGNORE_ERRORS_REGEX` - regular expression to match errors that should be ignored. If the error matches the regex, the Relayer will ignore it and will not retry the submission. For any other errors, the Relayer will exit with an error.
 
 ### Target chain node settings
 
@@ -90,10 +89,11 @@ This section contains description for all the possible config values that the Re
 - `RELAYER_ALLOW_KV_CALLBACKS` — if `true`, will pass proofs as sudo callbacks to contracts. A true value here is mostly usable for a private Relayer because KV query callbacks execution is quite expensive. If false, results will simply be submitted to Neutron and become available for smart contracts retrieval;
 - `RELAYER_MIN_KV_UPDATE_PERIOD` — minimal period of queries execution and submission. This value is usable for a public Relayer as a rate limiter because it roughly overrides the queries `update_period` and force queries execution not more often than `N` blocks;
 - `RELAYER_STORAGE_PATH` — path to leveldb storage, will be created on the given path if it doesn't exist. It is required if `RELAYER_ALLOW_TX_QUERIES` is `true`;
-- `RELAYER_CHECK_SUBMITTED_TX_STATUS_DELAY` — delay in seconds between TX query submission and the result handling checking (more about this in the [TX submission section](#a-bit-of-technical-details-about-tx-submission));
 - `RELAYER_QUERIES_TASK_QUEUE_CAPACITY` — capacity of the channel that is used to send messages from subscriber to Relayer. Better set to a higher value to avoid problems with Tendermint websocket subscriptions;
-- `RELAYER_LISTEN_ADDR` — listener address for webserver json api you can query and prometheus metrics.
-- `RELAYER_INITIAL_TX_SEARCH_OFFSET` - Only for transaction queries. If set to non zero and no prior search height exists, it will initially set search height to (last_height - X). One example of usage of it will be if you have lots of old tx's on first start you don't need. Keep in mind that it will affect each newly created transaction query. To get a better understanding about how this works read the [dedicated section](#beacons-in-tx-queries).
+- `RELAYER_CHECK_SUBMITTED_TX_STATUS_DELAY` — delay in seconds between TX query submission and the result handling checking (more about this in the [TX submission section](#a-bit-of-technical-details-about-tx-submission));
+- `RELAYER_INITIAL_TX_SEARCH_OFFSET` - Only for transaction queries. If set to non zero and no prior search height exists, it will initially set search height to (last_height - X). One example of usage of it will be if you have lots of old tx's on first start you don't need. Keep in mind that it will affect each newly created transaction query. To get a better understanding about how this works read the [dedicated section](#beacons-in-tx-queries);
+- `RELAYER_WEBSERVER_PORT` — listener address for webserver json api you can query and prometheus metrics;
+- `RELAYER_IGNORE_ERRORS_REGEX` - regular expression to match errors that should be ignored. If the error matches the regex, the Relayer will ignore it and will not retry the submission. For any other errors, the Relayer will exit with an error.
 
 ### Logger configuration
 

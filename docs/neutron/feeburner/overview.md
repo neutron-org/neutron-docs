@@ -4,12 +4,12 @@
 
 This document specifies the FeeBurner module for the Neutron network.
 
-The FeeBurner module is called in the end of processing of every block and manages consumer part of fees: all Neutron fees are burned and fees in any other denom are sent to Treasury.
+The FeeBurner module is called in the end of processing of every block and manages consumer part of fees: all Neutron fees are burned and fees in any other denom are sent to Reserve.
 
 ## Params
 
 - `NeutronDenom` — denom of Neutron token, fees in Neutrons are burned;
-- `TreasuryAddress` — address of Neutron Treasury smart contract, fees in all non-Neutron tokens will be transfered here.
+- `ReserveAddress` — address of Neutron Reserve smart contract, fees in all non-Neutron tokens will be transfered here.
 
 ## Concepts
 
