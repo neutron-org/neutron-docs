@@ -182,6 +182,19 @@ const sidebars = {
                         }
                     ],
                 },
+                {
+                    type: 'category',
+                    label: 'Strangelove',
+                    items: [
+                        {
+                            type: 'category',
+                            label: 'Packet Forward Middleware',
+                            items: [
+                                '3rdparty/strangelove/packet-forward-middleware/overview',
+                            ]
+                        }
+                    ],
+                },
             ],
         },
         {
