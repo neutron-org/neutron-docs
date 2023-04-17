@@ -151,6 +151,24 @@ const sidebars = {
                         },
                         {
                             type: 'category',
+                            label: 'LP Vesting',
+                            items: [
+                                'neutron/token-generation-event/vesting-lp/overview',
+                                'neutron/token-generation-event/vesting-lp/messages',
+                                'neutron/token-generation-event/vesting-lp/queries',
+                            ]
+                        },
+                        {
+                            type: 'category',
+                            label: 'Investors Vesting',
+                            items: [
+                                'neutron/token-generation-event/investors-vesting/overview',
+                                'neutron/token-generation-event/investors-vesting/messages',
+                                'neutron/token-generation-event/investors-vesting/queries',
+                            ]
+                        },
+                        {
+                            type: 'category',
                             label: 'Oracle',
                             items: [
                                 'neutron/token-generation-event/oracle/overview',
