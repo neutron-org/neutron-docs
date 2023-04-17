@@ -7,6 +7,7 @@ Airdrop contract, used for TGE event, is just a [cw-tokens/cw20-merkle-airdrop-c
 - `withdraw_all` patched to burn cNTRN tokens and send (received in exchange for burning) NTRN tokens to [reserve contract](../../tokenomics/reserve/overview). `withdraw_all` can only be called after vesting period is over;
 - stages logic removed, since we will only need one airdrop stage, also merged register merkle tree and instantiate messages into one;
 - removed owner freeze logic;
+- removed cross-chain airdrops;
 - tests moved to separate file;
 - enforced start/expiration logic to accept only timestamps, since block heights are not compatible with vesting logic.
 

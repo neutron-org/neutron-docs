@@ -9,10 +9,10 @@ pub struct InstantiateMsg {
     /// MerkleRoot is hex-encoded merkle root.
     pub merkle_root: String,
     /// A point in time from which it is possible to claim airdrops
-    pub airdrop_start: Timestamp,
+    pub airdrop_start: u64,
     /// A point in time from which a vesting is configured for cNTRNs. At this point, it is still
     /// possible for users to claim their airdrops.
-    pub vesting_start: Timestamp,
+    pub vesting_start: u64,
     /// Total duration of vesting. At `vesting_start.seconds() + vesting_duration_seconds`
     /// point of time it is no longer possible to claim airdrops. At the very same point of time,
     /// it is possible to withdraw all remaining cNTRNs, exchange them for NTRNs and send to
@@ -34,10 +34,6 @@ pub enum ExecuteMsg {
         amount: Uint128,
         /// Proof is hex-encoded merkle proof.
         proof: Vec<String>,
-        /// Enables cross chain airdrops.
-        /// Target wallet proves identity by sending a signed [SignedClaimMsg](SignedClaimMsg)
-        /// containing the recipient address.
-        sig_info: Option<SignatureInfo>,
     },
     /// Permissionless, activated after vesting is over (consult to `[InstantiateMsg]`
     /// documentation for more info). Withdraws all remaining cNTRN tokens, burns them,
