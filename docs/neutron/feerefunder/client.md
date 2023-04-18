@@ -20,8 +20,6 @@ service Query {
 
 ### fee-info [port-id] [channel-id] [sequence]
 
-Returns list of all failures.
-
 ```shell
 neutrond query feerefunder fee-info [port-id] [channel-id] [sequence]
 ```
@@ -53,5 +51,6 @@ Output:
           timeout_fee:
             - denom: "untrn"
               amount: "500"
+        payer: neutron10h9stc5v6ntgeygf5xf945njqq5h32r54rf7kf
   ```
 </details>
