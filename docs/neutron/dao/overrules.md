@@ -4,7 +4,7 @@
 
 Being inspired by the [Lido's EasyTracks](https://docs.lido.fi/guides/easy-track-guide#general-overview), Overrules
 allows to reduce governance load on the main Neutron DAO.
-Instead of creating the special motions that allow making actions on behalf of the main DAO, Overrules allows for a
+Instead of creating the special motions that allow making actions on behalf of the main DAO, Overrules allow for a
 subDAOs to manage things by themselves still being limited by the main DAO.
 
 It works in the following way:
@@ -34,7 +34,7 @@ This design allows to implement the Overrules in a way that doesn't require any 
 [the query to check if subDAO is in the DAO's subDAOs list](https://github.com/neutron-org/neutron-dao/blob/376cd05df727fbf9c1730a469f94cb6f373e05db/contracts/dao/cwd-core/src/contract.rs#L333)).
 
 How it works:
-1. subDAO member submits the proposal to subDAO pre-propose module, which takes the proposal message and wraps it in a
+1. subDAO member submits a proposal to subDAO pre-propose module, which takes the proposal message and wraps it in a
 `TimelockProposal` message.
 2. subDAO members vote for the proposal and...
 3. it gets executed, which means that timelock contract
@@ -109,13 +109,13 @@ since they're not triggered.
 Overrule pre-propose module allows only overrule messages to be created, thus, it takes only timelock contract address
 and subDAO proposal id as parameters. Title and description are generated automatically.
 
-The proposal module for overrule proposals is just properly configured regular SingleChoiceProposal module.
+The proposal module for overrule proposals is just a properly configured regular SingleChoiceProposal module.
 
-When the overrule proposal is going to be created, the overrule pre-propose module does some checks:
-1. does the timelock contract corresponds to the subDAO
+When an overrule proposal is going to be created, the overrule pre-propose module does some checks:
+1. does the timelock contract correspond to the subDAO
 2. is the subDAO in the DAO's subDAOs list
 3. is the proposal timelocked
-4. is the overrule proposal for this subDAO proposal already created
+4. is an overrule proposal for this subDAO proposal already created
 
 Those checks are needed to avoid spam and duplications. It's pretty crucial since the spam proposals and duplications
 can mislead DAO members and make the proposal that supposed to be overruled passed by washing out voting power to wrong
@@ -138,7 +138,7 @@ proposal themself.
 
 Current implementation has several caveats:
 
-1. Since timelock contract is one that executes the proposals, it essentially takes place of the subDAO core contract
+1. Since timelock contract is one that executes subDAO proposals, it essentially takes place of the subDAO core contract
 (e.g. it should hold the funds and be registered in external entities).
 2. The model might be a bit confusing in terms of proposal statuses. subDAO proposal now have two phases:
    1. subDAO-decision phase: the proposal is created, voted and executed by the subDAO. On this phase, the proposal has
@@ -153,7 +153,7 @@ means that subDAO sent the proposal to the timelock contract.
 would happen anyway.
    4. It should have no deposit since rejection of the overrule proposal is the only way to execute the subDAO proposal
 and should be considered normal thing, no one should be punished for creation such proposal.
-4. Overrules modules requires both from main DAO and a subDAO to be configured in a special way:
+4. Overrules modules require both from main DAO and a subDAO to be configured in a special way:
    1. Main DAO should have the overrule-compatible pre-propose module.
    2. subDAO should have the subDAO pre-propose module with timelocking feature.
    > Actually, 1st requirement can be avoided by changing the overrule proposal module in a way so that it won't create
