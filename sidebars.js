@@ -134,6 +134,7 @@ const sidebars = {
                     items: [
                         'neutron/dao/overview',
                         'neutron/dao/dao-dao-diff',
+                        'neutron/dao/overrules',
                     ],
                 },
                 {
