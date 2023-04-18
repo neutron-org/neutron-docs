@@ -35,13 +35,15 @@ This design allows to implement the Overrules in a way that doesn't require any 
 
 How it works:
 1. subDAO member submits the proposal to subDAO pre-propose module, which takes the proposal message and wraps it in a
-TimelockProposal message.
+`TimelockProposal` message.
 2. subDAO members vote for the proposal and...
-3. it gets executed, which means that Timelock contract
+3. it gets executed, which means that timelock contract
    1. locks the subDAO proposal,
    2. creates a new overrule proposal in the overrule pre-propose module of main DAO.
 4. Main DAO members vote for the overrule proposal.
 5. Overrule proposal is executed and subDAO proposal is rejected.
+
+Simplified schema:
 ```
                                                   subDAO members
                                                         │
@@ -75,6 +77,7 @@ member  Propose(    │  pre-propose │ Propose(    │            │ Execute(
 4. DAO members ignore the overrule proposal.
 5. Timelocked proposal can be executed once voting period of overrule proposal is over.
 
+Simplified schema:
 ```
                                                    subDAO members
                                                          │
@@ -134,10 +137,10 @@ Current implementation has several caveats:
 (e.g. it should hold the funds and be registered in external entities).
 2. The model might be a bit confusing in terms of proposal statuses. subDAO proposal now have two phases:
    1. subDAO-decision phase: the proposal is created, voted and executed by the subDAO. On this phase, the proposal has
-regular statuses (e.g. Passed, Rejected, etc.). Still, "Executed" doesn't mean that the proposal is executed, it means
-that subDAO sent the proposal to the Timelock contract.
+regular statuses (e.g. `Passed`, `Rejected`, etc.). Still, `Executed` doesn't mean that the proposal is executed, it
+means that subDAO sent the proposal to the timelock contract.
    2. Timelock phase: the proposal is locked at the Timelock contract. On this phase, the proposal has statuses
-Timelocked, Overruled, Executed. Here "Executed" means actual proposal execution.
+`Timelocked`, `Overruled`, `Executed`, `ExecutionFailed`. Here `Executed` means actual proposal execution.
 3. The overrule proposal module should be configured in a very special way:
    1. Obviously, it should have lower threshold and lower voting period than regular single choice proposal module.
    2. Revoting should be disabled so that once threshold is reached, the overrule message can be executed.
