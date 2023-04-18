@@ -101,6 +101,9 @@ Simplified schema:
                              proposal_id)) 
 ```
 
+If the subDAO proposal is rejected by subDAO members, everything works the same way as without any timelocks/overrules
+since they're not triggered.
+
 Overrule pre-propose module allows only overrule messages to be created, thus, it takes only timelock contract address
 and subDAO proposal id as parameters. Title and description are generated automatically.
 
