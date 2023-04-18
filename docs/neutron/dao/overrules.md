@@ -13,7 +13,7 @@ It works in the following way:
 - This subDAO can now manage its budget and permissions without the need to ask the main DAO for every action
 - Still, every subDAO proposal can be overruled by the main DAO within a specified timelock period
 
-To make subDAOs not to stuck on operations, the timelock period should be short enough (e.g. 3 days).
+To prevent subDAOs from experiencing operational delays, the timelock period should be reasonably brief (e.g. 3 days).
 At the same time, overruling should be easy enough, so the threshold should be low enough (e.g. 10 times lower than
 regular proposal threshold).
 
@@ -49,7 +49,7 @@ Simplified schema:
                                                         │
                                                       2 │Vote                            
             1       ┌──────────────┐     1       ┌──────▼─────┐      3      ┌─────────────┐    3        ┌─────────┐
-subDAO ────────────►│  sudDAO      ├────────────►│  proposal  ├────────────►│ subDAO core ├────────────►│ timelock│
+subDAO ────────────►│  sudDAO      ├────────────►│  proposal  ├────────────►│ subDAO core ├────────────►│timelock │
 member  Propose(    │  pre-propose │ Propose(    │            │ Execute(    │             │ Timelock(   │         │
         ProposeMsg) └──────────────┘ Timelock(   └────────────┘ Timelock(   └─────────────┘ ProposeMsg) └─┬────▲──┘
                                      ProposeMsg))               ProposeMsg))                              │    │
@@ -79,26 +79,28 @@ member  Propose(    │  pre-propose │ Propose(    │            │ Execute(
 
 Simplified schema:
 ```
-                                                   subDAO members
-                                                         │
-                                                       2 │Vote
-             1       ┌──────────────┐     1       ┌──────▼─────┐      3      ┌─────────────┐    3        ┌─────────┐  5
- subDAO ────────────►│  sudDAO      ├────────────►│  proposal  ├─────────────┤ subDAO core ├────────────►│ timelock├────────────►
- member  Propose(    │  pre-propose │ Propose(    │            │ Execute(    │             │ Timelock(   │         │ ProposeMsg
-         ProposeMsg) └──────────────┘ Timelock(   └────────────┘ Timelock(   └─────────────┘ ProposeMsg) └─┬───────┘
-                                      ProposeMsg))               ProposeMsg))                              │
-                                                                                                           │
-                                                        3                                                  │
-   ┌───────────────────────────────────────────────────────────────────────────────────────────────────────┘
-   │                              ProposeOverrule(timelock, proposal_id)
-   │
-   │
-   │        ┌──────────────┐      3        ┌────────────┐                 ┌────────────────┐
-   └───────►│  overrule    ├──────────────►│  proposal  │                 │ Main DAO core  │
-            │  pre-propose │ Propose(      │            │                 │                │
-            └──────────────┘ Overrule(     └────────────┘                 └────────────────┘
-                             timelock,
-                             proposal_id)) 
+                                                  subDAO members
+                                                        │
+                                                      2 │Vote
+            1       ┌──────────────┐     1       ┌──────▼─────┐      3      ┌─────────────┐    3        ┌─────────┐
+subDAO ────────────►│  sudDAO      ├────────────►│  proposal  ├─────────────┤ subDAO core ├────────────►│timelock │
+member  Propose(    │  pre-propose │ Propose(    │            │ Execute(    │             │ Timelock(   │         │
+        ProposeMsg) └──────────────┘ Timelock(   └────────────┘ Timelock(   └─────────────┘ ProposeMsg) └─┬─────┬─┘
+                                     ProposeMsg))               ProposeMsg))                              │     │
+                                                                                                          │     │
+                                                       3                                                  │     │
+  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────┘     │
+  │                              ProposeOverrule(timelock, proposal_id)                                         │
+  │                                                                                                           5 │
+  │                                                                                                             │
+  │        ┌──────────────┐      3        ┌────────────┐                 ┌────────────────┐          ProposeMsg │
+  └───────►│  overrule    ├──────────────►│  proposal  │                 │ Main DAO core  │                     │
+           │  pre-propose │ Propose(      │            │                 │                │                     ▼
+           └──────────────┘ Overrule(     └────────────┘                 └────────────────┘
+                            timelock,
+                            proposal_id))         4
+
+                                             DAO members
 ```
 
 If the subDAO proposal is rejected by subDAO members, everything works the same way as without any timelocks/overrules
