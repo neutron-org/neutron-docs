@@ -179,6 +179,13 @@ const sidebars = {
                                 '3rdparty/osmosis/tokenfactory/overview',
                                 '3rdparty/osmosis/tokenfactory/messages'
                             ]
+                        },
+                        {
+                            type: 'category',
+                            label: 'IBC Hooks',
+                            items: [
+                                '3rdparty/osmosis/ibc-hooks/overview'
+                            ]
                         }
                     ],
                 },
