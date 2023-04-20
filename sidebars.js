@@ -227,7 +227,7 @@ const sidebars = {
             type: 'category',
             label: 'Deployed contracts',
             items: [
-                'deployments/testnet',
+                'deployment/testnet',
             ],
         },
     ]
