@@ -61,6 +61,8 @@ timelock period.
 
 ### Timelocks & Overrules
 
+> For more info on Overrules, check [Overrules](/docs/neutron/dao/overrules.md) page.
+
 Proposals approved by a subDAO are timelocked. During the timelock period, the Neutron DAO can overrule any proposal by
 creating a new Overrule proposal; this proposal has a lower threshold than the regular proposals, and is executed
 immediately after reaching the threshold.
