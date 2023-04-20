@@ -223,6 +223,13 @@ const sidebars = {
                 'tutorials/integration_tests'
             ],
         },
+        {
+            type: 'category',
+            label: 'Deployed contracts',
+            items: [
+                'deployments/testnet',
+            ],
+        },
     ]
 };
 
