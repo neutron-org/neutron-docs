@@ -142,11 +142,29 @@ const sidebars = {
                     items: [
                         {
                             type: 'category',
+                            label: 'Airdrop',
+                            items: [
+                                'neutron/token-generation-event/airdrop/overview',
+                                'neutron/token-generation-event/airdrop/messages',
+                                'neutron/token-generation-event/airdrop/queries',
+                            ]
+                        },
+                        {
+                            type: 'category',
                             label: 'Credits',
                             items: [
                                 'neutron/token-generation-event/credits/overview',
                                 'neutron/token-generation-event/credits/messages',
                                 'neutron/token-generation-event/credits/queries',
+                            ]
+                        },
+                        {
+                            type: 'category',
+                            label: 'Lockdrop',
+                            items: [
+                                'neutron/token-generation-event/lockdrop/overview',
+                                'neutron/token-generation-event/lockdrop/messages',
+                                'neutron/token-generation-event/lockdrop/queries',
                             ]
                         },
                         {
@@ -175,15 +193,6 @@ const sidebars = {
                                 'neutron/token-generation-event/oracle/queries',
                             ]
                         },
-                        {
-                            type: 'category',
-                            label: 'Lockdrop',
-                            items: [
-                                'neutron/token-generation-event/lockdrop/overview',
-                                'neutron/token-generation-event/lockdrop/messages',
-                                'neutron/token-generation-event/lockdrop/queries',
-                            ]
-                        }
                     ],
                 },
                 'neutron/build',
