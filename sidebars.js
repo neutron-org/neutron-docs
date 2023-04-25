@@ -174,6 +174,15 @@ const sidebars = {
                                 'neutron/token-generation-event/oracle/overview',
                                 'neutron/token-generation-event/oracle/queries',
                             ]
+                        },
+                        {
+                            type: 'category',
+                            label: 'Lockdrop',
+                            items: [
+                                'neutron/token-generation-event/lockdrop/overview',
+                                'neutron/token-generation-event/lockdrop/messages',
+                                'neutron/token-generation-event/lockdrop/queries',
+                            ]
                         }
                     ],
                 },

@@ -10,6 +10,8 @@
 }
 ```
 
+## ExecuteMsg
+
 ### `RegisterVestingAccounts`
 
 Creates vesting schedules for the NTRN token. Also, each schedule will unlock tokens at a different rate according to its time duration.

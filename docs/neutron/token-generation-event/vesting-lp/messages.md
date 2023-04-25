@@ -12,6 +12,8 @@
 }
 ```
 
+## ExecuteMsg
+
 ### `receive`
 
 CW20 receive msg.
@@ -26,7 +28,7 @@ CW20 receive msg.
 }
 ```
 
-#### `RegisterVestingAccounts`
+#### `register_vesting_accounts`
 
 Creates vesting schedules for the LP token. Also, each schedule will unlock tokens at a different rate according to its time duration.
 
@@ -46,7 +48,7 @@ In `send.msg`, you may encode this JSON string into base64 encoding.
 
 ```json
 {
-  "RegisterVestingAccounts": {
+  "register_vesting_accounts": {
     "vesting_accounts": [
       {
         "address": "neutron...",
