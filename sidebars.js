@@ -199,6 +199,7 @@ const sidebars = {
                             label: 'Oracle',
                             items: [
                                 'neutron/token-generation-event/oracle/overview',
+                                'neutron/token-generation-event/oracle/messages',
                                 'neutron/token-generation-event/oracle/queries',
                             ]
                         },
