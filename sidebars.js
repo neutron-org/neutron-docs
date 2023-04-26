@@ -151,6 +151,15 @@ const sidebars = {
                         },
                         {
                             type: 'category',
+                            label: 'Auction',
+                            items: [
+                                'neutron/token-generation-event/auction/overview',
+                                'neutron/token-generation-event/auction/messages',
+                                'neutron/token-generation-event/auction/queries',
+                            ]
+                        },
+                        {
+                            type: 'category',
                             label: 'Credits',
                             items: [
                                 'neutron/token-generation-event/credits/overview',

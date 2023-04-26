@@ -67,7 +67,7 @@ CW20 receive msg.
 }
 ```
 
-Initializes necessary structs and info for a specific LP pool in the Lockdrop contract. Can be called only by the [Auction contract](TODO_LINK).
+Initializes necessary structs and info for a specific LP pool in the Lockdrop contract. Can be called only by the [Auction contract](/neutron/token-generation-event/auction/overview).
 Execute this message by calling the LP token contract address of the corresponding pool.
 
 ### `increase_lockup_for`
