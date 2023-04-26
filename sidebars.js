@@ -203,6 +203,15 @@ const sidebars = {
                                 'neutron/token-generation-event/oracle/queries',
                             ]
                         },
+                        {
+                            type: 'category',
+                            label: 'Band Price Feed',
+                            items: [
+                                'neutron/token-generation-event/price-feed/overview',
+                                'neutron/token-generation-event/price-feed/messages',
+                                'neutron/token-generation-event/price-feed/queries',
+                            ]
+                        },
                     ],
                 },
                 'neutron/build',
