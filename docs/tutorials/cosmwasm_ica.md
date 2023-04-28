@@ -312,7 +312,7 @@ fn execute_delegate(
     // specify fees to refund relayers for submission of ack and timeout messages
     //
     // The contract MUST HAVE recv_fee + ack_fee + timeout_fee coins on its balance!
-    // See more info about fees here: https://docs.neutron.org/neutron/interchain-txs/messages#msgsubmittx
+    // See more info about fees here: https://docs.neutron.org /neutron/modules/interchain-txs/messages#msgsubmittx
     // and here: https://docs.neutron.org/neutron/feerefunder/overview
     let fee = IbcFee {
         recv_fee: vec![], // must be empty
@@ -650,5 +650,5 @@ timeout, **you can be sure that the affected channel was closed**.
 > value.
 
 If the timeout occurs anyway, you can just
-execute [RegisterInterchainAccount message](/neutron/interchain-txs/messages#msgregisterinterchainaccount) again to
+execute [RegisterInterchainAccount message]( /neutron/modules/interchain-txs/messages#msgregisterinterchainaccount) again to
 recover access to your interchain account.

@@ -76,7 +76,7 @@ message MsgRegisterInterchainQueryResponse {
 * save the record in storage under incremented query id;
 
 #### Events
-Emits [`EventTypeNeutonMessage`](/neutron/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_updated`.
+Emits [`EventTypeNeutonMessage`](/neutron/modules/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_updated`.
 
 ### Update Interchain Query
 
@@ -103,12 +103,12 @@ message MsgUpdateInterchainQueryResponse {
 * [Updates](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/x/interchainqueries/keeper/msg_server.go#L130) a corresponding `RegisteredQuery` structure.
 
 #### Events
-Emits [`EventTypeNeutonMessage`](/neutron/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_updated`.
+Emits [`EventTypeNeutonMessage`](/neutron/modules/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_updated`.
 
 
 ### Remove Interchain Query
 
-[`MsgRemoveInterchainQueryRequest`](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/proto/interchainqueries/tx.proto#L104) can be submitted only by the owner of corresponding Interchain Query within the query's service period or by anyone beyond it. Read more about this message permissions [here](/neutron/interchain-queries/overview#query-creation-deposit).
+[`MsgRemoveInterchainQueryRequest`](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/proto/interchainqueries/tx.proto#L104) can be submitted only by the owner of corresponding Interchain Query within the query's service period or by anyone beyond it. Read more about this message permissions [here](/neutron/modules/interchain-queries/overview#query-creation-deposit).
 ```protobuf
 message MsgRemoveInterchainQueryRequest {
   uint64 query_id = 1;
@@ -127,7 +127,7 @@ message MsgRemoveInterchainQueryResponse {
 * Also [removes](https://github.com/neutron-org/neutron/blob/88abc3140a8d2944c03a1c282c2f83c59fe6030b/x/interchainqueries/keeper/msg_server.go#L106) the query results ([immediately](https://github.com/neutron-org/neutron/blob/88abc3140a8d2944c03a1c282c2f83c59fe6030b/x/interchainqueries/keeper/keeper.go#L144) for a KV query, [deferred in the ICQ module EndBlock](https://github.com/neutron-org/neutron/blob/88abc3140a8d2944c03a1c282c2f83c59fe6030b/x/interchainqueries/module.go#L176) for a TX query).
 
 #### Events
-Emits [`EventTypeNeutonMessage`](/neutron/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_removed`.
+Emits [`EventTypeNeutonMessage`](/neutron/modules/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_removed`.
 
 
 ### Submit Query Result
