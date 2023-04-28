@@ -44,7 +44,7 @@ Now you can import the libraries:
 
 ```rust
 use neutron_sdk::bindings::msg::NeutronMsg;
-use neutron_sdk::bindings::query::{InterchainQueries, QueryRegisteredQueryResponse};
+use neutron_sdk::bindings::query::{NeutronQuery, QueryRegisteredQueryResponse};
 use neutron_sdk::interchain_queries::queries::{
     query_balance, query_registered_query,
 };
@@ -80,7 +80,7 @@ pub enum ExecuteMsg {
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-    deps: DepsMut<InterchainQueries>,
+    deps: DepsMut<NeutronQuery>,
     env: Env,
     _: MessageInfo,
     msg: ExecuteMsg,
@@ -116,7 +116,7 @@ pub fn execute(
 }
 
 pub fn register_balance_query(
-    deps: DepsMut<InterchainQueries>,
+    deps: DepsMut<NeutronQuery>,
     env: Env,
     connection_id: String,
     addr: String,
@@ -129,7 +129,7 @@ pub fn register_balance_query(
 }
 
 pub fn register_transfers_query(
-    deps: DepsMut<InterchainQueries>,
+    deps: DepsMut<NeutronQuery>,
     env: Env,
     connection_id: String,
     recipient: String,
@@ -211,7 +211,7 @@ pub enum QueryMsg {
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps<InterchainQueries>, env: Env, msg: QueryMsg) -> NeutronResult<Binary> {
+pub fn query(deps: Deps<NeutronQuery>, env: Env, msg: QueryMsg) -> NeutronResult<Binary> {
     match msg {
         QueryMsg::GetRegisteredQuery { query_id } => {
             Ok(to_binary(&get_registered_query(deps, query_id)?)?)
@@ -232,7 +232,7 @@ any registered query by its id;
 
 ```rust
 pub fn query_balance(
-    deps: Deps<InterchainQueries>,
+    deps: Deps<NeutronQuery>,
     _env: Env,
     registered_query_id: u64,
 ) -> NeutronResult<BalanceResponse> {
@@ -256,7 +256,7 @@ The most import function here is `query_kv_result`:
 ```rust
 /// Reads submitted raw KV values for Interchain Query with **query_id** from the storage and reconstructs the result
 pub fn query_kv_result<T: KVReconstruct>(
-    deps: Deps<InterchainQueries>,
+    deps: Deps<NeutronQuery>,
     query_id: u64,
 ) -> NeutronResult<T> {
     let registered_query_result = get_interchain_query_result(deps, query_id)?;
@@ -302,7 +302,7 @@ That's why we've implemented **KV Queries Callbacks**, which allows you to get a
 KV callbacks are implemented via **Sudo** calls in your smart-contract:
 ```rust
 #[entry_point]
-pub fn sudo(deps: DepsMut<InterchainQueries>, env: Env, msg: SudoMsg) -> NeutronResult<Response> {
+pub fn sudo(deps: DepsMut<NeutronQuery>, env: Env, msg: SudoMsg) -> NeutronResult<Response> {
     match msg {
         SudoMsg::KVQueryResult { query_id } => sudo_kv_query_result(deps, env, query_id),
         _ => Ok(Response::default()),
@@ -312,7 +312,7 @@ pub fn sudo(deps: DepsMut<InterchainQueries>, env: Env, msg: SudoMsg) -> Neutron
 /// sudo_kv_query_result is the contract's callback for KV query results. Note that only the query
 /// id is provided, so you need to read the query result from the state.
 pub fn sudo_kv_query_result(
-    deps: DepsMut<InterchainQueries>,
+    deps: DepsMut<NeutronQuery>,
     env: Env,
     query_id: u64,
 ) -> NeutronResult<Response> {
@@ -336,7 +336,7 @@ Unlike KV-queries result, TX-queries results are not saved to the module storage
 TX-queries are supported only in _callback way_, so to get result from TX-queries you have to work with `sudo` callbacks and save results to the storage by yourself if you need:
 ```rust
 #[entry_point]
-pub fn sudo(deps: DepsMut<InterchainQueries>, env: Env, msg: SudoMsg) -> NeutronResult<Response> {
+pub fn sudo(deps: DepsMut<NeutronQuery>, env: Env, msg: SudoMsg) -> NeutronResult<Response> {
     match msg {
         SudoMsg::TxQueryResult {
             query_id,
@@ -349,7 +349,7 @@ pub fn sudo(deps: DepsMut<InterchainQueries>, env: Env, msg: SudoMsg) -> Neutron
 /// sudo_check_tx_query_result is an example callback for transaction query results that stores the
 /// deposits received as a result on the registered query in the contract's state.
 pub fn sudo_tx_query_result(
-    deps: DepsMut<InterchainQueries>,
+    deps: DepsMut<NeutronQuery>,
     _env: Env,
     query_id: u64,
     _height: u64,
@@ -420,7 +420,7 @@ Just like with the KV query (the Balance one), TX query results can be retrieved
 
 ```rust
 /// Returns the number of transfers made on remote chain and queried with ICQ
-fn query_transfers_number(deps: Deps<InterchainQueries>) -> NeutronResult<Binary> {
+fn query_transfers_number(deps: Deps<NeutronQuery>) -> NeutronResult<Binary> {
     let transfers_number = TRANSFERS.load(deps.storage).unwrap_or_default();
     Ok(to_binary(&GetTransfersAmountResponse { transfers_number })?)
 }
@@ -451,7 +451,7 @@ pub enum ExecuteMsg {
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-    deps: DepsMut<InterchainQueries>,
+    deps: DepsMut<NeutronQuery>,
     env: Env,
     _: MessageInfo,
     msg: ExecuteMsg,

@@ -57,7 +57,7 @@ Now you can import the libraries:
 
 ```rust
 use neutron_sdk::bindings::msg::{IbcFee, NeutronMsg};
-use neutron_sdk::bindings::query::{InterchainQueries, QueryInterchainAccountAddressResponse};
+use neutron_sdk::bindings::query::{NeutronQuery, QueryInterchainAccountAddressResponse};
 use neutron_sdk::bindings::types::ProtobufAny;
 use neutron_sdk::interchain_txs::helpers::get_port_id;
 use neutron_sdk::sudo::msg::{RequestPacket, SudoMsg};
