@@ -1,4 +1,4 @@
-# Build Neutron source code
+# Build
 
 ## Neutron Core
 

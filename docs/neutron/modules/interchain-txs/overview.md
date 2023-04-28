@@ -39,7 +39,7 @@ complete list of IBC events for each module message in the [messages](./messages
 > the packet timeout for your interchain transactions to a really large value.
 >
 >  If the timeout occurs anyway, you can just
-> execute [RegisterInterchainAccount message](/neutron/interchain-txs/messages#msgregisterinterchainaccount) again to
+> execute [RegisterInterchainAccount message]( /neutron/modules/interchain-txs/messages#msgregisterinterchainaccount) again to
 > recover access to your interchain account.
 
 ## Relaying
@@ -59,7 +59,7 @@ list = [
 ]
 ```
 
-> Note: you can have a look at the `MsgRegisterInterchainQuery` documentation in the [Messages](./messages.md) chapter
+> Note: you can have a look at the `MsgRegisterInterchainQuery` documentation in the [Messages](messages.md) chapter
 > to learn how IBC port naming works.
 
-Please refer to the [IBC Relaying](../../relaying/ibc-relayer.md) section for full IBC relaying documentation.
+Please refer to the [IBC Relaying](../../../relaying/ibc-relayer.md) section for full IBC relaying documentation.
