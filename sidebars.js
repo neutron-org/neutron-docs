@@ -26,8 +26,8 @@ const sidebars = {
                     type: 'category',
                     items: [
                         'neutron/dao/overview',
-                        'neutron/dao/dao-dao-diff',
                         'neutron/dao/overrules',
+                        'neutron/dao/dao-dao-diff',
                     ],
                 },
                 {
