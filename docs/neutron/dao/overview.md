@@ -30,15 +30,45 @@ that only DAO members can submit proposals.
 ### Voting Power Registry
 
 Instead of a single voting power module, Neutron DAO core contract interacts with the *Voting Power Registry* contract
-that keeps track of multiple *Voting Vaults*. There can be many Voting Vault implementations, but at the launch Neutron
-will only have one vault implementation for bonding native NTRN tokens.
+that keeps track of multiple *Voting Vaults* (see below).
 
-### Neutron Bonding Vault
+#### Voting vaults
 
-This vault will allow its users to Bond NTRN tokens without locking them (i.e., you can bond and unbond tokens with this
-vault with no unbonding period). Just as with normal DAO DAO voting modules, for each specific proposal, you can only
-use the voting power that was available to you at the time of proposal submission. No additional restrictions are
-imposed on the vault funds.
+A voting vault is a smart contract that implements the DAO DAO voting module interface, namely, it is capable of:
+
+1. Providing the total voting power at a given height,
+2. Providing the voting power of an address at a given height.
+
+The overall voting power of a given address is a sum of the voting powers that the address has in all of the registered
+voting vaults.
+
+There are two types of Voting Vaults:
+
+1. Real vaults,
+2. Virtual vaults.
+
+An example of a **real** vault is the Neutron Vault, which allows its users to directly bond and unbond NTRN tokens. (
+This is
+done without locking them, i.e., you can bond and unbond tokens with this vault with no unbonding period.)
+
+In most cases, however, a Voting Vault does not directly store user funds; in this sense, such voting vaults can be
+called **"virtual"** vaults.**. For example, the Lockdrop vault does not allow users to directly bond or unbond LP
+tokens; instead it implements a relatively complicated query to multiple contracts to determine the amount of NTRN
+tokens that correspond to a certain amount of LP tokens at a given height.
+
+> Note: The voting power is based exclusively on the amount of NTRN tokens, regardless of the type of the vault.
+
+Below is the list of Voting Vaults that will be available at launch:
+
+1. Neutron Vault;
+2. Credits Vault (virtual) — keeps track of the NTRN tokens that are vested in the Credits contract. _You can not add
+   tokens or remove tokens from this vault directly_;
+3. Lockdrop Vault (virtual) — keeps track of the NTRN tokens that are locked in the Lockdrop contract. You can not add
+   tokens or remove tokens from this vault directly;
+4. LP Vesting Vault (virtual) — keeps track of the NTRN tokens that are vested in the LP Vesting contract. You can not
+   add tokens or remove tokens from this vault directly;
+5. Investors Vault (virtual) — keeps track of the NTRN tokens that are vested in the early backers vesting contract. You
+   can not add tokens or remove tokens from this vault directly.
 
 ### Overrule proposals
 
@@ -52,7 +82,8 @@ Re-voting should be disabled for such proposals (execute immediately after the t
 ## subDAOs
 
 The Neutron DAO creates subDAOs by executing Neutron DAO proposals that contain *Instantiate* messages for the subDAO
-contracts. At the launch time, only the *Multisig-type* subDAO will be available, which is similar to the Neutron DAO, but
+contracts. At the launch time, only the *Multisig-type* subDAO will be available, which is similar to the Neutron DAO,
+but
 uses the [cw4 voting module](https://github.com/DA0-DA0/dao-contracts/tree/main/contracts/voting/dao-voting-cw4)
 implementation for voting power (that’s where the multisig logic is implemented).
 
