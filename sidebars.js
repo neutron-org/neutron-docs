@@ -22,6 +22,72 @@ const sidebars = {
                 'neutron/build',
                 'neutron/contribute',
                 {
+                    label: 'Neutron DAO',
+                    type: 'category',
+                    items: [
+                        'neutron/dao/overview',
+                        'neutron/dao/dao-dao-diff',
+                        'neutron/dao/overrules',
+                    ],
+                },
+                {
+                    label: 'Tokenomics',
+                    type: 'category',
+                    items: [
+                        'neutron/tokenomics/overview',
+                        {
+                            type: 'category',
+                            label: 'Reserve',
+                            items: [
+                                'neutron/tokenomics/reserve/overview',
+                                'neutron/tokenomics/reserve/messages',
+                                'neutron/tokenomics/reserve/queries'
+                            ]
+                        },
+                        {
+                            type: 'category',
+                            label: 'Treasury',
+                            items: [
+                                'neutron/tokenomics/treasury/overview',
+                                'neutron/tokenomics/treasury/messages',
+                                'neutron/tokenomics/treasury/queries'
+                            ]
+                        },
+                        {
+                            type: 'category',
+                            label: 'Distribution',
+                            items: [
+                                'neutron/tokenomics/distribution/overview',
+                                'neutron/tokenomics/distribution/messages',
+                                'neutron/tokenomics/distribution/queries'
+                            ]
+                        },
+                        {
+                            label: 'Token Generation Event',
+                            type: 'category',
+                            items: [
+                                {
+                                    type: 'category',
+                                    label: 'Credits',
+                                    items: [
+                                        'neutron/token-generation-event/credits/overview',
+                                        'neutron/token-generation-event/credits/messages',
+                                        'neutron/token-generation-event/credits/queries',
+                                    ]
+                                },
+                                {
+                                    type: 'category',
+                                    label: 'Oracle',
+                                    items: [
+                                        'neutron/token-generation-event/oracle/overview',
+                                        'neutron/token-generation-event/oracle/queries',
+                                    ]
+                                }
+                            ],
+                        }
+                    ]
+                },
+                {
                     label: 'Modules',
                     type: 'category',
                     items: [
@@ -103,31 +169,31 @@ const sidebars = {
                                     label: 'Osmosis',
                                     items: [
                                         {
-                                            type: 'category',
                                             label: 'Token Factory',
+                                            type: 'category',
                                             items: [
-                                                '3rdparty/osmosis/tokenfactory/overview',
-                                                '3rdparty/osmosis/tokenfactory/messages'
+                                                'neutron/modules/3rdparty/osmosis/tokenfactory/overview',
+                                                'neutron/modules/3rdparty/osmosis/tokenfactory/messages'
                                             ]
                                         },
                                         {
-                                            type: 'category',
                                             label: 'IBC Hooks',
+                                            type: 'category',
                                             items: [
-                                                '3rdparty/osmosis/ibc-hooks/overview'
+                                                'neutron/modules/3rdparty/osmosis/ibc-hooks/overview'
                                             ]
                                         }
                                     ],
                                 },
                                 {
-                                    type: 'category',
                                     label: 'Strangelove',
+                                    type: 'category',
                                     items: [
                                         {
-                                            type: 'category',
                                             label: 'Packet Forward Middleware',
+                                            type: 'category',
                                             items: [
-                                                '3rdparty/strangelove/packet-forward-middleware/overview',
+                                                'neutron/modules/3rdparty/strangelove/packet-forward-middleware/overview',
                                             ]
                                         }
                                     ],
@@ -135,73 +201,7 @@ const sidebars = {
                             ],
                         },
                     ],
-                },
-                {
-                    label: 'Tokenomics',
-                    type: 'category',
-                    items: [
-                        'neutron/tokenomics/overview',
-                        {
-                            type: 'category',
-                            label: 'Reserve',
-                            items: [
-                                'neutron/tokenomics/reserve/overview',
-                                'neutron/tokenomics/reserve/messages',
-                                'neutron/tokenomics/reserve/queries'
-                            ]
-                        },
-                        {
-                            type: 'category',
-                            label: 'Treasury',
-                            items: [
-                                'neutron/tokenomics/treasury/overview',
-                                'neutron/tokenomics/treasury/messages',
-                                'neutron/tokenomics/treasury/queries'
-                            ]
-                        },
-                        {
-                            type: 'category',
-                            label: 'Distribution',
-                            items: [
-                                'neutron/tokenomics/distribution/overview',
-                                'neutron/tokenomics/distribution/messages',
-                                'neutron/tokenomics/distribution/queries'
-                            ]
-                        },
-                        {
-                            label: 'Token Generation Event',
-                            type: 'category',
-                            items: [
-                                {
-                                    type: 'category',
-                                    label: 'Credits',
-                                    items: [
-                                        'neutron/token-generation-event/credits/overview',
-                                        'neutron/token-generation-event/credits/messages',
-                                        'neutron/token-generation-event/credits/queries',
-                                    ]
-                                },
-                                {
-                                    type: 'category',
-                                    label: 'Oracle',
-                                    items: [
-                                        'neutron/token-generation-event/oracle/overview',
-                                        'neutron/token-generation-event/oracle/queries',
-                                    ]
-                                }
-                            ],
-                        }
-                    ]
-                },
-                {
-                    label: 'Neutron DAO',
-                    type: 'category',
-                    items: [
-                        'neutron/dao/overview',
-                        'neutron/dao/dao-dao-diff',
-                        'neutron/dao/overrules',
-                    ],
-                },
+                }
             ],
         },
         {
