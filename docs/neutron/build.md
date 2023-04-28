@@ -2,14 +2,14 @@
 
 ## Neutron Core
 
-### Install Go 1.18
-Currently, Neutron team uses Go 1.18 to compile the code.
-Install [Go 1.18](https://go.dev/doc/install) using following instructions there.
+### Install Go 1.20
+Currently, Neutron team uses Go 1.20 to compile the code.
+Install [Go 1.20](https://go.dev/doc/install) using following instructions there.
 
 Verify the installation by executing `go version` in your terminal:
 ```shell
 $ go version
-go version go1.18.1 darwin/arm64
+go version go1.20.3 darwin/arm64
 ```
 
 ### Build Neutron
