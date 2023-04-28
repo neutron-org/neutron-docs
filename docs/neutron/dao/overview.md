@@ -61,7 +61,7 @@ tokens that correspond to a certain amount of LP tokens at a given height.
 Below is the list of Voting Vaults that will be available at launch:
 
 1. Neutron Vault;
-2. Credits Vault (virtual) — keeps track of the NTRN tokens that are vested in the Credits contract. _You can not add
+2. Credits Vault (virtual) — keeps track of the NTRN tokens that are vested in the [Credits](neutron/token-generation-event/overview.md) contract. _You can not add
    tokens or remove tokens from this vault directly_;
 3. Lockdrop Vault (virtual) — keeps track of the NTRN tokens that are locked in the Lockdrop contract. You can not add
    tokens or remove tokens from this vault directly;
