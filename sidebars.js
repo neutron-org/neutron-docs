@@ -140,6 +140,7 @@ const sidebars = {
                     type: 'category',
                     label: 'Token Generation Event',
                     items: [
+                        'neutron/token-generation-event/overview',
                         {
                             type: 'category',
                             label: 'Airdrop',
