@@ -18,4 +18,4 @@ There are 3 contracts that manage Neutron’s funds:
 - [The Distribution](distribution/overview) contract is responsible for the second step of token distribution where tokens sent to this
   contract are distributed between `share holders`, where `share holders` are a configurable set of addresses with
   number of shares. This contract allows shareholders to withdraw collected tokens.
-- The third one is Neutron DAO core module itself.
+- The third one is [Neutron DAO core module](../dao/overview) itself.
