@@ -190,6 +190,7 @@ Once the genesis state is initiated after the chain spawn time, the Neutron team
 In this example we are simply using neutron’s start command. Your actual steps depend on the tooling you use (cosmovisor, systemd, kubectl, ansible etc.)
 
 
+	# Final genesis URL will be announced shortly after spawn time
 	$ wget <URL_to_final_genesis.json>
 	$ mv genesis.json ~/.neutron/config
 	
