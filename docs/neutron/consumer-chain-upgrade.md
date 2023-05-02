@@ -8,6 +8,7 @@ Get prepared before [the spawn time][1]!
 
 ### High Level
 
+
 * **For launching consumer chains, validators have two main responsibilities: **
 	* Submit an `AssignConsumerKey` transaction on the Cosmos Hub
 	* Run the consumer chain binary at the spawn time. 
@@ -88,12 +89,13 @@ You need to initialize the Consumer chain node before assigning a key. Initializ
 
 **Node initialization procedure (example):**	
 
-	## 1. install neutrond
+	## 1. install neutrond.
 	$ git clone https://github.com/neutron-org/neutron
 	$ cd neutron
 	
 	# switch to version to be used
 	# the version might change
+	# You should have go >1.20 installed in order to build binary
 	$ git checkout v1.0.0-rc1
 	$ make install
 	
