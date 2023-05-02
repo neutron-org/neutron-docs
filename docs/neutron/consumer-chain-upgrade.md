@@ -205,7 +205,7 @@ You can compare the signatures on a recently-produced block with your validator'
 
 Parse your signature:
 
-	$ neutrond keys parse $($neutrond tendermint show-address)
+	$ neutrond keys parse $(neutrond tendermint show-address)
 	
 	Example output:
 	human: neutronvalcons
@@ -215,7 +215,7 @@ Parse your signature:
 To grab only the byte string:
 
 
-	$ neutrond keys parse $($neutrond tendermint show-address) --output json | jq '.bytes'
+	$ neutrond keys parse $(neutrond tendermint show-address) --output json | jq '.bytes'
 	
 	# Query the latest block for your signature:
 	$ neutrond q block | jq '.block.last_commit.signatures' | grep <your byte string from step above>
