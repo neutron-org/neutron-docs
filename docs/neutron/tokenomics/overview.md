@@ -12,7 +12,7 @@ transactions through Neutron’s IBC fee model. Transaction fees are paid in NTR
 
 There are 3 contracts that manage Neutron’s funds:
 
-- [The Reserve](reserve/overview) holds the vested NTRNs and sends them to the Treasury and Distribution contracts. Reserve tokens are
+- [The Reserve](reserve/overview) holds the vested NTRNs and sends them to the Neutron DAO core contract and the Distribution contract. Reserve tokens are
   vested based on on-chain activity: the more NTRN tokens are burned while processing block fees (see above), the more
   tokens get unlocked in the reserve;
 - [The Distribution](distribution/overview) contract is responsible for the second step of token distribution where tokens sent to this
