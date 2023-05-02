@@ -46,15 +46,6 @@ const sidebars = {
                         },
                         {
                             type: 'category',
-                            label: 'Treasury',
-                            items: [
-                                'neutron/tokenomics/treasury/overview',
-                                'neutron/tokenomics/treasury/messages',
-                                'neutron/tokenomics/treasury/queries'
-                            ]
-                        },
-                        {
-                            type: 'category',
                             label: 'Distribution',
                             items: [
                                 'neutron/tokenomics/distribution/overview',
