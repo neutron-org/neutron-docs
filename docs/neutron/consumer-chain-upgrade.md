@@ -62,7 +62,7 @@ The neutron [proposal has been put on-chain][4]. Cosmos Hub validators are oblig
 
 	$ neutrond q slashing params --home ~/.neutron
 	# example output
-	signed_blocks_window: 864000
+	signed_blocks_window: 140000
 	min_signed_per_window: 0.050000000000000000
 	downtime_jail_duration: 600s
 	slash_fraction_double_sign: 0.010000000000000000
