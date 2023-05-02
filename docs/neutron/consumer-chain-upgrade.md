@@ -84,7 +84,7 @@ The neutron [proposal has been put on-chain][4]. Cosmos Hub validators are oblig
 ### 1. Initialize the Consumer Chain
 You can initialize the Consumer chain before the spawn time specified in the ConsumerChainAddition proposal. You should not attempt to start the chain binary (neutrond start) before the spawn time - you need the genesis.json file with the initial validator set populated. The final genesis.json will be provided by the consumer chain team.
 
-You need to initialize the Consumer chain node before assigning a key. Initializing the node will provide you with a random private key (&lt;node\_home\>/config/priv\_validator\_key.json)
+You need to initialize the Consumer chain node before assigning a key. Initializing the node will provide you with a random private key (`<node_home>/config/priv_validator_key.json`)
 
 **Node initialization procedure (example):**	
 
@@ -215,7 +215,7 @@ To grab only the byte string:
 	$ neutrond keys parse $($neutrond tendermint show-address) --output json | jq '.bytes'
 	
 	# Query the latest block for your signature:
-	neutrond q block | jq '.block.last_commit.signatures' | grep <your byte string from step above>
+	$ neutrond q block | jq '.block.last_commit.signatures' | grep <your byte string from step above>
 
 
 
