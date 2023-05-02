@@ -21,6 +21,7 @@ const sidebars = {
                 'neutron/overview',
                 'neutron/build',
                 'neutron/contribute',
+                'neutron/consumer-chain-upgrade',
                 {
                     label: 'Neutron DAO',
                     type: 'category',
