@@ -58,6 +58,25 @@ const sidebars = {
                             label: 'Token Generation Event',
                             type: 'category',
                             items: [
+                                'neutron/token-generation-event/overview',
+                                {
+                                    type: 'category',
+                                    label: 'Airdrop',
+                                    items: [
+                                        'neutron/token-generation-event/airdrop/overview',
+                                        'neutron/token-generation-event/airdrop/messages',
+                                        'neutron/token-generation-event/airdrop/queries',
+                                    ]
+                                },
+                                {
+                                    type: 'category',
+                                    label: 'Auction',
+                                    items: [
+                                        'neutron/token-generation-event/auction/overview',
+                                        'neutron/token-generation-event/auction/messages',
+                                        'neutron/token-generation-event/auction/queries',
+                                    ]
+                                },
                                 {
                                     type: 'category',
                                     label: 'Credits',
@@ -69,12 +88,49 @@ const sidebars = {
                                 },
                                 {
                                     type: 'category',
+                                    label: 'Lockdrop',
+                                    items: [
+                                        'neutron/token-generation-event/lockdrop/overview',
+                                        'neutron/token-generation-event/lockdrop/messages',
+                                        'neutron/token-generation-event/lockdrop/queries',
+                                    ]
+                                },
+                                {
+                                    type: 'category',
+                                    label: 'LP Vesting',
+                                    items: [
+                                        'neutron/token-generation-event/vesting-lp/overview',
+                                        'neutron/token-generation-event/vesting-lp/messages',
+                                        'neutron/token-generation-event/vesting-lp/queries',
+                                    ]
+                                },
+                                {
+                                    type: 'category',
+                                    label: 'Investors Vesting',
+                                    items: [
+                                        'neutron/token-generation-event/investors-vesting/overview',
+                                        'neutron/token-generation-event/investors-vesting/messages',
+                                        'neutron/token-generation-event/investors-vesting/queries',
+                                    ]
+                                },
+                                {
+                                    type: 'category',
                                     label: 'Oracle',
                                     items: [
                                         'neutron/token-generation-event/oracle/overview',
+                                        'neutron/token-generation-event/oracle/messages',
                                         'neutron/token-generation-event/oracle/queries',
                                     ]
-                                }
+                                },
+                                {
+                                    type: 'category',
+                                    label: 'Band Price Feed',
+                                    items: [
+                                        'neutron/token-generation-event/price-feed/overview',
+                                        'neutron/token-generation-event/price-feed/messages',
+                                        'neutron/token-generation-event/price-feed/queries',
+                                    ]
+                                },
                             ],
                         }
                     ]

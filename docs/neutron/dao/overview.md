@@ -61,13 +61,13 @@ tokens that correspond to a certain amount of LP tokens at a given height.
 Below is the list of Voting Vaults that will be available at launch:
 
 1. **Neutron Vault;**
-2. **Credits Vault** (virtual) — keeps track of the NTRN tokens that are vested in the [Credits](neutron/token-generation-event/overview.md) contract. _You can not add
+2. **Credits Vault** (virtual) — keeps track of the NTRN tokens that are vested in the [Credits](neutron/token-generation-event/credits/overview.md) contract. _You can not add
    tokens or remove tokens from this vault directly_;
-3. **Lockdrop Vault** (virtual) — keeps track of the NTRN tokens that are locked in the Lockdrop contract. You can not add
+3. **Lockdrop Vault** (virtual) — keeps track of the NTRN tokens that are locked in the [Lockdrop](neutron/token-generation-event/lockdrop/overview.md) contract. You can not add
    tokens or remove tokens from this vault directly;
-4. **LP Vesting Vault** (virtual) — keeps track of the NTRN tokens that are vested in the LP Vesting contract. You can not
+4. **LP Vesting Vault** (virtual) — keeps track of the NTRN tokens that are vested in the [LP Vesting](neutron/token-generation-event/vesting-lp/overview.md) contract. You can not
    add tokens or remove tokens from this vault directly;
-5. **Investors Vault** (virtual) — keeps track of the NTRN tokens that are vested in the early backers vesting contract. You
+5. **Investors Vault** (virtual) — keeps track of the NTRN tokens that are vested in the early [backers vesting contract](neutron/token-generation-event/investors-vesting/overview.md). You
    can not add tokens or remove tokens from this vault directly.
 
 ### Overrule proposals
