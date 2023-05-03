@@ -1,4 +1,4 @@
-# Consumer Chain Upgrade Readiness
+# Neutron Launch Instructions
 
 ## TL;DR
 
@@ -9,10 +9,10 @@ Get prepared before [the spawn time][1]!
 ### High Level
 
 
-* **For launching consumer chains, validators have two main responsibilities: **
+* **For launching consumer chains, validators have two main responsibilities:**
 	* Submit an `AssignConsumerKey` transaction on the Cosmos Hub
 	* Run the consumer chain binary at the spawn time. 
-* **This guide informs validators about how to accomplish these goals. **
+* **This guide informs validators about how to accomplish these goals.**
 
 ### The Steps
 
@@ -28,7 +28,7 @@ Get prepared before [the spawn time][1]!
 
 ### Relevant Parameters
 
-* **`Soft_opt_out_threshold: 0.05` (e.g. 5% of the voting power) **
+* **`Soft_opt_out_threshold: 0.05` (e.g. 5% of the voting power)**
 	* The bottom 5% validators by voting power can decide whether or not they wish to opt-in to running a node on Neutron. They will earn rewards regardless of their decision.
 * **`Commit_timeout: 1000ms` (leads to \~2.5s blocktime on Pion-1)**
 	* This increases blocktime speed on the network. See [these docs][3] for more information about the implications of this parameter.
@@ -48,7 +48,7 @@ The neutron [proposal has been put on-chain][4]. Cosmos Hub validators are oblig
 
 
 
-1. Consumer chain upgrade support for all consumer chains will be done from the [Cosmos Hub discord validators verified channel][5]. Gather in there at chain spawn time (after the `ConsumerChainAddition` proposal passes) and during upgrades.
+1. Consumer chain launch & upgrade support for all consumer chains will be done from the [Cosmos Hub discord validators verified channel][5]. Gather in there at chain spawn time (after the `ConsumerChainAddition` proposal passes) and during upgrades.
 2. If you need specialized support or have questions, you can check out the [forum][6].
 3. Announcements will be sent across multiple channels to alert you about upgrades. The best place to stay up to date is in the [upgrades][7] channel in discord.
 4. There are three important parameters in every `ConsumerAdditionProposal`. They are:
@@ -61,13 +61,13 @@ The neutron [proposal has been put on-chain][4]. Cosmos Hub validators are oblig
 
 
 
-	$ neutrond q slashing params --home ~/.neutron
+	`$ neutrond q slashing params --home ~/.neutron
 	# example output
 	signed_blocks_window: 140000
 	min_signed_per_window: 0.050000000000000000
 	downtime_jail_duration: 600s
 	slash_fraction_double_sign: 0.010000000000000000
-	slash_fraction_downtime: 0.000100000000000000
+	slash_fraction_downtime: 0.000100000000000000`
 
 
 
@@ -75,7 +75,7 @@ The neutron [proposal has been put on-chain][4]. Cosmos Hub validators are oblig
 
 
 1. Fill out the [validator contact form][9] if you haven't already
-2. Join the Cosmos Hub discord and ping an admin to request to be added to the relevant channels
+2. Join the [Cosmos Hub discord][5] and ping an admin to request to be added to the relevant channels
 3. Read the rest of this document and ask on the forum if you have questions
 
 
@@ -241,7 +241,7 @@ The Cosmos community is here to assist you and support you as the ATOM economic 
 
 ## Attribution
 
-_Thanks to the teams at Interchain, Informal, and Hypha Worker Co-operative for their support preparing this documentation. _
+*Thanks to the teams at Interchain, Informal, and Hypha Worker Co-operative for their support preparing this documentation.*
 
 [1]:	https://www.mintscan.io/cosmos/proposals/792
 [2]:	https://cosmos.github.io/interchain-security/features/key-assignment
