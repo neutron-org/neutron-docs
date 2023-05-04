@@ -173,9 +173,7 @@ If you do not wish to reuse the private validator key from your provider chain, 
 	
 	# confirm your key has been assigned
 	$ GAIA_VALCONSADDR=$(gaiad tendermint show-address --home ~/.gaia)
-	$ gaiad query provider validator-consumer-key neutron-1 
-	
-	$GAIA_VALCONSADDR
+	$ gaiad query provider validator-consumer-key neutron-1 $GAIA_VALCONSADDR
 	consumer_address: "<your_address>"
 
 
