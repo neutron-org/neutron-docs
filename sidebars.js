@@ -19,7 +19,15 @@ const sidebars = {
             type: 'category',
             items: [
                 'neutron/overview',
-                'neutron/build',
+                {
+                    label: 'Build and run',
+                    type: 'category',
+                    items: [
+                        'neutron/build-and-run/overview',
+                        'neutron/build-and-run/neutron-sole',
+                        'neutron/build-and-run/cosmopark',
+                    ],
+                },
                 'neutron/contribute',
                 'neutron/consumer-chain-upgrade',
                 {
