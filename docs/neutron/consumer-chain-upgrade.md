@@ -125,7 +125,7 @@ You may notice that some consumer chains do not implement the x/staking module, 
 
 On the consumer chain, a validator's activity is identified by the private validator key used to sign blocks. There are two mutually exclusive methods for connecting activity on a consumer chain back to a provider.
 
-Assigning a key to be used on the provider chain is optional, but highly recommended.
+Assigning a key to be used on the consumer chain is optional, but highly recommended.
 
 Having different keys for all the chains helps minimize the impact of any of the keys being leaked.  
 
