@@ -2,7 +2,7 @@
 
 ## TL;DR
 
-Prop 792 was accepted by the Cosmos Community. If Neutron's mainnet launches between the 8th and the 21st of May, it may become the Hub's first consumer chain. Since a Cosmos Hub upgrade was scheduled on the Hub on Monday the 8th, **we strongly recommend validators to join a coordinated launch on Wednesday th 10th at 3pm UTC instead.**
+Prop 792 was accepted by the Cosmos Community. If Neutron's mainnet launches between the 8th and the 21st of May, it may become the Hub's first consumer chain. Since a Cosmos Hub upgrade was scheduled on the Hub on Monday the 8th, **we strongly recommend validators to join a coordinated launch on Wednesday the 10th at 3pm UTC instead.**
 
 * For launching consumer chains, validators have two main responsibilities:
 	* Submit an `AssignConsumerKey` transaction on the Cosmos Hub
