@@ -2,17 +2,12 @@
 
 ## TL;DR
 
-### Neutron is Launching
+Prop 792 was accepted by the Cosmos Community. If Neutron's mainnet launches between the 8th and the 21st of May, it may become the Hub's first consumer chain. Since a Cosmos Hub upgrade was scheduled on the Hub on Monday the 8th, **we strongly recommend validators to join a coordinated launch on Wednesday th 10th at 3pm UTC instead.**
 
-Get prepared before [the spawn time][1]!
-
-### High Level
-
-
-* **For launching consumer chains, validators have two main responsibilities:**
+* For launching consumer chains, validators have two main responsibilities:
 	* Submit an `AssignConsumerKey` transaction on the Cosmos Hub
 	* Run the consumer chain binary at the spawn time. 
-* **This guide informs validators about how to accomplish these goals.**
+* This guide informs validators about how to accomplish these goals.
 
 ### The Steps
 
