@@ -1,4 +1,4 @@
-# Neutron sole
+# Neutron standalone docker
 
 This page contains information about building and running a Neutron node in a standalone way.
 
@@ -20,7 +20,7 @@ The output should comply with the golang version mentioned in the [Prerequisites
 ### 2. Clone Neutron core repository and cd into it
 
 ```sh
-git clone https://github.com/neutron-org/neutron.git
+git clone -b v1.0.1 https://github.com/neutron-org/neutron.git
 cd neutron
 ```
 
