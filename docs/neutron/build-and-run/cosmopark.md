@@ -102,7 +102,7 @@ make stop-cosmopark
 
 #### Neutron node
 
-The Neutron node usage guidelines (exposed ports, CLI, prepared accounts) for Cosmopark are the same as for the sole run. Please refer to the [corresponding section](/neutron/build-and-run/neutron-sole#usage) to see more details on it.
+The Neutron node usage guidelines (exposed ports, CLI, prepared accounts) for Cosmopark are the same as for the sole run. Please refer to the [corresponding section](/neutron/build-and-run/neutron-docker#usage) to see more details on it.
 
 #### Hermes
 
