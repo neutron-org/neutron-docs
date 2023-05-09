@@ -30,7 +30,7 @@ const sidebars = {
                     ],
                 },
                 'neutron/contribute',
-                'neutron/consumer-chain-upgrade',
+                'neutron/consumer-chain-launch',
                 {
                     label: 'Neutron DAO',
                     type: 'category',

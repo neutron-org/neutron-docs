@@ -61,7 +61,7 @@ The neutron [proposal has been put on-chain][4]. Cosmos Hub validators are oblig
 	signed_blocks_window: 140000
 	min_signed_per_window: 0.050000000000000000
 	downtime_jail_duration: 600s
-	slash_fraction_double_sign: 0.010000000000000000
+	slash_fraction_double_sign: 0.050000000000000000
 	slash_fraction_downtime: 0.000100000000000000`
 
 
@@ -91,24 +91,24 @@ You need to initialize the Consumer chain node before assigning a key. Initializ
 	# switch to version to be used
 	# the version might change
 	# You should have go >1.20 installed in order to build binary
-	$ git checkout v1.0.0-rc1
+	$ git checkout v1.0.1
 	$ make install
 	
 	# after installing the neutrond tool is available; check the installation
 	$ neutrond version --long
 	name: neutron
 	server_name: neutrond
-	version: 1.0.0-rc1
-	commit: a735ee5cb359b53ce3833741847c784da3c66411
+	version: 1.0.1
+	commit: c236f1045f866c341ec26f5c409c04d201a19cde
 	....
 	
 	## 2. initialize your node
-	$ neutrond init neutron-val --home ~/.neutron
+	$ neutrond init neutron-val --chain-id neutron-1
 	{"app_message":{"adminmodule":{"admins":[]},"auth"... }}}
 	
 	# <node_home>/config/priv_validator_key.json contains your new key
 	# show the validator key (needed for key assignment on provider)
-	$ neutrond tendermint show-validator --home ~/.neutron
+	$ neutrond tendermint show-validator
 	{"@type":"/cosmos.crypto.ed25519.PubKey","key":"qVifseOYMsfeKnzSHlkEb+0ZZeuZrVPJ7sqMZJHAbBc="}
 	
 
@@ -139,7 +139,7 @@ Within the machine running the provider node, this key is found at
 Copy the contents of this file into a new file on the machine hosting the consumer chain, at 
 
 
-	~/.$CONSUMER_BINARY/config/priv_validator_key.json
+	~/.<neutron_node_home>/config/priv_validator_key.json
 
 
 Upon start, the consumer chain should begin signing blocks with the same validator key as present on the provider.
@@ -158,7 +158,7 @@ If you do not wish to reuse the private validator key from your provider chain, 
 
 	# run this on the machine that you will use to run neutron
 	# the command gets the public key to use for neutron
-	$ neutrond tendermint show-validator --home ~/.neutron
+	$ neutrond tendermint show-validator
 	{"@type":"/cosmos.crypto.ed25519.PubKey","key":"qVifseOYMsfeKnzSHlkEb+0ZZeuZrVPJ7sqMZJHAbBc="}
 	
 	# do this step on the provider machine
@@ -185,10 +185,10 @@ In this example we are simply using neutron’s start command. Your actual steps
 
 	# Final genesis URL will be announced shortly after spawn time
 	$ wget <URL_to_final_genesis.json>
-	$ mv genesis.json ~/.neutron/config
+	$ mv genesis.json ~/.neutrond/config
 	
 	# start the binary
-	$ neutrond start --home ~/.neutron
+	$ neutrond start
 	
 
 
