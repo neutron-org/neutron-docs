@@ -25,7 +25,7 @@ const sidebars = {
                     items: [
                         'neutron/build-and-run/overview',
                         'neutron/build-and-run/neutron-build',
-                        'neutron/build-and-run/neutron-docker',                        
+                        'neutron/build-and-run/neutron-docker',
                         'neutron/build-and-run/cosmopark',
                     ],
                 },
@@ -284,6 +284,7 @@ const sidebars = {
             type: 'category',
             items: [
                 'deployment/testnet',
+                'deployment/mainnet',
             ],
         },
     ]
