@@ -146,6 +146,7 @@ Upon start, the consumer chain should begin signing blocks with the same validat
 
 
 #### Option Two: Use key delegation
+⚠️ **If you did not use the key delegation feature before spawn time, do not use it until the chain is live, stable and receiving VSCPackets from the provider! **⚠️
 
 If you do not wish to reuse the private validator key from your provider chain, an alternative method is to use multiple keys managed by the Key Assignment feature.
 
