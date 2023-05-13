@@ -6,25 +6,24 @@
 
 There is two places to check out:
 
-* **Neutron Technical Newsletter** (https://t.me/+GK5KVutIvQhhNmNi): this is the Neutron dev team blog. Here we share
-  our
-  news and findings;
-* **Neutron Technical Support** (https://t.me/+7R1T1WieXShhOWVi): this is a chat where smart contract developers can ask
-  technical questions to the devs. Please note that non-technical questions and spam can result in an immediate ban.
+* **Neutron Builders Announcements** (https://t.me/+Q6C_kb0xLaoxYzE1): this is the channel with official announcements;
+* **Neutron Builders Chat** (https://t.me/+b9f8m8iybLdhYjE9): this is a chat where smart contract developers can ask
+  technical questions to the devs. Please note that non-technical questions and spam can result in an immediate ban;
+* **Neutron Dev Blog** (https://t.me/+GK5KVutIvQhhNmNi): a channel for various technical notes from the dev team.
 
 ### Where is block explorer?
 
 We encourage everyone to use the Mintscan explorer:
 
-* Mainnet (`neutron-1`): https://www.mintscan.io/neutron
-* Testnet (`pion-1`): https://testnet.mintscan.io/neutron-testnet
+* Mainnet (`neutron-1`): https://www.mintscan.io/neutron;
+* Testnet (`pion-1`): https://testnet.mintscan.io/neutron-testnet.
 
-### Where can I get the public REST and RPC nodes??
+### Where can I get the public REST and RPC nodes?
 
 You can check out the Cosmos Chain Registry:
 
-* [Mainnet](https://github.com/cosmos/chain-registry/blob/master/neutron/chain.json#L86) (`neutron-1`)
-* [Testnet](https://github.com/cosmos/chain-registry/blob/master/testnets/neutrontestnet/chain.json#L81) (`pion-1`)
+* [Mainnet](https://github.com/cosmos/chain-registry/blob/master/neutron/chain.json#L86) (`neutron-1`);
+* [Testnet](https://github.com/cosmos/chain-registry/blob/master/testnets/neutrontestnet/chain.json#L81) (`pion-1`).
 
 We are always keeping our REST and RPC nodes running and available for everyone to use; if you experience any problems
 with the public nodes, feel free to report to the Neutron Technical Support group (see above).
