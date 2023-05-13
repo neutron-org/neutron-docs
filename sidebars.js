@@ -19,6 +19,7 @@ const sidebars = {
             type: 'category',
             items: [
                 'neutron/overview',
+                'neutron/faq',
                 {
                     label: 'Build and run',
                     type: 'category',

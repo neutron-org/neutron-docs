@@ -23,3 +23,7 @@ ICAs allow modules and smart contracts to execute and track transactions on fore
 
 ### CosmWasm
 CosmWasm is a smart contracting platform built for the Cosmos ecosystem.
+
+### F.A.Q.
+
+Please refer to the [F.A.Q.](./faq.md) page!
