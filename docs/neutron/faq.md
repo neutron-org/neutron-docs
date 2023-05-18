@@ -25,8 +25,8 @@ upload, query and execute contracts.
 
 You can check out the Cosmos Chain Registry:
 
-* [Mainnet](https://github.com/cosmos/chain-registry/blob/master/neutron/chain.json#L86) (`neutron-1`);
-* [Testnet](https://github.com/cosmos/chain-registry/blob/master/testnets/neutrontestnet/chain.json#L81) (`pion-1`).
+* [Mainnet](https://github.com/cosmos/chain-registry/blob/master/neutron/chain.json) (`neutron-1`);
+* [Testnet](https://github.com/cosmos/chain-registry/blob/master/testnets/neutrontestnet/chain.json) (`pion-1`).
 
 We are always keeping our REST and RPC nodes running and available for everyone to use; if you experience any problems
 with the public nodes, feel free to report to the Neutron Technical Support group (see above).
