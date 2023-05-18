@@ -18,6 +18,9 @@ We encourage everyone to use the Mintscan explorer:
 * Mainnet (`neutron-1`): https://www.mintscan.io/neutron;
 * Testnet (`pion-1`): https://testnet.mintscan.io/neutron-testnet.
 
+We also recommend to use this awesome smart contracts [explorer](https://neutron.celat.one/mainnet/query?contract=neutron1suhgf5svhu4usrurvxzlgn54ksxmn8gljarjtxqnapv8kjnp4nrstdxvff) by Celatone: it provides a great UI to
+upload, query and execute contracts.
+
 ### Where can I get the public REST and RPC nodes?
 
 You can check out the Cosmos Chain Registry:
