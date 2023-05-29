@@ -28,7 +28,7 @@ make install
 2. `cd gaia`
 3. for some reason, gaia v9.0.3 checks if you have go v1.18 installed,
    not newer, not older, however, it builds fine with go v1.20, so, before
-   running `make install`, you will have to edit gaia's Makefile on line 106
+   running `make install`, you will have to edit gaia's Makefile on line 110
    like this:
 ```diff
 -$(BUILD_TARGETS): check_version go.sum $(BUILDDIR)/
