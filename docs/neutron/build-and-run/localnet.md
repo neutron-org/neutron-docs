@@ -30,8 +30,19 @@ make install
    not newer, not older, however, it builds fine with go v1.20, so, before
    running `make install`, you will have to edit gaia's Makefile on line 106
    like this:
-  -$(BUILD_TARGETS): check_version go.sum $(BUILDDIR)/
-  +$(BUILD_TARGETS): go.sum $(BUILDDIR)/
+```diff
+--- a/Makefile
++++ b/Makefile
+@@ -107,7 +107,7 @@ BUILD_TARGETS := build install
+
+build: BUILD_ARGS=-o $(BUILDDIR)/
+
+-$(BUILD_TARGETS): check_version go.sum $(BUILDDIR)/
++$(BUILD_TARGETS): go.sum $(BUILDDIR)/
+go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./...
+
+$(BUILDDIR)/:
+```
 4. finally, run `make install`
 
 ### 3. install Hermes
@@ -64,6 +75,7 @@ echo "banner spread envelope side kite person disagree path silver will brother 
 ```
 
 You can also check your balance using
+
 ```bash
 gaiad query bank balances "$(gaiad keys show test --output json | jq -r '.address')" --node tcp://0.0.0.0:16657
 ```
