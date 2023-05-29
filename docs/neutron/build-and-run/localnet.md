@@ -9,7 +9,7 @@ Beware: you will have to clone all these repositories in the same parent directo
 └── neutron-query-relayer
 ```
 
-## Prerequisities
+## Prerequisites
 
 - Go version 1.20 or newer
 - Rust toolchain v1.69 or newer
