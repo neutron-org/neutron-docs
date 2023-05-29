@@ -31,17 +31,8 @@ make install
    running `make install`, you will have to edit gaia's Makefile on line 106
    like this:
 ```diff
---- a/Makefile
-+++ b/Makefile
-@@ -107,7 +107,7 @@ BUILD_TARGETS := build install
-
-build: BUILD_ARGS=-o $(BUILDDIR)/
-
 -$(BUILD_TARGETS): check_version go.sum $(BUILDDIR)/
 +$(BUILD_TARGETS): go.sum $(BUILDDIR)/
-go $@ -mod=readonly $(BUILD_FLAGS) $(BUILD_ARGS) ./...
-
-$(BUILDDIR)/:
 ```
 4. finally, run `make install`
 
