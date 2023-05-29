@@ -77,7 +77,7 @@ echo "banner spread envelope side kite person disagree path silver will brother 
 You can also check your balance using
 
 ```bash
-gaiad query bank balances "$(gaiad keys show test --output json | jq -r '.address')" --node tcp://0.0.0.0:16657
+gaiad query bank balances "$(gaiad keys show test -a)" --node tcp://0.0.0.0:16657
 ```
 
 Neutron chain's RPC is exposed at `0.0.0.0:26657`,
@@ -90,5 +90,5 @@ echo "veteran try aware erosion drink dance decade comic dawn museum release epi
 You can also check your balance using
 
 ```bash
-neutrond query bank balances "$(neutrond keys show test --output json | jq -r '.address')" --node tcp://0.0.0.0:26657
+neutrond query bank balances "$(neutrond keys show test -a)" --node tcp://0.0.0.0:26657
 ```
