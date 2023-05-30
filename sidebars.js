@@ -28,6 +28,7 @@ const sidebars = {
                         'neutron/build-and-run/neutron-build',
                         'neutron/build-and-run/neutron-docker',
                         'neutron/build-and-run/cosmopark',
+                        'neutron/build-and-run/localnet'
                     ],
                 },
                 'neutron/contribute',
