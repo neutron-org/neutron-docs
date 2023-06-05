@@ -47,7 +47,7 @@ cargo install ibc-relayer-cli --bin hermes --version 1.4.1 --locked
 ```bash
 git clone https://github.com/neutron-org/neutron-query-relayer
 cd neutron-query-relayer
-make build
+make install
 ```
 
 ## Start Localnet
