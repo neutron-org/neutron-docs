@@ -35,7 +35,7 @@ address = "0.0.0.0:9090"
 Here we will leave the `pprof_laddr` set to port 6060, `rpc laddr` to port 26657, and `p2p laddr` to 26656 in the `config.toml` directory:
 
 ```sh
-nano $HOME/.osmosisd/config/config.toml
+nano $HOME/.neutrond/config/config.toml
 ```
 ```toml
 # pprof listen address (https://golang.org/pkg/net/http/pprof)
