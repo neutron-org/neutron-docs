@@ -289,10 +289,13 @@ const sidebars = {
             label: 'Tutorials',
             type: 'category',
             items: [
+                'tutorials/overview',
+                'tutorials/intoduction-to-cosmwasm',
+                'tutorials/cosmwasm-remix',
+                'tutorials/cosmwasm-wasmkit',
                 'tutorials/cosmwasm-ica',
                 'tutorials/cosmwasm-icq',
-                'tutorials/integration-tests',
-                'tutorials/cosmwasm-remix'
+                'tutorials/integration-tests'
             ],
         },
         {
