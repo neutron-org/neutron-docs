@@ -1,5 +1,5 @@
 # Deploy your first contract
-This guide will explore the basics of creating a simple cosmwasm contract.
+This guide will explore the basics of creating a simple cosmwasm contract. You can check out more detailed usage of wasmkit [here](https://wasmkit.arufaresearch.com/), for entry-level tutorials.
 
 
 ## Wasmkit
