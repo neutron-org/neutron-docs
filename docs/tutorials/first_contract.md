@@ -4,6 +4,21 @@ This guide will explore an overview of lifecycle of a simple CosmWasm contract u
 
 WasmKit is a development framework specifically designed for building CosmWasm contracts. The primary goal of the project is to simplify, streamline, and enhance the process of developing CosmWasm contracts.
 
+## WasmKit's approach to abstraction
+
+WasmKit's approach separates the running instances (networks, contracts, accounts) from the core logic (deploy steps, testing logic) to make contract interation possible with any CosmWasm enabled chain with any account with just a slight change in `wasmkit.config.js` if need be.
+
+WasmKit configuration file `wasmkit.config.js` maps blockchain networks (neutron mainnet, neutron testnet or localnet), accounts (contract admin account, contract deploy account, testing account) and even contracts (their .wasm file, schema files) with just their names and only use given names while writing interaction script or testing logic. This is poweful mechanism as it removes the need to store and keep track of data values for these 3 entities, for example, there is no need to store codeId after contract deployment, contractAddress after instantiation or to store RPC URL or chainId for mainnet, testnets.
+
+### Contract development cycle
+
+1. **Setup contracts repo**: A project repository to hold rust contracts, deployment scripts, tests and configuration files in one place. Can possible have docs and/or front-end source too.
+2. **Implement contract logic, compile and debug**: Define contract's storage, messages and contract methods for given messages. Compile contracts to generate `.wasm` files as contract binary and contract messages schema `.json` files.
+3. **Write unit, integration tests**: Unit tests can be written in contract's rust source and chain interaction integration tests in typescript.
+4. **Compress wasm binary, deploy to network, instantiate contract**: Deploy to network by using a simple deploy script written in typescript. Contract instantiation can also be done within the typsecript script.
+5. **Query or Execute contract**: Contract queries and execute calls can be simply implemented in typescipt using the `typsecript_schema/` clients generated.
+6. **Write front-end and scripts to interact with the contract**: The same `typescript_schema/` clients can be used to write front-end interaction with the contracts.
+
 ## Prerequisites
 
 The minimum packages/requirements are as follows:
@@ -12,10 +27,6 @@ The minimum packages/requirements are as follows:
 - Connection to a Neutron node
 
 ## Quick start
-
-### Contract development cycle
-
-TODO: explain list of steps to take from start to end for developing contracts.
 
 ### Setup rust environment
 
@@ -101,14 +112,41 @@ This will display the list of built-in tasks. This is your starting point to fin
 
 - Clear artifacts data:
 ```bash
-wasmkit clean
+npx wasmkit clean
 ```
 
 This will remove the `artifacts/` directory completely.
 
 - Clean artifacts for only one contract:
 ```bash
-wasmkit clean <contract-name>
+npx wasmkit clean <contract-name>
+```
+
+### Start local network
+
+A local instance of neutron network can be created if follwing config is specified in `wasmkit.config.js` file:
+
+```js
+  localnetworks: {  // specify localnetwork docker image, ports and environment variables
+    neutron: {
+      docker_image: "uditgulati0/neutron-node",
+      rpc_port: 26657,
+      rest_port: 1317,
+      flags: ["RUN_BACKGROUND=0"],
+    },
+  },
+```
+
+A neutron localnet using above config can be started by doing:
+
+```bash
+npx wasmkit localnet-start neutron
+```
+
+The RPC URL for this localnetwork will be `http://localhost:26657` and REST URL will be `http://localhost:1317`. This can be verfiied by doing:
+
+```bash
+npx wasmkit node-info --network localnet`
 ```
 
 ### Running user scripts
@@ -117,6 +155,12 @@ User scripts are a way to define the flow of interacting with contracts on some 
 
 ```bash
 npx wasmkit run scripts/<script-name>
+```
+
+`wasmkit.config.js` has list of networks defined and comes by default with 3 networks defined, namely, `testnet`, `localnet` and `mainnet`. To specify which network to the script (or test) for, simply use the `--network` flag similar as given below:
+
+```bash
+npx wasmkit run scripts/<script-name> --network localnet
 ```
 
 ## Run tests
@@ -133,12 +177,14 @@ npx wasmkit test test/<test-name>
 
 For example:
 ```bash
-npx wasmkit test test/sample-test.ts test another-test.ts
+npx wasmkit test test/sample-test.ts test/another-test.ts
 ```
 
 ## Initiate wasmkit playground
 
-To initiate wamskit playground make sure you are in project directory and contracts are compiled and instantiated using compile and run commands of wasmkit respectively.
+Wasmkit playground is an auto-generated minimal front-end for interacting with deployed contracts. Since, wasmkit keeps track of the deployed contract addresses on multiple networks, it can generate the playground front-end using these addresses and the typescript schem generated from the contracts. This playgound can be useful when quickly interacting with contracts either for debugging purposes or it can be shared as part of contract documentation for anyone to try out contracts interaction without having to setup environment or installing any cli.
+
+To initiate wamskit playground, make sure you are in project directory and contracts are compiled and instantiated using compile and run commands of wasmkit respectively.
 
 ```bash
 cd <project-name>
@@ -147,11 +193,20 @@ npx wasmkit playground
 
 This command will clone a react application to interact with deployed contracts. User can also modify its theme and logo using config file.
 
+Locally run the playground fronte-end using:
+
+```bash
+cd playground/
+yarn start
+```
+
 ## Configuration guide
 
 If you examine the `wasmkit.config.js` file, you will find testnet/localnet accounts and various networks, allowing users to customize fee, account, and network information according to their requirements.
 
 ```javascript
+// You can specify your own testnet/mainnet/localnet accounts
+// testnet account can be funded using faucets
 const testnet_accounts = [
   {
     name: 'account_0',
@@ -173,6 +228,18 @@ const localnet_accounts = [
   }
 ];
 
+const mainnet_accounts = [
+  {
+    name: 'account_0',
+    address: 'neutron3f...sf2',
+    mnemonic: 'clip ... choose'
+  }
+];
+
+// You can specify other networks similarly,
+// just need to know RPC URL and chainID
+// custom fee can also be added here
+// for detailed example: https://github.com/arufa-research/wasmkit/blob/master/packages/wasmkit/sample-project/wasmkit.config.js
 const networks = {
   localnet: {
     endpoint: 'http://localhost:26657/',
@@ -180,9 +247,14 @@ const networks = {
     accounts: localnet_accounts,
   },
   testnet: {
-    endpoint: 'https://rpc.uni.juno.deuslabs.fi/',
+    endpoint: 'https://rpc-palvus.pion-1.ntrn.tech/',
     chainId: 'pion-1',
     accounts: testnet_accounts,
+  },
+  mainnet: {
+    endpoint: 'https://rpc-kralum.neutron-1.neutron.org',
+    chainId: 'neutron-1',
+    accounts: mainnet_accounts,
   },
 };
 
@@ -191,6 +263,14 @@ module.exports = {
     default: networks.testnet,
     testnet: networks.testnet,
     localnet: networks.localnet,
+  },
+  localnetworks: {  // specify localnetwork docker image, ports and environment variables
+    neutron: {
+      docker_image: "uditgulati0/neutron-node",
+      rpc_port: 26657,
+      rest_port: 1317,
+      flags: ["RUN_BACKGROUND=0"],
+    },
   },
   mocha: {
     timeout: 60000
