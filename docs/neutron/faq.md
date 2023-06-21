@@ -34,3 +34,13 @@ with the public nodes, feel free to report to the Neutron Technical Support grou
 ### What CosmWasm version is used?
 
 We are using a [patched](https://github.com/neutron-org/neutron/blob/v1.0.1/go.mod#L158) 0.31.1 version of `wasmd`.
+
+### Where is testnet faucet?
+
+You can request from Testnet(`pion-1`) Faucet on the #testnet-faucet channel on Neutron’s Discord server with the following command:
+
+```text
+$request <NEUTRON-ADDRESS>
+```
+
+Where `<NEUTRON-ADDRESS>` is a `neutron1******` generated address.
