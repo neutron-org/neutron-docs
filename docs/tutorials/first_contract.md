@@ -129,7 +129,7 @@ A local instance of neutron network can be created if follwing config is specifi
 ```js
   localnetworks: {  // specify localnetwork docker image, ports and environment variables
     neutron: {
-      docker_image: "uditgulati0/neutron-node",
+      docker_image: "neutron-node",
       rpc_port: 26657,
       rest_port: 1317,
       flags: ["RUN_BACKGROUND=0"],
@@ -266,7 +266,7 @@ module.exports = {
   },
   localnetworks: {  // specify localnetwork docker image, ports and environment variables
     neutron: {
-      docker_image: "uditgulati0/neutron-node",
+      docker_image: "neutron-node",
       rpc_port: 26657,
       rest_port: 1317,
       flags: ["RUN_BACKGROUND=0"],
