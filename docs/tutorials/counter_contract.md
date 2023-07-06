@@ -44,49 +44,6 @@ Following is the file structure of the contract source:
 - `src/state.rs`: Defines what the structure of the contract's storage will be.
 - `src/bin/schema.rs`: Defines how to generate schema (language-agnostic format of contract messages) from the contract.
 
-## Contract dependencies
-
-Root directory `Cargo.toml` file:
-
-```rust
-[package]
-name = "<project-name>"
-version = "0.1.0"
-authors = ["<author-name> <author-email>"]
-edition = "2021"
-
-[lib]
-crate-type = ["cdylib", "rlib"]
-
-[profile.release]
-opt-level = 3
-debug = false
-rpath = false
-lto = true
-debug-assertions = false
-codegen-units = 1
-panic = 'abort'
-incremental = false
-overflow-checks = true
-
-[features]
-backtraces = ["cosmwasm-std/backtraces"]
-library = []
-
-[dependencies]
-cosmwasm-schema = "1.1.3"
-cosmwasm-std = "1.1.3"
-cosmwasm-storage = "1.1.3"
-cw-storage-plus = "1.0.1"
-cw2 = "1.0.1"
-schemars = "0.8.10"
-serde = { version = "1.0.145", default-features = false, features = ["derive"] }
-thiserror = { version = "1.0.31" }
-
-[dev-dependencies]
-cw-multi-test = "0.16.2"
-```
-
 ## Contract state
 
 `State` handles the state of the database where smart contract data is stored and accessed.
@@ -103,12 +60,12 @@ use schemars::JsonSchema;
 use cw_storage_plus::Item;
 use serde::{Deserialize, Serialize};
 
-pub const CONSTANTS: Item<Constants> = Item::new("constants");
+pub const STATE: Item<State> = Item::new("state");
 
 #[derive(Serialize, Debug, Deserialize, Clone, PartialEq, JsonSchema)]
-pub struct Constants {
+pub struct State {
     pub count: i32,
-    pub owner: String
+    pub owner: Addr
 }
 ```
 
