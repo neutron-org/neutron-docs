@@ -224,6 +224,19 @@ const sidebars = {
                             type: 'category',
                             items: [
                                 {
+                                    label: 'Cosmos Hub',
+                                    type: 'category',
+                                    items: [
+                                        {
+                                            label: 'Global Fee',
+                                            type: 'category',
+                                            items: [
+                                                'neutron/modules/3rdparty/cosmoshub/globalfee/overview',
+                                            ]
+                                        }
+                                    ],
+                                },
+                                {
                                     type: 'category',
                                     label: 'Osmosis',
                                     items: [
