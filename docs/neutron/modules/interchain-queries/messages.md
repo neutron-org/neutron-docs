@@ -72,7 +72,7 @@ message MsgRegisterInterchainQueryResponse {
 
 #### State modifications
 * increments last registered query id;
-* generates new [RegisteredQuery](https://github.com/neutron-org/neutron/blob/c8503c3c17df3c5ca24abeeafaba9123c28395ac/proto/interchainqueries/genesis.proto#L10);
+* generates new [RegisteredQuery](https://github.com/neutron-org/neutron/blob/v1.0.4-rc1/proto/interchainqueries/genesis.proto#L11);
 * save the record in storage under incremented query id;
 
 #### Events
@@ -82,7 +82,7 @@ Emits [`EventTypeNeutonMessage`](/neutron/modules/interchain-queries/events#even
 
 > **Note:** as well as for query registration, for query updates the maximum allowed number of KVKey values for a single InterchainQuery equals to 32.
 
-[`MsgUpdateInterchainQueryRequest`](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/proto/interchainqueries/tx.proto#L111) can be submitted only by the owner of corresponding Interchain Query:
+[`MsgUpdateInterchainQueryRequest`](https://github.com/neutron-org/neutron/blob/v1.0.4-rc1/proto/interchainqueries/tx.proto#L114) can be submitted only by the owner of corresponding Interchain Query:
 ```protobuf
 message MsgUpdateInterchainQueryRequest {
   uint64 query_id = 1;
@@ -100,7 +100,7 @@ message MsgUpdateInterchainQueryResponse {
 ```
 
 #### State modifications
-* [Updates](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/x/interchainqueries/keeper/msg_server.go#L130) a corresponding `RegisteredQuery` structure.
+* [Updates](https://github.com/neutron-org/neutron/blob/v1.0.4-rc1/x/interchainqueries/keeper/msg_server.go#L144) a corresponding `RegisteredQuery` structure.
 
 #### Events
 Emits [`EventTypeNeutonMessage`](/neutron/modules/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_updated`.
@@ -123,8 +123,8 @@ message MsgRemoveInterchainQueryResponse {
 ```
 
 #### State modifications
-* [Removes](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/x/interchainqueries/keeper/msg_server.go#L93) a corresponding `RegisteredQuery` structure.
-* Also [removes](https://github.com/neutron-org/neutron/blob/88abc3140a8d2944c03a1c282c2f83c59fe6030b/x/interchainqueries/keeper/msg_server.go#L106) the query results ([immediately](https://github.com/neutron-org/neutron/blob/88abc3140a8d2944c03a1c282c2f83c59fe6030b/x/interchainqueries/keeper/keeper.go#L144) for a KV query, [deferred in the ICQ module EndBlock](https://github.com/neutron-org/neutron/blob/88abc3140a8d2944c03a1c282c2f83c59fe6030b/x/interchainqueries/module.go#L176) for a TX query).
+* [Removes](https://github.com/neutron-org/neutron/blob/88abc3140a8d2944c03a1c282c2f83c59fe6030b/x/interchainqueries/keeper/keeper.go#L140) a corresponding `RegisteredQuery` structure.
+* Also removes the query results ([immediately](https://github.com/neutron-org/neutron/blob/88abc3140a8d2944c03a1c282c2f83c59fe6030b/x/interchainqueries/keeper/keeper.go#L144) for a KV query, [deferred in the ICQ module EndBlock](https://github.com/neutron-org/neutron/blob/v1.0.4-rc1/x/interchainqueries/module.go#L176) for a TX query).
 
 #### Events
 Emits [`EventTypeNeutonMessage`](/neutron/modules/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_removed`.
@@ -209,10 +209,10 @@ message MsgSubmitQueryResultResponse {}
   * set `registered_query.last_submitted_result_local_height` to the current Neutron height;
 * callback `MsgSubmitQueryResult.result.kv_results` to thr appropriate smart-contract if needed;
 * for every `block` in `MsgSubmitQueryResult.result.blocks`:
-  * verify `block.next_block_header` and `block.header` by calling [`ibcClientKeeper.UpdateClient(header)`](https://github.com/neutron-org/neutron/blob/4313d35f8082dc124c5fe9491870720bbd3a5052/x/interchainqueries/keeper/process_block_results.go#L63);
-  * [verify](https://github.com/neutron-org/neutron/blob/4313d35f8082dc124c5fe9491870720bbd3a5052/x/interchainqueries/keeper/process_block_results.go#L155) `block.txs` with verified headers;
+  * verify `block.next_block_header` and `block.header` by calling [`clientKeeper.UpdateClient(header)`](https://github.com/neutron-org/neutron/blob/v1.0.4-rc1/x/interchainqueries/keeper/process_block_results.go#L68);
+  * [verify](https://github.com/neutron-org/neutron/blob/v1.0.4-rc1/x/interchainqueries/keeper/process_block_results.go#L167) `block.txs` with verified headers;
 * process every `transaction` in every `block` from `MsgSubmitQueryResult.result.blocks`:
-  * [check](https://github.com/neutron-org/neutron/blob/4313d35f8082dc124c5fe9491870720bbd3a5052/x/interchainqueries/keeper/process_block_results.go#L125) transaction was not processed previously to avoid double submitting
-  * save generated record to the storage with composite key `bigEndianBytes(registered_query.id) + bigEndianBytes(last_submitted_transaction_id` prefixed by [`SubmittedTxKey`](https://github.com/neutron-org/neutron/blob/c8503c3c17df3c5ca24abeeafaba9123c28395ac/x/interchainqueries/types/keys.go#L33);
-  * [callback](https://github.com/neutron-org/neutron/blob/4313d35f8082dc124c5fe9491870720bbd3a5052/x/interchainqueries/keeper/process_block_results.go#L134) transaction to the appropriate smart-contract;
-  * [save](https://github.com/neutron-org/neutron/blob/4313d35f8082dc124c5fe9491870720bbd3a5052/x/interchainqueries/keeper/process_block_results.go#L141) transaction's hash to the storage to approach double-submission preventing mechanis,
+  * [check](https://github.com/neutron-org/neutron/blob/v1.0.4-rc1/x/interchainqueries/keeper/process_block_results.go#L134) transaction was not processed previously to avoid double submitting
+  * save generated record to the storage with composite key `bigEndianBytes(registered_query.id) + bigEndianBytes(last_submitted_transaction_id` prefixed by [`SubmittedTxKey`](https://github.com/neutron-org/neutron/blob/v1.0.4-rc1/x/interchainqueries/types/keys.go#L37);
+  * [callback](https://github.com/neutron-org/neutron/blob/v1.0.4-rc1/x/interchainqueries/keeper/process_block_results.go#L143) transaction to the appropriate smart-contract;
+  * [save](https://github.com/neutron-org/neutron/blob/v1.0.4-rc1/x/interchainqueries/keeper/process_block_results.go#L150) transaction's hash to the storage to approach double-submission preventing mechanis,
