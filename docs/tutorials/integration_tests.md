@@ -33,8 +33,8 @@ yarn test:interchain_kv_query # interchain kv query test
 APP_DIR - applications directory where Neutron, Gaia and Neutron query relayer are located
 NEUTRON_DENOM - neutron network denom
 COSMOS_DENOM - gaia (cosmoshub) network denom
-IBC_ATOM_DENOM — ibc ATOM denom
-IBC_USDC_DENOM — ibc USDC denom
+IBC_ATOM_DENOM — denom of a native token which is considered as an IBC transferred ATOM
+IBC_USDC_DENOM — denom of a native token which is considered as an IBC transferred USDC
 CONTRACTS_PATH - path to contracts that will be used in tests
 NEUTRON_ADDRESS_PREFIX - address prefix for neutron controller network
 COSMOS_ADDRESS_PREFIX - address prefix for gaia (cosmoshub) host network
