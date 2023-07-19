@@ -2,9 +2,13 @@
 
 ```rust
 pub enum QueryMsg {
+    /// The contract's configurations
     Config {},
+    /// List of pending funds to addresses (to be distributed)
     Pending {},
+    /// List of current shareholder weights
     Shares {},
+    /// Returns pause state info - whether contract is paused and if it is, until when
     PauseInfo {},
 }
 ```
