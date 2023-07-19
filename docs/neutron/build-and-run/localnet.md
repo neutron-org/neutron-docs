@@ -39,7 +39,7 @@ make install
 ### 3. Install Hermes
 
 ```bash
-cargo install ibc-relayer-cli --bin hermes --version 1.4.1 --locked
+cargo install ibc-relayer-cli --bin hermes --version 1.6.0 --locked
 ```
 
 ### 4. Install Neutron Query Relayer
