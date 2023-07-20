@@ -18,7 +18,7 @@ The Relayer also listens to the Neutron's `NewBlockHeader` events that are used 
 ### Queries execution
 
 When the update time comes for a query, the Relayer runs the specified query on the remote chain:
-* in case of a KV-query, the Relayer just [reads](https://github.com/neutron-org/cosmos-query-relayer/blob/4542045ab24d2735890e70d4dc525677d5f30c8a/internal/proof/proof_impl/get_storage_values.go#L11)
+* in case of a KV-query, the Relayer just [reads](https://github.com/neutron-org/neutron-query-relayer/blob/4542045ab24d2735890e70d4dc525677d5f30c8a/internal/proof/proof_impl/get_storage_values.go#L11)
 necessary KV-keys from the remote chain's storage with [Merkle Proofs](https://github.com/cosmos/cosmos-sdk/blob/ae77f0080a724b159233bd9b289b2e91c0de21b5/docs/interfaces/lite/specification.md). Neutron will need these proofs to [verify](https://github.com/neutron-org/neutron/blob/49c33ff43122cb12ee20e98493e0e2439a94f928/x/interchainqueries/keeper/msg_server.go#L217) validity of KV-results on results submission;
 * in case of a TX-query, the Relayer makes a query to the target chain's [Tendermint RPC](https://docs.tendermint.com/v0.33/app-dev/indexing-transactions.html#querying-transactions) 
 to search transactions by message types, events and attributes which were emitted during transactions execution and were 
