@@ -12,7 +12,7 @@ We are going to learn how to:
 4. Manage the registered Interchain Queries.
 
 > **Note:** this section assumes that you have basic knowledge of CosmWasm and have some experience in writing smart
-> contracts. You can check out CosmWasm [docs](https://docs.cosmwasm.com/docs/1.0/)
+> contracts. You can check out CosmWasm [docs](https://docs.cosmwasm.com/docs)
 > and [blog posts](https://medium.com/cosmwasm/writing-a-cosmwasm-contract-8fb946c3a516) for entry-level tutorials.
 
 > **Note:** before running any query creation transaction you need to top up your contract address. See [Interchain Queries Overview](../neutron/modules/interchain-queries/overview.md), "Query creation deposit" section.
@@ -30,30 +30,40 @@ libraries to your dependencies section:
 
 ```toml
 [dependencies]
-cosmwasm-std = { version = "1.0.0", features = ["staking"] }
+cosmwasm-std = "1.2.5"
 
 # Other standard dependencies...
 
 # This is a library that simplifies working with ICQ,
 # contains bindings for the Neutron ICQ module (messages, responses, etc.), some default Interchain Queries and provides
 # various helper functions.
-neutron-sdk = { path = "github.com/neutron-org/neutron/packages/neutron-sdk", default-features = false, version = "0.1.0" }
+neutron-sdk = "0.5.0"
 ```
 
 Now you can import the libraries:
 
 ```rust
-use neutron_sdk::bindings::msg::NeutronMsg;
-use neutron_sdk::bindings::query::{NeutronQuery, QueryRegisteredQueryResponse};
-use neutron_sdk::interchain_queries::queries::{
-    query_balance, query_registered_query,
+use neutron_sdk::{
+    bindings::{
+        msg::NeutronMsg,
+        query::{NeutronQuery, QueryRegisteredQueryResponse},
+        types::{Height, KVKey},
+    },
+    interchain_queries::{
+        new_register_balance_query_msg,
+        new_register_transfers_query_msg,
+        queries::{
+            get_registered_query, query_balance,
+        },
+        register_queries::new_register_interchain_query_msg,
+        types::{
+            QueryType, TransactionFilterItem, TransactionFilterOp, TransactionFilterValue,
+            COSMOS_SDK_TRANSFER_MSG_URL, RECIPIENT_FIELD,
+        },
+    },
+    sudo::msg::SudoMsg,
+    NeutronError, NeutronResult,
 };
-use neutron_sdk::interchain_queries::{
-    new_register_balance_query_msg,
-    new_register_transfers_query_msg,
-};
-use neutron_sdk::sudo::msg::SudoMsg;
-use neutron_sdk::{NeutronError, NeutronResult};
 ```
 
 ## 2. Register an Interchain Query
@@ -74,7 +84,7 @@ pub enum ExecuteMsg {
         connection_id: String,
         update_period: u64,
         recipient: String,
-        min_height: Option<u128>,
+        min_height: Option<u64>,
     }
 }
 
@@ -163,7 +173,7 @@ In the snippet above, we create the `ExecuteMsg` enum that contains two `Registe
 And implement simple handlers `register_balance_query` and `register_transfers_query` for these messages. Each handler
 uses built-in helpers from Neutron-SDK to create necessary register messages: `new_register_balance_query_msg` and `new_register_transfers_query_msg`:
 * `new_register_balance_query_msg` - is a KV-query, therefore it creates an Interchain Query with necessary KV-keys to read
-from remote chain and build a full `Balance` response from KV-values (you can see a full implementation of the helper in the [SDK source code](https://github.com/neutron-org/neutron-sdk/blob/a47bfac69667da57f8bf6ea81c9f16240e145c6d/packages/neutron-sdk/src/interchain_queries/register_queries.rs#L61)):
+from remote chain and build a full `Balance` response from KV-values (you can see a full implementation of the helper in the [SDK source code](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/packages/neutron-sdk/src/interchain_queries/register_queries.rs#L220)):
 ```rust
 pub fn new_register_balance_query_msg(...) -> NeutronResult<NeutronMsg> {
     // convert bech32 encoded address to a bytes representation
@@ -181,7 +191,7 @@ pub fn new_register_balance_query_msg(...) -> NeutronResult<NeutronMsg> {
 }
 ```
 * `new_register_transfers_query_msg` - is a TX-query, therefore it creates an Interchain Query with necessary TX-filter 
-to receive only required transactions from remote chain (you can see a full implementation of the helper in the [SDK source code](https://github.com/neutron-org/neutron-sdk/blob/a47bfac69667da57f8bf6ea81c9f16240e145c6d/packages/neutron-sdk/src/interchain_queries/register_queries.rs#L95)):
+to receive only required transactions from remote chain (you can see a full implementation of the helper in the [SDK source code](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/packages/neutron-sdk/src/interchain_queries/register_queries.rs#L220)):
 ```rust
 pub fn new_register_transfers_query_msg(...) -> NeutronResult<NeutronMsg> {
     // in this case the function creates filter to receive only transactions with transfer msg in it with a particular recipient
@@ -225,9 +235,9 @@ pub fn query(deps: Deps<NeutronQuery>, env: Env, msg: QueryMsg) -> NeutronResult
 In the snippet above we create the `QueryMsg` enum that contains three msgs: `GetRegisteredQuery`, `Balance`, `GetTransfersNumber`, and a `query`
 entrypoint which handles the defined query msgs. 
 
-* the handler of `GetRegisteredQuery` uses [built-in SDK helper](https://github.com/neutron-org/neutron-sdk/blob/a47bfac69667da57f8bf6ea81c9f16240e145c6d/packages/neutron-sdk/src/interchain_queries/queries.rs#L51) `get_registered_query` to get all the information about
+* the handler of `GetRegisteredQuery` uses [built-in SDK helper](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/packages/neutron-sdk/src/interchain_queries/queries.rs#L67) `get_registered_query` to get all the information about
 any registered query by its id;
-* the handler of `Balance` is much more interesting. It uses [built-in SDK helper](https://github.com/neutron-org/neutron-sdk/blob/a47bfac69667da57f8bf6ea81c9f16240e145c6d/packages/neutron-sdk/src/interchain_queries/queries.rs#L87) `query_balance` to query interchain balance:
+* the handler of `Balance` is much more interesting. It uses [built-in SDK helper](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/packages/neutron-sdk/src/interchain_queries/queries.rs#L103) `query_balance` to query interchain balance:
 * the handler of `GetTransfersNumber` will be below in the [section about tx queries handling](#get-results-from-tx-queries).
 
 ```rust
@@ -264,10 +274,10 @@ pub fn query_kv_result<T: KVReconstruct>(
     KVReconstruct::reconstruct(&registered_query_result.result.kv_results)
 }
 ```
-It is built-in into SDK, and it uses `KVReconstruct` [trait](https://github.com/neutron-org/neutron-sdk/blob/a47bfac69667da57f8bf6ea81c9f16240e145c6d/packages/neutron-sdk/src/interchain_queries/types.rs#L148)
+It is built-in into SDK, and it uses `KVReconstruct` [trait](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/packages/neutron-sdk/src/interchain_queries/types.rs#L175)
 to reconstruct KV-storage values into a nice structure.
 Meaning any structure that implements `KVReconstruct` trait can be used with `query_kv_result` helper.
-In our case we want to reconstruct `Balances` from KV-values. `Balances` is a build-in SDK structure and it already [implements](https://github.com/neutron-org/neutron-sdk/blob/a47bfac69667da57f8bf6ea81c9f16240e145c6d/packages/neutron-sdk/src/interchain_queries/types.rs#L176)
+In our case we want to reconstruct `Balances` from KV-values. `Balances` is a build-in SDK structure and it already [implements](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/packages/neutron-sdk/src/interchain_queries/types.rs#L202)
 `KVReconstruct` trait, so no additional functionality is required from developers, you can just import and use it as it is:
 ```rust
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -462,7 +472,8 @@ pub fn execute(
             query_id,
             new_keys,
             new_update_period,
-        } => update_interchain_query(query_id, new_keys, new_update_period),
+            new_recipient,
+        } => update_interchain_query(query_id, new_keys, new_update_period, new_recipinet),
         ExecuteMsg::RemoveInterchainQuery { query_id } => remove_interchain_query(query_id),
         ...
     }
@@ -472,8 +483,17 @@ pub fn update_interchain_query(
     query_id: u64,
     new_keys: Option<Vec<KVKey>>,
     new_update_period: Option<u64>,
+    new_recipient: Option<String>,
 ) -> NeutronResult<Response<NeutronMsg>> {
-    let update_msg = NeutronMsg::update_interchain_query(query_id, new_keys, new_update_period);
+    let new_filter = new_recipient.map(|recipient| {
+        vec![TransactionFilterItem {
+            field: RECIPIENT_FIELD.to_string(),
+            op: TransactionFilterOp::Eq,
+            value: TransactionFilterValue::String(recipient),
+        }]
+    });
+
+    let update_msg = NeutronMsg::update_interchain_query(query_id, new_keys, new_update_period, new_filter);
     Ok(Response::new().add_message(update_msg))
 }
 
