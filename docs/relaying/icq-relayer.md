@@ -104,7 +104,7 @@ As it is said in the Relayer's [readme](https://github.com/neutron-org/neutron-q
 Before running the Relayer application for production purposes, you need to create a wallet for the Relayer, top it up, and set up the configuration (refer to the [Configuration](#configuration) section). Also you will most likely need to deploy your own RPC nodes of Neutron and the chain of interest.
 
 - [How to deploy your own Neutron RPC node](/neutron/build-and-run/overview);
-- [How to how to prepare a target chain RPC node for Relayer's usage](/relaying/target-chain).
+- [How to prepare a target chain RPC node for Relayer's usage](/relaying/target-chain).
 
 ### Setting up Relayer wallet
 

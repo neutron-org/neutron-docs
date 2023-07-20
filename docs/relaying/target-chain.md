@@ -1,1 +1,1 @@
-# Setting up target chain
+# How to prepare a target chain RPC node for Relayer's usage
