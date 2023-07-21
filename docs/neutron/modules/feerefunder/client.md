@@ -14,7 +14,6 @@ service Query {
   rpc FeeInfo(FeeInfoRequest) returns (FeeInfoResponse) {
     option (google.api.http).get = "/neutron-org/neutron/feerefunder/info";
   }
-  // this line is used by starport scaffolding # 2
 }
 ```
 

@@ -20,4 +20,3 @@ But at the same time there is gas consumption for the sudo call. Two options for
 2. Release gas dynamically depending on the remaining gas and the gas reserve required to complete the call with a failure record in the state.
 
 In this implementation, the second approach was used. Also given the fact that Neutron makes the contract pay for all packets (using ibc fees), it's hard to spam / overflow neutron with failure records.
-

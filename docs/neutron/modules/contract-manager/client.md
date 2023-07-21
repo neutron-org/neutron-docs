@@ -11,6 +11,7 @@ service Query {
 	rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
 		option (google.api.http).get = "/neutron-org/neutron/contractmanager/params";
 	}
+
 	// Queries a Failures by address.
 	rpc Failure(QueryGetFailuresByAddressRequest) returns (QueryGetFailuresByAddressResponse) {
 		option (google.api.http).get = "/neutron-org/neutron/contractmanager/failure/{address}";
@@ -20,7 +21,6 @@ service Query {
 	rpc AllFailures(QueryAllFailureRequest) returns (QueryAllFailureResponse) {
 		option (google.api.http).get = "/neutron-org/neutron/contractmanager/failure";
 	}
-
 }
 ```
 
