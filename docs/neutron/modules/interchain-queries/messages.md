@@ -26,7 +26,8 @@ message MsgRegisterInterchainQuery {
 }
 
 message KVKey {
-  // Path (storage prefix) to the storage where you want to read value by key (usually name of cosmos-sdk module: 'staking', 'bank', etc.)
+  // Path (storage prefix) to the storage where you want to read value by key
+  // (usually name of cosmos-sdk module: 'staking', 'bank', etc.)
   string path = 1;
   // Key you want to read from the storage
   bytes key = 2;
