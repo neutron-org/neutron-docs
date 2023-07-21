@@ -90,14 +90,14 @@ describe('Neutron / My test', () => {
   });
 
   test('store contract', async () => {
-    codeId = await neutronAccount.storeWasm(NeutronContract.IBC_TRANSFER);
+    codeId = await neutronAccount.storeWasm('my_contract.wasm');
     expect(codeId).toBeGreaterThan(0);
   });
   test('instantiate', async () => {
     const res = await neutronAccount.instantiateContract(
       codeId,
       '{}',
-      'ibc_transfer',
+      'my_contract',
     );
     contractAddress = res[0]._contract_address;
     expect(contractAddress).toStartWith('neutron');

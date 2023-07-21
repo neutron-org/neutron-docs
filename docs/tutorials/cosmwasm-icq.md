@@ -144,7 +144,7 @@ pub fn register_transfers_query(
     connection_id: String,
     recipient: String,
     update_period: u64,
-    min_height: Option<u128>,
+    min_height: Option<u64>,
 ) -> NeutronResult<Response<NeutronMsg>> {
     let msg = new_register_transfers_query_msg(
         deps,
@@ -173,7 +173,7 @@ In the snippet above, we create the `ExecuteMsg` enum that contains two `Registe
 And implement simple handlers `register_balance_query` and `register_transfers_query` for these messages. Each handler
 uses built-in helpers from Neutron-SDK to create necessary register messages: `new_register_balance_query_msg` and `new_register_transfers_query_msg`:
 * `new_register_balance_query_msg` - is a KV-query, therefore it creates an Interchain Query with necessary KV-keys to read
-from remote chain and build a full `Balance` response from KV-values (you can see a full implementation of the helper in the [SDK source code](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/packages/neutron-sdk/src/interchain_queries/register_queries.rs#L220)):
+from remote chain and build a full `Balance` response from KV-values (you can see a full implementation of the helper in the [SDK source code](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/packages/neutron-sdk/src/interchain_queries/register_queries.rs#L52)):
 ```rust
 pub fn new_register_balance_query_msg(...) -> NeutronResult<NeutronMsg> {
     // convert bech32 encoded address to a bytes representation
