@@ -209,6 +209,48 @@ pub fn new_register_transfers_query_msg(...) -> NeutronResult<NeutronMsg> {
 > But if you don't find some particular register query helper in the SDK, you can always implement your own using implementations from SDK as a reference.
 > We encourage you to open pull requests with your query implementations to make Neutron SDK better and better!
 
+### 2.1 How to make make query to custom data that is not in neutron-sdk
+
+Same as in the code above, to make a query, you need to populate KVKey struct:
+```rust
+pub struct KVKey {
+    /// **path** is a path to the storage (storage prefix) where you want to read value by key (usually name of cosmos-packages module: 'staking', 'bank', etc.)
+    pub path: String,
+
+    /// **key** is a key you want to read from the storage
+    pub key: Binary,
+};
+```
+
+Let's say we want to make interchain query to wasmd module for contract info.
+
+First thing to understand is that you need to know exact version of that module on a chain that you want to query for data.
+Let's assume we'll query osmosis testnet (osmo-test-5 testnet)
+Here we discover that they use [`v16.0.0-rc2-testnet` version](https://github.com/osmosis-labs/testnets/tree/main/testnets/osmo-test-5#details).
+As we can see this version of osmosis uses [custom patched wasmd module](https://github.com/osmosis-labs/osmosis/blob/v16.0.0-rc2-testnet/go.mod#L320).
+Now that we have found [this wasmd module](https://github.com/osmosis-labs/wasmd/tree/v0.31.0-osmo-v16), let's understand how the cosmos-sdk stores data. // TODO: explain how cosmos-sdk store works - it's concatenating keys, and if you query for prefix, you can get a list of data items.
+Usually we'll look into keeper.go (TODO: LINK) to see where and what kind of data it keeps in a store.
+If you look for where it sets contract info, you'll find the store.Set [here](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/keeper/keeper.go#L749), that sets the contract info under the key `types.GetContractAddressKey(contractAddress)`
+This function is imported using the keys file. That file is common for storing all key creation helpers. It's common location is [/x/modulename/types/keys.go](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go).
+As we can see the key in store is simply [concatenation of ContractKeyPrefix ([]byte{0x02}) and address of the contract that you want to query](https://github.com/osmosis-labs/wasmd/blob/master/x/wasm/types/keys.go#L48).
+
+Now that we now how to create the key, we can rebuild it's creation using rust in cosmwasm:
+```rust
+TODO: code with thorought explanation comments
+```
+TODO: explain why we convert addr from bech32 to base64
+
+
+> WARN: if you find the wrong version of the module, key construction can change and you'll fail to query data
+
+
+Let's assume that we want to query a chain with wasmd module 
+
+Then our path will be:
+```rust
+"wasmd".to_string()
+```
+
 ## 3. Get results from the registered Interchain Queries
 
 ### Get results from KV-queries
