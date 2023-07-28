@@ -133,9 +133,11 @@ pub fn register_balance_query(
     denom: String,
     update_period: u64,
 ) -> NeutronResult<Response<NeutronMsg>> {
-    let msg = new_register_balance_query_msg(deps, env, connection_id, addr, denom, update_period)?;
+    let msg = new_register_balance_query_msg(connection_id, addr, denom, update_period)?;
+    // wrap into submessage to save {query_id, query_type} on reply that'll later be used to handle sudo kv callback
+    let submsg = SubMsg::reply_on_success(msg, BALANCES_REPLY_ID);
 
-    Ok(Response::new().add_message(msg))
+    Ok(Response::default().add_submessage(submsg))
 }
 
 pub fn register_transfers_query(
@@ -156,6 +158,49 @@ pub fn register_transfers_query(
     )?;
 
     Ok(Response::new().add_message(msg))
+}
+
+#[entry_point]
+pub fn reply(deps: DepsMut, _: Env, msg: Reply) -> StdResult<Response> {
+    deps.api
+        .debug(format!("WASMDEBUG: reply msg: {:?}", msg).as_str());
+    match msg.id {
+        BALANCES_REPLY_ID => write_balance_query_id_to_reply_id(deps, msg),
+        _ => Err(StdError::generic_err(format!(
+            "unsupported reply message id {}",
+            msg.id
+        ))),
+    }
+}
+
+
+pub const KV_QUERY_ID_TO_CALLBACKS: Map<u64, QueryKind> = Map::new("kv_query_id_to_callbacks");
+
+// contains query kinds that we expect to handle in `sudo_kv_query_result`
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub enum QueryKind {
+    // Balance query
+    Balance,
+    // You can add your handlers to understand what query to deserialize by query_id in sudo callback
+}
+
+// save query_id to query_type information in reply, so that we can understand the kind of query we're getting in sudo kv call
+fn write_balance_query_id_to_reply_id(deps: DepsMut, reply: Reply) -> StdResult<Response> {
+    let resp: MsgRegisterInterchainQueryResponse = serde_json_wasm::from_slice(
+        reply
+            .result
+            .into_result()
+            .map_err(StdError::generic_err)?
+            .data
+            .ok_or_else(|| StdError::generic_err("no result"))?
+            .as_slice(),
+    )
+    .map_err(|e| StdError::generic_err(format!("failed to parse response: {:?}", e)))?;
+
+    // then in success reply handler we do this
+    KV_QUERY_ID_TO_CALLBACKS.save(deps.storage, resp.id, &QueryKind::Balance)?;
+
+    Ok(Response::default())
 }
 ```
 
@@ -376,6 +421,32 @@ pub fn sudo_kv_query_result(
             .as_str(),
     );
 
+    // store last KV callback update time
+    KV_CALLBACK_STATS.save(deps.storage, query_id, &env.block.height)?;
+
+    let query_kind = KV_QUERY_ID_TO_CALLBACKS.may_load(deps.storage, query_id)?;
+    match query_kind {
+        Some(QueryKind::Balance) => {
+            let balances: Balances = query_kv_result(deps.as_ref(), query_id)?;
+            let balances_str = balances
+                .coins
+                .iter()
+                .map(|c| c.amount.to_string() + c.denom.as_str())
+                .collect::<Vec<String>>()
+                .join(", ");
+            deps.api
+                .debug(format!("WASMDEBUG: sudo callback; balances: {:?}", balances_str).as_str());
+        }
+        None => {
+            deps.api.debug(
+                format!(
+                    "WASMDEBUG: sudo callback without query kind assigned; query_id: {:?}",
+                    query_id
+                )
+                .as_str(),
+            );
+        }
+    }
     Ok(Response::default())
 }
 ```
