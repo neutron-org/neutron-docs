@@ -33,6 +33,30 @@ Relayer submits a query result as the following depending on the Relayer's confi
 
 This means that it's the Relayer who pays gas for these actions. Note that KV queries submission are straightforward and therefore cheap whereas TX ones and KV callbacks also include smart contract call and their cost may vary significantly.
 
+#### How query result submission works in Neutron ICQ module
+
+Relayer submits a query result as a message [MsgSubmitQueryResult](https://github.com/neutron-org/neutron/blob/v1.0.4/proto/interchainqueries/tx.proto#L46).
+
+Then Neutron ICQ module runs handler [here](https://github.com/neutron-org/neutron/blob/v1.0.4/x/interchainqueries/keeper/msg_server.go#L154).
+
+What happens in SubmitQueryResult handler:
+1. find the query by id
+2. for [KV query submissions](https://github.com/neutron-org/neutron/blob/v1.0.4/x/interchainqueries/keeper/msg_server.go#L208):
+      1. check interchain query type is KV
+      2. check that query needs a new update
+      3. check that result has same amount of keys as a registered query itself
+      4. for each kv key check that key is indeed in the correct order as in query
+      5. for each kv key check that storage prefix is correct
+      6. for each key verify the membership or non-membership (if value for key does not exist)
+      7. if all keys successfully verified, [save query result in store by it's id](https://github.com/neutron-org/neutron/blob/v1.0.4/x/interchainqueries/keeper/keeper.go#L272), update last local and remote heights
+      8. if all keys successfully verified, and kv callback is enabled, [call cosmwasm sudo handler with query id](https://github.com/neutron-org/neutron/blob/main/x/interchainqueries/keeper/msg_server.go#L256)
+3. for [TX query submissions](https://github.com/neutron-org/neutron/blob/v1.0.4/x/interchainqueries/keeper/msg_server.go#L266):
+      1. check interchain query type is TX
+      2. verify that tendermint header for block and next block are correct
+      3. using headers verify that transaction was included in the block and was executed successfully
+      4. [call cosmwasm sudo handler with tx data](https://github.com/neutron-org/neutron/blob/main/x/interchainqueries/keeper/process_block_results.go#L143)
+      5. mark that this tx was already processed
+
 #### A bit of technical details about queries
 
 ##### Queries submission

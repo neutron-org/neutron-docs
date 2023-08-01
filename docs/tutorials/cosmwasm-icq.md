@@ -250,7 +250,7 @@ pub fn new_register_transfers_query_msg(...) -> NeutronResult<NeutronMsg> {
 }
 ```
 
-> **Note:** Neutron SDK is shipped with a lot of helpers to register different Interchain Queries (you can find a full list [here](https://github.com/neutron-org/neutron-sdk/blob/main/packages/neutron-sdk/src/interchain_queries/register_queries.rs)).
+> **Note:** Neutron SDK is shipped with a lot of helpers to register different Interchain Queries (you can find a full list [here](https://github.com/neutron-org/neutron-sdk/blob/v0.6.0/packages/neutron-sdk/src/interchain_queries/v045/register_queries.rs)).
 > But if you don't find some particular register query helper in the SDK, you can always implement your own using implementations from SDK as a reference.
 > We encourage you to open pull requests with your query implementations to make Neutron SDK better and better!
 
