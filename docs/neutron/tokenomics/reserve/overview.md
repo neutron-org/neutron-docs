@@ -2,7 +2,7 @@
 
 This document describes the Reserve contract for the Neutron network.
 
-**The Reserve** contract holds the vested NTRNs, and sends them to the [Treasury](../treasury/overview.md) and [Distribution](../distribution/overview.md) contracts. This contract is owned by the [Neutron DAO](/docs/neutron/dao/overview.md#neutron-dao) and is instantiated at genesis. It is responsible for the first step of tokens
+**The Reserve** contract holds the vested NTRNs, and sends them to the [DAO treasury (core module)](../../dao/overview.md) and [Distribution](../distribution/overview.md) contracts. This contract is owned by the [Neutron DAO](/docs/neutron/dao/overview.md#neutron-dao) and is instantiated at genesis. It is responsible for the first step of tokens
 distribution.
 
 Reserve contract can be configured only by the [Neutron DAO](/docs/neutron/dao/overview.md#neutron-dao). The `distribute` call is permissionless and can be called by anybody.

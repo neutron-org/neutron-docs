@@ -1,18 +1,13 @@
-# Consumer Chain Upgrade Readiness
+# Neutron Launch Instructions
 
 ## TL;DR
 
-### Neutron is Launching
+Prop 792 was accepted by the Cosmos Community. If Neutron's mainnet launches between the 8th and the 21st of May, it may become the Hub's first consumer chain. Since a Cosmos Hub upgrade was scheduled on the Hub on Monday the 8th, **we strongly recommend validators to join a coordinated launch on Wednesday the 10th at 3pm UTC instead.**
 
-Get prepared before [the spawn time][1]!
-
-### High Level
-
-
-* **For launching consumer chains, validators have two main responsibilities: **
+* For launching consumer chains, validators have two main responsibilities:
 	* Submit an `AssignConsumerKey` transaction on the Cosmos Hub
 	* Run the consumer chain binary at the spawn time. 
-* **This guide informs validators about how to accomplish these goals. **
+* This guide informs validators about how to accomplish these goals.
 
 ### The Steps
 
@@ -28,7 +23,7 @@ Get prepared before [the spawn time][1]!
 
 ### Relevant Parameters
 
-* **`Soft_opt_out_threshold: 0.05` (e.g. 5% of the voting power) **
+* **`Soft_opt_out_threshold: 0.05` (e.g. 5% of the voting power)**
 	* The bottom 5% validators by voting power can decide whether or not they wish to opt-in to running a node on Neutron. They will earn rewards regardless of their decision.
 * **`Commit_timeout: 1000ms` (leads to \~2.5s blocktime on Pion-1)**
 	* This increases blocktime speed on the network. See [these docs][3] for more information about the implications of this parameter.
@@ -48,7 +43,7 @@ The neutron [proposal has been put on-chain][4]. Cosmos Hub validators are oblig
 
 
 
-1. Consumer chain upgrade support for all consumer chains will be done from the [Cosmos Hub discord validators verified channel][5]. Gather in there at chain spawn time (after the `ConsumerChainAddition` proposal passes) and during upgrades.
+1. Consumer chain launch & upgrade support for all consumer chains will be done from the [Cosmos Hub discord validators verified channel][5]. Gather in there at chain spawn time (after the `ConsumerChainAddition` proposal passes) and during upgrades.
 2. If you need specialized support or have questions, you can check out the [forum][6].
 3. Announcements will be sent across multiple channels to alert you about upgrades. The best place to stay up to date is in the [upgrades][7] channel in discord.
 4. There are three important parameters in every `ConsumerAdditionProposal`. They are:
@@ -61,13 +56,13 @@ The neutron [proposal has been put on-chain][4]. Cosmos Hub validators are oblig
 
 
 
-	$ neutrond q slashing params --home ~/.neutron
+	`$ neutrond q slashing params --home ~/.neutron
 	# example output
 	signed_blocks_window: 140000
 	min_signed_per_window: 0.050000000000000000
 	downtime_jail_duration: 600s
-	slash_fraction_double_sign: 0.010000000000000000
-	slash_fraction_downtime: 0.000100000000000000
+	slash_fraction_double_sign: 0.050000000000000000
+	slash_fraction_downtime: 0.000100000000000000`
 
 
 
@@ -75,7 +70,7 @@ The neutron [proposal has been put on-chain][4]. Cosmos Hub validators are oblig
 
 
 1. Fill out the [validator contact form][9] if you haven't already
-2. Join the Cosmos Hub discord and ping an admin to request to be added to the relevant channels
+2. Join the [Cosmos Hub discord][5] and ping an admin to request to be added to the relevant channels
 3. Read the rest of this document and ask on the forum if you have questions
 
 
@@ -96,24 +91,24 @@ You need to initialize the Consumer chain node before assigning a key. Initializ
 	# switch to version to be used
 	# the version might change
 	# You should have go >1.20 installed in order to build binary
-	$ git checkout v1.0.0-rc1
+	$ git checkout v1.0.1
 	$ make install
 	
 	# after installing the neutrond tool is available; check the installation
 	$ neutrond version --long
 	name: neutron
 	server_name: neutrond
-	version: 1.0.0-rc1
-	commit: a735ee5cb359b53ce3833741847c784da3c66411
+	version: 1.0.1
+	commit: c236f1045f866c341ec26f5c409c04d201a19cde
 	....
 	
 	## 2. initialize your node
-	$ neutrond init neutron-val --home ~/.neutron
+	$ neutrond init neutron-val --chain-id neutron-1
 	{"app_message":{"adminmodule":{"admins":[]},"auth"... }}}
 	
 	# <node_home>/config/priv_validator_key.json contains your new key
 	# show the validator key (needed for key assignment on provider)
-	$ neutrond tendermint show-validator --home ~/.neutron
+	$ neutrond tendermint show-validator
 	{"@type":"/cosmos.crypto.ed25519.PubKey","key":"qVifseOYMsfeKnzSHlkEb+0ZZeuZrVPJ7sqMZJHAbBc="}
 	
 
@@ -125,7 +120,7 @@ You may notice that some consumer chains do not implement the x/staking module, 
 
 On the consumer chain, a validator's activity is identified by the private validator key used to sign blocks. There are two mutually exclusive methods for connecting activity on a consumer chain back to a provider.
 
-Assigning a key to be used on the provider chain is optional, but highly recommended.
+Assigning a key to be used on the consumer chain is optional, but highly recommended.
 
 Having different keys for all the chains helps minimize the impact of any of the keys being leaked.  
 
@@ -144,13 +139,14 @@ Within the machine running the provider node, this key is found at
 Copy the contents of this file into a new file on the machine hosting the consumer chain, at 
 
 
-	~/.$CONSUMER_BINARY/config/priv_validator_key.json
+	~/.<neutron_node_home>/config/priv_validator_key.json
 
 
 Upon start, the consumer chain should begin signing blocks with the same validator key as present on the provider.
 
 
 #### Option Two: Use key delegation
+⚠️ **If you did not use the key delegation feature before spawn time, do not use it until the chain is live, stable and receiving VSCPackets from the provider! **⚠️
 
 If you do not wish to reuse the private validator key from your provider chain, an alternative method is to use multiple keys managed by the Key Assignment feature.
 
@@ -163,7 +159,7 @@ If you do not wish to reuse the private validator key from your provider chain, 
 
 	# run this on the machine that you will use to run neutron
 	# the command gets the public key to use for neutron
-	$ neutrond tendermint show-validator --home ~/.neutron
+	$ neutrond tendermint show-validator
 	{"@type":"/cosmos.crypto.ed25519.PubKey","key":"qVifseOYMsfeKnzSHlkEb+0ZZeuZrVPJ7sqMZJHAbBc="}
 	
 	# do this step on the provider machine
@@ -173,9 +169,7 @@ If you do not wish to reuse the private validator key from your provider chain, 
 	
 	# confirm your key has been assigned
 	$ GAIA_VALCONSADDR=$(gaiad tendermint show-address --home ~/.gaia)
-	$ gaiad query provider validator-consumer-key neutron-1 
-	
-	$GAIA_VALCONSADDR
+	$ gaiad query provider validator-consumer-key neutron-1 $GAIA_VALCONSADDR
 	consumer_address: "<your_address>"
 
 
@@ -192,10 +186,10 @@ In this example we are simply using neutron’s start command. Your actual steps
 
 	# Final genesis URL will be announced shortly after spawn time
 	$ wget <URL_to_final_genesis.json>
-	$ mv genesis.json ~/.neutron/config
+	$ mv genesis.json ~/.neutrond/config
 	
 	# start the binary
-	$ neutrond start --home ~/.neutron
+	$ neutrond start
 	
 
 
@@ -241,7 +235,7 @@ The Cosmos community is here to assist you and support you as the ATOM economic 
 
 ## Attribution
 
-_Thanks to the teams at Interchain, Informal, and Hypha Worker Co-operative for their support preparing this documentation. _
+*Thanks to the teams at Interchain, Informal, and Hypha Worker Co-operative for their support preparing this documentation.*
 
 [1]:	https://www.mintscan.io/cosmos/proposals/792
 [2]:	https://cosmos.github.io/interchain-security/features/key-assignment

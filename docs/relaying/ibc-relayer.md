@@ -35,7 +35,7 @@ address = "0.0.0.0:9090"
 Here we will leave the `pprof_laddr` set to port 6060, `rpc laddr` to port 26657, and `p2p laddr` to 26656 in the `config.toml` directory:
 
 ```sh
-nano $HOME/.osmosisd/config/config.toml
+nano $HOME/.neutrond/config/config.toml
 ```
 ```toml
 # pprof listen address (https://golang.org/pkg/net/http/pprof)
@@ -175,7 +175,10 @@ list = [
 ]
 
 [[chains]]
-id = 'osmosis-1'
+id = 'neutron-1'
+# Whether or not this is a CCV consumer chain. Default: false
+# Only specify true for CCV consumer chain (Neutron), but NOT for sovereign chains.
+ccv_consumer_chain = true
 rpc_addr = 'http://127.0.0.1:26657'
 grpc_addr = 'http://127.0.0.1:9090'
 websocket_addr = 'ws://127.0.0.1:26657/websocket'
