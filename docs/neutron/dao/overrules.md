@@ -32,7 +32,7 @@ To implement the Overrules, we add several smart contracts to the DAO:
 This design allows to implement the Overrules in a way that doesn't require any significant changes in the main DAO
 smart contracts. (The only change made to the main DAO is the addition of
 [the query to check if subDAO is in the DAO's subDAOs list](https://github.com/neutron-org/neutron-dao/blob/376cd05df727fbf9c1730a469f94cb6f373e05db/contracts/dao/cwd-core/src/contract.rs#L333),
-also there is `ExecuteTimelocked` message added for Subdao Core).
+also there is [`ExecuteTimelockedMsgs`](https://github.com/neutron-org/neutron-dao/blob/f8dc6cd51eca7c1f109ffe46c27284263bef761b/contracts/subdaos/cwd-subdao-core/src/contract.rs#L109) message added for SubDao Core).
 
 How it works:
 1. subDAO member submits a proposal to subDAO pre-propose module, which takes the proposal message and wraps it in a
