@@ -112,12 +112,9 @@ sudo apt install librust-openssl-dev build-essential git
 
 ## Build & setup Hermes
 
-Make the directory where you'll place the binary, clone the hermes source repository and build it using the latest release.
+These commands install hermes into `$HOME/.cargo/bin/` directory:
 ```sh
-mkdir -p $HOME/hermes
-git clone https://github.com/informalsystems/ibc-rs.git hermes
-cd hermes
-git checkout v1.6.0
+rustup override set 1.71.0
 cargo install ibc-relayer-cli --bin hermes --locked --version 1.6.0
 ```
 
@@ -129,9 +126,10 @@ cp config.toml $HOME/.hermes
 ```
 
 Check hermes version & config dir setup
-```
+```sh
 hermes version
-INFO ThreadId(01) using default configuration from '/home/relay/.hermes/config.toml'
+
+2023-08-07T15:27:49.236821Z  INFO ThreadId(01) running Hermes v1.6.0
 hermes 1.6.0
 ```
 
