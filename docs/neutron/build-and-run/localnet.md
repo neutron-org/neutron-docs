@@ -17,7 +17,7 @@ Beware: you will have to clone all these repositories in the same parent directo
 ### 1. install Neutron
 
 ```bash
-git clone https://github.com/neutron-org/neutron
+git clone -b v1.0.4 https://github.com/neutron-org/neutron
 cd neutron
 make install
 ```
