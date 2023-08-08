@@ -8,7 +8,7 @@ There is a set of integration tests which cover main Neutron features. If you de
 
 ## Installation
 * `git clone git@github.com:neutron-org/neutron-integration-tests.git`
-* `git clone git@github.com:neutron-org/neutron.git`
+* `git clone -b v1.0.4 git@github.com:neutron-org/neutron.git`
 * `git clone git@github.com:neutron-org/neutron-query-relayer.git`
 * `git clone -b v9.0.3 git@github.com:cosmos/gaia.git`
 * `cd neutron-integration-tests`
@@ -31,17 +31,21 @@ yarn test:interchain_kv_query # interchain kv query test
 ## Environment variables you can redefine
 
 ```
-NEUTRON_DIR - directory where Neutron is located
+APP_DIR - applications directory where Neutron, Gaia and Neutron query relayer are located
 NEUTRON_DENOM - neutron network denom
 COSMOS_DENOM - gaia (cosmoshub) network denom
+IBC_ATOM_DENOM — denom of a native token which is used as a fake IBC transferred ATOM
+IBC_USDC_DENOM — denom of a native token which is used as a fake IBC transferred USDC
 CONTRACTS_PATH - path to contracts that will be used in tests
 NEUTRON_ADDRESS_PREFIX - address prefix for neutron controller network
 COSMOS_ADDRESS_PREFIX - address prefix for gaia (cosmoshub) host network
 NODE1_URL - url to the first node
+NODE1_WS_URL - url to websocket of the first node
 NODE2_URL - url to the second node
+NODE2_WS_URL - url to websocket of the second node
 BLOCKS_COUNT_BEFORE_START - how many blocks we wait before start first test
-NO_DOCKER - do not start cosmopark for tests (if you want to run cosmopark manually)
-BLOCK_TIME - time in ms for 1 block production
+NO_DOCKER - do not start cosmopark for tests
+NO_REBUILD - skip containers rebuilding
 ```
 
 ## Config

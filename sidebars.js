@@ -291,7 +291,8 @@ const sidebars = {
             items: [
                 'tutorials/cosmwasm-ica',
                 'tutorials/cosmwasm-icq',
-                'tutorials/integration-tests'
+                'tutorials/integration-tests',
+                'tutorials/cosmwasm-remix'
             ],
         },
         {
