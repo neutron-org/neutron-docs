@@ -4,7 +4,7 @@ This documentation section contains various information about smart contracts an
 
 - the [Introduction to CosmWasm](/tutorials/introduction_to_cosmwasm) page will gently dive with you into the nature of smart contracts. There you can expect to find help in understanding of smart contract basic terms like contract's state and entry points, instantiation of a smart contract and interaction with it using a sample counter contract;
 - the [CosmWasm + Remix IDE](tutorials/cosmwasm_remix) page will guide you into the way of smart contracts development and deployment without any setup in a web-only way using Remix IDE;
-- the [CosmWasm + WasmKit](tutorials/cosmwasm_wasmkit) page will TODO;
+- the [CosmWasm + WasmKit](tutorials/cosmwasm_wasmkit) page will give you a brief introduction to WasmKit and how it can be leveraged to simplify and add structure to your CosmWasm smart contract development flow;
 - the [CosmWasm + ICA](tutorials/cosmwasm_ica) page will demonstrate you the way a smart contract can make use of the Neutron's Interchain Accounts module;
 - the [CosmWasm + ICQ](tutorials/cosmwasm_icq) page will demonstrate you the way a smart contract can make use of the Neutron's Interchain Queries module;
 - the [Integration tests](tutorials/integration_tests) page will help you in testing of your smart contract by providing hints on how to setup interchain environment and define integration testing flow.
