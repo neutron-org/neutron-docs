@@ -1,4 +1,4 @@
-# Deploy your first contract
+# CosmWasm + WasmKit
 
 This guide will explore an overview of lifecycle of a simple CosmWasm contract using WasmKit. You can check out more detailed WasmKit usage [here](https://wasmkit.arufaresearch.com/).
 
@@ -137,7 +137,7 @@ A local instance of neutron network can be created if follwing config is specifi
   },
 ```
 
-A neutron localnet using above config can be started by doing:
+You can see there's a `neutron-node` used as a docker image. For such a setup you'll need to [Build a Neutron node image](/neutron/build-and-run/neutron-docker#3-build-a-neutron-node-image). Once done, a neutron localnet using above config can be started by doing:
 
 ```bash
 npx wasmkit localnet-start neutron
