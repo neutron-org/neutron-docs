@@ -281,23 +281,49 @@ As we can see the key in store is simply [concatenation of ContractKeyPrefix ([]
 
 Now that we now how to create the key, we can rebuild it's creation using rust in cosmwasm:
 ```rust
-TODO: code with thorough explanation comments
-fn contract_address_info_key() {
-    
+// https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go#L28
+pub const CONTRACT_KEY_PREFIX: u8 = 0x02;
+
+fn create_contract_address_info_key(addr: AddressBytes) -> StdResult<AddressBytes> {
+    let mut key: Vec<u8> = vec![CONTRACT_KEY_PREFIX];
+    // https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go#L49
+    key.extend_from_slice(addr.to_be_bytes().as_slice());
+
+    Ok(key)
 }
 ```
-TODO: explain why we convert addr from bech32 to base64
 
+After that we can write use this key in a function that will create message to register this query:
+```rust
+pub const WASM_STORE_KEY: &str = "wasm";
+
+pub fn new_register_contract_address_info_query_msg(
+    connection_id: String,
+    addr: String,
+    update_period: u64,
+) -> NeutronResult<NeutronMsg> {
+    // We need to decode a bech32 encoded string and converts to base64 encoded bytes.
+    // This is needed since addresses are stored this way in Cosmos SDK.
+    let converted_addr_bytes = decode_and_convert(addr.as_str())?;
+
+    let balance_key = create_contract_address_info_key(converted_addr_bytes)?;
+
+    let kv_key = KVKey {
+        // Path to store, in our case its store of wasmd module (https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go#L13)
+        path: WASM_STORE_KEY.to_string(),
+        key: Binary(balance_key),
+    };
+
+    // Construct NeutronMsg to register interchain query with our constructed kv_key key, connection_id and period
+    NeutronMsg::register_interchain_query(
+        QueryPayload::KV(vec![kv_key]),
+        connection_id,
+        update_period,
+    )
+}
+```
 
 > WARN: if you find the wrong version of the module, key construction can change and you'll fail to query data
-
-
-Let's assume that we want to query a chain with wasmd module 
-
-Then our path will be:
-```rust
-"wasmd".to_string()
-```
 
 ## 3. Get results from the registered Interchain Queries
 
