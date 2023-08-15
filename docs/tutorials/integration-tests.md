@@ -9,7 +9,7 @@ There is a set of integration tests which cover main Neutron features. If you de
 ## Installation
 * `git clone git@github.com:neutron-org/neutron-integration-tests.git`
 * `git clone -b v1.0.4 git@github.com:neutron-org/neutron.git`
-* `git clone git@github.com:neutron-org/cosmos-query-relayer.git`
+* `git clone git@github.com:neutron-org/neutron-query-relayer.git`
 * `git clone -b v9.0.3 git@github.com:cosmos/gaia.git`
 * `cd neutron-integration-tests`
 * \* `make -C setup build-all`
@@ -24,7 +24,8 @@ There is a set of integration tests which cover main Neutron features. If you de
 yarn test # all tests
 yarn test:simple # basic tests
 yarn test:interchaintx # interchain txs test
-yarn test:interchain_tx_query # interchain tx query test
+yarn test:interchain_tx_query_plain # interchain tx query test
+yarn test:interchain_tx_query_resubmit # interchain tx query test #2
 yarn test:interchain_kv_query # interchain kv query test
 ```
 ## Environment variables you can redefine
@@ -61,34 +62,52 @@ To create a new contract you can refer to [Neutron Cosmwasm SDK Repo](https://gi
 You'll need to update artifacts in `./contracts` folder in case you have created a new contract. Place your contract(s) into `./contracts/artifacts` folder. Let's say you have the contract  with name `my_contract.wasm`
 
 ### Your first test
-Create a file named `new_one.test.ts` in `./src/testcases` with following code 
+Create a file named `new_one.test.ts` in `./src/testcases/parallel` with following code:
 ```js
-import { CosmosWrapper } from '../helpers/cosmos';
 import { TestStateLocalCosmosTestNet } from './common_localcosmosnet';
+import {
+  NEUTRON_DENOM,
+  CosmosWrapper,
+  WalletWrapper,
+} from '../../helpers/cosmos';
 
 describe('Neutron / My test', () => {
   let testState: TestStateLocalCosmosTestNet;
-  let cm: CosmosWrapper;
+  let neutronChain: CosmosWrapper;
+  let neutronAccount: WalletWrapper;
   let codeId: string;
   let contractAddress: string;
 
   beforeAll(async () => {
     testState = new TestStateLocalCosmosTestNet();
     await testState.init();
-    cm = new CosmosWrapper(testState.sdk1, testState.wallets.demo1);
+
+    neutronChain = new CosmosWrapper(
+      testState.sdk1,
+      testState.blockWaiter1,
+      NEUTRON_DENOM,
+    );
+    neutronAccount = new WalletWrapper(
+      neutronChain,
+      testState.wallets.qaNeutron.genQaWal1,
+    );
   });
 
   test('store contract', async () => {
-    codeId = await cm.storeWasm('my_contract.wasm');
-    expect(parseInt(codeId)).toBeGreaterThan(0);
+    codeId = await neutronAccount.storeWasm('my_contract.wasm');
+    expect(codeId).toBeGreaterThan(0);
   });
   test('instantiate', async () => {
-    const res = await cm.instantiate(codeId, '{}', 'my_contract');
-    contractAddress = res;
-    expect(res).toStartWith('neutron');
+    const res = await neutronAccount.instantiateContract(
+      codeId,
+      '{}',
+      'my_contract',
+    );
+    contractAddress = res[0]._contract_address;
+    expect(contractAddress).toStartWith('neutron');
   });
   test('execute contract', async () => {
-    const res = await cm.executeContract(
+    const res = await neutronAccount.executeContract(
       contractAddress,
       JSON.stringify({
         my_method: {
@@ -103,10 +122,13 @@ describe('Neutron / My test', () => {
 
 ```
 
+> Warning: Use `src/testcases/run_in_band` folder for your test if it cannot be run in parallel!
+> This is usually the case if test mutates some global chain state that other tests use directly or indirectly.
+
 Then update `package.json` in the root folder. Like this
 ```
 ...
-    "test:new_one": "jest --runInBand -b src/testcases/new_one",
+    "test:new_one": "jest --runInBand -b src/testcases/parallel/new_one",
 ...
 ```
 Now you can run your test:

@@ -83,7 +83,7 @@ message MsgSubmitTx {
   string memo = 5;
   uint64 timeout = 6;
 
-  neutronorg.neutron.feerefunder.Fee fee = 7 [(gogoproto.nullable) = false];
+  neutron.feerefunder.Fee fee = 7 [ (gogoproto.nullable) = false ];
 }
 ```
 

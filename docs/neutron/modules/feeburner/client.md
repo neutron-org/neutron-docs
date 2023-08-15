@@ -11,11 +11,13 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/neutron/feeburner/params";
   }
+
   // TotalBurnedNeutronsAmount queries total amount of burned neutron fees.
-  rpc TotalBurnedNeutronsAmount(QueryTotalBurnedNeutronsAmountRequest) returns (QueryTotalBurnedNeutronsAmountResponse) {
-    option (google.api.http).get = "/neutron/feeburner/total_burned_neutrons_amount";
+  rpc TotalBurnedNeutronsAmount(QueryTotalBurnedNeutronsAmountRequest)
+      returns (QueryTotalBurnedNeutronsAmountResponse) {
+    option (google.api.http).get =
+        "/neutron/feeburner/total_burned_neutrons_amount";
   }
-  // this line is used by starport scaffolding # 2
 }
 ```
 

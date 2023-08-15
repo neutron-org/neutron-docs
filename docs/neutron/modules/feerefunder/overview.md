@@ -10,7 +10,7 @@ The FeeRefunder module implements a mechanism and contains methods to make refun
 
 Due to the fact that contracts are allowed to make calls to the IBC as well as process all received data, a problem arieses in which a malicious contract can make a call to the IBC and, during the response of the `Ack` or `Timeout`, make another IBC call and so on forever. Which will lead to drainage of relayer's funds and spamming of the network.
 
-In order to avoid such problem, the code in the module forces the contract to pay for all Acknoledgements and Timeout messages it processes.
+In order to avoid such problem, the code in the module forces the contract to pay for all Acknowledgements and Timeout messages it processes.
 
 The mechanism behind the module is inspired by [ICS-29](https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment). ICS-29 itself requires both chains (target and source chains) to support the specifications which is not quite good for Neutron, since we want to connect as many chains as possible, and that's hard with ICS-29, since not so many chains use the latest [ibc-go](https://github.com/cosmos/ibc-go) version.
 

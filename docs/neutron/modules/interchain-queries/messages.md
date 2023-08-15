@@ -2,7 +2,7 @@
 
 ### Register Interchain Query
 
-[`MsgRegisterInterchainQuery`](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/proto/interchainqueries/tx.proto#L23) can be submitted by smart-contract only via `MsgRegisterInterchainQuery` transaction:
+[`MsgRegisterInterchainQuery`](https://github.com/neutron-org/neutron/blob/v1.0.4/proto/interchainqueries/tx.proto#L23) can be submitted by smart-contract only via `MsgRegisterInterchainQuery` transaction:
 
 ```protobuf
 message MsgRegisterInterchainQuery {
@@ -26,7 +26,8 @@ message MsgRegisterInterchainQuery {
 }
 
 message KVKey {
-  // Path (storage prefix) to the storage where you want to read value by key (usually name of cosmos-sdk module: 'staking', 'bank', etc.)
+  // Path (storage prefix) to the storage where you want to read value by key
+  // (usually name of cosmos-sdk module: 'staking', 'bank', etc.)
   string path = 1;
   // Key you want to read from the storage
   bytes key = 2;
@@ -63,7 +64,7 @@ will be converted by the ICQ relayer into a usual Tendermint search string:
 "transfer.amount" > 42 AND "message.module" = "bank"
 ```
 
-`MsgRegisterInterchainQuery` returns [`MsgRegisterInterchainQueryResponse`](https://github.com/neutron-org/neutron/blob/4313d35f8082dc124c5fe9491870720bbd3a5052/proto/interchainqueries/tx.proto#L42) where `id` is unique identifier of newly registered interchain query on success:
+`MsgRegisterInterchainQuery` returns [`MsgRegisterInterchainQueryResponse`](https://github.com/neutron-org/neutron/blob/v1.0.4/proto/interchainqueries/tx.proto#L44) where `id` is unique identifier of newly registered interchain query on success:
 ```protobuf
 message MsgRegisterInterchainQueryResponse { 
   uint64 id = 1; 
@@ -93,7 +94,7 @@ message MsgUpdateInterchainQueryRequest {
 }
 ```
 
-Returns just an empty [`MsgUpdateInterchainQueryResponse`](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/proto/interchainqueries/tx.proto#L117) on success:
+Returns just an empty [`MsgUpdateInterchainQueryResponse`](https://github.com/neutron-org/neutron/blob/v1.0.4/proto/interchainqueries/tx.proto#L121) on success:
 ```protobuf
 message MsgUpdateInterchainQueryResponse {
 }
@@ -108,7 +109,7 @@ Emits [`EventTypeNeutonMessage`](/neutron/modules/interchain-queries/events#even
 
 ### Remove Interchain Query
 
-[`MsgRemoveInterchainQueryRequest`](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/proto/interchainqueries/tx.proto#L104) can be submitted only by the owner of corresponding Interchain Query within the query's service period or by anyone beyond it. Read more about this message permissions [here](/neutron/modules/interchain-queries/overview#query-creation-deposit).
+[`MsgRemoveInterchainQueryRequest`](https://github.com/neutron-org/neutron/blob/v1.0.4/proto/interchainqueries/tx.proto#L108) can be submitted only by the owner of corresponding Interchain Query within the query's service period or by anyone beyond it. Read more about this message permissions [here](/neutron/modules/interchain-queries/overview#query-creation-deposit).
 ```protobuf
 message MsgRemoveInterchainQueryRequest {
   uint64 query_id = 1;
@@ -116,15 +117,15 @@ message MsgRemoveInterchainQueryRequest {
 }
 ```
 
-Returns just an empty [`MsgRemoveInterchainQueryResponse`](https://github.com/neutron-org/neutron/blob/dd812d6a05f4036a789cdb4b895020e73543702e/proto/interchainqueries/tx.proto#L108) on success:
+Returns just an empty [`MsgRemoveInterchainQueryResponse`](https://github.com/neutron-org/neutron/blob/v1.0.4/proto/interchainqueries/tx.proto#L112) on success:
 ```protobuf
 message MsgRemoveInterchainQueryResponse {
 }
 ```
 
 #### State modifications
-* [Removes](https://github.com/neutron-org/neutron/blob/88abc3140a8d2944c03a1c282c2f83c59fe6030b/x/interchainqueries/keeper/keeper.go#L140) a corresponding `RegisteredQuery` structure.
-* Also removes the query results ([immediately](https://github.com/neutron-org/neutron/blob/88abc3140a8d2944c03a1c282c2f83c59fe6030b/x/interchainqueries/keeper/keeper.go#L144) for a KV query, [deferred in the ICQ module EndBlock](https://github.com/neutron-org/neutron/blob/v1.0.4/x/interchainqueries/module.go#L176) for a TX query).
+* [Removes](https://github.com/neutron-org/neutron/blob/v1.0.4/x/interchainqueries/keeper/keeper.go#L140) a corresponding `RegisteredQuery` structure.
+* Also removes the query results ([immediately](https://github.com/neutron-org/neutron/blob/v1.0.4/x/interchainqueries/keeper/keeper.go#L144) for a KV query, [deferred in the ICQ module EndBlock](https://github.com/neutron-org/neutron/blob/v1.0.4/x/interchainqueries/module.go#L176) for a TX query).
 
 #### Events
 Emits [`EventTypeNeutonMessage`](/neutron/modules/interchain-queries/events#eventtypeneutronmessage) with `action` equals `query_removed`.
@@ -132,7 +133,7 @@ Emits [`EventTypeNeutonMessage`](/neutron/modules/interchain-queries/events#even
 
 ### Submit Query Result
 
-[`MsgSubmitQueryResult`](https://github.com/neutron-org/neutron/blob/4313d35f8082dc124c5fe9491870720bbd3a5052/proto/interchainqueries/tx.proto#L44) can be submitted by any Neutron account via `MsgSubmitQueryResult` transaction:
+[`MsgSubmitQueryResult`](https://github.com/neutron-org/neutron/blob/v1.0.4/proto/interchainqueries/tx.proto#L46) can be submitted by any Neutron account via `MsgSubmitQueryResult` transaction:
 
 ```protobuf
 message MsgSubmitQueryResult {
@@ -191,7 +192,7 @@ message TxValue {
 }
 ```
 
-Returns just an empty [`MsgSubmitQueryResultResponse`](https://github.com/neutron-org/neutron/blob/4313d35f8082dc124c5fe9491870720bbd3a5052/proto/interchainqueries/tx.proto#L99) on success:
+Returns just an empty [`MsgSubmitQueryResultResponse`](https://github.com/neutron-org/neutron/blob/v1.0.4/proto/interchainqueries/tx.proto#L106) on success:
 
 ```protobuf
 message MsgSubmitQueryResultResponse {}
