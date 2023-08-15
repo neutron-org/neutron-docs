@@ -112,9 +112,10 @@ sudo apt install librust-openssl-dev build-essential git
 
 ## Build & setup Hermes
 
-These commands install hermes into `$HOME/.cargo/bin/` directory:
+> Use rust version `1.71.0` to install, otherwise it might not compile!
+
+This will install hermes into `$HOME/.cargo/bin/` directory:
 ```sh
-rustup override set 1.71.0
 cargo install ibc-relayer-cli --bin hermes --locked --version 1.6.0
 ```
 
