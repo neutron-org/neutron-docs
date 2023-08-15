@@ -273,15 +273,18 @@ First thing to understand is that you need to know exact version of that module 
 Let's assume we'll query osmosis testnet (osmo-test-5 testnet).
 Here we discover that chain uses [`v16.0.0-rc2-testnet` version](https://github.com/osmosis-labs/testnets/tree/main/testnets/osmo-test-5#details).
 As we can see this version of osmosis uses [custom patched wasmd module](https://github.com/osmosis-labs/osmosis/blob/v16.0.0-rc2-testnet/go.mod#L320).
-Now that we have found [this wasmd module](https://github.com/osmosis-labs/wasmd/tree/v0.31.0-osmo-v16), let's understand how the cosmos-sdk stores data. // TODO: explain how cosmos-sdk store works - it's concatenating keys, and if you query for prefix, you can get a list of data items.
+Now that we have found [this wasmd module](https://github.com/osmosis-labs/wasmd/tree/v0.31.0-osmo-v16), let's understand how the cosmos-sdk stores data. To simplify: Cosmos SDK [store](https://docs.cosmos.network/main/core/store) keeps data as a nested tree of bytes. That means that you can fetch list of elements from a given prefix and a concrete element if you concatenate prefix with the element key.
 Usually we'll look into [keeper.go](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/keeper/keeper.go) to see where and what kind of data it keeps in a store.
-If you look for where it sets contract info, you'll find the store.Set [here](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/keeper/keeper.go#L749), that sets the contract info under the key `types.GetContractAddressKey(contractAddress)`
+Let's say we understood that we want to fetch contract info data. If you look for where contract info is being set, you'll find the store.Set [here](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/keeper/keeper.go#L749), that sets the contract info under the key `types.GetContractAddressKey(contractAddress)`.
 This function is imported using the keys file. That file is common for storing all key creation helpers. It's common location is [/x/modulename/types/keys.go](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go).
 As we can see the key in store is simply [concatenation of ContractKeyPrefix ([]byte{0x02}) and address of the contract that you want to query](https://github.com/osmosis-labs/wasmd/blob/master/x/wasm/types/keys.go#L48).
 
 Now that we now how to create the key, we can rebuild it's creation using rust in cosmwasm:
 ```rust
-TODO: code with thorought explanation comments
+TODO: code with thorough explanation comments
+fn contract_address_info_key() {
+    
+}
 ```
 TODO: explain why we convert addr from bech32 to base64
 
