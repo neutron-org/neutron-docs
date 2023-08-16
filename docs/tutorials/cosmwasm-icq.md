@@ -254,77 +254,6 @@ pub fn new_register_transfers_query_msg(...) -> NeutronResult<NeutronMsg> {
 > But if you don't find some particular register query helper in the SDK, you can always implement your own using implementations from SDK as a reference.
 > We encourage you to open pull requests with your query implementations to make Neutron SDK better and better!
 
-### 2.1 How to make make query to custom data that is not in neutron-sdk
-
-Same as in the code above, to make a query, you need to populate KVKey struct:
-```rust
-pub struct KVKey {
-    /// **path** is a path to the storage (storage prefix) where you want to read value by key (usually name of cosmos-packages module: 'staking', 'bank', etc.)
-    pub path: String,
-
-    /// **key** is a key you want to read from the storage
-    pub key: Binary,
-};
-```
-
-Let's say we want to make interchain query to wasmd module for contract info.
-
-First thing to understand is that you need to know exact version of that module on a chain that you want to query for data.
-Let's assume we'll query osmosis testnet (osmo-test-5 testnet).
-Here we discover that chain uses [`v16.0.0-rc2-testnet` version](https://github.com/osmosis-labs/testnets/tree/main/testnets/osmo-test-5#details).
-As we can see this version of osmosis uses [custom patched wasmd module](https://github.com/osmosis-labs/osmosis/blob/v16.0.0-rc2-testnet/go.mod#L320).
-Now that we have found [this wasmd module](https://github.com/osmosis-labs/wasmd/tree/v0.31.0-osmo-v16), let's understand how the cosmos-sdk stores data. To simplify: Cosmos SDK [store](https://docs.cosmos.network/main/core/store) keeps data as a nested tree of bytes. That means that you can fetch list of elements from a given prefix and a concrete element if you concatenate prefix with the element key.
-Usually we'll look into [keeper.go](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/keeper/keeper.go) to see where and what kind of data it keeps in a store.
-Let's say we understood that we want to fetch contract info data. If you look for where contract info is being set, you'll find the store.Set [here](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/keeper/keeper.go#L749), that sets the contract info under the key `types.GetContractAddressKey(contractAddress)`.
-This function is imported using the keys file. That file is common for storing all key creation helpers. It's common location is [/x/modulename/types/keys.go](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go).
-As we can see the key in store is simply [concatenation of ContractKeyPrefix ([]byte{0x02}) and address of the contract that you want to query](https://github.com/osmosis-labs/wasmd/blob/master/x/wasm/types/keys.go#L48).
-
-Now that we now how to create the key, we can rebuild it's creation using rust in cosmwasm:
-```rust
-// https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go#L28
-pub const CONTRACT_KEY_PREFIX: u8 = 0x02;
-
-fn create_contract_address_info_key(addr: AddressBytes) -> StdResult<AddressBytes> {
-    let mut key: Vec<u8> = vec![CONTRACT_KEY_PREFIX];
-    // https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go#L49
-    key.extend_from_slice(addr.to_be_bytes().as_slice());
-
-    Ok(key)
-}
-```
-
-After that we can write use this key in a function that will create message to register this query:
-```rust
-pub const WASM_STORE_KEY: &str = "wasm";
-
-pub fn new_register_contract_address_info_query_msg(
-    connection_id: String,
-    addr: String,
-    update_period: u64,
-) -> NeutronResult<NeutronMsg> {
-    // We need to decode a bech32 encoded string and converts to base64 encoded bytes.
-    // This is needed since addresses are stored this way in Cosmos SDK.
-    let converted_addr_bytes = decode_and_convert(addr.as_str())?;
-
-    let balance_key = create_contract_address_info_key(converted_addr_bytes)?;
-
-    let kv_key = KVKey {
-        // Path to store, in our case its store of wasmd module (https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go#L13)
-        path: WASM_STORE_KEY.to_string(),
-        key: Binary(balance_key),
-    };
-
-    // Construct NeutronMsg to register interchain query with our constructed kv_key key, connection_id and period
-    NeutronMsg::register_interchain_query(
-        QueryPayload::KV(vec![kv_key]),
-        connection_id,
-        update_period,
-    )
-}
-```
-
-> WARN: if you find the wrong version of the module, key construction can change and you'll fail to query data
-
 ## 3. Get results from the registered Interchain Queries
 
 ### Get results from KV-queries
@@ -648,3 +577,159 @@ pub fn remove_interchain_query(query_id: u64) -> NeutronResult<Response<NeutronM
 In the snippet above we add `UpdateInterchainQuery` and `RemoveInterchainQuery` to our `ExecuteMsg` enum and define corresponding
 handlers `update_interchain_query` and `remove_interchain_query` which, in short, just issue proper [Neutron msgs](/neutron/modules/interchain-queries/messages) to update and remove interchain query.
 In a real world scenario such handlers must have ownership checks.
+
+## Learning to make your own queries that are not in Neutron SDK
+
+Same as in the code above, to make a query, you need to populate KVKey struct:
+```rust
+pub struct KVKey {
+    /// **path** is a path to the storage (storage prefix) where you want to read value by key (usually name of cosmos-packages module: 'staking', 'bank', etc.)
+    pub path: String,
+
+    /// **key** is a key you want to read from the storage
+    pub key: Binary,
+};
+```
+
+Let's say we want to make interchain query to wasmd module for contract info.
+
+First thing to understand is that you need to know exact version of that module on a chain that you want to query for data.
+
+Let's assume we'll query osmosis testnet (osmo-test-5 testnet).
+
+Here we discover that chain uses [`v16.0.0-rc2-testnet` version](https://github.com/osmosis-labs/testnets/tree/main/testnets/osmo-test-5#details).
+
+As we can see this version of osmosis uses [custom patched wasmd module](https://github.com/osmosis-labs/osmosis/blob/v16.0.0-rc2-testnet/go.mod#L320).
+
+Now that we have found [this wasmd module](https://github.com/osmosis-labs/wasmd/tree/v0.31.0-osmo-v16), let's understand how the cosmos-sdk stores data. To simplify: Cosmos SDK [store](https://docs.cosmos.network/main/core/store) keeps data as a nested tree of bytes. That means that you can fetch list of elements from a given prefix and a concrete element if you concatenate prefix with the element key.
+
+Usually we'll look into [keeper.go](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/keeper/keeper.go) to see where and what kind of data it keeps in a store.
+
+Let's say we understood that we want to fetch contract info data. If you look for where contract info is being set, you'll find the store.Set [here](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/keeper/keeper.go#L749), that sets the contract info under the key `types.GetContractAddressKey(contractAddress)`.
+
+This function is imported using the keys file. That file is common for storing all key creation helpers. It's common location is [/x/modulename/types/keys.go](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go).
+
+As we can see the key in store is simply [concatenation of ContractKeyPrefix ([]byte{0x02}) and address of the contract that you want to query](https://github.com/osmosis-labs/wasmd/blob/master/x/wasm/types/keys.go#L48).
+
+Now that we now how to create the key, we can rebuild it's creation using rust in cosmwasm:
+```rust
+// https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go#L28
+pub const CONTRACT_KEY_PREFIX: u8 = 0x02;
+
+fn create_contract_address_info_key(addr: AddressBytes) -> StdResult<AddressBytes> {
+    let mut key: Vec<u8> = vec![CONTRACT_KEY_PREFIX];
+    // https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go#L49
+    key.extend_from_slice(addr.as_slice());
+
+    Ok(key)
+}
+```
+
+After that we can write use this key in a function that will create message to register this query:
+```rust
+// https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go#L13
+pub const WASM_STORE_KEY: &str = "wasm";
+
+pub fn new_register_contract_address_info_query_msg(
+    connection_id: String,
+    addr: String,
+    update_period: u64,
+) -> NeutronResult<NeutronMsg> {
+    // We need to decode a bech32 encoded string and converts to base64 encoded bytes.
+    // This is needed since addresses are stored this way in Cosmos SDK.
+    let converted_addr_bytes = decode_and_convert(addr.as_str())?;
+
+    let balance_key = create_contract_address_info_key(converted_addr_bytes)?;
+
+    let kv_key = KVKey {
+        // Path to store, in our case its store of wasmd module (https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go#L13)
+        path: WASM_STORE_KEY.to_string(),
+        key: Binary(balance_key),
+    };
+
+    // Construct NeutronMsg to register interchain query with our constructed kv_key key, connection_id and period
+    NeutronMsg::register_interchain_query(
+        QueryPayload::KV(vec![kv_key]),
+        connection_id,
+        update_period,
+    )
+}
+```
+
+And to get some results, last you'll need to implement reconstruction of results implementing KVReconstruct.
+
+First you'll need to use osmosis library into `Cargo.toml` to get the types for reconstruction:
+```toml
+osmosis-std = { version = "0.16.1" }
+```
+
+Then you can implement KVReconstruct like this:
+```rust
+impl KVReconstruct for ContractInfo {
+    fn reconstruct(storage_values: &[StorageValue]) -> NeutronResult<ContractInfo> {
+        if storage_values.len() != 1 {
+            return Err(Std(StdError::generic_err(format!(
+                "Not one storage value returned for ContractInfo response: {:?}",
+                storage_values.len()
+            ))));
+        }
+        let kv = storage_values
+            .first()
+            .ok_or(Std(StdError::generic_err(format!(
+                "Not one storage value returned for ContractInfo response: {:?}",
+                storage_values.len()
+            ))))?;
+        let osmosis_res = OsmosisContractInfo::decode(kv.value.as_slice())?;
+
+        let res = ContractInfo {
+            code_id: osmosis_res.code_id,
+            creator: osmosis_res.creator,
+            admin: osmosis_res.admin,
+            label: osmosis_res.label,
+            created: osmosis_res.created.map(|p| AbsoluteTxPosition {
+                block_height: p.block_height,
+                tx_index: p.tx_index,
+            }),
+            ibc_port_id: osmosis_res.ibc_port_id,
+        };
+
+        Ok(res)
+    }
+}
+
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct ContractInfo {
+    // CodeID is the reference to the stored Wasm code
+    pub code_id: u64,
+    // Creator address who initially instantiated the contract
+    pub creator: String,
+    // Admin is an optional address that can execute migrations
+    pub admin: String,
+    // Label is optional metadata to be stored with a contract instance.
+    pub label: String,
+    // Created Tx position when the contract was instantiated.
+    pub created: Option<AbsoluteTxPosition>,
+    pub ibc_port_id: String,
+}
+
+// AbsoluteTxPosition is a unique transaction position that allows for global
+// ordering of transactions.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct AbsoluteTxPosition {
+    // BlockHeight is the block the contract was created at
+    pub block_height: u64,
+    // TxIndex is a monotonic counter within the block (actual transaction index,
+    // or gas consumed)
+    pub tx_index: u64,
+}
+```
+
+Great! Now you can query `ContractInfo` as simple as this:
+```rust
+let contract_info: ContractInfo = query_kv_result(deps, query_id)?;
+```
+
+> WARN: if you find the wrong version of the module, key construction can change and you'll fail to query data
