@@ -15,7 +15,7 @@ WasmKit configuration file `wasmkit.config.js` maps blockchain networks (neutron
 1. **Setup contracts repo**: A project repository to hold rust contracts, deployment scripts, tests and configuration files in one place. Can possible have docs and/or front-end source too.
 2. **Implement contract logic, compile and debug**: Define contract's storage, messages and contract methods for given messages. Compile contracts to generate `.wasm` files as contract binary and contract messages schema `.json` files.
 3. **Write unit, integration tests**: Unit tests can be written in contract's rust source and chain interaction integration tests in typescript.
-4. **Compress wasm binary, deploy to network, instantiate contract**: Deploy to network by using a simple deploy script written in typescript. Contract instantiation can also be done within the typsecript script.
+4. **Compress wasm binary, deploy to network, instantiate contract**: Deploy to network by using a simple deploy script written in typescript. Contract instantiation can also be done within the typescript script.
 5. **Query or Execute contract**: Contract queries and execute calls can be simply implemented in typescipt using the `typsecript_schema/` clients generated.
 6. **Write front-end and scripts to interact with the contract**: The same `typescript_schema/` clients can be used to write front-end interaction with the contracts.
 
