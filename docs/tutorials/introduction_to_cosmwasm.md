@@ -11,8 +11,8 @@ A smart contract can be considered an instance of a singleton object whose inter
 As a smart contract writer, your job is to define 3 functions that compose your smart contract's interface:
 
 1. `instantiate()`: a constructor which is called during contract instantiation to provide the initial state
-2. `execute()`: gets called when a user wants to invoke a method on the smart contract
-3. `query()`: gets called when a user wants to get data out of a smart contract
+2. `execute()`: gets called when a user wants to invoke a method on the smart contract, this invokes one of the execute messages defined in the contract under `ExecuteMsg` enum which is essentially a list of transactions the contract supports
+3. `query()`: gets called when a user wants to get data out of a smart contract, this invokes one of the query messages defined in the contract under `QueryMsg` enum which is a list of queries the contract supports
 
 In our sample counter contract, we will implement one instantiate, one query, and two execute methods.
 
