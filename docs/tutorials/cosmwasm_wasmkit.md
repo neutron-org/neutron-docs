@@ -159,7 +159,7 @@ You can see there's a `neutron-node` used as a docker image. For such a setup yo
 npx wasmkit localnet-start neutron
 ```
 
-The RPC URL for this localnetwork will be `http://localhost:26657` and REST URL will be `http://localhost:1317`. This can be verfiied by doing:
+The RPC URL for this localnetwork will be `http://localhost:26657` and REST URL will be `http://localhost:1317`. This can be verified by doing:
 
 ```bash
 npx wasmkit node-info --network localnet
