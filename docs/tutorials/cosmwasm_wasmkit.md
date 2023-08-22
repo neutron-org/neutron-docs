@@ -209,7 +209,7 @@ npx wasmkit playground
 
 This command will clone a react application to interact with deployed contracts. User can also modify its theme and logo using config file.
 
-Locally run the playground fronte-end using:
+Locally run the playground front-end using:
 
 ```bash
 cd playground/
