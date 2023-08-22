@@ -288,4 +288,4 @@ fn query_count(deps: Deps) -> StdResult<CountResponse> {
 }
 ```
 
-Note that deps is of type `Deps`, not `DepsMut` (`Mut` for mutable) as in the `execute()`, which implies that queries are for read-only operations and does not make any changes to contract's storage.
+Note that deps is of type `Deps`, not `DepsMut` (`Mut` stands for mutable) as in the `execute()`, which implies that queries are for read-only operations and do not make any changes to contract's storage.
