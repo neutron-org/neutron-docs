@@ -198,7 +198,7 @@ npx wasmkit test test/sample-test.ts test/another-test.ts
 
 ## Initiate wasmkit playground
 
-Wasmkit playground is an auto-generated minimal front-end for interacting with deployed contracts. Since, wasmkit keeps track of the deployed contract addresses on multiple networks, it can generate the playground front-end using these addresses and the typescript schem generated from the contracts. This playgound can be useful when quickly interacting with contracts either for debugging purposes or it can be shared as part of contract documentation for anyone to try out contracts interaction without having to setup environment or installing any cli.
+Wasmkit playground is an auto-generated minimal front-end for interacting with deployed contracts. Since wasmkit keeps track of the deployed contract addresses on multiple networks, it can generate the playground front-end using these addresses and the typescript schema generated from the contracts. This playground can be useful when quickly interacting with contracts either for debugging purposes or it can be shared as part of contract documentation for anyone to try out contracts interaction without having to setup environment or installing any cli.
 
 To initiate wamskit playground, make sure you are in project directory and contracts are compiled and instantiated using compile and run commands of wasmkit respectively.
 
