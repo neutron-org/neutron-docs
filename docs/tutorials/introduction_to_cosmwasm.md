@@ -6,7 +6,7 @@ The counter contract template can be found in [this GitHub repository](https://g
 
 ## Contract basics
 
-A smart contract can be considered an instance of a singleton object whose internal state is persisted on the blockchain. Users can trigger state changes by sending the smart contract JSON messages, and users can also query its state by sending a request formatted as a JSON message. These JSON messages are different than Cosmos blockchain messages such as `MsgSend` and `MsgExecuteContract`.
+A smart contract can be considered an instance of a singleton object whose internal state is persisted on the blockchain. Users can trigger state changes by sending the smart contract JSON messages, and users can also query its state by sending a request formatted as a JSON message.
 
 As a smart contract writer, your job is to define 3 functions that compose your smart contract's interface:
 
