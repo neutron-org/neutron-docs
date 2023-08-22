@@ -1,6 +1,6 @@
 # Introduction to CosmWasm
 
-Let's consider what a smart contract is and the way it works under the hood. The following is a minimal contract that stores a counter value which can be incremented and one can query this counter value.
+Let's examine what a smart contract is and the way it works under the hood. The following is a minimal contract that stores a counter value which can be incremented and everyone can query this counter value.
 
 The counter contract template can be found in [this GitHub repository](https://github.com/CosmWasm/cw-template).
 
