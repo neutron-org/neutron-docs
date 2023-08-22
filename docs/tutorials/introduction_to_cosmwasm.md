@@ -86,7 +86,7 @@ Notice how the `State` struct holds both `count` and `owner`. In addition, the d
 
 The `InstantiateMsg` is provided to the contract when a user instantiates a contract on the blockchain through a `MsgInstantiateContract`. This provides the contract with its configuration as well as its initial state.
 
-On the Neutron blockchain, the uploading of a contract's code and the instantiation of a contract are regarded as separate events, unlike on Ethereum. This is to allow a small set of vetted contract archetypes to exist as multiple instances sharing the same base code, but be configured with different parameters (imagine one canonical ERC20, and multiple tokens that use its code).
+Neutron utilizes [CosmWasm](https://cosmwasm.com/) as the smart contract execution layer. In CosmWasm, the uploading of a contract's code and the instantiation of a contract are regarded as separate events, unlike on Ethereum. This is to allow a small set of vetted contract archetypes to exist as multiple instances sharing the same base code, but be configured with different parameters (imagine one canonical ERC20, and multiple tokens that use its code).
 
 ```rust
 // src/msg.rs
