@@ -290,7 +290,7 @@ const sidebars = {
             type: 'category',
             items: [
                 'tutorials/overview',
-                'tutorials/intoduction_to_cosmwasm',
+                'tutorials/introduction_to_cosmwasm',
                 'tutorials/cosmwasm_remix',
                 'tutorials/cosmwasm_wasmkit',
                 'tutorials/cosmwasm_ica',

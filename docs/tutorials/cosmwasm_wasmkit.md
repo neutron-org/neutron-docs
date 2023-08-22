@@ -22,7 +22,7 @@ WasmKit configuration file `wasmkit.config.js` maps blockchain networks (neutron
 ## Prerequisites
 
 The minimum packages/requirements are as follows:
-- Node `v14+`
+- Node `v16+`
 - Yarn `v1.22+` or Npm `v6.0+`
 - Connection to a Neutron node
 
@@ -61,6 +61,12 @@ chmod +x $HOME/.yarn/bin/wasmkit
 
 ## Usage
 
+:::note
+
+Depending on your system and how you install, the wasmkit commands could work with `npx` prefix or without. Try both to be sure on how it works for you.
+
+:::
+
 ### Initialize a project
 
 ```bash
@@ -82,6 +88,12 @@ cd <project-name>
 npx wasmkit --help
 ```
 
+:::note
+
+Make sure you're inside project's root directory when running compile command.
+
+:::
+
 The `compile` command generates compiled `.wasm` files in `artifacts/contracts/`, schema `.json` files in `artifacts/schema/` and typescript clients in `artifacts/typescript_schema/`.
 
 - Compile all the contracts in the project:
@@ -92,6 +104,10 @@ npx wasmkit compile
 - Compile only one contracts or a subset of all contracts in the project:
 ```bash
 npx wasmkit compile <contract-source-dir>
+
+npx wasmkit compile contracts/first_contract/ # compile only contract with name 'first_contract'
+
+npx wasmkit compile contracts/first_contract/ contracts/second_contract/ # compile only these 2 contracts
 ```
 
 - Skip schema generation while compiling:
