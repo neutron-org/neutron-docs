@@ -140,7 +140,7 @@ npx wasmkit clean <contract-name>
 
 ### Start local network
 
-A local instance of neutron network can be created if follwing config is specified in `wasmkit.config.js` file:
+A local instance of neutron network can be created if a following config is specified in `wasmkit.config.js` file:
 
 ```js
   localnetworks: {  // specify localnetwork docker image, ports and environment variables
