@@ -38,6 +38,12 @@ rustup --version
 rustc --version
 ```
 
+:::info
+
+Alternatively, you can install rust by following their [documentation](https://www.rust-lang.org/tools/install).
+
+:::
+
 ### Installation
 
 ```bash
