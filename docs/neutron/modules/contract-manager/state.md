@@ -1,6 +1,22 @@
 # State
 
 The ContractManager module stores one [Failure](https://github.com/neutron-org/neutron/blob/v1.0.4/proto/contractmanager/genesis.proto#L12) per contract address and record id.
-`Failure` contains all the necessary info to store data about ACK sudo handler call failure. `address` contains contract addres and it is used in conjunction with  `id` field to create index of the record in the `KVStore`. `ack_id` is used to identify ACK request that was failed, `ack_type` can take two values : `ack`, and `timeout`.
 
-
+`Failure` contains all the necessary info to store data about ACK sudo handler call failure:
+```protobuf
+// Failure message contains information about ACK failures and can be used to
+// replay ACK in case of requirement.
+// Note that Failure means that sudo handler to cosmwasm contract failed for some reason
+message Failure {
+  // Address of the failed contract
+  string address = 1;
+  // Id of the failure under specific address
+  uint64 id = 2;
+  // Acknowledgement type ('ack' or 'timeout')
+  string ack_type = 3;
+  // IBC Packet
+  ibc.core.channel.v1.Packet packet = 4;
+  // Acknowledgement
+  ibc.core.channel.v1.Acknowledgement ack = 5;
+}
+```
