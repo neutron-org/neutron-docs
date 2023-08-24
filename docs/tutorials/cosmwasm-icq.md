@@ -592,23 +592,15 @@ pub struct KVKey {
 ```
 
 Let's say we want to make interchain query to wasmd module for contract info.
-
 First thing to understand is that you need to know exact version of that module on a chain that you want to query for data.
-
 Let's assume we'll query osmosis testnet (osmo-test-5 testnet).
-
 Here we discover that chain uses [`v16.0.0-rc2-testnet` version](https://github.com/osmosis-labs/testnets/tree/main/testnets/osmo-test-5#details).
-
 As we can see this version of osmosis uses [custom patched wasmd module](https://github.com/osmosis-labs/osmosis/blob/v16.0.0-rc2-testnet/go.mod#L320).
 
 Now that we have found [this wasmd module](https://github.com/osmosis-labs/wasmd/tree/v0.31.0-osmo-v16), let's understand how the cosmos-sdk stores data. To simplify: Cosmos SDK [store](https://docs.cosmos.network/main/core/store) keeps data as a nested tree of bytes. That means that you can fetch list of elements from a given prefix and a concrete element if you concatenate prefix with the element key.
-
 Usually we'll look into [keeper.go](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/keeper/keeper.go) to see where and what kind of data it keeps in a store.
-
 Let's say we understood that we want to fetch contract info data. If you look for where contract info is being set, you'll find the store.Set [here](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/keeper/keeper.go#L749), that sets the contract info under the key `types.GetContractAddressKey(contractAddress)`.
-
 This function is imported using the keys file. That file is common for storing all key creation helpers. It's common location is [/x/modulename/types/keys.go](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go).
-
 As we can see the key in store is simply [concatenation of ContractKeyPrefix ([]byte{0x02}) and address of the contract that you want to query](https://github.com/osmosis-labs/wasmd/blob/master/x/wasm/types/keys.go#L48).
 
 Now that we now how to create the key, we can rebuild it's creation using rust in cosmwasm:
@@ -656,7 +648,21 @@ pub fn new_register_contract_address_info_query_msg(
 }
 ```
 
-And to get some results, last you'll need to implement reconstruction of results implementing KVReconstruct.
+By this point we've learned how to register a query with correct key.
+Now to get some meaningful results, you'll need to understand how to get query results.
+For that you'll need to implement reconstruction of results using `KVReconstruct` trait.
+This trait has one function `reconstruct` that takes raw `&[StorageValue]` as an input and returns `NeutronResult<YourStruct>`.
+Argument into the function will have as many items in it as you'll sent keys when registered the query.
+In our case it's length will be 1.
+
+These values are stored as a protobuf encoded value.
+To decode it we'll need to find or describe the type for the protobuf value in rust code.
+
+First find the protobuf type that is used to store the value.
+`ContractInfo` is stored [here](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/proto/cosmwasm/wasm/v1/types.proto#L75).
+There you have two choises:
+- Use already available implementations - for osmosis they have osmosis-std lib with our type [see this] (https://github.com/osmosis-labs/osmosis-rust/blob/v0.16.1/packages/osmosis-std/src/types/cosmwasm/wasm/v1.rs#L301);
+- Write your own prost protobuf impl to decode.
 
 First you'll need to use osmosis library into `Cargo.toml` to get the types for reconstruction:
 ```toml
@@ -665,22 +671,28 @@ osmosis-std = { version = "0.16.1" }
 
 Then you can implement KVReconstruct like this:
 ```rust
+use osmosis_std::types::cosmwasm::wasm::v1::ContractInfo as OsmosisContractInfo;
+
 impl KVReconstruct for ContractInfo {
     fn reconstruct(storage_values: &[StorageValue]) -> NeutronResult<ContractInfo> {
+        // our query has one key, that means we expect only one item in the slice
         if storage_values.len() != 1 {
             return Err(Std(StdError::generic_err(format!(
                 "Not one storage value returned for ContractInfo response: {:?}",
                 storage_values.len()
             ))));
         }
+        // take first key
         let kv = storage_values
             .first()
             .ok_or(Std(StdError::generic_err(format!(
                 "Not one storage value returned for ContractInfo response: {:?}",
                 storage_values.len()
             ))))?;
+        // decode binary value into protobuf struct
         let osmosis_res = OsmosisContractInfo::decode(kv.value.as_slice())?;
 
+        // construct result using decoded struct
         let res = ContractInfo {
             code_id: osmosis_res.code_id,
             creator: osmosis_res.creator,
@@ -696,7 +708,6 @@ impl KVReconstruct for ContractInfo {
         Ok(res)
     }
 }
-
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -727,9 +738,44 @@ pub struct AbsoluteTxPosition {
 }
 ```
 
+Now that our our ContractInfo implements KVReconstruct, we can try to check that it's working properly.
+For that we can write something analogous to the [testing.rs test_balance_reconstruct_from_hex](https://github.com/neutron-org/neutron-sdk/blob/main/packages/neutron-sdk/src/interchain_queries/v045/testing.rs#L762).
+
+```rust
+
+pub const BALANCES_HEX_RESPONSE: &str = "TODO!"; // see below the code on how to find this value
+
+#[test]
+fn test_balance_reconstruct_from_hex() {
+    let bytes = hex::decode(BALANCES_HEX_RESPONSE).unwrap(); // decode hex string to bytes
+    let base64_input = BASE64_STANDARD.encode(bytes); // encode bytes to base64 string
+
+    let s = StorageValue {
+        storage_prefix: String::default(), // not used in reconstruct
+        key: Binary::default(),            // not used in reconstruct
+        value: Binary::from_base64(base64_input.as_str()).unwrap(),
+    };
+    let bank_balances = Balances::reconstruct(&[s]).unwrap();
+    assert_eq!(
+        bank_balances,
+        Balances {
+            coins: vec![StdCoin {
+                denom: String::from("stake"),
+                amount: Uint128::from(99999000u64),
+            }]
+        }
+    );
+```
+
+Not that to write a test we need an example of HEX response for our function that we'll use for `BALANCES_HEX_RESPONSE` constant.
+For that we can use [icq-compliance-officer](https://github.com/neutron-org/icq-compliance-officer) repo.
+TODO: write how to use it and finish test example
+
 Great! Now you can query `ContractInfo` as simple as this:
 ```rust
 let contract_info: ContractInfo = query_kv_result(deps, query_id)?;
 ```
 
-> WARN: if you find the wrong version of the module, key construction can change and you'll fail to query data
+> WARN: if you find the wrong version of the module, key construction AND/OR data model can change and you'll fail to query data AND/OR deconstruct it!
+> For example, you can see that in [v0.45.11-ics](https://github.com/cosmos/cosmos-sdk/blob/v0.45.11-ics/x/bank/keeper/send.go#L262) sets balance as `Coin` type and in [v0.46.11](https://github.com/cosmos/cosmos-sdk/blob/v0.46.11/x/bank/keeper/send.go#L290) it sets only the amount as a `String` type. So if you don't change the KVReconstruct for this value, it'll break.
+
