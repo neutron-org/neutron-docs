@@ -768,14 +768,57 @@ fn test_balance_reconstruct_from_hex() {
 ```
 
 Not that to write a test we need an example of HEX response for our function that we'll use for `BALANCES_HEX_RESPONSE` constant.
-For that we can use [icq-compliance-officer](https://github.com/neutron-org/icq-compliance-officer) repo.
-TODO: write how to use it and finish test example
+To do that you'll need to get value using `RPC_PATH/abci_query` with your contructed key and store.
+``
+`data` is your KV key in HEX represenation of the binary.
+To construct the key, you can use run this code somewhere:
+```rust
+let addr = "osmo14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sq2r9g9";
+let converted_addr_bytes = decode_and_convert(addr).unwrap();
+let actual = create_contract_address_info_key(converted_addr_bytes).unwrap();
+println!("{:?}", hex::encode(actual))
+```
+
+Then using [abci_query with this key](https://rpc.testnet.osmosis.zone/abci_query?path=%22%2Fstore%2Fwasm%2Fkey%22&data=0x02ade4a5f5803a439835c636395a8d648dee57b2fc90d98dc17fa887159b69638b) you can write a test named `test_contract_info_reconstruct()` that will use returned value as an input to ContractInfo::reconstruct.
+
+See whole test implementation below:
+
+```rust
+use cosmwasm_std::Binary;
+use crate::bindings::types::StorageValue;
+use crate::interchain_queries::helpers::decode_and_convert;
+use crate::interchain_queries::thirdparty::osmo_v31::helpers::create_contract_address_info_key;
+use crate::interchain_queries::thirdparty::osmo_v31::types::{AbsoluteTxPosition, ContractInfo};
+use crate::interchain_queries::types::KVReconstruct;
+
+const ABCI_KEY: &str = "02ade4a5f5803a439835c636395a8d648dee57b2fc90d98dc17fa887159b69638b";
+const ABCI_RESULT: &str = "CAESK29zbW8xcWxtd2prZzd1dTRhd2FqdzVhdW5jdGpkY2U5cTY1N2ozMm54czIiCk9zbW81X1Bhd3MqBAiy9g4=";
+
+#[test]
+fn test_contract_info_reconstruct() {
+    let value = base64::decode(ABCI_RESULT).unwrap();
+    let input = StorageValue {
+        storage_prefix: "wasm".to_string(),
+        key: Binary::from(vec![]),
+        value: Binary::from(value),
+    };
+    let contract_info = ContractInfo::reconstruct(&vec![input]);
+    assert!(contract_info.is_ok());
+    assert_eq!(contract_info.unwrap(), ContractInfo {
+        code_id: 1,
+        creator: "osmo1qlmwjkg7uu4awajw5aunctjdce9q657j32nxs2".to_string(),
+        admin: "".to_string(),
+        label: "Osmo5_Paws".to_string(),
+        created: Some(AbsoluteTxPosition { block_height: 244530, tx_index: 0 }),
+        ibc_port_id: "".to_string(),
+    })
+}
+```
 
 Great! Now you can query `ContractInfo` as simple as this:
 ```rust
 let contract_info: ContractInfo = query_kv_result(deps, query_id)?;
 ```
 
-> WARN: if you find the wrong version of the module, key construction AND/OR data model can change and you'll fail to query data AND/OR deconstruct it!
+> WARN: if you use different versions of the module to find data and actually run chain, key construction AND/OR data model can change and you'll fail to query data AND/OR deconstruct it!
 > For example, you can see that in [v0.45.11-ics](https://github.com/cosmos/cosmos-sdk/blob/v0.45.11-ics/x/bank/keeper/send.go#L262) sets balance as `Coin` type and in [v0.46.11](https://github.com/cosmos/cosmos-sdk/blob/v0.46.11/x/bank/keeper/send.go#L290) it sets only the amount as a `String` type. So if you don't change the KVReconstruct for this value, it'll break.
-
