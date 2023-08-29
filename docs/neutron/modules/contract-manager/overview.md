@@ -39,7 +39,7 @@ type ResubmitFailure struct {
 Binding in cosmwasm described [here](https://github.com/neutron-org/neutron-sdk/blob/feat/contract-manager-resubmit/packages/neutron-sdk/src/bindings/msg.rs#L184).
 
 It will call sudo handler with exact same arguments as the original handler that failed.
-The only difference is that this SubmitHandler will be called not from relayer, so the gas limitations above do not apply.
+The only difference is that this `SubmitHandler` will be called not from relayer, so the gas limitations above do not apply.
 
 > Note that you can only resubmit failure through cosmwasm contract.
 
