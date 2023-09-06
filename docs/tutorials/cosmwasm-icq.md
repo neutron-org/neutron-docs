@@ -742,6 +742,8 @@ Now that our our ContractInfo implements KVReconstruct, we can try to check that
 For that we can write something analogous to the [testing.rs test_balance_reconstruct_from_hex](https://github.com/neutron-org/neutron-sdk/blob/main/packages/neutron-sdk/src/interchain_queries/v045/testing.rs#L762).
 
 ```rust
+use base64::prelude::*;
+use base64::Engine;
 
 pub const BALANCES_HEX_RESPONSE: &str = "TODO!"; // see below the code on how to find this value
 
