@@ -2,8 +2,8 @@
 
 ## Neutron DAO
 
-| Name                                   |                                                                                                                                                                                                    |
-|----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Name                                   | Address                                                                                                                                                                             |
+|----------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Neutron Core                           | [neutron1kvxlf27r0h7mzjqgdydqdf76dtlyvwz6u9q8tysfae53ajv8urtq4fdkvy](https://neutron.celat.one/pion-1/contracts/neutron1kvxlf27r0h7mzjqgdydqdf76dtlyvwz6u9q8tysfae53ajv8urtq4fdkvy) |
 | Single Proposal Module                 | [neutron19sf2y4dvgt02kczemvhktrwvt4aunrahw8qkjq6u3pehdujwssgqrs5e4h](https://neutron.celat.one/pion-1/contracts/neutron19sf2y4dvgt02kczemvhktrwvt4aunrahw8qkjq6u3pehdujwssgqrs5e4h) |
 | Single Pre-Proposal Module             | [neutron1fyhj2gq9k4dduahlyy46ffy22ad7lagglcec2acacyzjsd6w5n7qdx5hn4](https://neutron.celat.one/pion-1/contracts/neutron1fyhj2gq9k4dduahlyy46ffy22ad7lagglcec2acacyzjsd6w5n7qdx5hn4) |
@@ -18,3 +18,18 @@
 | Security subDAO Pre-Proposal Module    | [neutron18pr88545upy572s30fr6ng0thp8cekdp8atzp0zfwxzp2qjt8d3sxux43p](https://neutron.celat.one/pion-1/contracts/neutron18pr88545upy572s30fr6ng0thp8cekdp8atzp0zfwxzp2qjt8d3sxux43p) |
 | Security subDAO Voting Module          | [neutron1ujdzgmjaks2s2uwnvm24tqdu0kmtlegr8gu87ngly2hdlumxtg7q3ca6lg](https://neutron.celat.one/pion-1/contracts/neutron1ujdzgmjaks2s2uwnvm24tqdu0kmtlegr8gu87ngly2hdlumxtg7q3ca6lg) |
 | Security subDAO CW4 Group              | [neutron1lcepwp9hc95v8yq4tetrc989sp2rshaejmqa487jjyq8zmg0luuqg4ke0f](https://neutron.celat.one/pion-1/contracts/neutron1lcepwp9hc95v8yq4tetrc989sp2rshaejmqa487jjyq8zmg0luuqg4ke0f) |
+
+## Bridge
+
+### Contracts
+
+| Name                    | Address                                                                                                                                                                             |
+|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Lido Satellite (pion-1) | [neutron1xdtwh5jr4zjx8g3zh29jud75c666wua7tsmum3ajm6ylf782etfs60dj2h](https://neutron.celat.one/pion-1/contracts/neutron1xdtwh5jr4zjx8g3zh29jud75c666wua7tsmum3ajm6ylf782etfs60dj2h) |
+| GMP Helper (Görli)      | [0x928cC242bb97DCb493c5d8De9fA215910eDC2ab5](https://goerli.etherscan.io/address/0x928cC242bb97DCb493c5d8De9fA215910eDC2ab5)                                                        |
+
+### Denoms
+
+| Symbol   | Denom                                                                               |
+|----------|-------------------------------------------------------------------------------------|
+| `wstETH` | `factory/neutron1xdtwh5jr4zjx8g3zh29jud75c666wua7tsmum3ajm6ylf782etfs60dj2h/wstETH` |
