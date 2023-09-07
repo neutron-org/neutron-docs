@@ -617,8 +617,21 @@ fn create_contract_address_info_key(addr: AddressBytes) -> StdResult<AddressByte
 }
 ```
 
-After that we can write use this key in a function that will create message to register this query:
+After that we can write use this key in a function that will create message to register this query.
+
+First import required lib:
+```toml
+neutron-sdk = { package = "neutron-sdk", version = "0.6.1" }
+```
+
+Then write code:
 ```rust
+use neutron_sdk::interchain_queries::helpers::decode_and_convert;
+use neutron_sdk::interchain_queries::types::QueryPayload;
+use neutron_sdk::bindings::types::KVKey;
+use neutron_sdk::bindings::msg::NeutronMsg;
+use cosmwasm_std::Binary;
+
 // https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go#L13
 pub const WASM_STORE_KEY: &str = "wasm";
 
@@ -664,7 +677,7 @@ There you have two choises:
 - Use already available implementations - for osmosis they have osmosis-std lib with our type [see this] (https://github.com/osmosis-labs/osmosis-rust/blob/v0.16.1/packages/osmosis-std/src/types/cosmwasm/wasm/v1.rs#L301);
 - Write your own prost protobuf impl to decode.
 
-First you'll need to use osmosis library into `Cargo.toml` to get the types for reconstruction:
+First you'll need to import required libs:
 ```toml
 osmosis-std = { version = "0.16.1" }
 ```
@@ -672,6 +685,9 @@ osmosis-std = { version = "0.16.1" }
 Then you can implement KVReconstruct like this:
 ```rust
 use osmosis_std::types::cosmwasm::wasm::v1::ContractInfo as OsmosisContractInfo;
+use neutron_sdk::interchain_queries::types::KVReconstruct;
+use neutron_sdk::bindings::types::StorageValue;
+use neutron_sdk::{NeutronError, NeutronResult};
 
 impl KVReconstruct for ContractInfo {
     fn reconstruct(storage_values: &[StorageValue]) -> NeutronResult<ContractInfo> {
@@ -738,14 +754,14 @@ pub struct AbsoluteTxPosition {
 }
 ```
 
-Now that our our ContractInfo implements KVReconstruct, we can try to check that it's working properly.
+Now that our ContractInfo implements KVReconstruct, we can try to check that it's working properly.
 For that we can write something analogous to the [testing.rs test_balance_reconstruct_from_hex](https://github.com/neutron-org/neutron-sdk/blob/main/packages/neutron-sdk/src/interchain_queries/v045/testing.rs#L762).
 
 ```rust
 use base64::prelude::*;
 use base64::Engine;
 
-pub const BALANCES_HEX_RESPONSE: &str = "TODO!"; // see below the code on how to find this value
+pub const BALANCES_HEX_RESPONSE: &str = "TODO!"; // see the code below on how to find this value
 
 #[test]
 fn test_balance_reconstruct_from_hex() {
@@ -770,13 +786,16 @@ fn test_balance_reconstruct_from_hex() {
 ```
 
 Not that to write a test we need an example of HEX response for our function that we'll use for `BALANCES_HEX_RESPONSE` constant.
-To do that you'll need to get value using `RPC_PATH/abci_query` with your contructed key and store.
+To do that you'll need to get value using `RPC_PATH/abci_query` GET request with your contructed key and store.
 ``
 `data` is your KV key in HEX represenation of the binary.
-To construct the key, you can use run this code somewhere:
+To construct the key, you can run this code somewhere:
 ```rust
+use neutron_sdk::interchain_queries::helpers::decode_and_convert;
+
 let addr = "osmo14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sq2r9g9";
 let converted_addr_bytes = decode_and_convert(addr).unwrap();
+// your newly written `create_contract_address_info_key` function
 let actual = create_contract_address_info_key(converted_addr_bytes).unwrap();
 println!("{:?}", hex::encode(actual))
 ```
@@ -788,10 +807,8 @@ See whole test implementation below:
 ```rust
 use cosmwasm_std::Binary;
 use crate::bindings::types::StorageValue;
-use crate::interchain_queries::helpers::decode_and_convert;
-use crate::interchain_queries::thirdparty::osmo_v31::helpers::create_contract_address_info_key;
-use crate::interchain_queries::thirdparty::osmo_v31::types::{AbsoluteTxPosition, ContractInfo};
-use crate::interchain_queries::types::KVReconstruct;
+use neutron_sdk::interchain_queries::helpers::decode_and_convert;
+use neutron_sdk::interchain_queries::types::KVReconstruct;
 
 const ABCI_KEY: &str = "02ade4a5f5803a439835c636395a8d648dee57b2fc90d98dc17fa887159b69638b";
 const ABCI_RESULT: &str = "CAESK29zbW8xcWxtd2prZzd1dTRhd2FqdzVhdW5jdGpkY2U5cTY1N2ozMm54czIiCk9zbW81X1Bhd3MqBAiy9g4=";
@@ -819,8 +836,10 @@ fn test_contract_info_reconstruct() {
 
 Great! Now you can query `ContractInfo` as simple as this:
 ```rust
+use neutron_sdk::interchain_queries::query_kv_result;
+
 let contract_info: ContractInfo = query_kv_result(deps, query_id)?;
 ```
 
-> WARN: if you use different versions of the module to find data and actually run chain, key construction AND/OR data model can change and you'll fail to query data AND/OR deconstruct it!
+> WARN: please look into correct version of chain when you search on how keys and data model are stored. Otherwise key construction AND/OR data model can change and you'll fail to query data OR reconstruct it!
 > For example, you can see that in [v0.45.11-ics](https://github.com/cosmos/cosmos-sdk/blob/v0.45.11-ics/x/bank/keeper/send.go#L262) sets balance as `Coin` type and in [v0.46.11](https://github.com/cosmos/cosmos-sdk/blob/v0.46.11/x/bank/keeper/send.go#L290) it sets only the amount as a `String` type. So if you don't change the KVReconstruct for this value, it'll break.
