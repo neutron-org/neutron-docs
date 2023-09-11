@@ -580,7 +580,7 @@ In a real world scenario such handlers must have ownership checks.
 
 ## Learning to make your own queries that are not in Neutron SDK
 
-Same as in the code above, to make a query, you need to populate KVKey struct:
+Same as in the examples above, to make a query, you need to populate KVKey struct:
 ```rust
 pub struct KVKey {
     /// **path** is a path to the storage (storage prefix) where you want to read value by key (usually name of cosmos-packages module: 'staking', 'bank', etc.)
@@ -597,10 +597,10 @@ Let's assume we'll query osmosis testnet (osmo-test-5 testnet).
 Here we discover that chain uses [`v16.0.0-rc2-testnet` version](https://github.com/osmosis-labs/testnets/tree/main/testnets/osmo-test-5#details).
 As we can see this version of osmosis uses [custom patched wasmd module](https://github.com/osmosis-labs/osmosis/blob/v16.0.0-rc2-testnet/go.mod#L320).
 
-Now that we have found [this wasmd module](https://github.com/osmosis-labs/wasmd/tree/v0.31.0-osmo-v16), let's understand how the cosmos-sdk stores data. To simplify: Cosmos SDK [store](https://docs.cosmos.network/main/core/store) keeps data as a nested tree of bytes. That means that you can fetch list of elements from a given prefix and a concrete element if you concatenate prefix with the element key.
-Usually we'll look into [keeper.go](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/keeper/keeper.go) to see where and what kind of data it keeps in a store.
-Let's say we understood that we want to fetch contract info data. If you look for where contract info is being set, you'll find the store.Set [here](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/keeper/keeper.go#L749), that sets the contract info under the key `types.GetContractAddressKey(contractAddress)`.
-This function is imported using the keys file. That file is common for storing all key creation helpers. It's common location is [/x/modulename/types/keys.go](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go).
+Now that we have found [this wasmd module](https://github.com/osmosis-labs/wasmd/tree/v0.31.0-osmo-v16), let's understand how the cosmos-sdk stores data. To simplify: Cosmos SDK [store](https://docs.cosmos.network/main/core/store) keeps data as a self-balancing tree where key is an array of bytes. In that tree you can fetch list of elements that share a common prefix and a concrete element if you concatenate prefix with the element key.
+Usually we'll look into [keeper.go](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/keeper/keeper.go) and other files in the `keeper` package to see where and what kind of data it keeps in a store.
+Let's say we want to fetch contract info data. If you look for where contract info is being set, you'll find the store.Set [here](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/keeper/keeper.go#L749), that sets the contract info under the key `types.GetContractAddressKey(contractAddress)`.
+This function is imported using the keys file and it is a common place for storing all key creation helpers. It's usually placed at [/x/modulename/types/keys.go](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go).
 As we can see the key in store is simply [concatenation of ContractKeyPrefix ([]byte{0x02}) and address of the contract that you want to query](https://github.com/osmosis-labs/wasmd/blob/master/x/wasm/types/keys.go#L48).
 
 Now that we now how to create the key, we can rebuild it's creation using rust in cosmwasm:
@@ -617,14 +617,7 @@ fn create_contract_address_info_key(addr: AddressBytes) -> StdResult<AddressByte
 }
 ```
 
-After that we can write use this key in a function that will create message to register this query.
-
-First import required lib:
-```toml
-neutron-sdk = { package = "neutron-sdk", version = "0.6.1" }
-```
-
-Then write code:
+After that we can write use this key in a function that will create message to register this query:
 ```rust
 use neutron_sdk::interchain_queries::helpers::decode_and_convert;
 use neutron_sdk::interchain_queries::types::QueryPayload;
@@ -652,7 +645,7 @@ pub fn new_register_contract_address_info_query_msg(
         key: Binary(balance_key),
     };
 
-    // Construct NeutronMsg to register interchain query with our constructed kv_key key, connection_id and period
+    // Construct NeutronMsg to register interchain query with our constructed kv_key key, connection_id and update_period
     NeutronMsg::register_interchain_query(
         QueryPayload::KV(vec![kv_key]),
         connection_id,
@@ -675,7 +668,7 @@ First find the protobuf type that is used to store the value.
 `ContractInfo` is stored [here](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/proto/cosmwasm/wasm/v1/types.proto#L75).
 There you have two choises:
 - Use already available implementations - for osmosis they have osmosis-std lib with our type [see this] (https://github.com/osmosis-labs/osmosis-rust/blob/v0.16.1/packages/osmosis-std/src/types/cosmwasm/wasm/v1.rs#L301);
-- Write your own prost protobuf impl to decode.
+- Write your own prost protobuf implementation.
 
 First you'll need to import required libs:
 ```toml
