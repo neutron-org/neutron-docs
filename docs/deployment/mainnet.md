@@ -1,10 +1,11 @@
 # neutron-1 [mainnet]
 
 ## IBC Denoms
-| Symbol |                                                                        |
-|--------|------------------------------------------------------------------------|
-| ATOM   | `ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9` |
-| aUSDC  | `ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349` |
+| Symbol    |                                                                        |
+|-----------|------------------------------------------------------------------------|
+| `ATOM`    | `ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9` |
+| `axlUSDC` | `ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349` |
+| `axlWETH` | `ibc/A585C2D15DCD3B010849B453A2CFCB5E213208A5AB665691792684C26274304D` |
 
 ## Neutron DAO
 
@@ -63,4 +64,3 @@
 | Symbol   | Denom                                                                               |
 |----------|-------------------------------------------------------------------------------------|
 | `wstETH` | `factory/neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry/wstETH` |
-| `axlWETH`| `ibc/A585C2D15DCD3B010849B453A2CFCB5E213208A5AB665691792684C26274304D`              |

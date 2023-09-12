@@ -1,5 +1,10 @@
 # pion-1 [testnet]
 
+## IBC Denoms
+| Symbol    |                                                                        |
+|-----------|------------------------------------------------------------------------|
+| `axlWETH` | `ibc/CC8B40E3F3536D003C6ED7C65421067215453AECE1517A6F0935470C634A036B` |
+
 ## Neutron DAO
 
 | Name                                   | Address                                                                                                                                                                             |
@@ -33,4 +38,3 @@
 | Symbol   | Denom                                                                               |
 |----------|-------------------------------------------------------------------------------------|
 | `wstETH` | `factory/neutron1xdtwh5jr4zjx8g3zh29jud75c666wua7tsmum3ajm6ylf782etfs60dj2h/wstETH` |
-| `axlWETH`| `ibc/CC8B40E3F3536D003C6ED7C65421067215453AECE1517A6F0935470C634A036B`              |
