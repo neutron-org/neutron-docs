@@ -63,3 +63,4 @@
 | Symbol   | Denom                                                                               |
 |----------|-------------------------------------------------------------------------------------|
 | `wstETH` | `factory/neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry/wstETH` |
+| `axl-ETH`| `ibc/A585C2D15DCD3B010849B453A2CFCB5E213208A5AB665691792684C26274304D`              |
