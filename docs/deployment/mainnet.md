@@ -49,3 +49,17 @@
 |--------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Neutron Vesting Investors      | [neutron14q5elxj4ghktt7d7d0uw0cs0gqyeay25h5fkree897gjm38gevxqmvqsq5](https://neutron.celat.one/neutron-1/contracts/neutron14q5elxj4ghktt7d7d0uw0cs0gqyeay25h5fkree897gjm38gevxqmvqsq5) |
 | LTI Vesting                    | [neutron1a5xz4zm0gkpcf92ddm7fw8pghg2mf4wm6cyu6cgcruq35upf7auslnnfye](https://neutron.celat.one/neutron-1/contracts/neutron1a5xz4zm0gkpcf92ddm7fw8pghg2mf4wm6cyu6cgcruq35upf7auslnnfye) |
+
+## Bridge
+
+### Contracts
+
+| Name                    | Address                                                                                                                                                                             |
+|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Lido Satellite          | [neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry](https://neutron.celat.one/neutron-1/contracts/neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry) |
+
+### Denoms
+
+| Symbol   | Denom                                                                               |
+|----------|-------------------------------------------------------------------------------------|
+| `wstETH` | `factory/neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry/wstETH` |
