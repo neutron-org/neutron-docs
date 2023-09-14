@@ -31,7 +31,7 @@
 | Name                    | Address                                                                                                                                                                             |
 |-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Lido Satellite (pion-1) | [neutron1xdtwh5jr4zjx8g3zh29jud75c666wua7tsmum3ajm6ylf782etfs60dj2h](https://neutron.celat.one/pion-1/contracts/neutron1xdtwh5jr4zjx8g3zh29jud75c666wua7tsmum3ajm6ylf782etfs60dj2h) |
-| GMP Helper (Görli)      | [0x928cC242bb97DCb493c5d8De9fA215910eDC2ab5](https://goerli.etherscan.io/address/0x928cC242bb97DCb493c5d8De9fA215910eDC2ab5)                                                        |
+| GMP Helper (Görli)      | [0x1C100406FCe76830c7B0396E082F7a8C45a000e4](https://goerli.etherscan.io/address/0x1C100406FCe76830c7B0396E082F7a8C45a000e4)                                                        |
 
 ### Denoms
 
