@@ -55,9 +55,10 @@
 
 ### Contracts
 
-| Name                    | Address                                                                                                                                                                             |
-|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Lido Satellite          | [neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry](https://neutron.celat.one/neutron-1/contracts/neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry) |
+| Name                       | Address                                                                                                                                                                                |
+|----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Lido Satellite (neutron-1) | [neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry](https://neutron.celat.one/neutron-1/contracts/neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry) |
+| GMP Helper (Ethereum)      | [0x8A5fcd88B4aC70A1939955fAeA4E12bd0C7B1237](https://etherscan.io/address/0x8A5fcd88B4aC70A1939955fAeA4E12bd0C7B1237)                                                                  |
 
 ### Denoms
 
