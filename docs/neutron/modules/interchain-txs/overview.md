@@ -41,6 +41,7 @@ complete list of IBC events for each module message in the [messages](./messages
 >  If the timeout occurs anyway, you can just
 > execute [RegisterInterchainAccount message]( /neutron/modules/interchain-txs/messages#msgregisterinterchainaccount) again to
 > recover access to your interchain account.
+> **Note** Keep in mind, new channel is created
 
 ## Relaying
 

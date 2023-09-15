@@ -19,6 +19,8 @@ To make sure there is no exploits with infinite recursion of IBC calls that call
 
 If your contract exceeds this constant `LIMIT`, it will terminate sudo handler call and save a `Failure` with full call info. You can [resubmit failure](#resubmitfailure) from this contract.
 
+The `LIMIT` is defined by `SudoCallGasLimit` module's parameter.
+
 We give an ability to resubmit bindings through the contract that initiated the IBC transaction.
 
 ## Binding msgs

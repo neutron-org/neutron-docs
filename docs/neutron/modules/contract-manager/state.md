@@ -12,11 +12,7 @@ message Failure {
   string address = 1;
   // Id of the failure under specific address
   uint64 id = 2;
-  // Acknowledgement type ('ack' or 'timeout')
-  string ack_type = 3;
-  // IBC Packet
-  ibc.core.channel.v1.Packet packet = 4;
-  // Acknowledgement
-  ibc.core.channel.v1.Acknowledgement ack = 5;
+  // Serialized MessageSudoCallback with Packet and Ack(if exists)
+  bytes sudo_payload = 3;
 }
 ```
