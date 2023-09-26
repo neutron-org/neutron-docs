@@ -152,7 +152,7 @@ means that subDAO sent the proposal to the timelock contract.
 2. The overrule proposal module should be configured in a very special way:
    1. Obviously, it should have lower threshold and lower voting period than regular single choice proposal module.
    2. Revoting should be disabled so that once threshold is reached, the overrule message can be executed.
-   3. Quorum should be set to the absolute count type so that even if significant voting power is against overruling, it
+   3. Quorum should be set to the absolute percentage type so that even if significant voting power is against overruling, it
 would happen anyway.
    4. It should have no deposit since rejection of the overrule proposal is the only way to execute the subDAO proposal
 and should be considered normal thing, no one should be punished for creation such proposal.
