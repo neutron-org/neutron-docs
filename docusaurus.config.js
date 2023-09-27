@@ -40,6 +40,13 @@ const config = {
           routeBasePath: '/', // Serve the docs at the site's root
           remarkPlugins: [math],
           rehypePlugins: [katex],
+          lastVersion: 'current',
+          versions: {
+            current: {
+              label: '1.1.0',
+              path: '/',
+            },
+          },
         },
       }),
     ],
@@ -83,6 +90,11 @@ const config = {
             label: 'GitHub',
             position: 'right',
           },
+          {
+            type: 'docsVersionDropdown',
+            position: 'right',
+            dropdownActiveClassDisabled: true,
+          }
         ],
       },
       footer: {
