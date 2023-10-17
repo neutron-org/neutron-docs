@@ -19,7 +19,7 @@ To make sure there are no exploits with infinite recursion of IBC messages which
 
 If your contract exceeds this constant `LIMIT`, it will terminate sudo handler call and save a `Failure` with full call info. You can [resubmit failure](#resubmitfailure) from this contract.
 
-We give an ability to resubmit bindings through the contract that initiated the IBC transaction.
+We provide an ability to resubmit bindings through the contract that initiated the IBC transaction.
 
 ## Binding msgs
 
