@@ -1,6 +1,6 @@
 # CosmWasm + WasmKit
 
-This guide will explore an overview of lifecycle of a simple CosmWasm contract using WasmKit. You can check out more detailed WasmKit usage [here](https://wasmkit.arufaresearch.com/).
+This guide will explore an overview of lifecycle of a simple CosmWasm contract using WasmKit. You can check out more detailed WasmKit usage [here](https://wasmkit.kubiklabs.xyz/).
 
 WasmKit is a development framework specifically designed for building CosmWasm contracts. The primary goal of the project is to simplify, streamline, and enhance the process of developing CosmWasm contracts.
 
@@ -47,19 +47,19 @@ Alternatively, you can install rust by following their [documentation](https://w
 ### Installation
 
 ```bash
-yarn global add @arufa/wasmkit
+yarn global add @kubiklabs/wasmkit
 ```
 
 or
 
 ```bash
-npm install -g @arufa/wasmkit
+npm install -g @kubiklabs/wasmkit
 ```
 
 Installation from source:
 
 ```bash
-git clone https://github.com/arufa-research/wasmkit.git
+git clone https://github.com/kubiklabs/wasmkit.git
 cd wasmkit && yarn install && yarn build
 cd packages/wasmkit && yarn link
 chmod +x $HOME/.yarn/bin/wasmkit
@@ -261,7 +261,7 @@ const mainnet_accounts = [
 // You can specify other networks similarly,
 // just need to know RPC URL and chainID
 // custom fee can also be added here
-// for detailed example: https://github.com/arufa-research/wasmkit/blob/master/packages/wasmkit/sample-project/wasmkit.config.js
+// for detailed example: https://github.com/kubiklabs/wasmkit/blob/master/packages/wasmkit/sample-project/wasmkit.config.js
 const networks = {
   localnet: {
     endpoint: 'http://localhost:26657/',
