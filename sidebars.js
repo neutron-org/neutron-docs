@@ -151,6 +151,14 @@ const sidebars = {
                     type: 'category',
                     items: [
                         {
+                            label: 'Admin module',
+                            type: 'category',
+                            items: [
+                                'neutron/modules/admin-module/overview',
+                                'neutron/modules/admin-module/messages',
+                            ]
+                        },
+                        {
                             label: 'Interchain Transactions',
                             type: 'category',
                             items: [

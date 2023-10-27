@@ -1,10 +1,9 @@
-# Overview
+# Admin Module
 
-## Abstract
+## Overview
 
-This document specifies the Admin module for the Neutron network, which serves as a central governance tool for administrators, developers, and the [DAO](link) members to propose and execute critical operations on the Neutron network.
+The Admin module in the Neutron network is a central governance tool, enabling the [DAO](link) to propose and execute pivotal operations. Developed using the [cosmos-sdk](https://github.com/cosmos/cosmos-sdk), this module is upgraded to align with the `Cosmos SDK 0.47`.
 
-The Admin module is a product of leveraging the functionalities and structures provided by the [cosmos-sdk](https://github.com/cosmos/cosmos-sdk), tailored specifically for the requirements of the Neutron network.
 
 ## Concepts
 
@@ -28,3 +27,36 @@ We achieve governance through a dual mechanism approach. A message, structured a
 
 The Admin module in Neutron utilizes both the aforementioned proposal mechanisms. Specifically, these are executed within the msg.server of the admin module, ensuring seamless integration with the larger Neutron infrastructure. Our commitment is to keep abreast of the cosmos-sdk updates while preserving the unique governance structure that Neutron network requires.
 
+### Whitelisting
+As soon as we want to control the list of proposals that may be executed via adminmodule, we have [a simple whitelisting](https://github.com/neutron-org/neutron/blob/update-sdk47/app/proposals_allowlisting.go) mechanism.
+
+## Challenges related to Cosmos SDK 0.47
+
+Transitioning to `Cosmos SDK 0.47` introduced several hurdles:
+
+- **Original Admin Module's Dormancy:** Prior to `v1.1.0`, Neutron used the [original Admin Module](https://github.com/Ethernal-Tech/admin-module). This module, no longer actively maintained, needs an upgrade.
+
+- **Deprecation of `x/params`:** With the new SDK version, the `x/params` module has been deprecated, pushing each Cosmos Module to implement custom parameter handling logic.
+
+- **Change in Governance Logic:** The new SDK has moved away from the `ProposalHandler` logic in modules. Instead, the `gov` module can now issue direct messages to any Cosmos Module.
+
+## Enhancements & Solutions
+
+### ProposalExecuteMessage Binding
+Introduced a new [`ProposalExecuteMessage`](https://github.com/neutron-org/neutron/blob/261f47c30dcfc7cd51eef2b78bd770abd059208b/wasmbinding/bindings/msg.go#L105)` binding, allowing the AdminModule to process any type of Cosmos message. A [signer verification](https://github.com/neutron-org/neutron/blob/261f47c30dcfc7cd51eef2b78bd770abd059208b/wasmbinding/message_plugin.go#L441) ensures authenticity.
+
+### Whitelisting of Executable Messages
+Implemented a [whitelist mechanism](https://github.com/neutron-org/neutron/blob/261f47c30dcfc7cd51eef2b78bd770abd059208b/app/proposals_allowlisting.go#L48) to ensure that only pre-approved messages are executed.
+
+### Legacy Proposals & Handler
+For ensuring backward compatibility, we have retained [ClientUpdateProposal, UpgradeProposal, and ParamChangeProposal](https://github.com/neutron-org/neutron/blob/261f47c30dcfc7cd51eef2b78bd770abd059208b/wasmbinding/bindings/msg.go#L102). Additionally, a handler named `MsgSubmitProposalLegacy` has been [introduced](https://github.com/neutron-org/admin-module/blob/feat/admin-module-sdk47/x/adminmodule/keeper/msg_server_submit_proposal_legacy.go) for pre-sdk47 proposals.
+
+### Revamped MsgSubmitProposal
+The [`MsgSubmitProposal`](https://github.com/neutron-org/admin-module/blob/feat/admin-module-sdk47/x/adminmodule/keeper/msg_server_submit_proposal.go) has been redesigned to handle any type of Cosmos message.
+
+### Streamlined Logic and Execution
+We've removed unnecessary logic and the cache context, leading to immediate proposal execution within the msgServer/keeper and the removal of Active and Inactive queues.
+
+## Conclusion
+
+With these updates, Neutron remains at the forefront of the evolving Cosmos ecosystem, ensuring our governance remains robust, safe and compatible.
