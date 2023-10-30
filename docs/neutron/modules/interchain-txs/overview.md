@@ -23,12 +23,15 @@ a [Sudo() call](https://github.com/CosmWasm/wasmd/blob/288609255ad92dfe5c54eae57
 and a custom [message scheme](https://github.com/neutron-org/neutron/blob/v1.0.4/x/contractmanager/types/sudo.go). You can find a
 complete list of IBC events for each module message in the [messages](./messages) section.
 
-> **Note**: if your Sudo handler fails, the acknowledgment won't be marked as processed inside the IBC module. This will
-> make most IBC relayers try to submit the acknowledgment over and over again. And since the ICA channels are `ORDERED`,
-> ACKs must be processed in the same order as corresponding transactions were sent, meaning no further acknowledgments
-> will be process until the previous one processed successfully.
->
-> We strongly recommend developers to write Sudo handlers very carefully and keep them as simple as possible. If you do
+## Sudo errors handling
+
+Interchaintxs module configured the following way, all the errors from a sudo handler are being suppressed by [contract manager middleware](/neutron/modules/contract-manager/overview#concepts), sudo handler is limited with [LIMIT](/neutron/modules/contract-manager/overview#gas-limitation) amount of gas
+
+## Importing interchaintxs module
+
+If you use interchaintxs module in your application and if your Sudo handler fails, the acknowledgment won't be marked as processed inside the IBC module. This will  make most IBC relayers try to submit the acknowledgment over and over again. And since the ICA channels are `ORDERED`, ACKs must be processed in the same order as corresponding transactions were sent, meaning no further acknowledgments will be process until the previous one processed successfully.
+
+> **Note** We strongly recommend developers to write Sudo handlers very carefully and keep them as simple as possible. If you do
 > want to have elaborate logic in your handler, you should verify the acknowledgement data before making any state
 > changes; that way you can, if the data received with the acknowledgement is incompatible with executing the handler
 > logic normally, return an `Ok()` response immediately, which will prevent the acknowledgement from being resubmitted.
