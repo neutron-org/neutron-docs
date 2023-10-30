@@ -47,9 +47,6 @@ Amount of coins to deposit is defined via parameter (`query_deposit`) controlled
 
 In other words, it is expected of the query owner to remove its queries when they are not needed anymore. If a query hasn't been in use for the `query_submit_timeout` and owner hasn't removed it, network users are granted with an opportunity to clean the chain up and raise assets for it.
 
-
-# Transaction Filter
-
 ```json
 [{"field": "{eventType}.{attributeKey}", "val": "{attributeValue}", "op": "gte"}, ...]
 ```
