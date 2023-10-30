@@ -50,7 +50,7 @@ message MsgBurn {
 
 **State Modifications:**
 - Safety check the following
-  - Check that the denom minting is created via `tokenfactory` module
+  - Check that the denom has been created via `tokenfactory` module
   - Check that the sender of the message is the admin of the denom
 - Burn designated amount of tokens for the denom via `bank` module
 
