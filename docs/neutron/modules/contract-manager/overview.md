@@ -17,7 +17,7 @@ To ensure that the state of the contract is consistent, the call to the sudo han
 
 ### Gas limitation
 
-To make sure there are no exploits with infinite recursion of IBC messages which call other IBC messages in sudo handler we use constant gas `LIMIT` to spend. If your contracts need to do intense computational work in sudo handler, you can save the messages and do work later in a separate method.
+To make sure there are no exploits with infinite recursion of IBC messages which call other IBC messages in sudo handler we use constant gas `LIMIT` to spend. The LIMIT is small, so you can't place extensive work in Sudo handlers. As a workaround, in such cases you can use Sudo handlers to simply store required payload in contract's state, and use Execute messages to handle results separately.
 
 If your contract exceeds this constant `LIMIT`, it will terminate sudo handler call and save a `Failure` with full call info. You can [resubmit failure](#resubmitfailure) from this contract.
 
