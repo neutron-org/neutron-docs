@@ -112,13 +112,11 @@ sudo apt install librust-openssl-dev build-essential git
 
 ## Build & setup Hermes
 
-Make the directory where you'll place the binary, clone the hermes source repository and build it using the latest release.
+> Use rust version `1.71.0` to install, otherwise it might not compile!
+
+This will install hermes into `$HOME/.cargo/bin/` directory:
 ```sh
-mkdir -p $HOME/hermes
-git clone https://github.com/informalsystems/ibc-rs.git hermes
-cd hermes
-git checkout v1.0.0
-cargo install ibc-relayer-cli --bin hermes --locked
+cargo install ibc-relayer-cli --bin hermes --locked --version 1.6.0
 ```
 
 Make hermes config & keys directory, copy config-template to config directory:
@@ -131,14 +129,15 @@ cp config.toml $HOME/.hermes
 Check hermes version & config dir setup
 ```sh
 hermes version
-INFO ThreadId(01) using default configuration from '/home/relay/.hermes/config.toml'
-hermes 1.0.0
+
+2023-08-07T15:27:49.236821Z  INFO ThreadId(01) running Hermes v1.6.0
+hermes 1.6.0
 ```
 
 Edit hermes config (use ports according to the port configuration we set above, add only chains you want to relay)
 
-```
-nano $HOME/.hermes/config/config.toml
+```sh
+nano $HOME/.hermes/config.toml
 ```
 Neutron introduces smart-contract level callbacks for IBC packets. From an IBC relayer's perspective, this means that
 custom application logic can be executed when a packet is submitted to Neutron, which can potentially drain the
@@ -150,7 +149,7 @@ and restrict the channels they are willing to relay for. For example, you can do
 id = 'cosmoshub-4'
 rpc_addr = 'http://127.0.0.1:26757'
 grpc_addr = 'http://127.0.0.1:9092'
-websocket_addr = 'ws://127.0.0.1:26757/websocket'
+event_source = { mode = 'push', url = 'ws://127.0.0.1:26757/websocket', batch_delay = '200ms' }
 rpc_timeout = '10s'
 account_prefix = 'cosmos'
 key_name = 'cosmos'
@@ -181,9 +180,9 @@ id = 'neutron-1'
 ccv_consumer_chain = true
 rpc_addr = 'http://127.0.0.1:26657'
 grpc_addr = 'http://127.0.0.1:9090'
-websocket_addr = 'ws://127.0.0.1:26657/websocket'
+event_source = { mode = 'push', url = 'ws://127.0.0.1:26657/websocket', batch_delay = '200ms' }
 rpc_timeout = '10s'
-account_prefix = 'ntrn'
+account_prefix = 'neutron'
 key_name = 'neutron'
 address_type = { derivation = 'cosmos' }
 store_prefix = 'ibc'
