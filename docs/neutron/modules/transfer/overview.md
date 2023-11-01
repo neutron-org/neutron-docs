@@ -21,4 +21,4 @@ IBC transfers take some time, therefore contracts don't get the IBC transfer res
 
 ## Sudo errors handling
 
-Trnsfer module configured the following way, all the errors from a sudo handler are being suppressed by [contract manager middleware](/neutron/modules/contract-manager/overview#concepts), sudo handler is limited with [LIMIT](/neutron/modules/contract-manager/overview#gas-limitation) amount of gas
+Transfer module configured the following way, all the errors from a sudo handler are being suppressed by [contract manager middleware](/neutron/modules/contract-manager/overview#concepts), sudo handler is limited with [LIMIT](/neutron/modules/contract-manager/overview#gas-limitation) amount of gas
