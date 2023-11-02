@@ -12,12 +12,14 @@ message MsgRegisterInterchainAccount {
   string from_address = 1;
   string connection_id = 2 [ (gogoproto.moretags) = "yaml:\"connection_id\"" ];
   string interchain_account_id = 3 [ (gogoproto.moretags) = "yaml:\"interchain_account_id\"" ];
+  repeated cosmos.base.v1beta1.Coin register_fee = 4;
 }
 ```
 
 * `from_address` must be a smart contract address, otherwise the message will fail;
 * `connection_id` must be the identifier of a valid IBC connection, otherwise the message will fail;
 * `interchain_account_id` is used to generate the [owner](https://github.com/cosmos/ibc-go/blob/v3.1.1/modules/apps/27-interchain-accounts/controller/keeper/account.go#L17) parameter for ICA's `RegisterInterchainAccount()` call, which is later used for port identifier generation (see below). Maximum allowed length of `interchain_account_id` is 47 characters.
+* `register_fee` fee is required to be paid in favor of the community (payee address is the treasury) to register an interchain account. Minimal amount of fee is contolled by the module's param `RegisterFee`
 
 <details>
   <summary>IBC ports naming / Interchain Account address derivation</summary>
@@ -125,24 +127,26 @@ message MsgSubmitTxResponse {
 ### IBC Events
 
 ```go
-type SudoMessageTimeout struct {
-	Timeout struct {
-		Request channeltypes.Packet `json:"request"`
-	} `json:"timeout"`
+// MessageSudoCallback is passed to a contract's sudo() entrypoint when an interchain
+// transaction failed.
+type MessageSudoCallback struct {
+	Response *ResponseSudoPayload `json:"response,omitempty"`
+	Error    *ErrorSudoPayload    `json:"error,omitempty"`
+	Timeout  *TimeoutPayload      `json:"timeout,omitempty"`
 }
 
-type SudoMessageResponse struct {
-	Response struct {
-		Request channeltypes.Packet `json:"request"`
-		Data    []byte              `json:"data"` // Message data
-	} `json:"response"`
+type ResponseSudoPayload struct {
+	Request channeltypes.Packet `json:"request"`
+	Data    []byte              `json:"data"` // Message data
 }
 
-type SudoMessageError struct {
-	Error struct {
-		Request channeltypes.Packet `json:"request"`
-		Details string              `json:"details"`
-	} `json:"error"`
+type ErrorSudoPayload struct {
+	Request channeltypes.Packet `json:"request"`
+	Details string              `json:"details"`
+}
+
+type TimeoutPayload struct {
+	Request channeltypes.Packet `json:"request"`
 }
 ```
 

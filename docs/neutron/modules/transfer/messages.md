@@ -36,11 +36,11 @@ message MsgTransfer {
       [ (gogoproto.nullable) = false ];
 }
 ```
+
 > **Note:** your smart-contract **must have** `fee.ack_fee + fee.timeout_fee + fee.recv_fee` coins on its balance, otherwise the message fails. See more info about fee refunding mechanism [here](../feerefunder/overview#general-mechanics).
 
 This message has the same structure the original module has, with addition of `fee` field.
-See the corresponding original module's page here: https://ibc.cosmos.network/main/apps/transfer/messages.html#msgtransfer.
-
+See the corresponding original module's page here: <https://ibc.cosmos.network/main/apps/transfer/messages.html#msgtransfer>.
 
 ### MsgTransfer response
 
