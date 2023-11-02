@@ -39,30 +39,7 @@ message KVKey {
 Currently `query_type` can take the following values:
 * `kv` - query **values** from Cosmos-SDK KV-storage on remote chain which are stored under some **keys**. In this case `kv_keys` must be filled in.
 
-* `tx` - query to search for transactions on remote chain. `transactions_filter` describes a filter by which the [ICQ relayer](/relaying/icq-relayer) will perform the transactions search. It has the following format:
-```json
-[{"field": "{eventType}.{attributeKey}", "val": "{attributeValue}", "op": "gte"}, ...]
-```
-
-Maximum allowed amount of filters is 32. Supplying more filters than allowed will return an error.
-
-Supported operators:
-* `eq`
-* `lt`
-* `gt`
-* `lte`
-* `gte`
-
-The ICQ relayer can easily parse this format and compose it into usual [Tendermint syntax](https://docs.tendermint.com/v0.33/app-dev/indexing-transactions.html#querying-transactions) for searching transactions.
-
-For instance, this query to search all transfer transactions with amount greater than 42:
-```json
-[{"field": "transfer.amount", "op": "gt", "val": 42}, {"field": "message.module", "op": "eq", "val": "bank"}]
-```
-will be converted by the ICQ relayer into a usual Tendermint search string:
-```
-"transfer.amount" > 42 AND "message.module" = "bank"
-```
+* `tx` - query to search for transactions on remote chain. `transactions_filter` describes a filter by which the [ICQ relayer](/relaying/icq-relayer) will perform the transactions search. [The transaction filter is described in more detail in the overview](/neutron/modules/interchain-queries/overview):
 
 `MsgRegisterInterchainQuery` returns [`MsgRegisterInterchainQueryResponse`](https://github.com/neutron-org/neutron/blob/v1.0.4/proto/interchainqueries/tx.proto#L44) where `id` is unique identifier of newly registered interchain query on success:
 ```protobuf
