@@ -15,9 +15,13 @@ But this in turn exposes the problem of informing the owner of the contract that
 
 To ensure that the state of the contract is consistent, the call to the sudo handler takes place in a temporary state (using `CacheContext`), which is written to the active state if the call succeeds.
 
+### Gas limitation
+
 To make sure there are no exploits with infinite recursion of IBC messages which call other IBC messages in sudo handler we use constant gas `LIMIT` to spend. The LIMIT is small, so you can't place extensive work in Sudo handlers. As a workaround, in such cases you can use Sudo handlers to simply store required payload in contract's state, and use Execute messages to handle results separately.
 
 If your contract exceeds this constant `LIMIT`, it will terminate sudo handler call and save a `Failure` with full call info. You can [resubmit failure](#resubmitfailure) from this contract.
+
+The `LIMIT` is defined by `SudoCallGasLimit` module's parameter.
 
 We provide an ability to resubmit bindings through the contract that initiated the IBC transaction.
 

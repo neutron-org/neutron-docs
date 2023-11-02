@@ -46,12 +46,10 @@ Output:
   failures:
     - address: neutron1nc5tatafv6eyq7llkr2gv50ff9e22mnf70qgjlv737ktmt4eswrqcd0mrx
       id: 0
-      ack_id: 0
-      ack_type: "ack"
+      sudo_payload: <serialized msg of MessageSudoCallback type>
     - address: neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq
       id: 1
-      ack_id: 1
-      ack_type: "timeout"
+      sudo_payload: <serialized msg of MessageSudoCallback type>
   pagination:
     next_key: null
     total: "2"
@@ -81,12 +79,10 @@ Output:
   failures:
     - address: neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq
       id: 0
-      ack_id: 0
-      ack_type: "ack"
+      sudo_payload: <serialized msg of MessageSudoCallback type>
     - address: neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq
       id: 1
-      ack_id: 1
-      ack_type: "ack"
+      sudo_payload: <serialized msg of MessageSudoCallback type>
   pagination:
     next_key: null
     total: "2"
