@@ -43,7 +43,7 @@ In Neutron, you can write smart contracts with Rust language. **WELLDONE Code** 
 
 ### Create Template
 
-Create a simple example contract code written in Rust. You can create a sample contract by selecting the template option and clicking the `Create` button. More templates may be found at [Neutron Samples](https://github.com/deus-labs/cw-contracts).
+Create a simple example contract code written in Rust. You can create a sample contract by selecting the template option and clicking the `Create` button. More templates may be found at [CosmWasm Samples](https://github.com/deus-labs/cw-contracts).
 
 <img src={require('/img/remix-ide-plugin/template-code-neutron.png').default} alt='template-code-neutron' style={{width: '50%'}}/>
 

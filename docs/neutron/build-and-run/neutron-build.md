@@ -33,7 +33,7 @@ The command above will build a Neutron binary and store it under your `$GOBIN` d
 
 ```sh
 neutrond version
-1.0.4-rc1
+1.0.4
 ```
 
 If you have problems with PATH-related stuff, please refer to the go releases and instructions link in the [prerequisites](#prerequisites) section.
