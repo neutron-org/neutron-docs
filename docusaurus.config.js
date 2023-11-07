@@ -106,7 +106,7 @@ const config = {
               },
               {
                 label: 'Discord',
-                href: 'https://discord.com/invite/zRT2ZkQsxA',
+                href: 'https://discord.neutron.org/',
               },
               {
                 label: 'Twitter',
