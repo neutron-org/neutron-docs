@@ -2,7 +2,7 @@
 
 ## Overview
 
-This section provides detailed specifications for the messages within the Admin module of the Neutron network. Messages serve as the primary vehicle for users, administrators, and the [DAO](link) to communicate and propose changes within the Neutron ecosystem. Based on the cosmos-sdk architecture, the Admin module offers a range of standardized message structures for seamless governance and operations.
+This section provides detailed specifications for the messages within the Admin module of the Neutron network. Messages serve as the primary vehicle for users, administrators, and the [DAO](/neutron/dao/overview) to communicate and propose changes within the Neutron ecosystem. Based on the cosmos-sdk architecture, the Admin module offers a range of standardized message structures for seamless governance and operations.
 
 ---
 

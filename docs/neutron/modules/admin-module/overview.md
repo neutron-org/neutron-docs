@@ -9,7 +9,7 @@ The [Admin module](https://github.com/neutron-org/admin-module/tree/feat/admin-m
 
 ### Network Administration and Governance
 
-Being the network's admin, our [DAO](https://neutron.celat.one/neutron-1/contracts/neutron1suhgf5svhu4usrurvxzlgn54ksxmn8gljarjtxqnapv8kjnp4nrstdxvff) is empowered to execute proposals that can significantly change the network state. These proposals can encapsulate a myriad of operations including but not limited to:
+Being the network's admin, our [DAO](/neutron/dao/overview) is empowered to execute proposals that can significantly change the network state. These proposals can encapsulate a myriad of operations including but not limited to:
 - Modifying parameters of a specific module, like adjusting transaction fees or validator incentives.
 - A full spectrum of `wasm` proposals, leveraging the WebAssembly smart contract functionalities in Cosmos.
 - [Upgrade proposals](https://github.com/cosmos/cosmos-sdk/blob/main/x/upgrade/types/upgrade.pb.go), enabling seamless interoperability and data transfer between distinct blockchains.
@@ -43,7 +43,7 @@ Transitioning to `Cosmos SDK 0.47` introduced several hurdles:
 ### Enhancements & Solutions
 
 #### ProposalExecuteMessage Binding
-Introduced a new [`ProposalExecuteMessage`](https://github.com/neutron-org/neutron/blob/261f47c30dcfc7cd51eef2b78bd770abd059208b/wasmbinding/bindings/msg.go#L105)` binding, allowing the AdminModule to process any type of Cosmos message. A [signer verification](https://github.com/neutron-org/neutron/blob/261f47c30dcfc7cd51eef2b78bd770abd059208b/wasmbinding/message_plugin.go#L441) ensures authenticity.
+Introduced a new [`ProposalExecuteMessage`](https://github.com/neutron-org/neutron/blob/261f47c30dcfc7cd51eef2b78bd770abd059208b/wasmbinding/bindings/msg.go#L105) binding, allowing the AdminModule to process any type of Cosmos message. A [signer verification](https://github.com/neutron-org/neutron/blob/261f47c30dcfc7cd51eef2b78bd770abd059208b/wasmbinding/message_plugin.go#L441) ensures authenticity.
 
 #### Whitelisting of Executable Messages
 Implemented a [whitelist mechanism](https://github.com/neutron-org/neutron/blob/261f47c30dcfc7cd51eef2b78bd770abd059208b/app/proposals_allowlisting.go#L48) to ensure that only pre-approved messages are executed.
