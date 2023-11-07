@@ -37,6 +37,18 @@ func GenerateAddress(moduleAccAddr sdk.AccAddress, connectionID, portID string) 
 </details>
 
 > **Note:** your contract needs to implement the `sudo()` entrypoint on order to successfully process the IBC events associated with this message. You can find an example in the [neutron-sdk](https://github.com/neutron-org/neutron-sdk/tree/main/contracts) repository. 
+ ### SDK v0.47 Update: Fee Implementation for ICA Registration
+
+As of SDK version 0.47, we have introduced a new fee structure for the registration of Interchain Accounts (ICAs). Please be aware of the following updates:
+
+- **[Minimum Fee (minFee)](https://github.com/neutron-org/neutron/blob/c6df465e5f83a811fd1cc98b6ebbf677a55ea21c/x/interchaintxs/types/params.pb.go#L32):** A minimum fee is now required for all new ICA registrations. This fee goes directly to the `FeeCollector` to support network operations and service maintenance.
+
+- **`FeeCollector Beneficiary`:** The `FeeCollector` is the designated recipient of the new registration fees, ensuring the economic sustainability of the network. This addr [is set](https://github.com/neutron-org/neutron/blob/c6df465e5f83a811fd1cc98b6ebbf677a55ea21c/app/app.go#L658) upon keeper initialization 
+
+- **Backwards Compatibility Assurance:**
+    - Contracts and ICAs established with contracts, stored on earlier SDK versions (pre-0.47) [will **not**](https://github.com/neutron-org/neutron/blob/c6df465e5f83a811fd1cc98b6ebbf677a55ea21c/x/interchaintxs/keeper/msg_server.go#L51) incur the new registration fee.
+    - This update is fully compatible with previous SDK versions, guaranteeing a smooth transition and no disruption to existing contracts and services.
+
 
 ### Response
 
