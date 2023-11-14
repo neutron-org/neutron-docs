@@ -132,7 +132,7 @@ For check #4 pre-propose module stores the map from pair <timelock_contract_addr
 proposal id.
 It also allows one to get the corresponding overrule proposal id for given subDAO proposal via 
 [special query](https://github.com/neutron-org/neutron-dao/blob/376cd05df727fbf9c1730a469f94cb6f373e05db/contracts/dao/pre-propose/cwd-pre-propose-single-overrule/src/contract.rs#L277).
-Reverse query (get subDAO proposal id for given overrule proposal id) is also possible, one just need to query the
+Reverse query (get subDAO proposal id for given overrule proposal id) is also possible, one just needs to query the
 overrule proposal content from proposal module and get the subDAO proposal id from the proposal message.
 
 In general, overrule proposal creation is permissionless. Still, since it's created in the very same transaction as the
@@ -166,7 +166,7 @@ because of title and description.
    
 ### Deployment
 
-Overrule pre-propose module is deployed pretty the same way as any other pre-propose module and doesn't have any
+Overrule pre-propose module is deployed pretty much the same way as any other pre-propose module and doesn't have any
 additional init message.
 
 subDAO pre-propose module is also deployed the same way as regular pre-propose modules. Still, it instantiates
