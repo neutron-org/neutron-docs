@@ -316,12 +316,12 @@ fn execute_delegate(
     // specify fees to refund relayers for submission of ack and timeout messages
     //
     // The contract MUST HAVE recv_fee + ack_fee + timeout_fee coins on its balance!
-    // See more info about fees here: https://docs.neutron.org /neutron/modules/interchain-txs/messages#msgsubmittx
-    // and here: https://docs.neutron.org/neutron/feerefunder/overview
+    // See more info about fees here: https://docs.neutron.org/neutron/modules/interchain-txs/messages#msgsubmittx
+    // and here: https://docs.neutron.org/neutron/modules/feerefunder/overview
     let fee = IbcFee {
         recv_fee: vec![], // must be empty
-        ack_fee: vec![CosmosCoin::new(1000u128, "untrn")],
-        timeout_fee: vec![CosmosCoin::new(1000u128, "untrn")],
+        ack_fee: vec![CosmosCoin::new(100000u128, "untrn")],
+        timeout_fee: vec![CosmosCoin::new(100000u128, "untrn")],
     };
 
     // Form the neutron SubmitTx message containing the binary Delegate message.
