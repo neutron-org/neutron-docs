@@ -21,6 +21,12 @@ We encourage everyone to use the Mintscan explorer:
 We also recommend to use this awesome smart contracts [explorer](https://neutron.celat.one/mainnet/query?contract=neutron1suhgf5svhu4usrurvxzlgn54ksxmn8gljarjtxqnapv8kjnp4nrstdxvff) by Celatone: it provides a great UI to
 upload, query and execute contracts.
 
+### Where to download latest snapshots?
+
+If you want to spin up your own archive node, you can use our snapshot service, which allows you to do so without the requirement to sync from the very beginning.
+
+- [Snapshot service](https://snapshot.neutron.org)
+
 ### Where can I get the public REST and RPC nodes?
 
 You can check out the Cosmos Chain Registry:
