@@ -4,14 +4,14 @@
 
 ### I am a developer who builds on Neutron. How can I get in touch with the dev team?
 
-There is two places to check out:
+There are two places to check out:
 
 - **Neutron Builders Announcements** (https://t.me/+Q6C_kb0xLaoxYzE1): this is the channel with official announcements;
 - **Neutron Builders Chat** (https://t.me/+b9f8m8iybLdhYjE9): this is a chat where smart contract developers can ask
   technical questions to the devs. Please note that non-technical questions and spam can result in an immediate ban;
 - **Neutron Dev Blog** (https://t.me/+GK5KVutIvQhhNmNi): a channel for various technical notes from the dev team.
 
-### Where is block explorer?
+### Where is the block explorer?
 
 We encourage everyone to use the Mintscan explorer:
 
@@ -41,7 +41,7 @@ with the public nodes, feel free to report to the Neutron Technical Support grou
 
 We are using a [patched](https://github.com/neutron-org/neutron/blob/v1.0.1/go.mod#L158) 0.31.1 version of `wasmd`.
 
-### Where is testnet faucet?
+### Where is the testnet faucet?
 
 You can request from Testnet(`pion-1`) Faucet on the #testnet-faucet channel on Neutron’s Discord server with the following command:
 
