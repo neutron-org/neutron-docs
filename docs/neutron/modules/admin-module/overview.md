@@ -34,7 +34,7 @@ As soon as we want to control the list of proposals that may be executed via adm
 
 Transitioning to `Cosmos SDK 0.47` introduced several hurdles:
 
-- **Original Admin Module's Dormancy:** Prior to `v1.1.0`, Neutron used the [original Admin Module](https://github.com/Ethernal-Tech/admin-module). This module, no longer actively maintained, needs an upgrade.
+- **Original Admin Module's Dormancy:** Prior to `v2.0.0`, Neutron used the [original Admin Module](https://github.com/Ethernal-Tech/admin-module). This module, no longer actively maintained, needs an upgrade.
 
 - **Deprecation of `x/params`:** With the new SDK version, the `x/params` module has been deprecated, pushing each Cosmos Module to implement custom parameter handling logic.
 
