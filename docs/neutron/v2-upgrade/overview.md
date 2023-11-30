@@ -50,5 +50,5 @@ Enhancements within Neutron focus on integrating new modules, refining existing 
 
 ### Adminmodule Rework
 
-- **Module and Governance Alignment:** The admin module has been redesigned to align with the deprecated params module and the new governance proposal handling mechanism in sdk v0.47. For more details, visit [Adminmodule Overview](/neutron/modules/admin-module/overview).
+- **Module and Governance Alignment:** The admin module has been redesigned to align with the deprecated params module and the new governance proposal handling mechanism in sdk v0.47. For more details, visit [Adminmodule Overview](/neutron/modules/admin-module/overview#challenges-related-to-cosmos-sdk-047).
 
