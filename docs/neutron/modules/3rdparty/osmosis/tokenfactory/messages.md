@@ -10,7 +10,7 @@ message MsgCreateDenom {
 ```
 
 **State Modifications:**
-- Fund [Neutron DAO Treasury](http://localhost:3000/neutron/dao/overview) with the denom creation fee from the creator address, specified in `Params`; 
+- Fund [Neutron DAO Treasury](/neutron/dao/overview) with the denom creation fee from the creator address, specified in `Params`; 
 - Consume an amount of gas corresponding to the `DenomCreationGasConsume` parameter specified in `Params`;
 - Set `DenomMetaData` via bank keeper;
 - Set `AuthorityMetadata` for the given denom to store the admin for the created denom `factory/{creator address}/{subdenom}`. Admin is automatically set as the Msg sender;
