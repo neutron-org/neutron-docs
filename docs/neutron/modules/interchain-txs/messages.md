@@ -37,7 +37,7 @@ As of SDK version 0.47, we have introduced a new fee structure for the registrat
 - **`FeeCollector Beneficiary`:** The `FeeCollector` is the designated recipient of the new registration fees, ensuring the economic sustainability of the network. This is the Neutron DAO at the moment.
 
 - **Backwards Compatibility Assurance:**
-  - Contracts and ICAs established with contracts, stored on earlier SDK versions (pre-0.47) [will **not**](https://github.com/neutron-org/neutron/blob/c6df465e5f83a811fd1cc98b6ebbf677a55ea21c/x/interchaintxs/keeper/msg_server.go#L51) incur the new registration fee.
+  - Contracts and ICAs established with contracts, stored on _neutron_ before v2.0.0 [will **not**](https://github.com/neutron-org/neutron/blob/c6df465e5f83a811fd1cc98b6ebbf677a55ea21c/x/interchaintxs/keeper/msg_server.go#L51) incur the new registration fee.
   - This update is fully compatible with previous SDK versions, guaranteeing a smooth transition and no disruption to existing contracts and services.
 
 ICA's remote address generation concatenates connection identifier and port identifier to use them as the derivation key for the new account:
