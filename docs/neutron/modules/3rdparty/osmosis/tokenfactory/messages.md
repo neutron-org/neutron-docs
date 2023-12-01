@@ -56,6 +56,32 @@ message MsgBurn {
 
 
 
+### ForceTransfer
+Force transferring of a specific denom is only allowed for the creator of the denom registered during `CreateDenom`.
+``` {.go}
+message MsgForceTransfer {
+  option (amino.name) = "osmosis/tokenfactory/force-transfer";
+
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  cosmos.base.v1beta1.Coin amount = 2 [
+    (gogoproto.moretags) = "yaml:\"amount\"",
+    (gogoproto.nullable) = false
+  ];
+  string transferFromAddress = 3
+  [ (gogoproto.moretags) = "yaml:\"transfer_from_address\"" ];
+  string transferToAddress = 4
+  [ (gogoproto.moretags) = "yaml:\"transfer_to_address\"" ];
+}
+```
+
+**State Modifications:**
+- Safety check the following
+  - Check that the denom has been created via `tokenfactory` module
+  - Check that the sender of the message is the admin of the denom
+- Send designated amount of tokens for the denom via `bank` module from `transferFromAddress` to `transferToAddress`
+
+
+
 ### ChangeAdmin
 Change the admin of a denom. Note, this is only allowed to be called by the current admin of the denom.
 
@@ -84,3 +110,41 @@ message MsgChangeAdmin {
 
 - Check that sender of the message is the admin of denom
 - Modify `AuthorityMetadata` state entry to change the admin of the denom
+
+
+
+### SetBeforeSendHook
+Allowing to assign a CosmWasm contract to call with a BeforeSend hook for a specific denom is only allowed for the creator of the denom registered during `CreateDenom`.
+``` {.go}
+message MsgSetBeforeSendHook {
+  option (amino.name) = "osmosis/tokenfactory/set-beforesend-hook";
+
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  string denom = 2 [ (gogoproto.moretags) = "yaml:\"denom\"" ];
+  string contract_addr = 3
+  [ (gogoproto.moretags) = "yaml:\"contract_addr\"" ];
+}
+```
+
+**State Modifications:**
+- Safety check the following
+  - Check that the denom has been created via `tokenfactory` module
+  - Check that the sender of the message is the admin of the denom
+- Sets a bank hook for specified `denom` and `contract_addr`
+
+
+
+### UpdateParams
+Updates [params](/neutron/modules/3rdparty/osmosis/tokenfactory/params) of the module.
+
+```go
+message MsgChangeAdmin {
+  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
+  cosmos.bank.v1beta1.Metadata metadata = 2 [ (gogoproto.moretags) = "yaml:\"metadata\"", (gogoproto.nullable)   = false ];
+}
+```
+
+**State Modifications:**
+
+- Check that sender of the message is the `Authority` of the module. Currently it's an address of Neutron's [AdminModule](/neutron/modules/admin-module/overview)
+- Modify `Params` state entry to update params of the module

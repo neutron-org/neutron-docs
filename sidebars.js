@@ -253,7 +253,8 @@ const sidebars = {
                                             type: 'category',
                                             items: [
                                                 'neutron/modules/3rdparty/osmosis/tokenfactory/overview',
-                                                'neutron/modules/3rdparty/osmosis/tokenfactory/messages'
+                                                'neutron/modules/3rdparty/osmosis/tokenfactory/messages',
+                                                'neutron/modules/3rdparty/osmosis/tokenfactory/params'
                                             ]
                                         },
                                         {
