@@ -28,27 +28,27 @@ CosmWasm is a smart contracting platform built for the Cosmos ecosystem.
 
 Please refer to the [F.A.Q.](./faq.md) page!
 
-### Updates
+### Releases
 
-<details> <summary> v2.0.0</summary>
+#### Overview
 
-##### Overview
+This section provides a comprehensive overview of the significant changes and updates in [Neutron version 2](https://github.com/neutron-org/neutron/releases/tag/v2.0.0), focusing on the upgrades to Cosmos SDK, Wasmd, and Neutron's internal modules.
 
-This section provides a comprehensive overview of the significant changes and updates in Neutron version 2, focusing on the upgrades to Cosmos SDK, Wasmd, and Neutron's internal modules.
+<details> <summary>v2.0.0</summary>
 
 #### Cosmos SDK Upgrade
 
-Neutron has transitioned from cosmos-sdk v0.45 to the more advanced v0.47, encompassing significant improvements and custom adaptations. The key aspects of this upgrade include:
+Neutron has transitioned from Cosmos SDK v0.45 to the more advanced v0.47, encompassing significant improvements and custom adaptations. The key aspects of this upgrade include:
 
 - **Primary Changes:**
-    - Reference to the main [cosmos-sdk v0.47 documentation](https://docs.cosmos.network/v0.47/learn/intro/overview).
+    - Reference to the main [Cosmos SDK v0.47 documentation](https://docs.cosmos.network/v0.47/learn/intro/overview).
     - Access to the full changelog [here](https://github.com/cosmos/cosmos-sdk/blob/v0.47.6/CHANGELOG.md).
 
 - **Neutron's Custom Fork:**
-    - We have created [our own fork](https://github.com/neutron-org/cosmos-sdk) of the cosmos-sdk, introducing unique enhancements tailored to our needs:
+    - We have created [our own fork](https://github.com/neutron-org/cosmos-sdk) of the Cosmos SDK, introducing unique enhancements tailored to our needs:
         - **Gas Counting Exclusion:** Removal of gas counting in the upgrade module's begin blocker for more consistent gas accounting.
         - **BankHooks Introduction:** Implementation of [BankHooks](https://github.com/neutron-org/cosmos-sdk/pull/2), a pivotal feature for the new Tokenfactory.
-        - **[Optimized Slashing Calculation](https://github.com/neutron-org/cosmos-sdk/pull/5):** Backporting of slashing missed blocks calculation from sdk v0.50.
+        - **[Optimized Slashing Calculation](https://github.com/neutron-org/cosmos-sdk/pull/5):** Backporting of slashing missed blocks calculation from Cosmos SDK v0.50.
         - **CometBFT Transition:** A significant shift to CometBFT for enhanced consensus reliability.
         - **ABCI 1.0 Support:** Enabling chains to implement their mempool with ABCI 1.0 compatibility.
         - **Module Parameters Handling:** Deprecation of the [x/params module](https://docs.cosmos.network/v0.47/modules/params). Modules now manage parameters directly.
@@ -80,10 +80,10 @@ Enhancements within Neutron focus on integrating new modules, refining existing 
 
 - **ICA Usability Improvements:** Enhanced Interchain Account (ICA) functionality for a more user-friendly and secure experience for developers.
 - **Sudo Execution Error Handling:** Streamlined error message retrieval in the ContractManager module.
-- **New Fee Structure for ICA Creation:** [Introduction](https://github.com/neutron-org/neutron/pull/334) of a fee system for developers creating ICAs on remote chains. [Learn more](neutron/modules/interchain-txs/messages) (see SDK v0.47 Update section)
+- **New Fee Structure for ICA Creation:** [Introduction](https://github.com/neutron-org/neutron/pull/334) of a fee system for developers creating ICAs on remote chains. [Learn more](neutron/modules/interchain-txs/messages) (see Cosmos SDK v0.47 Update section)
 
 ##### Adminmodule Rework
 
-- **Module and Governance Alignment:** The admin module has been redesigned to align with the deprecated params module and the new governance proposal handling mechanism in sdk v0.47. For more details, visit [Adminmodule Overview](/neutron/modules/admin-module/overview#challenges-related-to-cosmos-sdk-047).
+- **Module and Governance Alignment:** The admin module has been redesigned to align with the deprecated params module and the new governance proposal handling mechanism in Cosmos SDK v0.47. For more details, visit [Adminmodule Overview](/neutron/modules/admin-module/overview#challenges-related-to-cosmos-sdk-047).
 
 </details>
