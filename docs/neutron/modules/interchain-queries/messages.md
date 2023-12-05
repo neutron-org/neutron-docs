@@ -193,4 +193,4 @@ message MsgSubmitQueryResultResponse {}
   * [check](https://github.com/neutron-org/neutron/blob/v1.0.4/x/interchainqueries/keeper/process_block_results.go#L134) transaction was not processed previously to avoid double submitting
   * save generated record to the storage with composite key `bigEndianBytes(registered_query.id) + bigEndianBytes(last_submitted_transaction_id` prefixed by [`SubmittedTxKey`](https://github.com/neutron-org/neutron/blob/v1.0.4/x/interchainqueries/types/keys.go#L37);
   * [callback](https://github.com/neutron-org/neutron/blob/v1.0.4/x/interchainqueries/keeper/process_block_results.go#L143) transaction to the appropriate smart-contract;
-  * [save](https://github.com/neutron-org/neutron/blob/v1.0.4/x/interchainqueries/keeper/process_block_results.go#L150) transaction's hash to the storage to approach double-submission preventing mechanis,
+  * [save](https://github.com/neutron-org/neutron/blob/v1.0.4/x/interchainqueries/keeper/process_block_results.go#L150) transaction's hash to the storage to approach double-submission preventing mechanics,
