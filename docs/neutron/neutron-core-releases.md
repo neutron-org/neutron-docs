@@ -13,8 +13,8 @@ Neutron has transitioned from Cosmos SDK v0.45 to the more advanced v0.47, encom
 - **Primary Changes:**
     - Reference to the main [Cosmos SDK v0.47 documentation](https://docs.cosmos.network/v0.47/learn/intro/overview).
     - Access to the full changelog [here](https://github.com/cosmos/cosmos-sdk/blob/v0.47.6/CHANGELOG.md).
-
-- **Neutron's Custom Fork:**
+    - `--broadcast-mode` block was removed. You need to query the result for a TX with neutrond q tx hash instead.
+    - the SDK version includes some key store migration for the CLI. Make sure you backup your private keys before testing this! You can not switch back to v0.45.
     - We have created [our own fork](https://github.com/neutron-org/cosmos-sdk) of the Cosmos SDK, introducing unique enhancements tailored to our needs:
         - **Gas Counting Exclusion:** Removal of gas counting in the upgrade module's begin blocker for more consistent gas accounting.
         - **BankHooks Introduction:** Implementation of [BankHooks](https://github.com/neutron-org/cosmos-sdk/pull/2), a pivotal feature for the new Tokenfactory.
@@ -50,7 +50,7 @@ Enhancements within Neutron focus on integrating new modules, refining existing 
 
 - **ICA Usability Improvements:** Enhanced Interchain Account (ICA) functionality for a more user-friendly and secure experience for developers.
 - **Sudo Execution Error Handling:** Streamlined error message retrieval in the ContractManager module.
-- **New Fee Structure for ICA Creation:** [Introduction](https://github.com/neutron-org/neutron/pull/334) of a fee system for developers creating ICAs on remote chains. [Learn more](neutron/modules/interchain-txs/messages) (see Cosmos SDK v0.47 Update section)
+- **New Fee Structure for ICA Creation:** [Introduction](https://github.com/neutron-org/neutron/pull/334) of a fee system for developers creating ICAs on remote chains. [Learn more](/neutron/modules/interchain-txs/messages#msgregisterinterchainaccount) 
 
 ##### Adminmodule Rework
 
