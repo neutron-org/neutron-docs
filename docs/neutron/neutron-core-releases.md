@@ -2,9 +2,9 @@
 
 ## Overview
 
-This section provides a comprehensive overview of the significant changes and updates in [Neutron version 2](https://github.com/neutron-org/neutron/releases/tag/v2.0.0), focusing on the upgrades to Cosmos SDK, Wasmd, and Neutron's internal modules.
+This section provides a comprehensive overview of the significant changes and updates in Neutron, focusing on the upgrades to Cosmos SDK, Wasmd, and Neutron's internal modules.
 
-## v2.0.0
+## [v2.0.0](https://github.com/neutron-org/neutron/releases/tag/v2.0.0)
 
 #### Cosmos SDK Upgrade
 
