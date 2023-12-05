@@ -182,6 +182,15 @@ const sidebars = {
                             ]
                         },
                         {
+                            label: 'Dex module',
+                            type: 'category',
+                            items: [
+                                'neutron/modules/dex-module/overview',
+                                'neutron/modules/dex-module/messages',
+                                'neutron/modules/dex-module/client',
+                            ]
+                        },
+                        {
                             label: 'Transfer',
                             type: 'category',
                             items: [
