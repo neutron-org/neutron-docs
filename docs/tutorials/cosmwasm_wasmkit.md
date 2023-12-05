@@ -8,7 +8,7 @@ WasmKit is a development framework specifically designed for building CosmWasm c
 
 WasmKit's approach separates the running instances (networks, contracts, accounts) from the core logic (deploy steps, testing logic) to make contract interation possible with any CosmWasm enabled chain with any account with just a slight change in `wasmkit.config.js` if need be.
 
-WasmKit configuration file `wasmkit.config.js` maps blockchain networks (neutron mainnet, neutron testnet or localnet), accounts (contract admin account, contract deploy account, testing account) and even contracts (their .wasm file, schema files) with just their names and only use given names while writing interaction script or testing logic. This is poweful mechanism as it removes the need to store and keep track of data values for these 3 entities, for example, there is no need to store codeId after contract deployment, contractAddress after instantiation or to store RPC URL or chainId for mainnet, testnets.
+WasmKit configuration file `wasmkit.config.js` maps blockchain networks (neutron mainnet, neutron testnet or localnet), accounts (contract admin account, contract deploy account, testing account) and even contracts (their .wasm file, schema files) with just their names and only use given names while writing interaction script or testing logic. This is powerful mechanism as it removes the need to store and keep track of data values for these 3 entities, for example, there is no need to store codeId after contract deployment, contractAddress after instantiation or to store RPC URL or chainId for mainnet, testnets.
 
 ### Contract development cycle
 
@@ -83,7 +83,7 @@ This will create a directory inside the current directory with boiler-plate code
 
 - The `contracts/` directory has all the rust files for the contract logic.
 - `scripts/` directory contains `.ts` scripts that users can write according to the use case, a sample script has been added to give some understanding of how a user script should look like.
-- `test/` directory contains `.ts` scripts to run intergation tests for the deployed contracts.
+- `test/` directory contains `.ts` scripts to run integration tests for the deployed contracts.
 
 ### Compile the project
 
