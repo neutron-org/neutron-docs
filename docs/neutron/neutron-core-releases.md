@@ -56,3 +56,5 @@ Enhancements within Neutron focus on integrating new modules, refining existing 
 
 - **Module and Governance Alignment:** The admin module has been redesigned to align with the deprecated params module and the new governance proposal handling mechanism in Cosmos SDK v0.47. For more details, visit [Adminmodule Overview](/neutron/modules/admin-module/overview#challenges-related-to-cosmos-sdk-047).
 
+##### Dex module intoduction 
+- **Neutrality:** Bringing completely new [dex module](neutron/modules/dex-module/overview.md). Users may interact with this module to provide liquidity and execute trades according to commonly-accepted exchange semantics.
