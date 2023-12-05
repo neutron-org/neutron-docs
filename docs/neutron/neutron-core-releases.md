@@ -32,6 +32,8 @@ Our custom fork of [wasmd](https://github.com/neutron-org/wasmd), based on versi
 - **Instantiate2 Activation:** Enabling predictable contract addresses through the [instantiate2 feature](https://docs.rs/cosmwasm-std/1.2.1/cosmwasm_std/fn.instantiate2_address.html).
 - **Smart-Contract Size Limit Increase:** Expansion of the binary size limit from 800KB to 1.6MB as [explained here](https://github.com/neutron-org/neutron/pull/320).
 - **Additional Improvements:** Various other technical modifications and advancements.
+- **Legacy REST endpoints for queries and txs are completely removed** and only gRPC endpoints must be used now;legacy REST endpoints for queries and txs are completely removed and only gRPC endpoints must be used now.
+- contracts are able to use **floating point operations**.
 
 #### Neutron Itself
 
