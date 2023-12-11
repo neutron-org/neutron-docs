@@ -23,17 +23,17 @@ Neutron has transitioned from Cosmos SDK v0.45 to the more advanced v0.47, encom
         - **ABCI 1.0 Support:** Enabling chains to implement their mempool with ABCI 1.0 compatibility.
         - **Module Parameters Handling:** Deprecation of the [x/params module](https://docs.cosmos.network/v0.47/modules/params). Modules now manage parameters directly.
         - **IBC-Go Upgrade:** Moving to ibc-go v7 for improved inter-blockchain communication.
-        - **Technical Enhancements:** Several minor yet impactful technical improvements.
+        - **Technical Enhancements:** Several minor yet impactful technical improvements (see full list [here](https://github.com/cosmos/cosmos-sdk/blob/v0.47.6/CHANGELOG.md)).
 
 #### Wasmd Upgrade
 
-Our custom fork of [wasmd](https://github.com/neutron-org/wasmd), based on version [0.45](https://github.com/CosmWasm/wasmd/blob/main/CHANGELOG.md), brings forward these key developments:
+Our custom fork of [wasmd](https://github.com/neutron-org/wasmd), based on version [0.45](https://github.com/CosmWasm/wasmd/blob/v0.45.0/CHANGELOG.md), brings forward these key developments:
 
 - **Instantiate2 Activation:** Enabling predictable contract addresses through the [instantiate2 feature](https://docs.rs/cosmwasm-std/1.2.1/cosmwasm_std/fn.instantiate2_address.html).
 - **Smart-Contract Size Limit Increase:** Expansion of the binary size limit from 800KB to 1.6MB as [explained here](https://github.com/neutron-org/neutron/pull/320).
-- **Additional Improvements:** Various other technical modifications and advancements.
 - **Legacy REST endpoints for queries and txs are completely removed** and only gRPC endpoints must be used now;legacy REST endpoints for queries and txs are completely removed and only gRPC endpoints must be used now.
 - contracts are able to use **floating point operations**.
+- **Additional Improvements:** Various other technical modifications and advancements (see full changelog [here](https://github.com/CosmWasm/wasmd/blob/v0.45.0/CHANGELOG.md)).
 
 #### Neutron Itself
 
