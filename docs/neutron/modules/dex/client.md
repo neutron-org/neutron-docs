@@ -43,7 +43,7 @@ This query retrieves a `LimitOrderTrancheUser` by user address and TrancheKey.
 
 Request:
 
-```proto
+```protobuf
 message QueryGetLimitOrderTrancheUserRequest {
   string address    = 1;
   string tranche_key = 2;
@@ -52,9 +52,35 @@ message QueryGetLimitOrderTrancheUserRequest {
 
 Response:
 
-```proto
+```protobuf
 message QueryGetLimitOrderTrancheUserResponse {
   LimitOrderTrancheUser limit_order_tranche_user = 1 [(gogoproto.nullable) = true];
+}
+
+message LimitOrderTrancheUser {
+  TradePairID trade_pair_id = 1;
+  int64 tick_index_taker_to_maker = 2;
+  string tranche_key = 3;
+  string address = 4; 
+  string shares_owned = 5  [
+      (gogoproto.moretags)   = "yaml:\"shares_owned\"",
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+      (gogoproto.nullable)   = false,
+      (gogoproto.jsontag) = "shares_owned"
+  ];  
+  string shares_withdrawn = 6  [
+      (gogoproto.moretags)   = "yaml:\"shares_withdrawn\"",
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+      (gogoproto.nullable)   = false,
+      (gogoproto.jsontag) = "shares_withdrawn"
+  ]; 
+  string shares_cancelled = 7  [
+      (gogoproto.moretags)   = "yaml:\"shares_cancelled\"",
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+      (gogoproto.nullable)   = false,
+      (gogoproto.jsontag) = "shares_cancelled"
+  ];
+  LimitOrderType order_type = 8;
 }
 ```
 
@@ -139,6 +165,56 @@ Response:
 message QueryGetLimitOrderTrancheResponse {
   LimitOrderTranche limit_order_tranche = 1 [(gogoproto.nullable) = true];
 }
+
+message LimitOrderTrancheKey {
+  TradePairID trade_pair_id = 1;
+  int64 tick_index_taker_to_maker = 2;
+  string tranche_key = 3;
+}
+
+message LimitOrderTranche {
+  LimitOrderTrancheKey key = 1;
+  string reserves_maker_denom = 2  [
+    (gogoproto.moretags)   = "yaml:\"reserves_maker_denom\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable)   = false,
+    (gogoproto.jsontag) = "reserves_maker_denom"
+  ];
+  string reserves_taker_denom = 3  [
+    (gogoproto.moretags)   = "yaml:\"reserves_taker_denom\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable)   = false,
+    (gogoproto.jsontag) = "reserves_taker_denom"
+  ];
+  string total_maker_denom = 4  [
+    (gogoproto.moretags)   = "yaml:\"total_maker_denom\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable)   = false,
+    (gogoproto.jsontag) = "total_maker_denom"
+  ];
+  string total_taker_denom = 5  [
+    (gogoproto.moretags)   = "yaml:\"total_taker_denom\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable)   = false,
+    (gogoproto.jsontag) = "total_taker_denom"
+  ];
+  // GoodTilDate is represented as seconds since  January 1, year 1, 00:00:00.00 UTC
+  // LimitOrders with goodTilDate set are valid as long as blockTime <= goodTilDate
+
+  // JIT orders also use goodTilDate to handle deletion but represent a special case
+  // All JIT orders have a goodTilDate of 0 and an exception is made to still still treat these orders as live
+  // Order deletion still functions the same and the orders will be deleted at the end of the block
+  google.protobuf.Timestamp expiration_time = 6 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = true
+  ];
+  string price_taker_to_maker = 7 [
+    (gogoproto.moretags)   = "yaml:\"price_taker_to_maker\"",
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v2/utils/math.PrecDec",
+    (gogoproto.nullable)   = false,
+    (gogoproto.jsontag) = "price_taker_to_maker"
+  ];
+}
 ```
 
 **Arguments**
@@ -207,7 +283,7 @@ curl /dex/limit_order_tranche/{pairID}/{tokenIn}
 GET "/dex/user/deposits/{address}"
 ```
 
-This query retrieves a list of `UserDeposits` items.
+This query retrieves a list of `DepositRecord` items by user address.
 
 **Proto Messages**
 
@@ -249,7 +325,7 @@ curl /dex/user/deposits/{address}
 GET "/neutron/dex/user/limit_orders/{address}"
 ```
 
-This query retrieves a list of `UserLimitOrders` items.
+This query retrieves a list of `LimitOrderTrancheUser` items by user address.
 
 **Proto Messages**
 
@@ -380,7 +456,7 @@ curl /neutron/dex/filled_limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{tra
 GET "/neutron/dex/filled_limit_order_tranche"
 ```
 
-This query retrieves a list of `InactiveLimitOrderTranche` items.
+This query retrieves a list of inactive `LimitOrderTranche` items.
 
 **Proto Messages**
 
@@ -464,7 +540,7 @@ curl /neutron/dex/pool_reserves/{pairID}/{tokenIn}
 GET "/neutron/dex/pool_reserves/{pairID}/{tokenIn}/{tickIndex}/{fee}"
 ```
 
-This query retrieves a `PoolReserve` by index.
+This query retrieves a `PoolReserves` by index.
 
 **Proto Messages**
 
@@ -733,7 +809,7 @@ message QueryAllPoolMetadataResponse {
 **Arguments**
 * `QueryAllPoolMetadataRequest`: Request message for the `GetALLPoolMetadata` query.
   * `pagination` (cosmos.base.query.v1beta1.PageRequest): Pagination options.
-
+f
 
 Curl Command:
 ```bash
