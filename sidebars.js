@@ -182,12 +182,32 @@ const sidebars = {
                             ]
                         },
                         {
-                            label: 'Dex module',
+                            label: 'Dex',
                             type: 'category',
                             items: [
-                                'neutron/modules/dex-module/overview',
-                                'neutron/modules/dex-module/messages',
-                                'neutron/modules/dex-module/client',
+                                {
+                                    label: 'Overview',
+                                    type: 'category',
+                                    items: [
+                                        'neutron/modules/dex/overview/overview',
+                                        {
+                                            label: 'Concepts',
+                                            type: 'category',
+                                            items: [
+                                                'neutron/modules/dex/overview/concepts/amms-and-orderbooks',
+                                                'neutron/modules/dex/overview/concepts/liquidity-iteration',
+                                                'neutron/modules/dex/overview/concepts/liquidity-pools',
+                                                'neutron/modules/dex/overview/concepts/pool-reserves',
+                                                'neutron/modules/dex/overview/concepts/swaps',
+                                                'neutron/modules/dex/overview/concepts/fees',
+                                                'neutron/modules/dex/overview/concepts/ticks',
+                                                'neutron/modules/dex/overview/concepts/limit-order-tranches',
+                                            ]
+                                        }
+                                    ],
+                                },
+                                'neutron/modules/dex/messages',
+                                'neutron/modules/dex/client',
                             ]
                         },
                         {

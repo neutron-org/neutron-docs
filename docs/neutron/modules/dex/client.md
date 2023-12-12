@@ -5,7 +5,7 @@
 #### LimitOrderTrancheUser
 
 ```
-GET "/dualitylabs/duality/dex/limit_order_tranche_user/{address}/{trancheKey}"
+GET "/Neutron DEXlabs/Neutron DEX/dex/limit_order_tranche_user/{address}/{trancheKey}"
 ```
 
 This query retrieves a `LimitOrderTrancheUser` by user address and TrancheKey.
@@ -40,13 +40,13 @@ message QueryGetLimitOrderTrancheUserResponse {
 Curl Command:
 
 ```bash
-curl http://lcd.duality.xyz/dualitylabs/duality/dex/limit_order_tranche_user/{address}/{trancheKey}
+curl http://lcd.Neutron DEX.xyz/Neutron DEXlabs/Neutron DEX/dex/limit_order_tranche_user/{address}/{trancheKey}
 ```
 
 #### LimitOrderTrancheUserAll
 
 ```
-GET "/dualitylabs/duality/dex/limit_order_tranche_user"
+GET "/Neutron DEXlabs/Neutron DEX/dex/limit_order_tranche_user"
 ```
 
 This query retrieves a list of `LimitOrderTrancheUser` items.
@@ -80,13 +80,13 @@ message QueryAllLimitOrderTrancheUserResponse {
 Curl Command:
 
 ```bash
-curl http://lcd.duality.xyz/dualitylabs/duality/dex/limit_order_tranche_user
+curl http://lcd.Neutron DEX.xyz/Neutron DEXlabs/Neutron DEX/dex/limit_order_tranche_user
 ```
 
 ### LimitOrderTranche
 
 ```
-GET "/dualitylabs/duality/dex/limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}"
+GET "/Neutron DEXlabs/Neutron DEX/dex/limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}"
 ```
 
 This query retrieves a `LimitOrderTranche` by index.
@@ -125,13 +125,13 @@ message QueryGetLimitOrderTrancheResponse {
 Curl Command:
 
 ```bash
-curl http://lcd.duality.xyz/dualitylabs/duality/dex/limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}
+curl http://lcd.Neutron DEX.xyz/Neutron DEXlabs/Neutron DEX/dex/limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}
 ```
 
 #### LimitOrderTrancheAll
 
 ```
-GET "/dualitylabs/duality/dex/limit_order_tranche/{pairID}/{tokenIn}"
+GET "/Neutron DEXlabs/Neutron DEX/dex/limit_order_tranche/{pairID}/{tokenIn}"
 ```
 
 This query retrieves a list of `LimitOrderTranche` items for a given pairID / TokenIn combination.
@@ -169,13 +169,13 @@ message QueryAllLimitOrderTrancheResponse {
 Curl Command:
 
 ```bash
-curl http://lcd.duality.xyz/dualitylabs/duality/dex/limit_order_tranche/{pairID}/{tokenIn}
+curl http://lcd.Neutron DEX.xyz/Neutron DEXlabs/Neutron DEX/dex/limit_order_tranche/{pairID}/{tokenIn}
 ```
 
 #### GetUserPositions
 
 ```
-GET "/dualitylabs/duality/dex/user/positions/{address}"
+GET "/Neutron DEXlabs/Neutron DEX/dex/user/positions/{address}"
 ```
 
 This query retrieves a list of user’s LP deposits and limit orders.
@@ -255,13 +255,13 @@ message LimitOrderTrancheUser {
 Curl Command:
 
 ```bash
-curl http://lcd.duality.xyz/dualitylabs/duality/dex/user/positions/{address}
+curl http://lcd.Neutron DEX.xyz/Neutron DEXlabs/Neutron DEX/dex/user/positions/{address}
 ```
 
 #### UserDepositsAll
 
 ```
-GET "/dualitylabs/duality/dex/user/deposits/{address}"
+GET "/Neutron DEXlabs/Neutron DEX/dex/user/deposits/{address}"
 ```
 
 This query retrieves a list of `UserDeposits` items.
@@ -294,13 +294,13 @@ message QueryAllUserDepositsResponse {
 Curl Command:
 
 ```bash
-curl http://lcd.duality.xyz/dualitylabs/duality/dex/user/deposits/{address}
+curl http://lcd.Neutron DEX.xyz/Neutron DEXlabs/Neutron DEX/dex/user/deposits/{address}
 ```
 
 #### UserLimitOrdersAll
 
 ```
-GET "/dualitylabs/duality/dex/user/limit_orders/{address}"
+GET "/Neutron DEXlabs/Neutron DEX/dex/user/limit_orders/{address}"
 ```
 
 This query retrieves a list of `UserLimitOrders` items.
@@ -333,13 +333,13 @@ message QueryAllUserLimitOrdersResponse {
 Curl Command:
 
 ```bash
-curl http://lcd.duality.xyz/dualitylabs/duality/dex/user/limit_orders/{address}
+curl http://lcd.Neutron DEX.xyz/Neutron DEXlabs/Neutron DEX/dex/user/limit_orders/{address}
 ```
 
 #### TickLiquidityAll
 
 ```
-GET "/dualitylabs/duality/dex/tick_liquidity/{pairID}/{tokenIn}"
+GET "/Neutron DEXlabs/Neutron DEX/dex/tick_liquidity/{pairID}/{tokenIn}"
 ```
 
 This query retrieves a list of `TickLiquidity` items for a given pairID / TokenIn combination.
@@ -377,13 +377,13 @@ message QueryAllTickLiquidityResponse {
 Curl Command:
 
 ```bash
-curl http://lcd.duality.xyz/dualitylabs/duality/dex/tick_liquidity/{pairID}/{tokenIn}
+curl http://lcd.Neutron DEX.xyz/Neutron DEXlabs/Neutron DEX/dex/tick_liquidity/{pairID}/{tokenIn}
 ```
 
 ### InactiveLimitOrderTranche
 
 ```
-GET "/dualitylabs/duality/dex/filled_limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}"
+GET "/Neutron DEXlabs/Neutron DEX/dex/filled_limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}"
 ```
 
 This query retrieves an `InactiveLimitOrderTranche` by index.
@@ -422,13 +422,13 @@ message QueryGetInactiveLimitOrderTrancheResponse {
 Curl Command:
 
 ```bash
-curl http://lcd.duality.xyz/dualitylabs/duality/dex/filled_limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}
+curl http://lcd.Neutron DEX.xyz/Neutron DEXlabs/Neutron DEX/dex/filled_limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}
 ```
 
 #### InactiveLimitOrderTrancheAll
 
 ```
-GET "/dualitylabs/duality/dex/filled_limit_order_tranche"
+GET "/Neutron DEXlabs/Neutron DEX/dex/filled_limit_order_tranche"
 ```
 
 This query retrieves a list of `InactiveLimitOrderTranche` items.
@@ -462,13 +462,13 @@ message QueryAllInactiveLimitOrderTrancheResponse {
 Curl Command:
 
 ```bash
-curl http://lcd.duality.xyz/dualitylabs/duality/dex/filled_limit_order_tranche
+curl http://lcd.Neutron DEX.xyz/Neutron DEXlabs/Neutron DEX/dex/filled_limit_order_tranche
 ```
 
 #### PoolReservesAll
 
 ```
-GET "/dualitylabs/duality/dex/pool_reserves/{pairID}/{tokenIn}"
+GET "/Neutron DEXlabs/Neutron DEX/dex/pool_reserves/{pairID}/{tokenIn}"
 ```
 
 This query retrieves a list of `PoolReserves` items for a given pairID / TokenIn combination.
@@ -506,13 +506,13 @@ message QueryAllPoolReservesResponse {
 Curl Command:
 
 ```bash
-curl http://lcd.duality.xyz/dualitylabs/duality/dex/pool_reserves/{pairID}/{tokenIn}
+curl http://lcd.Neutron DEX.xyz/Neutron DEXlabs/Neutron DEX/dex/pool_reserves/{pairID}/{tokenIn}
 ```
 
 #### PoolReserves
 
 ```
-GET "/dualitylabs/duality/dex/pool_reserves/{pairID}/{tokenIn}/{tickIndex}/{fee}"
+GET "/Neutron DEXlabs/Neutron DEX/dex/pool_reserves/{pairID}/{tokenIn}/{tickIndex}/{fee}"
 ```
 
 This query retrieves a `PoolReserve` by index.
@@ -551,6 +551,6 @@ message QueryGetPoolReservesResponse {
 Curl Command:
 
 ```bash
-curl http://lcd.duality.xyz/dualitylabs/duality/dex/pool_reserves/{pairID}/{tokenIn}/{tickIndex}/{fee}
+curl http://lcd.Neutron DEX.xyz/Neutron DEXlabs/Neutron DEX/dex/pool_reserves/{pairID}/{tokenIn}/{tickIndex}/{fee}
 ```
 
