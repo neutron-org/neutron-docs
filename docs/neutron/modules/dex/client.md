@@ -2,10 +2,39 @@
 
 ## Queries
 
-#### LimitOrderTrancheUser
+### Params
+Queries the parameters of the module.
 
 ```
-GET "/dex/limit_order_tranche_user/{address}/{trancheKey}"
+GET "/dex/params"
+```
+
+**Proto Messages**
+
+Request:
+```protobuf
+message QueryParamsRequest {}
+```
+
+Response:
+
+```protobuf
+message QueryParamsResponse {
+
+// params holds all the parameters of this module.
+Params params = 1 [(gogoproto.nullable) = false];
+}
+```
+
+Curl Command:
+```bash
+curl /neutron/dex/params
+```
+
+### LimitOrderTrancheUser
+
+```
+GET "/dex/limit_order_tranche_user/{address}/{tranche_key}"
 ```
 
 This query retrieves a `LimitOrderTrancheUser` by user address and TrancheKey.
@@ -16,8 +45,8 @@ Request:
 
 ```proto
 message QueryGetLimitOrderTrancheUserRequest {
-  string address = 1;
-  string trancheKey = 2;
+  string address    = 1;
+  string tranche_key = 2;
 }
 ```
 
@@ -25,7 +54,7 @@ Response:
 
 ```proto
 message QueryGetLimitOrderTrancheUserResponse {
-  LimitOrderTrancheUser limitOrderTrancheUser = 1 [(gogoproto.nullable) = false];
+  LimitOrderTrancheUser limit_order_tranche_user = 1 [(gogoproto.nullable) = true];
 }
 ```
 
@@ -33,14 +62,14 @@ message QueryGetLimitOrderTrancheUserResponse {
 
 * `QueryGetLimitOrderTrancheUserRequest`: Request message for the `LimitOrderTrancheUser` query.
     * `address` (string): The user address.
-    * `trancheKey` (string): The tranche key.
+    * `tranche_key` (string): The tranche key.
 
 **Sample Query**
 
 Curl Command:
 
 ```bash
-curl http://lcd.Neutron DEX.xyz/Neutron DEXlabs/Neutron DEX/dex/limit_order_tranche_user/{address}/{trancheKey}
+curl /neutron/dex/limit_order_tranche_user/{address}/{tranche_key}
 ```
 
 #### LimitOrderTrancheUserAll
@@ -65,8 +94,8 @@ Response:
 
 ```proto
 message QueryAllLimitOrderTrancheUserResponse {
-  repeated LimitOrderTrancheUser limitOrderTrancheUser = 1 [(gogoproto.nullable) = false];
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+  repeated LimitOrderTrancheUser                  limit_order_tranche_user = 1 [(gogoproto.nullable) = true];
+           cosmos.base.query.v1beta1.PageResponse pagination            = 2;
 }
 ```
 
@@ -95,20 +124,20 @@ This query retrieves a `LimitOrderTranche` by index.
 
 Request:
 
-```proto
+```protobuf
 message QueryGetLimitOrderTrancheRequest {
-  string pairID = 1;
-  int64 tickIndex = 2;
-  string tokenIn = 3;
-  string trancheKey = 4;
+  string pair_id     = 1;
+  int64  tick_index  = 2;
+  string token_in    = 3;
+  string tranche_key = 4;
 }
 ```
 
 Response:
 
-```proto
+```protobuf
 message QueryGetLimitOrderTrancheResponse {
-  LimitOrderTranche limitOrderTranche = 1 [(gogoproto.nullable) = false];
+  LimitOrderTranche limit_order_tranche = 1 [(gogoproto.nullable) = true];
 }
 ```
 
@@ -125,10 +154,10 @@ message QueryGetLimitOrderTrancheResponse {
 Curl Command:
 
 ```bash
-curl http://lcd.Neutron DEX.xyz/Neutron DEXlabs/Neutron DEX/dex/limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}
+curl neutron/dex/limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}
 ```
 
-#### LimitOrderTrancheAll
+### LimitOrderTrancheAll
 
 ```
 GET "dex/limit_order_tranche/{pairID}/{tokenIn}"
@@ -142,8 +171,8 @@ Request:
 
 ```proto
 message QueryAllLimitOrderTrancheRequest {
-  string pairID = 1;
-  string tokenIn = 2;
+  string                                pair_id     = 1;
+  string                                token_in    = 2;
   cosmos.base.query.v1beta1.PageRequest pagination = 3;
 }
 ```
@@ -152,8 +181,8 @@ Response:
 
 ```proto
 message QueryAllLimitOrderTrancheResponse {
-  repeated LimitOrderTranche limitOrderTranche = 1 [(gogoproto.nullable) = false];
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+  repeated LimitOrderTranche                      limit_order_tranche = 1 [(gogoproto.nullable) = true];
+           cosmos.base.query.v1beta1.PageResponse pagination        = 2;
 }
 ```
 
@@ -172,93 +201,7 @@ Curl Command:
 curl /dex/limit_order_tranche/{pairID}/{tokenIn}
 ```
 
-#### GetUserPositions
-
-```
-GET "/dex/user/positions/{address}"
-```
-
-This query retrieves a list of user’s LP deposits and limit orders.
-
-**Proto Messages**
-
-Request:
-
-```proto
-message QueryGetUserPositionsRequest {
-  string address = 1;
-}
-```
-
-Response:
-
-```proto
-message QueryGetUserPositionsResponse {
-  UserPositions userPositions = 1 [(gogoproto.nullable) = false];
-}
-
-message UserPositions {
-  repeated DepositRecord PoolDeposits  = 1 [(gogoproto.nullable) = false];
-  repeated LimitOrderTrancheUser LimitOrders  = 2 [(gogoproto.nullable) = false];
-}
-
-message DepositRecord {
-  PairID pairID = 1;
-  string sharesOwned = 2 [
-                          (gogoproto.moretags)   = "yaml:\"totalShares\"",
-                          (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-                          (gogoproto.nullable)   = false,
-                          (gogoproto.jsontag) = "totalShares"
-                          ];
-  int64 centerTickIndex = 3;
-  int64 lowerTickIndex = 4;
-  int64 upperTickIndex = 5;
-  uint64 fee = 6;
-}
-
-message LimitOrderTrancheUser {
-  PairID pairID = 1;
-  string token = 2;
-  int64 tickIndex = 3;
-  string trancheKey = 4; 
-  string address = 5; 
-  string sharesOwned = 6  [
-      (gogoproto.moretags)   = "yaml:\"sharesOwned\"",
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-      (gogoproto.nullable)   = false,
-      (gogoproto.jsontag) = "sharesOwned"
-  ];  
-  string sharesWithdrawn = 7  [
-      (gogoproto.moretags)   = "yaml:\"sharesWithdrawn\"",
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-      (gogoproto.nullable)   = false,
-      (gogoproto.jsontag) = "sharesWithdrawn"
-  ]; 
-  string sharesCancelled = 8  [
-      (gogoproto.moretags)   = "yaml:\"sharesCancelled\"",
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-      (gogoproto.nullable)   = false,
-      (gogoproto.jsontag) = "sharesCancelled"
-  ];
-  LimitOrderType orderType = 10;
-}
-
-```
-
-**Arguments**
-
-* `QueryGetUserPositionsRequest`: Request message for the `GetUserPositions` query.
-    * `address` (string): The user address.
-
-**Sample Query**
-
-Curl Command:
-
-```bash
-curl /dex/user/positions/{address}
-```
-
-#### UserDepositsAll
+### UserDepositsAll
 
 ```
 GET "/dex/user/deposits/{address}"
@@ -270,17 +213,19 @@ This query retrieves a list of `UserDeposits` items.
 
 Request:
 
-```proto
+```protobuf
 message QueryAllUserDepositsRequest {
   string address = 1;
+	cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 ```
 
 Response:
 
-```proto
+```protobuf
 message QueryAllUserDepositsResponse {
-  repeated DepositRecord deposits = 1 [(gogoproto.nullable) = false];
+  repeated DepositRecord deposits = 1 [(gogoproto.nullable) = true];
+	cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 ```
 
@@ -288,6 +233,7 @@ message QueryAllUserDepositsResponse {
 
 * `QueryAllUserDepositsRequest`: Request message for the `UserDepositsAll` query.
     * `address` (string): The user address.
+    * `pagination` (cosmos.base.query.v1beta1.PageRequest): Pagination options.
 
 **Sample Query**
 
@@ -297,7 +243,7 @@ Curl Command:
 curl /dex/user/deposits/{address}
 ```
 
-#### UserLimitOrdersAll
+### AllUserLimitOrdersRequest
 
 ```
 GET "/neutron/dex/user/limit_orders/{address}"
@@ -309,17 +255,19 @@ This query retrieves a list of `UserLimitOrders` items.
 
 Request:
 
-```proto
+```protobuf
 message QueryAllUserLimitOrdersRequest {
   string address = 1;
+	cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 ```
 
 Response:
 
-```proto
+```protobuf
 message QueryAllUserLimitOrdersResponse {
-  repeated LimitOrderTrancheUser limitOrders = 1 [(gogoproto.nullable) = false];
+  repeated LimitOrderTrancheUser limit_orders = 1 [(gogoproto.nullable) = true];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 ```
 
@@ -327,6 +275,7 @@ message QueryAllUserLimitOrdersResponse {
 
 * `QueryAllUserLimitOrdersRequest`: Request message for the `UserLimitOrdersAll` query.
     * `address` (string): The user address.
+    * `pagination` (cosmos.base.query.v1beta1.PageRequest): Pagination options.
 
 **Sample Query**
 
@@ -336,7 +285,7 @@ Curl Command:
 curl http://lcd.Neutron DEX.xyz/Neutron DEXlabs/Neutron DEX/dex/user/limit_orders/{address}
 ```
 
-#### TickLiquidityAll
+### AllTickLiquidity
 
 ```
 GET "/neutron/dex/tick_liquidity/{pairID}/{tokenIn}"
@@ -348,10 +297,10 @@ This query retrieves a list of `TickLiquidity` items for a given pairID / TokenI
 
 Request:
 
-```proto
+```protobuf
 message QueryAllTickLiquidityRequest {
-  string pairID = 1;
-  string tokenIn = 2;
+  string                                pair_id     = 1;
+  string                                token_in    = 2;
   cosmos.base.query.v1beta1.PageRequest pagination = 3;
 }
 ```
@@ -360,8 +309,8 @@ Response:
 
 ```proto
 message QueryAllTickLiquidityResponse {
-  repeated TickLiquidity tickLiquidity = 1 [(gogoproto.nullable) = false];
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+  repeated TickLiquidity                          tick_liquidity = 1 [(gogoproto.nullable) = true];
+           cosmos.base.query.v1beta1.PageResponse pagination    = 2;
 }
 ```
 
@@ -392,20 +341,20 @@ This query retrieves an `InactiveLimitOrderTranche` by index.
 
 Request:
 
-```proto
+```protobuf
 message QueryGetInactiveLimitOrderTrancheRequest {
-  string pairID = 1;
-  string tokenIn = 2;
-  int64 tickIndex = 3;
-  string trancheKey = 4;
+  string pair_id     = 1;
+  string token_in    = 2;
+  int64  tick_index  = 3;
+  string tranche_key = 4;
 }
 ```
 
 Response:
 
-```proto
+```protobuf
 message QueryGetInactiveLimitOrderTrancheResponse {
-  LimitOrderTranche inactiveLimitOrderTranche = 1 [(gogoproto.nullable) = false];
+  LimitOrderTranche inactive_limit_order_tranche = 1 [(gogoproto.nullable) = true];
 }
 ```
 
@@ -422,10 +371,10 @@ message QueryGetInactiveLimitOrderTrancheResponse {
 Curl Command:
 
 ```bash
-curl http://lcd.Neutron DEX.xyz/Neutron DEXlabs/Neutron DEX/dex/filled_limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}
+curl /neutron/dex/filled_limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}
 ```
 
-#### InactiveLimitOrderTrancheAll
+### InactiveLimitOrderTrancheAll
 
 ```
 GET "/neutron/dex/filled_limit_order_tranche"
@@ -447,8 +396,8 @@ Response:
 
 ```proto
 message QueryAllInactiveLimitOrderTrancheResponse {
-  repeated LimitOrderTranche inactiveLimitOrderTranche = 1 [(gogoproto.nullable) = false];
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+  repeated LimitOrderTranche                      inactive_limit_order_tranche = 1 [(gogoproto.nullable) = true];
+           cosmos.base.query.v1beta1.PageResponse pagination                = 2;
 }
 ```
 
@@ -465,7 +414,7 @@ Curl Command:
 curl /neutron/dex/filled_limit_order_tranche
 ```
 
-#### PoolReservesAll
+### PoolReservesAll
 
 ```
 GET "/neutron/dex/pool_reserves/{pairID}/{tokenIn}"
@@ -477,7 +426,7 @@ This query retrieves a list of `PoolReserves` items for a given pairID / TokenIn
 
 Request:
 
-```proto
+```protobuf
 message QueryAllPoolReservesRequest {
   string pairID = 1;
   string tokenIn = 2;
@@ -509,7 +458,7 @@ Curl Command:
 curl /neutron/dex/pool_reserves/{pairID}/{tokenIn}
 ```
 
-#### PoolReserves
+### PoolReserves
 
 ```
 GET "/neutron/dex/pool_reserves/{pairID}/{tokenIn}/{tickIndex}/{fee}"
@@ -521,7 +470,7 @@ This query retrieves a `PoolReserve` by index.
 
 Request:
 
-```proto
+```protobuf
 message QueryGetPoolReservesRequest {
   string pairID = 1;
   string tokenIn = 2;
@@ -532,7 +481,7 @@ message QueryGetPoolReservesRequest {
 
 Response:
 
-```proto
+```protobuf
 message QueryGetPoolReservesResponse {
   PoolReserves poolReserves = 1 [(gogoproto.nullable) = false];
 }
@@ -554,3 +503,239 @@ Curl Command:
 curl /neutron/dex/pool_reserves/{pairID}/{tokenIn}/{tickIndex}/{fee}
 ```
 
+### QueryEstimateMultiHopSwap
+```
+GET "/neutron/dex/estimate_multi_hop_swap"
+```
+Queries the simulated result of a multihop swap
+
+**Proto Messages**
+
+Request: 
+
+```protobuf
+message QueryEstimateMultiHopSwapRequest {
+string        creator        = 1;
+string        receiver       = 2;
+repeated MultiHopRoute routes         = 3;
+string        amount_in       = 4 [(gogoproto.moretags) = "yaml:\"amount_in\""      , (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false, (gogoproto.jsontag) = "amount_in"      ];
+string        exit_limit_price = 5 [(gogoproto.moretags) = "yaml:\"exit_limit_price\"", (gogoproto.customtype) = "github.com/neutron-org/neutron/v2/utils/math.PrecDec", (gogoproto.nullable) = false, (gogoproto.jsontag) = "exit_limit_price"];
+
+// If pickBestRoute == true then all routes are run and the route with the best price is chosen
+// otherwise, the first succesful route is used.
+bool pick_best_route = 6;
+}
+```
+
+Response:
+```protobuf 
+message QueryEstimateMultiHopSwapResponse {
+cosmos.base.v1beta1.Coin coin_out = 1 [(gogoproto.nullable) = false, (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin", (gogoproto.jsontag) = "coin_out"];
+}
+```
+
+**Arguments**
+
+* `QueryGetPoolReservesRequest`: Request message for the `PoolReserves` query.
+  * `creator` (string): creator.
+  * `receiver` (string): receiver.
+  * `MultiHopRoute` : TODO
+
+**Sample Query**
+
+Curl Command:
+
+```bash
+curl /neutron/dex/estimate_multi_hop_swap
+```
+
+### EstimatePlaceLimitOrder
+
+```
+GET "/neutron/dex/estimate_place_limit_order"
+```
+
+**Proto Messages**
+
+Request: 
+```protobuf
+message QueryEstimatePlaceLimitOrderRequest {
+string         creator          = 1;
+string         receiver         = 2;
+string         token_in          = 3;
+string         token_out         = 4;
+int64          tick_index_in_to_out = 5;
+string         amount_in         = 6 [(gogoproto.moretags) = "yaml:\"amount_in\"", (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false, (gogoproto.jsontag) = "amount_in"];
+LimitOrderType order_type        = 7;
+
+// expirationTime is only valid iff orderType == GOOD_TIL_TIME.
+google.protobuf.Timestamp expiration_time = 8 [(gogoproto.stdtime)  = true                   , (gogoproto.nullable)   = true                                    ] ;
+string                    maxAmount_out   = 9 [(gogoproto.moretags) = "yaml:\"max_amount_out\"", (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = true, (gogoproto.jsontag) = "max_amount_out"];
+}
+```
+
+Response: 
+```protobuf
+message QueryEstimatePlaceLimitOrderResponse {
+
+// Total amount of coin used for the limit order
+// You can derive makerLimitInCoin using the equation: totalInCoin = swapInCoin + makerLimitInCoin
+cosmos.base.v1beta1.Coin total_in_coin = 1 [(gogoproto.moretags) = "yaml:\"total_in_coin\"", (gogoproto.nullable) = false, (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin", (gogoproto.jsontag) = "total_in_coin"];
+
+// Total amount of the token in that was immediately swapped for swapOutCoin
+cosmos.base.v1beta1.Coin swap_in_coin = 2 [(gogoproto.moretags) = "yaml:\"swap_in_coin\"", (gogoproto.nullable) = false, (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin", (gogoproto.jsontag) = "swap_in_coin"];
+
+// Total amount of coin received from the taker portion of the limit order
+// This is the amount of coin immediately available in the users account after executing the
+// limit order. It does not include any future proceeds from the maker portion which will have withdrawn in the future
+cosmos.base.v1beta1.Coin swap_out_coin = 3 [(gogoproto.moretags) = "yaml:\"swap_out_coin\"", (gogoproto.nullable) = false, (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin", (gogoproto.jsontag) = "swap_out_coin"];
+}
+```
+
+**Arguments**
+
+* `QueryEstimatePlaceLimitOrderRequest`: Request message for the `EstimatePlaceLimitOrder` query.
+  * `id` (uint64): TODO.
+
+Curl Command:
+
+```bash
+curl /neutron/dex/estimate_place_limit_order
+```
+
+### PoolRequest
+```
+GET "/neutron/dex/pool/{pair_id}/{tick_index}/{fee}"
+```
+
+**Proto Messages**
+
+Request: 
+```protobuf
+message QueryPoolRequest {
+string pair_id    = 1;
+int64  tick_index = 2;
+uint64 fee       = 3;
+}
+```
+
+Response:
+
+```protobuf
+message QueryPoolResponse {
+  Pool pool = 1 [(gogoproto.nullable) = true];
+}
+```
+
+**Arguments**
+* `QueryPoolRequest`: Request message for the `PoolRequest` query.
+  * `pairID` (string): The pair ID.
+  * `tickIndex` (int64): The tick index.
+  * `fee` (uint64): fee.
+
+
+Curl Command:
+```bash
+curl /neutron/dex/pool/{pair_id}/{tick_index}/{fee}
+```
+
+### PoolRequestByID
+
+```
+GET "/neutron/dex/pool/{pool_id}"
+```
+
+Queries a pool by ID
+
+**Proto Messages**
+
+Request:
+```protobuf
+message QueryPoolByIDRequest {
+  uint64 pool_id = 1;
+}
+```
+
+Response:
+
+```protobuf
+message QueryPoolResponse {
+  Pool pool = 1 [(gogoproto.nullable) = true];
+}
+```
+**Arguments**
+
+* `QueryPoolByIDRequest`: Request message for the `PoolRequestByID` query.
+  * `id` (uint64): Pool ID.
+
+Curl Command:
+```bash
+curl /neutron/dex/pool/{pool_id}
+```
+
+### GetPoolMetadata
+
+```
+GET "/neutron/dex/pool_metadata/{id}"
+```
+Queries a PoolMetadata by ID
+
+**Proto Messages**:
+Request: 
+```protobuf
+message QueryGetPoolMetadataRequest {
+uint64 id = 1;
+}
+```
+
+Response: 
+```protobuf
+
+message QueryGetPoolMetadataResponse {
+  PoolMetadata Pool_metadata = 1 [(gogoproto.nullable) = false];
+}
+```
+**Arguments**
+
+* `QueryGetPoolMetadataRequest`: Request message for the `GetPoolMetadata` query.
+  * `id` (uint64): Pool ID.
+
+
+```bash
+curl /neutron/dex/pool_metadata/{id}
+```
+
+### GetALLPoolMetadata
+```
+GET "/neutron/dex/pool_metadata"
+```
+
+Queries a list of PoolMetadata items
+
+**Proto Messages**:
+
+Request:
+```protobuf
+message QueryAllPoolMetadataRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+```
+
+Response:
+
+```protobuf
+message QueryAllPoolMetadataResponse {
+  repeated PoolMetadata                           pool_metadata = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse          pagination   = 2;
+}
+```
+
+**Arguments**
+* `QueryAllPoolMetadataRequest`: Request message for the `GetALLPoolMetadata` query.
+  * `pagination` (cosmos.base.query.v1beta1.PageRequest): Pagination options.
+
+
+Curl Command:
+```bash
+curl /neutron/dex/pool_metadata
+```
