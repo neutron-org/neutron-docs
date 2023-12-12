@@ -65,25 +65,25 @@ message DepositOptions {
 
 #### MsgDeposit
 
-| Feild                            | Description                                                                                  |
-| -------------------------------- | -------------------------------------------------------------------------------------------- |
-| Creator string (sdk.AccAddress)  | The account from which deposit Tokens will be debited                                        |
-| Receiver string (sdk.AccAddress) | The account to which PoolShares will be issued                                               |
-| TokenA string                    | Denom for one side of the deposit                                                            |
-|  TokenB string                   |  Denom for the opposing side of the deposit                                                  |
-| AmountsA \[]sdk.Int              | Amounts of tokenA to deposit                                                                 |
-|   AmountsB \[]sdk.Int            | Amounts of tokenB to deposit                                                                 |
-| TickIndexesAToB \[]int64         | Tick indexes to deposit at defined in terms of TokenA to TokenB (ie. TokenA is on the left)  |
-| Fees \[]uint64                   | Fees to use for each deposit                                                                 |
-| Options \[]DepositOptions        |     Additional deposit options                                                               |
+| Feild                              | Description                                                                                  |
+|------------------------------------| -------------------------------------------------------------------------------------------- |
+| `Creator` string (sdk.AccAddress)  | The account from which deposit Tokens will be debited                                        |
+| `Receiver` string (sdk.AccAddress) | The account to which PoolShares will be issued                                               |
+| `TokenA` string                    | Denom for one side of the deposit                                                            |
+| `TokenB` string                    |  Denom for the opposing side of the deposit                                                  |
+| `AmountsA` \[]sdk.Int              | Amounts of tokenA to deposit                                                                 |
+| `AmountsB` \[]sdk.Int              | Amounts of tokenB to deposit                                                                 |
+| `TickIndexesAToB` \[]int64         | Tick indexes to deposit at defined in terms of TokenA to TokenB (ie. TokenA is on the left)  |
+| `Fees` \[]uint64                   | Fees to use for each deposit                                                                 |
+| `Options` \[]DepositOptions        |     Additional deposit options                                                               |
 
 
 
 #### DepositOptions
 
-| Field          | Description                           |
-| -------------- | ------------------------------------- |
-| Autoswap bool  | Toggle to use autoswap (default true) |
+| Field           | Description                           |
+|-----------------| ------------------------------------- |
+| `Autoswap` bool | Toggle to use autoswap (default true) |
 
 
 
@@ -130,20 +130,20 @@ message MultiHopRoute {
 
 #### MsgMultiHopSwap
 
-| Field                            | Description                                                          |
-| -------------------------------- | -------------------------------------------------------------------- |
-| Creator string (sdk.AccAddress)  | Account from which TokenIn is debited                                |
-| Receiver string (sdk.AccAddress) | Account to which TokenOut is credited                                |
-| Routes \[]MultiHopRoute          | Array of possible routes                                             |
-| AmountIn sdk.Int                 | Amount of TokenIn to swap                                            |
-| ExitLimitPrice sdk.Dec           | Minimum price that that must be satisfied for a route to succeed     |
-| PickBestRoute bool               | If true all routes are run and the route with the best price is used |
+| Field                              | Description                                                          |
+|------------------------------------|----------------------------------------------------------------------|
+| `Creator` string (sdk.AccAddress)  | Account from which TokenIn is debited                                |
+| `Receiver` string (sdk.AccAddress) | Account to which TokenOut is credited                                |
+| `Routes` \[]MultiHopRoute          | Array of possible routes                                             |
+| `AmountIn` sdk.Int                 | Amount of TokenIn to swap                                            |
+| `ExitLimitPrice` sdk.Dec           | Minimum price that that must be satisfied for a route to succeed     |
+| `PickBestRoute` bool               | If true all routes are run and the route with the best price is used |
 
 **Multihop Route**
 
-| Field          | Description                      |
-| -------------- | -------------------------------- |
-| Hops \[]String | Array of denoms to route through |
+| Field            | Description                      |
+|------------------|----------------------------------|
+| `Hops` \[]String | Array of denoms to route through |
 
 
 ## Place Limit Order
@@ -156,7 +156,7 @@ Maker limit orders provide new liquidity to the dex that can be swapped through 
 
 Taker limit orders do not add liquidity to the dex, instead they trade against existing TickLiquidity. Taker orders will either fail at the time of transaction or be completed immediately. Successful taker orders will deposit the proceeds directly back into the receiever’s address.
 
-Rather than supplying a limit price, limit order take a `TickIndex` as an argument. For maker limit orders this is the tick that the LimitOrderTranche will be placed at. For taker limit order will only trade through liquidity at or above the `TickIndex.` A specific price can be converted to a `TickIndex` using the following formula:
+Rather than supplying a limit price, limit orders take a `TickIndex` as an argument. For maker limit orders this is the tick that the LimitOrderTranche will be placed at. For taker limit order will only trade through liquidity at or above the `TickIndex.` A specific price can be converted to a `TickIndex` using the following formula:
 
 $$TickIndex = log_{1.0001}(price)$$
 
@@ -172,7 +172,7 @@ Immediate-or-Cancel limit orders are maker orders that will swap as much as of t
 
 #### GOOD\_TIL\_CANCELLED&#x20;
 
-Good-til-Cancelled limit orders are hybrid maker and taker limit orders. They will attempt to trade the supplied `AmountIn` at the `TickIndex` or better. However, if they total `AmountIn` cannot be traded at the limit price they remaining amount will be placed as a maker limit order. The proceeds from the taker portion are deposited into the user’s account immediately, however, the proceeds from the maker portion must be explicitly withdrawn via WithdrawLimitOrder.
+Good-til-Cancelled limit orders are hybrid maker and taker limit orders. They will attempt to trade the supplied `AmountIn` at the `TickIndex` or better. However, if the total `AmountIn` cannot be traded at the limit price they remaining amount will be placed as a maker limit order. The proceeds from the taker portion are deposited into the user’s account immediately, however, the proceeds from the maker portion must be explicitly withdrawn via WithdrawLimitOrder.
 
 #### GOOD\_TIL\_TIME&#x20;
 
@@ -254,14 +254,14 @@ enum LimitOrderType{
 
 | Field                            | Desciption                                                                                                                                      |
 |----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| Creator string (sdk.AccAddress)  | Account from which TokenIn is debited                                                                                                           |
-| Receiver string (sdk.AccAddress) | Account to which TokenOut is credited or that will be allowed to withdraw or cancel a maker order                                               |
-| TokenIn string                   | Token being “sold”                                                                                                                              |
-| TokenOut                         | Token being “bought”                                                                                                                            |
-| TickIndex int64                  | Limit tick for a limit order, specified in terms of TokenIn to TokenOut                                                                         |
-| AmountIn sdk.Int                 | Amount of TokenIn to be traded                                                                                                                  |
-| OrderType orderType              | Type of limit order to be used. Must be one of: GOOD\_TIL\_CANCELLED, FILL\_OR\_KILL, IMMEDIATE\_OR\_CANCEL, JUST\_IN\_TIME, or GOOD\_TIL\_TIME |
-| ExpirationTime time.Time         | Expiration time for order. Only valid for GOOD\_TIL\_TIME limit orders                                                                          |
+| `Creator` string (sdk.AccAddress)  | Account from which TokenIn is debited                                                                                                           |
+| `Receiver` string (sdk.AccAddress) | Account to which TokenOut is credited or that will be allowed to withdraw or cancel a maker order                                               |
+| `TokenIn` string                   | Token being “sold”                                                                                                                              |
+| `TokenOut`                         | Token being “bought”                                                                                                                            |
+| `TickIndex` int64                  | Limit tick for a limit order, specified in terms of TokenIn to TokenOut                                                                         |
+| `AmountIn` sdk.Int                 | Amount of TokenIn to be traded                                                                                                                  |
+| `OrderType` orderType              | Type of limit order to be used. Must be one of: GOOD\_TIL\_CANCELLED, FILL\_OR\_KILL, IMMEDIATE\_OR\_CANCEL, JUST\_IN\_TIME, or GOOD\_TIL\_TIME |
+| `ExpirationTime` time.Time         | Expiration time for order. Only valid for GOOD\_TIL\_TIME limit orders                                                                          |
 
 ## Cancel Limit Order Message
 
@@ -282,16 +282,18 @@ message MsgCancelLimitOrder {
 
 ### MsgCancelLimitOrder
 
-| Field                           | Description                                                                         |
-| ------------------------------- | ----------------------------------------------------------------------------------- |
-| Creator string (sdk.AccAddress) | Account which controls the limit order and to which any untraded amount is credited |
-| TrancheKey string               | TrancheKey for the target limit order                                               |
+| Field                             | Description                                                                         |
+|-----------------------------------|-------------------------------------------------------------------------------------|
+| `Creator` string (sdk.AccAddress) | Account which controls the limit order and to which any untraded amount is credited |
+| `TrancheKey` string               | TrancheKey for the target limit order                                               |
 
 
 ## Withdraw Filled Limit Order
 
+### Overview 
 Overview Once a limit order has been filled – either partially or in its entirety, it can be withdrawn at any time. Withdrawing from a limit order credits all available proceeds to the user. Withdraw can be called on a limit order multiple times as new proceeds become available. Withdraw Filled Limit Order Message
 
+### Withdraw Filled Limit Order Message
 ```protobuf
 message MsgWithdrawFilledLimitOrder {
   string creator = 1;
@@ -302,9 +304,9 @@ message MsgWithdrawFilledLimitOrder {
 
 ### MsgWithdrawFilledLimitOrder
 
-| Creator string (sdk.AccAddress) | Account which controls the limit order and to which proceeds are credited |
-| ------------------------------- |---------------------------------------------------------------------------|
-| TrancheKey string               | TrancheKey for the target limit order                                     |
+| Creator string (sdk.AccAddress)  | Account which controls the limit order and to which proceeds are credited |
+|----------------------------------|---------------------------------------------------------------------------|
+| `TrancheKey` string              | TrancheKey for the target limit order                                     |
 
 
 ## Withdrawal
@@ -332,12 +334,12 @@ message MsgWithdrawal {
 }
 ```
 
-| Field                            | Description                                                                                                |
-|----------------------------------|------------------------------------------------------------------------------------------------------------|
-| Creator string (sdk.AccAddress)  | The account from which the PoolShares are removed                                                          |
-| Receiver string (sdk.AccAddress) | The account to which the tokens are credited                                                               |
-| TokenA string                    | Denom for one side of the deposit                                                                          |
-| TokenB string                    | Denom for the opposing side of the deposit                                                                 |
-| SharesToRemove \[]sdk.Int        | Amount of shares to remove from each pool                                                                  |
-| TickIndexesAToB \[]int64         | Tick indexes of the target LiquidityPools defined in terms of TokenA to TokenB (ie. TokenA is on the left) |
-| Fees \[]uint64                   | Fee for the target LiquidityPools                                                                          |
+| Field                              | Description                                                                                                |
+|------------------------------------|------------------------------------------------------------------------------------------------------------|
+| `Creator` string (sdk.AccAddress)  | The account from which the PoolShares are removed                                                          |
+| `Receiver` string (sdk.AccAddress) | The account to which the tokens are credited                                                               |
+| `TokenA` string                    | Denom for one side of the deposit                                                                          |
+| `TokenB` string                    | Denom for the opposing side of the deposit                                                                 |
+| `SharesToRemove` \[]sdk.Int        | Amount of shares to remove from each pool                                                                  |
+| `TickIndexesAToB` \[]int64         | Tick indexes of the target LiquidityPools defined in terms of TokenA to TokenB (ie. TokenA is on the left) |
+| `Fees` \[]uint64                   | Fee for the target LiquidityPools                                                                          |
