@@ -98,7 +98,7 @@ Curl Command:
 curl /neutron/dex/limit_order_tranche_user/{address}/{tranche_key}
 ```
 
-#### LimitOrderTrancheUserAll
+### LimitOrderTrancheUserAll
 
 ```
 GET "/dex/Neutron DEX/dex/limit_order_tranche_user"
