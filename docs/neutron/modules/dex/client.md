@@ -606,7 +606,8 @@ bool pick_best_route = 6;
 ```protobuf
 message MultiHopRoute {
   repeated string hops = 1;
-}```
+}
+```
 
 Response:
 ```protobuf 
