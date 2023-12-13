@@ -319,7 +319,7 @@ Curl Command:
 curl /dex/user/deposits/{address}
 ```
 
-### AllUserLimitOrdersRequest
+### LimitOrderTrancheUserAllByAddress
 
 ```
 GET "/neutron/dex/user/limit_orders/{address}"
