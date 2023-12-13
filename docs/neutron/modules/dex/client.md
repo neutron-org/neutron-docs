@@ -617,13 +617,13 @@ cosmos.base.v1beta1.Coin coin_out = 1 [(gogoproto.nullable) = false, (gogoproto.
 
 **Arguments**
 
-    * `QueryEstimateMultiHopSwapRequest`: Request message for the `EstimateMultiHopSwap` query.
-      * `creator` (string): creator.
-      * `receiver` (string): receiver.
-      * `MultiHopRoute` ([]MultiHopeRoute):  Array of possible routes.
-      * `AmountIn` (sdk.Int): Amount of TokenIn to swap.
-      * `ExitLimitPrice` (sdk.Dec): Minimum price that must be satisfied for a route to succeed.
-      * `PickBestRoute` (bool): When true, all routes are run and the route with the best price is used.
+* `QueryEstimateMultiHopSwapRequest`: Request message for the `EstimateMultiHopSwap` query.
+  * `creator` (string): creator.
+  * `receiver` (string): receiver.
+  * `MultiHopRoute` ([]MultiHopeRoute):  Array of possible routes.
+  * `AmountIn` (sdk.Int): Amount of TokenIn to swap.
+  * `ExitLimitPrice` (sdk.Dec): Minimum price that must be satisfied for a route to succeed.
+  * `PickBestRoute` (bool): When true, all routes are run and the route with the best price is used.
 
 **Sample Query**
 
@@ -666,10 +666,9 @@ enum LimitOrderType{
   JUST_IN_TIME = 3;
   GOOD_TIL_TIME = 4;
 }
-}
 ```
 
-Response: 
+Response:
 ```protobuf
 message QueryEstimatePlaceLimitOrderResponse {
 
@@ -689,15 +688,15 @@ cosmos.base.v1beta1.Coin swap_out_coin = 3 [(gogoproto.moretags) = "yaml:\"swap_
 
 **Arguments**
 
-    * `QueryEstimatePlaceLimitOrderRequest`: Request message for the `EstimatePlaceLimitOrder` query.
-        * `Creator` string (sdk.AccAddress): Account from which TokenIn is debited.
-        * `Receiver` string (sdk.AccAddress): Account to which TokenOut is credited or that will be allowed to withdraw or cancel a maker order.
-        * `TokenIn` (string): Token being “sold”.
-        * `TokenOut` (string): Token being “bought”.
-        * `TickIndex` (int64): Limit tick for a limit order, specified in terms of TokenIn to TokenOut.
-        * `AmountIn` (sdk.Int): Amount of TokenIn to be traded.
-        * `OrderType` (orderType): Type of limit order to be used. Must be one of: GOOD\_TIL\_CANCELLED, FILL\_OR\_KILL, IMMEDIATE\_OR\_CANCEL, JUST\_IN\_TIME, or GOOD\_TIL\_TIME.
-        * `ExpirationTime` (time.Time): Expiration time for order. Only valid for GOOD\_TIL\_TIME limit orders.
+* `QueryEstimatePlaceLimitOrderRequest`: Request message for the `EstimatePlaceLimitOrder` query.
+    * `Creator` string (sdk.AccAddress): Account from which TokenIn is debited.
+    * `Receiver` string (sdk.AccAddress): Account to which TokenOut is credited or that will be allowed to withdraw or cancel a maker order.
+    * `TokenIn` (string): Token being “sold”.
+    * `TokenOut` (string): Token being “bought”.
+    * `TickIndex` (int64): Limit tick for a limit order, specified in terms of TokenIn to TokenOut.
+    * `AmountIn` (sdk.Int): Amount of TokenIn to be traded.
+    * `OrderType` (orderType): Type of limit order to be used. Must be one of: GOOD\_TIL\_CANCELLED, FILL\_OR\_KILL, IMMEDIATE\_OR\_CANCEL, JUST\_IN\_TIME, or GOOD\_TIL\_TIME.
+    * `ExpirationTime` (time.Time): Expiration time for order. Only valid for GOOD\_TIL\_TIME limit orders.
 
 Curl Command:
 
