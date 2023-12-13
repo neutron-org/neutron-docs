@@ -361,7 +361,7 @@ Curl Command:
 curl http://lcd.Neutron DEX.xyz/Neutron DEXlabs/Neutron DEX/dex/user/limit_orders/{address}
 ```
 
-### AllTickLiquidity
+### TickLiquidityAll
 
 ```
 GET "/neutron/dex/tick_liquidity/{pairID}/{tokenIn}"
