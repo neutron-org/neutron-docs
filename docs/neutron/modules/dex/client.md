@@ -245,7 +245,7 @@ This query retrieves a list of `LimitOrderTranche` items for a given pairID / To
 
 Request:
 
-```proto
+```protobuf
 message QueryAllLimitOrderTrancheRequest {
   string                                pair_id     = 1;
   string                                token_in    = 2;
@@ -255,10 +255,10 @@ message QueryAllLimitOrderTrancheRequest {
 
 Response:
 
-```proto
+```protobuf
 message QueryAllLimitOrderTrancheResponse {
   repeated LimitOrderTranche                      limit_order_tranche = 1 [(gogoproto.nullable) = true];
-           cosmos.base.query.v1beta1.PageResponse pagination        = 2;
+  cosmos.base.query.v1beta1.PageResponse pagination        = 2;
 }
 ```
 
@@ -292,7 +292,7 @@ Request:
 ```protobuf
 message QueryAllUserDepositsRequest {
   string address = 1;
-	cosmos.base.query.v1beta1.PageRequest pagination = 2;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 ```
 
@@ -301,7 +301,7 @@ Response:
 ```protobuf
 message QueryAllUserDepositsResponse {
   repeated DepositRecord deposits = 1 [(gogoproto.nullable) = true];
-	cosmos.base.query.v1beta1.PageResponse pagination = 2;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 ```
 
@@ -334,7 +334,7 @@ Request:
 ```protobuf
 message QueryAllUserLimitOrdersRequest {
   string address = 1;
-	cosmos.base.query.v1beta1.PageRequest pagination = 2;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 ```
 

@@ -36,31 +36,26 @@ $$additionalShares = left_0 \cdot p(-fee) + left_1 \cdot p(i-fee)$$
 
 ```protobuf
 message MsgDeposit {
-  string creator = 1;
-  string receiver = 2;
-  string tokenA = 3;
-  string tokenB = 4;
-  repeated string amountsA = 5  [
-      (gogoproto.moretags)   = "yaml:\"amountA\"",
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-      (gogoproto.nullable)   = false,
-      (gogoproto.jsontag) = "amountA"
-  ]; 
-   repeated string amountsB = 6  [
-      (gogoproto.moretags)   = "yaml:\"amountB\"",
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-      (gogoproto.nullable)   = false,
-      (gogoproto.jsontag) = "amountB"
-  ]; 
-  repeated int64 tickIndexesAToB = 7;
-  repeated uint64 fees = 8;
-  repeated DepositOptions Options = 9;
+    string creator = 1;
+    string receiver = 2;
+    string token_a = 3;
+    string token_b = 4;
+    repeated string amounts_a = 5  [
+        (gogoproto.moretags)   = "yaml:\"amounts_a\"",
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+        (gogoproto.nullable)   = false,
+        (gogoproto.jsontag) = "amounts_a"
+    ];
+    repeated string amounts_b = 6  [
+        (gogoproto.moretags)   = "yaml:\"amounts_b\"",
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+        (gogoproto.nullable)   = false,
+        (gogoproto.jsontag) = "amounts_b"
+    ];
+    repeated int64 tick_indexes_a_to_b = 7;
+    repeated uint64 fees = 8;
+    repeated DepositOptions options = 9;
 }
-
-message DepositOptions {
-  bool autoswap = 1; 
-}
-
 ```
 
 #### MsgDeposit
@@ -104,27 +99,29 @@ Multihop swap also allows users to supply multiple different routes. By default,
 ### Multihop Swap Message
 
 ```protobuf
-message MsgMultiHopSwap {
-  string creator = 1;
-  string receiver = 2;
-  repeated MultiHopRoute routes = 3;
-  string amountIn = 4 [
-                       (gogoproto.moretags)   = "yaml:\"amountIn\"",
-                       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-                       (gogoproto.nullable)   = false,
-                       (gogoproto.jsontag) = "amountIn"
-                       ];
-  string exitLimitPrice = 5 [
-                             (gogoproto.moretags)   = "yaml:\"exitLimitPrice\"",
-                             (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-                             (gogoproto.nullable)   = false,
-                             (gogoproto.jsontag) = "exitLimitPrice"
-                             ];
-  bool pickBestRoute = 6;
+message MultiHopRoute {
+    repeated string hops = 1;
 }
 
-message MultiHopRoute {
-  repeated string hops = 1;
+message MsgMultiHopSwap {
+    string creator = 1;
+    string receiver = 2;
+    repeated MultiHopRoute routes = 3;
+    string amount_in = 4 [
+        (gogoproto.moretags)   = "yaml:\"amount_in\"",
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+        (gogoproto.nullable)   = false,
+        (gogoproto.jsontag) = "amount_in"
+    ];
+    string exit_limit_price = 5 [
+        (gogoproto.moretags)   = "yaml:\"exit_limit_price\"",
+        (gogoproto.customtype) = "github.com/neutron-org/neutron/v2/utils/math.PrecDec",
+        (gogoproto.nullable)   = false,
+        (gogoproto.jsontag) = "exit_limit_price"
+    ];
+    // If pickBestRoute == true then all routes are run and the route with the best price is chosen
+    // otherwise, the first succesful route is used.
+    bool pick_best_route = 6;
 }
 ```
 
@@ -182,72 +179,34 @@ Good-til-Time limit order function exactly the same as Good-til-Cancelled limit 
 
 Just-in-Time limit orders are an advanced maker limit order order that provides tradeable liquidity for exactly one block. At the end of the same block in which the Just-in-Time order was submitted the order is canceled and any untraded portion will no longer be usable as active liquidity.
 
-## Place Limit Order
-
-### Overview
-
-Limit orders provide the primary mechanism for trading on the Duality Dex. Limit orders can provide liquidity to the Dex (“Maker LimitOrders”) and/or can be used to trade against preexisting liquidity (“Taker Limit Orders”). All limit orders provide a `TickIndex`which serves as a limit price for which the order will be executed at.
-
-Maker limit orders provide new liquidity to the dex that can be swapped through by other traders (either via Multihop Swap or a Taker Limit Order.) The liquidity supplied by a maker limit order is stored in a `LimitOrderTranche` at a specific tick. Once the tranche has been fully or partially filled via another order the user can withdraw the proceeds from that tranche. Maker limit orders can also be cancelled at any time. Maker only limit order’s are created with the following order types: GOOD\_TIL\_CANCELLED (will first try to satisfy the order via a taker limit order and only create an maker order if there is insufficient liquidity available above the provided `TickIndex`) JUST\_IN\_TIME GOOD\_TIL\_TIME
-
-Taker limit orders do not add liquidity to the dex, instead they trade against existing TickLiquidity. Taker orders will either fail at the time of transaction or be completed immediately. Successful taker orders will deposit the proceeds directly back into the receiever’s address.
-
-Rather than supplying a limit price, limit order take a `TickIndex` as an argument. For maker limit orders this is the tick that the LimitOrderTranche will be placed at. For taker limit order will only trade through liquidity at or above the `TickIndex.` A specific price can be converted to a `TickIndex` using the following formula:
-
-$$TickIndex = log_{1.0001}(price)$$
-
-### Order types
-
-#### FILL\_OR\_KILL
-
-Fill-or-Kill limit orders are maker limit orders that either successfully swap 100% of the supplied `AmountIn` or return an error. If there is insufficient liquidity to complete the trade at or above the supplied `TickIndex` a Fill-or-Kill order will return an error of `ErrFoKLimitOrderNotFilled.`
-
-#### IMMEDIATE\_OR\_CANCEL
-
-Immediate-or-Cancel limit orders are maker orders that will swap as much as of the `AmountIn` as possible given available liquidity above the supplied `TickIndex`. Unlike Fill-or-Kill orders they will still successfully complete even if they are only able to partially trade through the `AmountIn` at the `TickIndex` or better.
-
-#### GOOD\_TIL\_CANCELLED&#x20;
-
-Good-til-Cancelled limit orders are hybrid maker and taker limit orders. They will attempt to trade the supplied `AmountIn` at the `TickIndex` or better. However, if they total `AmountIn` cannot be traded at the limit price they remaining amount will be placed as a maker limit order. The proceeds from the taker portion are deposited into the user’s account immediately, however, the proceeds from the maker portion must be explicitly withdrawn via WithdrawLimitOrder.
-
-#### GOOD\_TIL\_TIME&#x20;
-
-Good-til-Time limit order function exactly the same as Good-til-Cancelled limit orders first trying to trade as a taker limit order and then placing any remaining amount as a maker limit order. However, the maker portion of the limit order has a specified `ExpirationTime. After the` ExpirationTime\` the order will be cancelled and can no longer be traded against. When withdrawing a Good-til-Time limit order the user will receive both the successfully traded portion of the limit order (TokenOut) as well as any remaining untraded amount (TokenIn).
-
-#### JUST\_IN\_TIME&#x20;
-
-Just-in-Time limit orders are an advanced maker limit order order that provides tradeable liquidity for exactly one block. At the end of the same block in which the Just-in-Time order was submitted the order is canceled and any untraded portion will no longer be usable as active liquidity.
-
 ### PlaceLimitOrder Message
 
-``` protobuf
+```protobuf
 message MsgPlaceLimitOrder {
   string creator = 1;
   string receiver = 2;
-  string tokenIn = 3;
-  string tokenOut = 4;
-  int64 tickIndex = 5;
-  string amountIn = 7 [
-      (gogoproto.moretags)   = "yaml:\"amountIn\"",
+  string token_in = 3;
+  string token_out = 4;
+  int64 tick_index_in_to_out = 5;
+  string amount_in = 7 [
+      (gogoproto.moretags)   = "yaml:\"amount_in\"",
       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
       (gogoproto.nullable)   = false,
-      (gogoproto.jsontag) = "amountIn"
+      (gogoproto.jsontag) = "amount_in"
   ];
-  LimitOrderType orderType = 8;
-  google.protobuf.Timestamp expirationTime = 9 [
+  LimitOrderType order_type = 8;
+  // expirationTime is only valid iff orderType == GOOD_TIL_TIME.
+  google.protobuf.Timestamp expiration_time = 9 [
                                              (gogoproto.stdtime) = true,
                                              (gogoproto.nullable) = true
                                              ];
+  string max_amount_out = 10 [
+                       (gogoproto.moretags)   = "yaml:\"max_amount_out\"",
+                       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+                       (gogoproto.nullable)   = true,
+                       (gogoproto.jsontag) = "max_amount_out"
+                       ];
 }
-
-enum LimitOrderType{
-  GOOD_TIL_CANCELLED = 0;
-  FILL_OR_KILL = 1;
-  IMMEDIATE_OR_CANCEL = 2;
-  JUST_IN_TIME = 3;
-  GOOD_TIL_TIME = 4;
-}
-
 ```
 
 #### MsgPlaceLimitOrder
@@ -275,8 +234,8 @@ NOTE: Canceling a partially filled limit order does not withdraw the traded port
 
 ```protobuf
 message MsgCancelLimitOrder {
-  string creator = 1;
-  string trancheKey = 2;
+    string creator = 1;
+    string tranche_key = 2;
 }
 ```
 
@@ -291,15 +250,14 @@ message MsgCancelLimitOrder {
 ## Withdraw Filled Limit Order
 
 ### Overview 
-Overview Once a limit order has been filled – either partially or in its entirety, it can be withdrawn at any time. Withdrawing from a limit order credits all available proceeds to the user. Withdraw can be called on a limit order multiple times as new proceeds become available. Withdraw Filled Limit Order Message
+Once a limit order has been filled – either partially or in its entirety, it can be withdrawn at any time. Withdrawing from a limit order credits all available proceeds to the user. Withdraw can be called on a limit order multiple times as new proceeds become available. Withdraw Filled Limit Order Message
 
 ### Withdraw Filled Limit Order Message
 ```protobuf
 message MsgWithdrawFilledLimitOrder {
-  string creator = 1;
-  string trancheKey = 2;
-} 
-
+    string creator = 1;
+    string tranche_key = 2;
+}
 ```
 
 ### MsgWithdrawFilledLimitOrder
@@ -324,10 +282,10 @@ message MsgWithdrawal {
     string tokenA = 3;
     string tokenB = 4;
     repeated string sharesToRemove = 5 [
-    (gogoproto.moretags) = "yaml:\"sharesToRemove\"",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false,
-    (gogoproto.jsontag) = "sharesToRemove"
+        (gogoproto.moretags) = "yaml:\"sharesToRemove\"",
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+        (gogoproto.nullable) = false,
+        (gogoproto.jsontag) = "sharesToRemove"
     ];
     repeated int64 tickIndexesAToB = 6;
     repeated uint64 fees = 7;
@@ -343,3 +301,41 @@ message MsgWithdrawal {
 | `SharesToRemove` \[]sdk.Int        | Amount of shares to remove from each pool                                                                  |
 | `TickIndexesAToB` \[]int64         | Tick indexes of the target LiquidityPools defined in terms of TokenA to TokenB (ie. TokenA is on the left) |
 | `Fees` \[]uint64                   | Fee for the target LiquidityPools                                                                          |
+
+## UpdateParams
+
+### Overview
+Used to update module's params
+
+### UpdateParamsMsg
+```protobuf
+message MsgUpdateParams {
+  option (amino.name) = "dex/MsgUpdateParams";
+  option (cosmos.msg.v1.signer) = "authority";
+
+  // Authority is the address of the governance account.
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // NOTE: All parameters must be supplied.
+  Params params = 2
+    [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
+
+message Params {
+    option (gogoproto.goproto_stringer) = false;
+    repeated uint64 fee_tiers = 1;
+    string max_true_taker_spread = 2 [
+        (gogoproto.moretags)   = "yaml:\"max_true_taker_spread\"",
+        (gogoproto.customtype) = "github.com/neutron-org/neutron/v2/utils/math.PrecDec",
+        (gogoproto.nullable)   = false,
+        (gogoproto.jsontag) = "max_true_taker_spread"
+    ];
+
+}
+```
+
+TODO: fill description
+
+| Field                       | Description |
+|-----------------------------|-------------|
+| `FeeTiers` uint64           |             |
+| `MaxTrueTakerSpread` string |             |
