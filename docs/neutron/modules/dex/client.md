@@ -411,7 +411,7 @@ curl /neutron/dex/tick_liquidity/{pairID}/{tokenIn}
 GET "/neutron/dex/filled_limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}"
 ```
 
-This query retrieves an `InactiveLimitOrderTranche` by index.
+This query retrieves an inactive `LimitOrderTranche` by index.
 
 **Proto Messages**
 
@@ -604,6 +604,7 @@ bool pick_best_route = 6;
 ```
 
 Response:
+
 ```protobuf 
 message QueryEstimateMultiHopSwapResponse {
 cosmos.base.v1beta1.Coin coin_out = 1 [(gogoproto.nullable) = false, (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin", (gogoproto.jsontag) = "coin_out"];
@@ -683,6 +684,7 @@ curl /neutron/dex/estimate_place_limit_order
 ```
 GET "/neutron/dex/pool/{pair_id}/{tick_index}/{fee}"
 ```
+Queries a pool by pair, tick and fee
 
 **Proto Messages**
 
@@ -809,7 +811,6 @@ message QueryAllPoolMetadataResponse {
 **Arguments**
 * `QueryAllPoolMetadataRequest`: Request message for the `GetALLPoolMetadata` query.
   * `pagination` (cosmos.base.query.v1beta1.PageRequest): Pagination options.
-f
 
 Curl Command:
 ```bash
