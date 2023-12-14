@@ -26,7 +26,7 @@ Params params = 1 [(gogoproto.nullable) = false];
 }
 ```
 
-Curl Command:
+Curl Command (testnet):
 ```bash
 curl /neutron/dex/params
 ```
@@ -92,10 +92,10 @@ message LimitOrderTrancheUser {
 
 **Sample Query**
 
-Curl Command:
+Curl Command (testnet):
 
 ```bash
-curl /neutron/dex/limit_order_tranche_user/{address}/{tranche_key}
+curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/limit_order_tranche_user/{address}/{tranche_key}
 ```
 
 ### LimitOrderTrancheUserAll
@@ -132,10 +132,10 @@ message QueryAllLimitOrderTrancheUserResponse {
 
 **Sample Query**
 
-Curl Command:
+Curl Command (testnet):
 
 ```bash
-curl /dex/limit_order_tranche_user
+curl https://rest-falcron.pion-1.ntrn.tech/dex/limit_order_tranche_user
 ```
 
 ### LimitOrderTranche
@@ -200,7 +200,6 @@ message LimitOrderTranche {
   ];
   // GoodTilDate is represented as seconds since  January 1, year 1, 00:00:00.00 UTC
   // LimitOrders with goodTilDate set are valid as long as blockTime <= goodTilDate
-
   // JIT orders also use goodTilDate to handle deletion but represent a special case
   // All JIT orders have a goodTilDate of 0 and an exception is made to still still treat these orders as live
   // Order deletion still functions the same and the orders will be deleted at the end of the block
@@ -227,10 +226,10 @@ message LimitOrderTranche {
 
 **Sample Query**
 
-Curl Command:
+Curl Command (testnet):
 
 ```bash
-curl neutron/dex/limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}
+curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}
 ```
 
 ### LimitOrderTrancheAll
@@ -271,10 +270,10 @@ message QueryAllLimitOrderTrancheResponse {
 
 **Sample Query**
 
-Curl Command:
+Curl Command (testnet):
 
 ```bash
-curl /dex/limit_order_tranche/{pairID}/{tokenIn}
+curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/limit_order_tranche/{pairID}/{tokenIn}
 ```
 
 ### UserDepositsAll
@@ -313,10 +312,10 @@ message QueryAllUserDepositsResponse {
 
 **Sample Query**
 
-Curl Command:
+Curl Command (testnet):
 
 ```bash
-curl /dex/user/deposits/{address}
+curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/user/deposits/{address}
 ```
 
 ### LimitOrderTrancheUserAllByAddress
@@ -355,10 +354,10 @@ message QueryAllUserLimitOrdersResponse {
 
 **Sample Query**
 
-Curl Command:
+Curl Command (testnet):
 
 ```bash
-curl http://lcd.Neutron DEX.xyz/Neutron DEXlabs/Neutron DEX/dex/user/limit_orders/{address}
+curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/user/limit_orders/{address}
 ```
 
 ### TickLiquidityAll
@@ -386,7 +385,7 @@ Response:
 ```proto
 message QueryAllTickLiquidityResponse {
   repeated TickLiquidity                          tick_liquidity = 1 [(gogoproto.nullable) = true];
-           cosmos.base.query.v1beta1.PageResponse pagination    = 2;
+  cosmos.base.query.v1beta1.PageResponse pagination    = 2;
 }
 ```
 
@@ -399,10 +398,10 @@ message QueryAllTickLiquidityResponse {
 
 **Sample Query**
 
-Curl Command:
+Curl Command (testnet):
 
 ```bash
-curl /neutron/dex/tick_liquidity/{pairID}/{tokenIn}
+curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/tick_liquidity/{pairID}/{tokenIn}
 ```
 
 ### InactiveLimitOrderTranche
@@ -444,10 +443,10 @@ message QueryGetInactiveLimitOrderTrancheResponse {
 
 **Sample Query**
 
-Curl Command:
+Curl Command (testnet):
 
 ```bash
-curl /neutron/dex/filled_limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}
+curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/filled_limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}
 ```
 
 ### InactiveLimitOrderTrancheAll
@@ -462,7 +461,7 @@ This query retrieves a list of inactive `LimitOrderTranche` items.
 
 Request:
 
-```proto
+```protobuf
 message QueryAllInactiveLimitOrderTrancheRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 }
@@ -470,10 +469,10 @@ message QueryAllInactiveLimitOrderTrancheRequest {
 
 Response:
 
-```proto
+```protobuf
 message QueryAllInactiveLimitOrderTrancheResponse {
   repeated LimitOrderTranche                      inactive_limit_order_tranche = 1 [(gogoproto.nullable) = true];
-           cosmos.base.query.v1beta1.PageResponse pagination                = 2;
+  cosmos.base.query.v1beta1.PageResponse pagination                = 2;
 }
 ```
 
@@ -484,10 +483,10 @@ message QueryAllInactiveLimitOrderTrancheResponse {
 
 **Sample Query**
 
-Curl Command:
+Curl Command (testnet):
 
 ```bash
-curl /neutron/dex/filled_limit_order_tranche
+curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/filled_limit_order_tranche
 ```
 
 ### PoolReservesAll
@@ -528,10 +527,10 @@ message QueryAllPoolReservesResponse {
 
 **Sample Query**
 
-Curl Command:
+Curl Command (testnet):
 
 ```bash
-curl /neutron/dex/pool_reserves/{pairID}/{tokenIn}
+curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/pool_reserves/{pairID}/{tokenIn}
 ```
 
 ### PoolReserves
@@ -573,10 +572,10 @@ message QueryGetPoolReservesResponse {
 
 **Sample Query**
 
-Curl Command:
+Curl Command (testnet):
 
 ```bash
-curl /neutron/dex/pool_reserves/{pairID}/{tokenIn}/{tickIndex}/{fee}
+curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/pool_reserves/{pairID}/{tokenIn}/{tickIndex}/{fee}
 ```
 
 ### QueryEstimateMultiHopSwap
@@ -629,10 +628,10 @@ cosmos.base.v1beta1.Coin coin_out = 1 [(gogoproto.nullable) = false, (gogoproto.
 
 **Sample Query**
 
-Curl Command:
+Curl Command (testnet):
 
 ```bash
-curl /neutron/dex/estimate_multi_hop_swap
+curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/estimate_multi_hop_swap
 ```
 
 ### EstimatePlaceLimitOrder
@@ -700,10 +699,10 @@ cosmos.base.v1beta1.Coin swap_out_coin = 3 [(gogoproto.moretags) = "yaml:\"swap_
     * `OrderType` (orderType): Type of limit order to be used. Must be one of: GOOD\_TIL\_CANCELLED, FILL\_OR\_KILL, IMMEDIATE\_OR\_CANCEL, JUST\_IN\_TIME, or GOOD\_TIL\_TIME.
     * `ExpirationTime` (time.Time): Expiration time for order. Only valid for GOOD\_TIL\_TIME limit orders.
 
-Curl Command:
+Curl Command (testnet):
 
 ```bash
-curl /neutron/dex/estimate_place_limit_order
+curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/estimate_place_limit_order
 ```
 
 ### PoolRequest
@@ -738,9 +737,9 @@ message QueryPoolResponse {
   * `fee` (uint64): fee.
 
 
-Curl Command:
+Curl Command (testnet):
 ```bash
-curl /neutron/dex/pool/{pair_id}/{tick_index}/{fee}
+curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/pool/{pair_id}/{tick_index}/{fee}
 ```
 
 ### PoolRequestByID
@@ -772,9 +771,9 @@ message QueryPoolResponse {
 * `QueryPoolByIDRequest`: Request message for the `PoolRequestByID` query.
   * `id` (uint64): Pool ID.
 
-Curl Command:
+Curl Command (testnet):
 ```bash
-curl /neutron/dex/pool/{pool_id}
+curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/pool/{pool_id}
 ```
 
 ### GetPoolMetadata
@@ -838,7 +837,7 @@ message QueryAllPoolMetadataResponse {
 * `QueryAllPoolMetadataRequest`: Request message for the `GetALLPoolMetadata` query.
   * `pagination` (cosmos.base.query.v1beta1.PageRequest): Pagination options.
 
-Curl Command:
+Curl Command (testnet):
 ```bash
-curl /neutron/dex/pool_metadata
+curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/pool_metadata
 ```
