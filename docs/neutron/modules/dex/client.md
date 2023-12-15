@@ -198,10 +198,10 @@ message LimitOrderTranche {
     (gogoproto.nullable)   = false,
     (gogoproto.jsontag) = "total_taker_denom"
   ];
-  // GoodTilDate is represented as seconds since  January 1, year 1, 00:00:00.00 UTC
-  // LimitOrders with goodTilDate set are valid as long as blockTime <= goodTilDate
-  // JIT orders also use goodTilDate to handle deletion but represent a special case
-  // All JIT orders have a goodTilDate of 0 and an exception is made to still still treat these orders as live
+  // GoodTilTime is represented as seconds since  January 1, year 1, 00:00:00.00 UTC
+  // LimitOrders with goodTilTime set are valid as long as blockTime <= goodTilTime
+  // JIT orders also use goodTilTime to handle deletion but represent a special case
+  // All JIT orders have a goodTilTime of 0 and an exception is made to still still treat these orders as live
   // Order deletion still functions the same and the orders will be deleted at the end of the block
   google.protobuf.Timestamp expiration_time = 6 [
     (gogoproto.stdtime) = true,
@@ -410,7 +410,7 @@ curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/tick_liquidity/{pairID}/{
 GET "/neutron/dex/filled_limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}"
 ```
 
-This query retrieves an inactive `LimitOrderTranche` by index.
+This query retrieves a `LimitOrderTranche` by a tranche's key (pairID + tokenIn + tickIndex + trancheKey
 
 **Proto Messages**
 
@@ -539,7 +539,7 @@ curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/pool_reserves/{pairID}/{t
 GET "/neutron/dex/pool_reserves/{pairID}/{tokenIn}/{tickIndex}/{fee}"
 ```
 
-This query retrieves a `PoolReserves` by index.
+This query retrieves a `PoolReserves` by PoolReservesKey (PairID+TokenIn+TickIndex+Fee).
 
 **Proto Messages**
 

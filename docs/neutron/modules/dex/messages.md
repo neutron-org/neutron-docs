@@ -211,16 +211,16 @@ message MsgPlaceLimitOrder {
 
 #### MsgPlaceLimitOrder
 
-| Field                            | Desciption                                                                                                                                      |
-|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| `Creator` string (sdk.AccAddress)  | Account from which TokenIn is debited                                                                                                           |
-| `Receiver` string (sdk.AccAddress) | Account to which TokenOut is credited or that will be allowed to withdraw or cancel a maker order                                               |
-| `TokenIn` string                   | Token being “sold”                                                                                                                              |
-| `TokenOut`                         | Token being “bought”                                                                                                                            |
-| `TickIndex` int64                  | Limit tick for a limit order, specified in terms of TokenIn to TokenOut                                                                         |
-| `AmountIn` sdk.Int                 | Amount of TokenIn to be traded                                                                                                                  |
-| `OrderType` orderType              | Type of limit order to be used. Must be one of: GOOD\_TIL\_CANCELLED, FILL\_OR\_KILL, IMMEDIATE\_OR\_CANCEL, JUST\_IN\_TIME, or GOOD\_TIL\_TIME |
-| `ExpirationTime` time.Time         | Expiration time for order. Only valid for GOOD\_TIL\_TIME limit orders                                                                          |
+| Field                               | Desciption                                                                                                                                      |
+|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Creator` string (sdk.AccAddress)   | Account from which TokenIn is debited                                                                                                           |
+| `Receiver` string (sdk.AccAddress)  | Account to which TokenOut is credited or that will be allowed to withdraw or cancel a maker order                                               |
+| `TokenIn` string                    | Token being “sold”                                                                                                                              |
+| `TokenOut`                          | Token being “bought”                                                                                                                            |
+| `TickIndex` int64                   | Limit tick for a limit order, specified in terms of TokenIn to TokenOut                                                                         |
+| `AmountIn` sdk.Int                  | Amount of TokenIn to be traded                                                                                                                  |
+| `OrderType` orderType               | Type of limit order to be used. Must be one of: GOOD\_TIL\_CANCELLED, FILL\_OR\_KILL, IMMEDIATE\_OR\_CANCEL, JUST\_IN\_TIME, or GOOD\_TIL\_TIME |
+| `ExpirationTime` time.Time          | Expiration time for order. Only valid for GOOD\_TIL\_TIME limit orders                                                                          |
 
 ## Cancel Limit Order Message
 
@@ -333,9 +333,7 @@ message Params {
 }
 ```
 
-TODO: fill description
-
-| Field                       | Description |
-|-----------------------------|-------------|
-| `FeeTiers` uint64           |             |
-| `MaxTrueTakerSpread` string |             |
+| Field                       | Description                                                                                                                                                                                                                                             |
+|-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `FeeTiers` uint64           | Fee tiers is the list of allowable fees that can be used for LP deposits                                                                                                                                                                                |
+| `MaxTrueTakerSpread` string | max true taker spread is the maximum difference in price between the stated tick price and the actual price (after rounding) given to the taker. Swaps in pools that result in a price difference greater than `max_true_taker_spread` will be aborted. |
