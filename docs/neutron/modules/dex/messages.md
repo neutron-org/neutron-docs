@@ -40,16 +40,16 @@ message MsgDeposit {
     string receiver = 2;
     string token_a = 3;
     string token_b = 4;
-    repeated string amounts_a = 5  [
-        (gogoproto.moretags)   = "yaml:\"amounts_a\"",
+    repeated string amounts_a = 5 [
+        (gogoproto.moretags) = "yaml:\"amounts_a\"",
         (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-        (gogoproto.nullable)   = false,
+        (gogoproto.nullable) = false,
         (gogoproto.jsontag) = "amounts_a"
     ];
-    repeated string amounts_b = 6  [
-        (gogoproto.moretags)   = "yaml:\"amounts_b\"",
+    repeated string amounts_b = 6 [
+        (gogoproto.moretags) = "yaml:\"amounts_b\"",
         (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-        (gogoproto.nullable)   = false,
+        (gogoproto.nullable) = false,
         (gogoproto.jsontag) = "amounts_b"
     ];
     repeated int64 tick_indexes_a_to_b = 7;
@@ -60,17 +60,17 @@ message MsgDeposit {
 
 #### MsgDeposit
 
-| Feild                              | Description                                                                                  |
-|------------------------------------| -------------------------------------------------------------------------------------------- |
-| `Creator` string (sdk.AccAddress)  | The account from which deposit Tokens will be debited                                        |
-| `Receiver` string (sdk.AccAddress) | The account to which PoolShares will be issued                                               |
-| `TokenA` string                    | Denom for one side of the deposit                                                            |
-| `TokenB` string                    |  Denom for the opposing side of the deposit                                                  |
-| `AmountsA` \[]sdk.Int              | Amounts of tokenA to deposit                                                                 |
-| `AmountsB` \[]sdk.Int              | Amounts of tokenB to deposit                                                                 |
-| `TickIndexesAToB` \[]int64         | Tick indexes to deposit at defined in terms of TokenA to TokenB (ie. TokenA is on the left)  |
-| `Fees` \[]uint64                   | Fees to use for each deposit                                                                 |
-| `Options` \[]DepositOptions        |     Additional deposit options                                                               |
+| Feild                              | Description                                                                                 |
+|------------------------------------|---------------------------------------------------------------------------------------------|
+| `Creator` string (sdk.AccAddress)  | The account from which deposit Tokens will be debited                                       |
+| `Receiver` string (sdk.AccAddress) | The account to which PoolShares will be issued                                              |
+| `TokenA` string                    | Denom for one side of the deposit                                                           |
+| `TokenB` string                    | Denom for the opposing side of the deposit                                                  |
+| `AmountsA` \[]sdk.Int              | Amounts of tokenA to deposit                                                                |
+| `AmountsB` \[]sdk.Int              | Amounts of tokenB to deposit                                                                |
+| `TickIndexesAToB` \[]int64         | Tick indexes to deposit at defined in terms of TokenA to TokenB (ie. TokenA is on the left) |
+| `Fees` \[]uint64                   | Fees to use for each deposit                                                                |
+| `Options` \[]DepositOptions        | Additional deposit options                                                                  |
 
 
 
@@ -108,19 +108,19 @@ message MsgMultiHopSwap {
     string receiver = 2;
     repeated MultiHopRoute routes = 3;
     string amount_in = 4 [
-        (gogoproto.moretags)   = "yaml:\"amount_in\"",
+        (gogoproto.moretags) = "yaml:\"amount_in\"",
         (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-        (gogoproto.nullable)   = false,
+        (gogoproto.nullable) = false,
         (gogoproto.jsontag) = "amount_in"
     ];
     string exit_limit_price = 5 [
-        (gogoproto.moretags)   = "yaml:\"exit_limit_price\"",
+        (gogoproto.moretags) = "yaml:\"exit_limit_price\"",
         (gogoproto.customtype) = "github.com/neutron-org/neutron/v2/utils/math.PrecDec",
-        (gogoproto.nullable)   = false,
+        (gogoproto.nullable) = false,
         (gogoproto.jsontag) = "exit_limit_price"
     ];
-    // If pickBestRoute == true then all routes are run and the route with the best price is chosen
-    // otherwise, the first succesful route is used.
+    // If pickBestRoute == true then all routes are run and the route with the
+    // best price is chosen otherwise, the first succesful route is used.
     bool pick_best_route = 6;
 }
 ```
@@ -183,29 +183,29 @@ Just-in-Time limit orders are an advanced maker limit order order that provides 
 
 ```protobuf
 message MsgPlaceLimitOrder {
-  string creator = 1;
-  string receiver = 2;
-  string token_in = 3;
-  string token_out = 4;
-  int64 tick_index_in_to_out = 5;
-  string amount_in = 7 [
-      (gogoproto.moretags)   = "yaml:\"amount_in\"",
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-      (gogoproto.nullable)   = false,
-      (gogoproto.jsontag) = "amount_in"
-  ];
-  LimitOrderType order_type = 8;
-  // expirationTime is only valid iff orderType == GOOD_TIL_TIME.
-  google.protobuf.Timestamp expiration_time = 9 [
-                                             (gogoproto.stdtime) = true,
-                                             (gogoproto.nullable) = true
-                                             ];
-  string max_amount_out = 10 [
-                       (gogoproto.moretags)   = "yaml:\"max_amount_out\"",
-                       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-                       (gogoproto.nullable)   = true,
-                       (gogoproto.jsontag) = "max_amount_out"
-                       ];
+    string creator = 1;
+    string receiver = 2;
+    string token_in = 3;
+    string token_out = 4;
+    int64 tick_index_in_to_out = 5;
+    string amount_in = 7 [
+        (gogoproto.moretags) = "yaml:\"amount_in\"",
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+        (gogoproto.nullable) = false,
+        (gogoproto.jsontag) = "amount_in"
+    ];
+    LimitOrderType order_type = 8;
+    // expirationTime is only valid iff orderType == GOOD_TIL_TIME.
+    google.protobuf.Timestamp expiration_time = 9 [
+        (gogoproto.stdtime) = true,
+        (gogoproto.nullable) = true
+    ];
+    string max_amount_out = 10 [
+        (gogoproto.moretags) = "yaml:\"max_amount_out\"",
+        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+        (gogoproto.nullable) = true,
+        (gogoproto.jsontag) = "max_amount_out"
+    ];
 }
 ```
 
@@ -279,15 +279,15 @@ Withdraw is used to redeem PoolShares for the user’s pro-rata portion of token
 message MsgWithdrawal {
     string creator = 1;
     string receiver = 2;
-    string tokenA = 3;
-    string tokenB = 4;
-    repeated string sharesToRemove = 5 [
-        (gogoproto.moretags) = "yaml:\"sharesToRemove\"",
+    string token_a = 3;
+    string token_b = 4;
+    repeated string shares_to_remove = 5 [
+        (gogoproto.moretags) = "yaml:\"shares_to_remove\"",
         (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
         (gogoproto.nullable) = false,
-        (gogoproto.jsontag) = "sharesToRemove"
+        (gogoproto.jsontag) = "shares_to_remove"
     ];
-    repeated int64 tickIndexesAToB = 6;
+    repeated int64 tick_indexes_a_to_b = 6;
     repeated uint64 fees = 7;
 }
 ```
@@ -310,26 +310,27 @@ Used to update module's params
 ### UpdateParamsMsg
 ```protobuf
 message MsgUpdateParams {
-  option (amino.name) = "dex/MsgUpdateParams";
-  option (cosmos.msg.v1.signer) = "authority";
+    option (amino.name) = "dex/MsgUpdateParams";
+    option (cosmos.msg.v1.signer) = "authority";
 
-  // Authority is the address of the governance account.
-  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  // NOTE: All parameters must be supplied.
-  Params params = 2
-    [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+    // Authority is the address of the governance account.
+    string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+    // NOTE: All parameters must be supplied.
+    Params params = 2 [
+        (gogoproto.nullable) = false,
+        (amino.dont_omitempty) = true
+    ];
 }
 
 message Params {
     option (gogoproto.goproto_stringer) = false;
     repeated uint64 fee_tiers = 1;
     string max_true_taker_spread = 2 [
-        (gogoproto.moretags)   = "yaml:\"max_true_taker_spread\"",
+        (gogoproto.moretags) = "yaml:\"max_true_taker_spread\"",
         (gogoproto.customtype) = "github.com/neutron-org/neutron/v2/utils/math.PrecDec",
-        (gogoproto.nullable)   = false,
+        (gogoproto.nullable) = false,
         (gogoproto.jsontag) = "max_true_taker_spread"
     ];
-
 }
 ```
 

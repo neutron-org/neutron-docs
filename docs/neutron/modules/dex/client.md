@@ -45,7 +45,7 @@ Request:
 
 ```protobuf
 message QueryGetLimitOrderTrancheUserRequest {
-  string address    = 1;
+  string address = 1;
   string tranche_key = 2;
 }
 ```
@@ -61,24 +61,24 @@ message LimitOrderTrancheUser {
   TradePairID trade_pair_id = 1;
   int64 tick_index_taker_to_maker = 2;
   string tranche_key = 3;
-  string address = 4; 
-  string shares_owned = 5  [
-      (gogoproto.moretags)   = "yaml:\"shares_owned\"",
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-      (gogoproto.nullable)   = false,
-      (gogoproto.jsontag) = "shares_owned"
-  ];  
-  string shares_withdrawn = 6  [
-      (gogoproto.moretags)   = "yaml:\"shares_withdrawn\"",
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-      (gogoproto.nullable)   = false,
-      (gogoproto.jsontag) = "shares_withdrawn"
-  ]; 
-  string shares_cancelled = 7  [
-      (gogoproto.moretags)   = "yaml:\"shares_cancelled\"",
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-      (gogoproto.nullable)   = false,
-      (gogoproto.jsontag) = "shares_cancelled"
+  string address = 4;
+  string shares_owned = 5 [
+    (gogoproto.moretags) = "yaml:\"shares_owned\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "shares_owned"
+  ];
+  string shares_withdrawn = 6 [
+    (gogoproto.moretags) = "yaml:\"shares_withdrawn\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "shares_withdrawn"
+  ];
+  string shares_cancelled = 7 [
+    (gogoproto.moretags) = "yaml:\"shares_cancelled\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "shares_cancelled"
   ];
   LimitOrderType order_type = 8;
 }
@@ -110,7 +110,7 @@ This query retrieves a list of `LimitOrderTrancheUser` items.
 
 Request:
 
-```proto
+```protobuf
 message QueryAllLimitOrderTrancheUserRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 }
@@ -118,10 +118,10 @@ message QueryAllLimitOrderTrancheUserRequest {
 
 Response:
 
-```proto
+```protobuf
 message QueryAllLimitOrderTrancheUserResponse {
-  repeated LimitOrderTrancheUser                  limit_order_tranche_user = 1 [(gogoproto.nullable) = true];
-           cosmos.base.query.v1beta1.PageResponse pagination            = 2;
+  repeated LimitOrderTrancheUser limit_order_tranche_user = 1 [(gogoproto.nullable) = true];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 ```
 
@@ -152,9 +152,9 @@ Request:
 
 ```protobuf
 message QueryGetLimitOrderTrancheRequest {
-  string pair_id     = 1;
-  int64  tick_index  = 2;
-  string token_in    = 3;
+  string pair_id = 1;
+  int64 tick_index = 2;
+  string token_in = 3;
   string tranche_key = 4;
 }
 ```
@@ -174,43 +174,46 @@ message LimitOrderTrancheKey {
 
 message LimitOrderTranche {
   LimitOrderTrancheKey key = 1;
-  string reserves_maker_denom = 2  [
-    (gogoproto.moretags)   = "yaml:\"reserves_maker_denom\"",
+  string reserves_maker_denom = 2 [
+    (gogoproto.moretags) = "yaml:\"reserves_maker_denom\"",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable)   = false,
+    (gogoproto.nullable) = false,
     (gogoproto.jsontag) = "reserves_maker_denom"
   ];
-  string reserves_taker_denom = 3  [
-    (gogoproto.moretags)   = "yaml:\"reserves_taker_denom\"",
+  string reserves_taker_denom = 3 [
+    (gogoproto.moretags) = "yaml:\"reserves_taker_denom\"",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable)   = false,
+    (gogoproto.nullable) = false,
     (gogoproto.jsontag) = "reserves_taker_denom"
   ];
-  string total_maker_denom = 4  [
-    (gogoproto.moretags)   = "yaml:\"total_maker_denom\"",
+  string total_maker_denom = 4 [
+    (gogoproto.moretags) = "yaml:\"total_maker_denom\"",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable)   = false,
+    (gogoproto.nullable) = false,
     (gogoproto.jsontag) = "total_maker_denom"
   ];
-  string total_taker_denom = 5  [
-    (gogoproto.moretags)   = "yaml:\"total_taker_denom\"",
+  string total_taker_denom = 5 [
+    (gogoproto.moretags) = "yaml:\"total_taker_denom\"",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable)   = false,
+    (gogoproto.nullable) = false,
     (gogoproto.jsontag) = "total_taker_denom"
   ];
-  // GoodTilTime is represented as seconds since  January 1, year 1, 00:00:00.00 UTC
-  // LimitOrders with goodTilTime set are valid as long as blockTime <= goodTilTime
-  // JIT orders also use goodTilTime to handle deletion but represent a special case
-  // All JIT orders have a goodTilTime of 0 and an exception is made to still still treat these orders as live
-  // Order deletion still functions the same and the orders will be deleted at the end of the block
+  // GoodTilDate is represented as seconds since  January 1, year 1, 00:00:00.00
+  // UTC LimitOrders with goodTilDate set are valid as long as blockTime <=
+  // goodTilDate
+
+  // JIT orders also use goodTilDate to handle deletion but represent a special
+  // case All JIT orders have a goodTilDate of 0 and an exception is made to
+  // still still treat these orders as live Order deletion still functions the
+  // same and the orders will be deleted at the end of the block
   google.protobuf.Timestamp expiration_time = 6 [
     (gogoproto.stdtime) = true,
     (gogoproto.nullable) = true
   ];
   string price_taker_to_maker = 7 [
-    (gogoproto.moretags)   = "yaml:\"price_taker_to_maker\"",
+    (gogoproto.moretags) = "yaml:\"price_taker_to_maker\"",
     (gogoproto.customtype) = "github.com/neutron-org/neutron/v2/utils/math.PrecDec",
-    (gogoproto.nullable)   = false,
+    (gogoproto.nullable) = false,
     (gogoproto.jsontag) = "price_taker_to_maker"
   ];
 }
@@ -246,8 +249,8 @@ Request:
 
 ```protobuf
 message QueryAllLimitOrderTrancheRequest {
-  string                                pair_id     = 1;
-  string                                token_in    = 2;
+  string pair_id = 1;
+  string token_in = 2;
   cosmos.base.query.v1beta1.PageRequest pagination = 3;
 }
 ```
@@ -256,8 +259,8 @@ Response:
 
 ```protobuf
 message QueryAllLimitOrderTrancheResponse {
-  repeated LimitOrderTranche                      limit_order_tranche = 1 [(gogoproto.nullable) = true];
-  cosmos.base.query.v1beta1.PageResponse pagination        = 2;
+  repeated LimitOrderTranche limit_order_tranche = 1 [(gogoproto.nullable) = true];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 ```
 
@@ -374,18 +377,25 @@ Request:
 
 ```protobuf
 message QueryAllTickLiquidityRequest {
-  string                                pair_id     = 1;
-  string                                token_in    = 2;
+  string pair_id = 1;
+  string token_in = 2;
   cosmos.base.query.v1beta1.PageRequest pagination = 3;
 }
 ```
 
 Response:
 
-```proto
+```protobuf
+message TickLiquidity {
+  oneof liquidity {
+    PoolReserves pool_reserves = 1;
+    LimitOrderTranche limit_order_tranche = 2;
+  }
+}
+
 message QueryAllTickLiquidityResponse {
-  repeated TickLiquidity                          tick_liquidity = 1 [(gogoproto.nullable) = true];
-  cosmos.base.query.v1beta1.PageResponse pagination    = 2;
+  repeated TickLiquidity tick_liquidity = 1 [(gogoproto.nullable) = true];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 ```
 
@@ -418,9 +428,9 @@ Request:
 
 ```protobuf
 message QueryGetInactiveLimitOrderTrancheRequest {
-  string pair_id     = 1;
-  string token_in    = 2;
-  int64  tick_index  = 3;
+  string pair_id = 1;
+  string token_in = 2;
+  int64 tick_index = 3;
   string tranche_key = 4;
 }
 ```
@@ -428,6 +438,7 @@ message QueryGetInactiveLimitOrderTrancheRequest {
 Response:
 
 ```protobuf
+
 message QueryGetInactiveLimitOrderTrancheResponse {
   LimitOrderTranche inactive_limit_order_tranche = 1 [(gogoproto.nullable) = true];
 }
@@ -471,8 +482,8 @@ Response:
 
 ```protobuf
 message QueryAllInactiveLimitOrderTrancheResponse {
-  repeated LimitOrderTranche                      inactive_limit_order_tranche = 1 [(gogoproto.nullable) = true];
-  cosmos.base.query.v1beta1.PageResponse pagination                = 2;
+  repeated LimitOrderTranche inactive_limit_order_tranche = 1 [(gogoproto.nullable) = true];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 ```
 
@@ -503,17 +514,17 @@ Request:
 
 ```protobuf
 message QueryAllPoolReservesRequest {
-  string pairID = 1;
-  string tokenIn = 2;
+  string pair_id = 1;
+  string token_in = 2;
   cosmos.base.query.v1beta1.PageRequest pagination = 3;
 }
 ```
 
 Response:
 
-```proto
+```protobuf
 message QueryAllPoolReservesResponse {
-  repeated PoolReserves poolReserves = 1 [(gogoproto.nullable) = false];
+  repeated PoolReserves pool_reserves = 1 [(gogoproto.nullable) = true];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 ```
@@ -547,9 +558,9 @@ Request:
 
 ```protobuf
 message QueryGetPoolReservesRequest {
-  string pairID = 1;
-  string tokenIn = 2;
-  int64 tickIndex = 3;
+  string pair_id = 1;
+  string token_in = 2;
+  int64 tick_index = 3;
   uint64 fee = 4;
 }
 ```
@@ -558,7 +569,7 @@ Response:
 
 ```protobuf
 message QueryGetPoolReservesResponse {
-  PoolReserves poolReserves = 1 [(gogoproto.nullable) = false];
+  PoolReserves pool_reserves = 1 [(gogoproto.nullable) = true];
 }
 ```
 
@@ -590,19 +601,27 @@ Request:
 
 ```protobuf
 message QueryEstimateMultiHopSwapRequest {
-string        creator        = 1;
-string        receiver       = 2;
-repeated MultiHopRoute routes         = 3;
-string        amount_in       = 4 [(gogoproto.moretags) = "yaml:\"amount_in\""      , (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false, (gogoproto.jsontag) = "amount_in"      ];
-string        exit_limit_price = 5 [(gogoproto.moretags) = "yaml:\"exit_limit_price\"", (gogoproto.customtype) = "github.com/neutron-org/neutron/v2/utils/math.PrecDec", (gogoproto.nullable) = false, (gogoproto.jsontag) = "exit_limit_price"];
+  string creator = 1;
+  string receiver = 2;
+  repeated MultiHopRoute routes = 3;
+  string amount_in = 4 [
+    (gogoproto.moretags) = "yaml:\"amount_in\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "amount_in"
+  ];
+  string exit_limit_price = 5 [
+    (gogoproto.moretags) = "yaml:\"exit_limit_price\"",
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v2/utils/math.PrecDec",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "exit_limit_price"
+  ];
 
-// If pickBestRoute == true then all routes are run and the route with the best price is chosen
-// otherwise, the first succesful route is used.
-bool pick_best_route = 6;
+  // If pickBestRoute == true then all routes are run and the route with the
+  // best price is chosen otherwise, the first succesful route is used.
+  bool pick_best_route = 6;
 }
-```
 
-```protobuf
 message MultiHopRoute {
   repeated string hops = 1;
 }
@@ -610,9 +629,13 @@ message MultiHopRoute {
 
 Response:
 
-```protobuf 
+```protobuf
 message QueryEstimateMultiHopSwapResponse {
-cosmos.base.v1beta1.Coin coin_out = 1 [(gogoproto.nullable) = false, (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin", (gogoproto.jsontag) = "coin_out"];
+  cosmos.base.v1beta1.Coin coin_out = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "coin_out"
+  ];
 }
 ```
 
@@ -645,17 +668,30 @@ GET "/neutron/dex/estimate_place_limit_order"
 Request: 
 ```protobuf
 message QueryEstimatePlaceLimitOrderRequest {
-string         creator          = 1;
-string         receiver         = 2;
-string         token_in          = 3;
-string         token_out         = 4;
-int64          tick_index_in_to_out = 5;
-string         amount_in         = 6 [(gogoproto.moretags) = "yaml:\"amount_in\"", (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false, (gogoproto.jsontag) = "amount_in"];
-LimitOrderType order_type        = 7;
+  string creator = 1;
+  string receiver = 2;
+  string token_in = 3;
+  string token_out = 4;
+  int64 tick_index_in_to_out = 5;
+  string amount_in = 6 [
+    (gogoproto.moretags) = "yaml:\"amount_in\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "amount_in"
+  ];
+  LimitOrderType order_type = 7;
 
-// expirationTime is only valid iff orderType == GOOD_TIL_TIME.
-google.protobuf.Timestamp expiration_time = 8 [(gogoproto.stdtime)  = true                   , (gogoproto.nullable)   = true                                    ] ;
-string                    maxAmount_out   = 9 [(gogoproto.moretags) = "yaml:\"max_amount_out\"", (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = true, (gogoproto.jsontag) = "max_amount_out"];
+  // expirationTime is only valid iff orderType == GOOD_TIL_TIME.
+  google.protobuf.Timestamp expiration_time = 8 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = true
+  ];
+  string maxAmount_out = 9 [
+    (gogoproto.moretags) = "yaml:\"max_amount_out\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = true,
+    (gogoproto.jsontag) = "max_amount_out"
+  ];
 }
 ```
 
@@ -672,18 +708,34 @@ enum LimitOrderType{
 Response:
 ```protobuf
 message QueryEstimatePlaceLimitOrderResponse {
+  // Total amount of coin used for the limit order
+  // You can derive makerLimitInCoin using the equation: totalInCoin =
+  // swapInCoin + makerLimitInCoin
+  cosmos.base.v1beta1.Coin total_in_coin = 1 [
+    (gogoproto.moretags) = "yaml:\"total_in_coin\"",
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "total_in_coin"
+  ];
 
-// Total amount of coin used for the limit order
-// You can derive makerLimitInCoin using the equation: totalInCoin = swapInCoin + makerLimitInCoin
-cosmos.base.v1beta1.Coin total_in_coin = 1 [(gogoproto.moretags) = "yaml:\"total_in_coin\"", (gogoproto.nullable) = false, (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin", (gogoproto.jsontag) = "total_in_coin"];
+  // Total amount of the token in that was immediately swapped for swapOutCoin
+  cosmos.base.v1beta1.Coin swap_in_coin = 2 [
+    (gogoproto.moretags) = "yaml:\"swap_in_coin\"",
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "swap_in_coin"
+  ];
 
-// Total amount of the token in that was immediately swapped for swapOutCoin
-cosmos.base.v1beta1.Coin swap_in_coin = 2 [(gogoproto.moretags) = "yaml:\"swap_in_coin\"", (gogoproto.nullable) = false, (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin", (gogoproto.jsontag) = "swap_in_coin"];
-
-// Total amount of coin received from the taker portion of the limit order
-// This is the amount of coin immediately available in the users account after executing the
-// limit order. It does not include any future proceeds from the maker portion which will have withdrawn in the future
-cosmos.base.v1beta1.Coin swap_out_coin = 3 [(gogoproto.moretags) = "yaml:\"swap_out_coin\"", (gogoproto.nullable) = false, (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin", (gogoproto.jsontag) = "swap_out_coin"];
+  // Total amount of coin received from the taker portion of the limit order
+  // This is the amount of coin immediately available in the users account after
+  // executing the limit order. It does not include any future proceeds from the
+  // maker portion which will have withdrawn in the future
+  cosmos.base.v1beta1.Coin swap_out_coin = 3 [
+    (gogoproto.moretags) = "yaml:\"swap_out_coin\"",
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "swap_out_coin"
+  ];
 }
 ```
 
@@ -716,15 +768,21 @@ Queries a pool by pair, tick and fee
 Request: 
 ```protobuf
 message QueryPoolRequest {
-string pair_id    = 1;
-int64  tick_index = 2;
-uint64 fee       = 3;
+  string pair_id = 1;
+  int64 tick_index = 2;
+  uint64 fee = 3;
 }
 ```
 
 Response:
 
 ```protobuf
+message Pool {
+  uint64 id = 1;
+  PoolReserves lower_tick0 = 2;
+  PoolReserves upper_tick1 = 3;
+}
+
 message QueryPoolResponse {
   Pool pool = 1 [(gogoproto.nullable) = true];
 }
@@ -787,12 +845,22 @@ Queries a PoolMetadata by ID
 Request: 
 ```protobuf
 message QueryGetPoolMetadataRequest {
-uint64 id = 1;
+  uint64 id = 1;
 }
 ```
 
 Response: 
 ```protobuf
+message PoolMetadata {
+  uint64 id = 1;
+  int64 tick = 2;
+  uint64 fee = 3;
+  PairID pair_id = 4;
+}
+message PairID {
+  string token0 = 1;
+  string token1 = 2;
+}
 
 message QueryGetPoolMetadataResponse {
   PoolMetadata Pool_metadata = 1 [(gogoproto.nullable) = false];
@@ -828,8 +896,8 @@ Response:
 
 ```protobuf
 message QueryAllPoolMetadataResponse {
-  repeated PoolMetadata                           pool_metadata = 1 [(gogoproto.nullable) = false];
-  cosmos.base.query.v1beta1.PageResponse          pagination   = 2;
+  repeated PoolMetadata pool_metadata = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 ```
 
