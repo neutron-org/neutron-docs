@@ -144,7 +144,7 @@ curl https://rest-falcron.pion-1.ntrn.tech/dex/limit_order_tranche_user
 GET "/dex/limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}"
 ```
 
-This query retrieves a `LimitOrderTranche` by index.
+This query retrieves a `LimitOrderTranche` by a tranche's key (pairID + tokenIn + tickIndex + trancheKey).
 
 **Proto Messages**
 
@@ -420,7 +420,7 @@ curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/tick_liquidity/{pairID}/{
 GET "/neutron/dex/filled_limit_order_tranche/{pairID}/{tokenIn}/{tickIndex}/{trancheKey}"
 ```
 
-This query retrieves a `LimitOrderTranche` by a tranche's key (pairID + tokenIn + tickIndex + trancheKey
+This query retrieves an inactive `LimitOrderTranche` by a tranche's key (pairID + tokenIn + tickIndex + trancheKey
 
 **Proto Messages**
 
