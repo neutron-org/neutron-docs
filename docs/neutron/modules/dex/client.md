@@ -28,7 +28,7 @@ Params params = 1 [(gogoproto.nullable) = false];
 
 Curl Command (testnet):
 ```bash
-curl /neutron/dex/params
+curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/params
 ```
 
 ### LimitOrderTrancheUser
