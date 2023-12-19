@@ -663,6 +663,8 @@ curl https://rest-falcron.pion-1.ntrn.tech/neutron/dex/estimate_multi_hop_swap
 GET "/neutron/dex/estimate_place_limit_order"
 ```
 
+Queries the simulated result of a limit order placement.
+
 **Proto Messages**
 
 Request: 
