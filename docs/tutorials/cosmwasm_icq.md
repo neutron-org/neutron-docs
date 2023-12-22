@@ -781,7 +781,7 @@ fn test_balance_reconstruct_from_hex() {
 Not that to write a test we need an example of HEX response for our function that we'll use for `BALANCES_HEX_RESPONSE` constant.
 To do that you'll need to get value using `RPC_PATH/abci_query` GET request with your contructed key and store.
 ``
-`data` is your KV key in HEX represenation of the binary.
+`data` is your KV key in HEX representation of the binary.
 To construct the key, you can run this code somewhere:
 ```rust
 use neutron_sdk::interchain_queries::helpers::decode_and_convert;

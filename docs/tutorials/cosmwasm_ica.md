@@ -45,7 +45,7 @@ cosmwasm-std = "1.2.5"
 # various helper functions.
 neutron-sdk = "0.5.0"
 
-# Required to marshal skd.Msg values; the marshalled messsages will be attached to the IBC packets
+# Required to marshal skd.Msg values; the marshalled messages will be attached to the IBC packets
 # and executed as a transaction on the host chain.
 cosmos-sdk-proto = { version = "0.14.0", default-features = false }
 protobuf = { version = "3.2.0", features = ["with-bytes"] }
@@ -316,12 +316,12 @@ fn execute_delegate(
     // specify fees to refund relayers for submission of ack and timeout messages
     //
     // The contract MUST HAVE recv_fee + ack_fee + timeout_fee coins on its balance!
-    // See more info about fees here: https://docs.neutron.org /neutron/modules/interchain-txs/messages#msgsubmittx
-    // and here: https://docs.neutron.org/neutron/feerefunder/overview
+    // See more info about fees here: https://docs.neutron.org/neutron/modules/interchain-txs/messages#msgsubmittx
+    // and here: https://docs.neutron.org/neutron/modules/feerefunder/overview
     let fee = IbcFee {
         recv_fee: vec![], // must be empty
-        ack_fee: vec![CosmosCoin::new(1000u128, "untrn")],
-        timeout_fee: vec![CosmosCoin::new(1000u128, "untrn")],
+        ack_fee: vec![CosmosCoin::new(100000u128, "untrn")],
+        timeout_fee: vec![CosmosCoin::new(100000u128, "untrn")],
     };
 
     // Form the neutron SubmitTx message containing the binary Delegate message.
@@ -711,7 +711,7 @@ fn sudo_timeout(deps: DepsMut, _env: Env, request: RequestPacket) -> StdResult<R
     // write an error log and / or save the acknowledgement to an errors queue for later manual
     // processing. The decision is based purely on your application logic.
     // Please be careful because it may lead to an unexpected state changes because state might
-    // has been changed before this call and will not be reverted because of supressed error.
+    // has been changed before this call and will not be reverted because of suppressed error.
     let payload = read_sudo_payload(deps.storage, channel_id, seq_id).ok();
     if let Some(payload) = payload {
         // update but also check that we don't update same seq_id twice
