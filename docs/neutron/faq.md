@@ -33,7 +33,7 @@ with the public nodes, feel free to report to the Neutron Technical Support grou
 
 ### What CosmWasm version is used?
 
-We are using a [patched](https://github.com/neutron-org/neutron/blob/v1.0.1/go.mod#L158) 0.31.1 version of `wasmd`.
+We are using a [patched](https://github.com/neutron-org/neutron/blob/e605ed3db4381994ee8185ba4a0ff0877d34e67f/go.mod#L194) 0.45.0 version of `wasmd`.
 
 ### Where is testnet faucet?
 
