@@ -1,0 +1,3 @@
+# Liquidity Iteration
+
+When swapping through liquidity via a Swap, Multi-Hop Swap, or a Taker Limit Order we iterate through the available tick liquidity to fill the swap order. Liquidity is always iterated through in order of best to worst price. In the case of swapping Token0 (tokenIn) for Token1 (tokenOut) we iterate through tickIndexes left to right (eg. -1, 0, 1, 2...) and for Token1 for Token0 we iterate from right to left (eg. 2, 1, 0, -1…) For each swap we completely exhaust the available reserves before moving onto the next tick. For TickLiquidity instances at the same `TickIndex` they are iterated through in a deterministic order as follows. PoolReserves: In Ascending `Fee` order LimitOrderTranches: In ascending `TrancheKey` order
