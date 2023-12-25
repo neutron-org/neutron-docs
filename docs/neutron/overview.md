@@ -27,3 +27,4 @@ CosmWasm is a smart contracting platform built for the Cosmos ecosystem.
 ### F.A.Q.
 
 Please refer to the [F.A.Q.](./faq.md) page!
+
