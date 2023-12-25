@@ -33,6 +33,7 @@ const sidebars = {
                 },
                 'neutron/contribute',
                 'neutron/consumer-chain-launch',
+                'neutron/neutron-core-releases',
                 {
                     label: 'Neutron DAO',
                     type: 'category',
@@ -151,6 +152,14 @@ const sidebars = {
                     type: 'category',
                     items: [
                         {
+                            label: 'Admin module',
+                            type: 'category',
+                            items: [
+                                'neutron/modules/admin-module/overview',
+                                'neutron/modules/admin-module/messages',
+                            ]
+                        },
+                        {
                             label: 'Interchain Transactions',
                             type: 'category',
                             items: [
@@ -170,6 +179,35 @@ const sidebars = {
                                 'neutron/modules/interchain-queries/client',
                                 'neutron/modules/interchain-queries/state',
                                 'neutron/modules/interchain-queries/events'
+                            ]
+                        },
+                        {
+                            label: 'Dex',
+                            type: 'category',
+                            items: [
+                                {
+                                    label: 'Overview',
+                                    type: 'category',
+                                    items: [
+                                        'neutron/modules/dex/overview/overview',
+                                        {
+                                            label: 'Concepts',
+                                            type: 'category',
+                                            items: [
+                                                'neutron/modules/dex/overview/concepts/amms-and-orderbooks',
+                                                'neutron/modules/dex/overview/concepts/liquidity-iteration',
+                                                'neutron/modules/dex/overview/concepts/liquidity-pools',
+                                                'neutron/modules/dex/overview/concepts/pool-reserves',
+                                                'neutron/modules/dex/overview/concepts/swaps',
+                                                'neutron/modules/dex/overview/concepts/fees',
+                                                'neutron/modules/dex/overview/concepts/ticks',
+                                                'neutron/modules/dex/overview/concepts/limit-order-tranches',
+                                            ]
+                                        }
+                                    ],
+                                },
+                                'neutron/modules/dex/messages',
+                                'neutron/modules/dex/client',
                             ]
                         },
                         {
@@ -245,7 +283,8 @@ const sidebars = {
                                             type: 'category',
                                             items: [
                                                 'neutron/modules/3rdparty/osmosis/tokenfactory/overview',
-                                                'neutron/modules/3rdparty/osmosis/tokenfactory/messages'
+                                                'neutron/modules/3rdparty/osmosis/tokenfactory/messages',
+                                                'neutron/modules/3rdparty/osmosis/tokenfactory/params'
                                             ]
                                         },
                                         {

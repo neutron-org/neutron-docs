@@ -1,7 +1,7 @@
 # Overview
 
-> This module was taken from Osmosis chain codebase (commit: https://github.com/osmosis-labs/osmosis/commit/9e178a631f91ffc91c51f3665ed915c9f15e1807). The reason of this action was to adopt module and tests to our codebase because it was not possible to import it without code modification
-> that was made by Osmosis team to the orginal Cosmos SDK. These changes made it not possible (without deep modifications of the whole code) to import module to our code.
+> This module was taken from Osmosis chain codebase (commit: https://github.com/osmosis-labs/osmosis/commit/2f9c773ab6f10e0b4ea0b2a29264b389a376a9a1). The reason of this action was to adopt module and tests to our codebase and update it to Cosmos SDK 0.47 because it was not possible to import it without code modification
+> that was made by Osmosis team to the original Cosmos SDK. These changes made it not possible (without deep modifications of the whole code) to import module to our code.
 
 ## Abstract
 
@@ -22,6 +22,41 @@ created denom. Once a denom is created, the original creator is given
     allows changing the master admin account, or even setting it to
     `""`, meaning no account has admin privileges of the asset.
 
+## Bank hooks
+Token factory supports better integration with contracts using bank hooks.
+
+Token factory is integrated with Before Send bank hooks, `TrackBeforeSend` and `BlockBeforeSend`. Both hooks gets called whenever a bank send takes place, the difference between two hooks is that `TrackBeforeSend` would not error and `BlockBeforeSend` errors. Due to this difference `TrackBeforeSend` is useful for cases when a contract needs to track specific send actions of the token factory denom, whilst `BlockBeforeSend` would be more useful for situations when we want to block specific sends using contracts.
+
+Each Token Factory denom allows the registration of one contract address. This contract is sudo-called every time the aforementioned bank hooks are activated.
+
+Contracts are able to integrate with these hooks by implementing `BlockBeforeSend` and `TrackBeforeSend` message as the following example:
+
+```rust
+#[entry_point]
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) ->  StdResult<Response> {
+    match &msg{
+        SudoMsg::BlockBeforeSend { from, to, amount} => {
+            Ok(Response::new().add_attributes(vec![
+                ("hook", "block"),
+                ("from", from),
+                ("to", to),
+                ("amount", &amount.to_string())
+            ]))
+        },
+        SudoMsg::TrackBeforeSend { from, to, amount} => {
+            Ok(Response::new().add_attributes(vec![
+                ("hook", "track"),
+                ("from", from),
+                ("to", to),
+                ("amount", &amount.to_string())
+            ]))
+        }
+    }
+}
+```
+
+
+Note that since `TrackBeforeSend` hook can also be triggered upon module to module send (which is not gas metered), we internally gas meter `TrackBeforeSend` with a gas limit of 100_000.
 
 ## Expectations from the chain
 

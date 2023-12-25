@@ -20,27 +20,34 @@ A smart contract that tries to register an interchain account or to execute an i
 to receive the IBC events related to these actions. The Interchain Transactions module solves this task by passing these
 IBC events to the smart contract using
 a [Sudo() call](https://github.com/CosmWasm/wasmd/blob/288609255ad92dfe5c54eae572fe7d6010e712eb/x/wasm/keeper/keeper.go#L453)
-and a custom [message scheme](https://github.com/neutron-org/neutron/blob/v1.0.4/x/contractmanager/types/sudo.go). You can find a
+and a custom [message scheme](https://github.com/neutron-org/neutron/blob/v2.0.0/x/contractmanager/types/sudo.go). You can find a
 complete list of IBC events for each module message in the [messages](./messages) section.
 
-> **Note**: if your Sudo handler fails, the acknowledgment won't be marked as processed inside the IBC module. This will
-> make most IBC relayers try to submit the acknowledgment over and over again. And since the ICA channels are `ORDERED`,
-> ACKs must be processed in the same order as corresponding transactions were sent, meaning no further acknowledgments
-> will be process until the previous one processed successfully.
+## Sudo errors handling
+
+Interchaintxs module configured the following way, all the errors from a sudo handler are being suppressed by [contract manager middleware](/neutron/modules/contract-manager/overview#concepts), sudo handler is limited with [LIMIT](/neutron/modules/contract-manager/overview#gas-limitation) amount of gas
+
+## Importing interchaintxs module
+
+If you use interchaintxs module in your application and if your Sudo handler fails, the acknowledgment will be marked as processed inside the IBC module anyway, without any notes about an error saved into the store. This will make the IBC relayers to successfully submit the acknowledgment and get the fees.
+
+> **Note** You can use a [contracts manager](/neutron/modules/contract-manager/overview#concepts) SudoLimitWrapper as a wrapper for SudoKeeper,
+> exactly like neutron [configured](#sudo-errors-handling) the module
 >
-> We strongly recommend developers to write Sudo handlers very carefully and keep them as simple as possible. If you do
+> **Note** We strongly recommend developers to write Sudo handlers very carefully and keep them as simple as possible. If you do
 > want to have elaborate logic in your handler, you should verify the acknowledgement data before making any state
 > changes; that way you can, if the data received with the acknowledgement is incompatible with executing the handler
 > logic normally, return an `Ok()` response immediately, which will prevent the acknowledgement from being resubmitted.
-
+>
 > **Note**: there is no dedicated event for a closed channel (ICA disables all messages related to closing the channels)
 > . Your channel, however, can still be closed if a packet timeout occurs; thus, if you are notified about a packet
 > timeout, you can be sure that the affected channel was closed. Please note that it is generally a good practice to set
 > the packet timeout for your interchain transactions to a really large value.
 >
->  If the timeout occurs anyway, you can just
+> If the timeout occurs anyway, you can just
 > execute [RegisterInterchainAccount message]( /neutron/modules/interchain-txs/messages#msgregisterinterchainaccount) again to
 > recover access to your interchain account.
+> **Note** Keep in mind, new channel is created
 
 ## Relaying
 

@@ -15,8 +15,58 @@ But this in turn exposes the problem of informing the owner of the contract that
 
 To ensure that the state of the contract is consistent, the call to the sudo handler takes place in a temporary state (using `CacheContext`), which is written to the active state if the call succeeds.
 
-But at the same time there is gas consumption for the sudo call. Two options for gas limitation were proposed:
-1. Allocate only a certain amount of gas per sudo handler call, thereby limiting the handler's computational capabilities. The volume of the dediated amount of gas can be regulated by the help of governance proposal
-2. Release gas dynamically depending on the remaining gas and the gas reserve required to complete the call with a failure record in the state.
+### Gas limitation
 
-In this implementation, the second approach was used. Also given the fact that Neutron makes the contract pay for all packets (using ibc fees), it's hard to spam / overflow neutron with failure records.
+To make sure there are no exploits with infinite recursion of IBC messages which call other IBC messages in sudo handler we use constant gas `LIMIT` to spend. The LIMIT is small, so you can't place extensive work in Sudo handlers. As a workaround, in such cases you can use Sudo handlers to simply store required payload in contract's state, and use Execute messages to handle results separately.
+
+If your contract exceeds this constant `LIMIT`, it will terminate sudo handler call and save a `Failure` with full call info. You can [resubmit failure](#resubmitfailure) from this contract.
+
+The `LIMIT` is defined by `SudoCallGasLimit` module's parameter.
+
+We provide an ability to resubmit bindings through the contract that initiated the IBC transaction.
+
+## Binding msgs
+
+### ResubmitFailure
+
+Cosmwasm contracts that sent an IBC transfer or ICA transaction can resubmit their failures.
+
+This binding is permissioned - only the contract that sent an IBC transfer or transaction can call it.
+
+The format is as follows:
+```go
+type ResubmitFailure struct {
+	FailureId uint64 `json:"failure_id"`
+}
+```
+
+Binding in cosmwasm described [here](https://github.com/neutron-org/neutron-sdk/blob/feat/contract-manager-resubmit/packages/neutron-sdk/src/bindings/msg.rs#L184).
+
+It will call sudo handler with exact same arguments as the original handler that failed.
+The only difference is that this `SubmitHandler` will be called not from relayer, so the gas limitations above do not apply.
+
+> Note that you can only resubmit failure through cosmwasm contract.
+
+See examples on how to resubmit failure for [interchain txs](https://github.com/neutron-org/neutron-dev-contracts/blob/feat/contract-manager-resubmit/contracts/neutron_interchain_txs/src/contract.rs#L441) and for [ibc transfer](https://github.com/neutron-org/neutron-dev-contracts/blob/feat/contract-manager-resubmit/contracts/ibc_transfer/src/contract.rs#L271)
+
+## Binding queries
+
+Failures for contract address can be queried using [bindings](https://github.com/neutron-org/neutron/blob/feat/contract-manager-resubmit/wasmbinding/bindings/query.go#L39).
+
+Query request struct should be like:
+
+```go
+type Failures struct {
+	Address    string             `json:"address"`
+	Pagination *query.PageRequest `json:"pagination,omitempty"`
+}
+```
+
+Response:
+```go
+type FailuresResponse struct {
+	Failures []contractmanagertypes.Failure `json:"failures"`
+}
+```
+
+You're encouraged to use our neutron-sdk implementation in contracts - [request](https://github.com/neutron-org/neutron-sdk/blob/feat/contract-manager-resubmit/packages/neutron-sdk/src/bindings/query.rs#L61) and [response](https://github.com/neutron-org/neutron-sdk/blob/feat/contract-manager-resubmit/packages/neutron-sdk/src/bindings/query.rs#L119)
