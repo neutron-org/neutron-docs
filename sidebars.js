@@ -334,7 +334,15 @@ const sidebars = {
                 'tutorials/cosmwasm_wasmkit',
                 'tutorials/cosmwasm_ica',
                 'tutorials/cosmwasm_icq',
-                'tutorials/integration_tests'
+                'tutorials/integration_tests',
+                {
+                    label: 'Indexers',
+                    type: 'category',
+                    items: [
+                        'tutorials/indexers/intro',
+                        'tutorials/indexers/subquery',
+                    ]
+                }
             ],
         },
         {
