@@ -37,6 +37,13 @@ You can check out the Cosmos Chain Registry:
 We are always keeping our REST and RPC nodes running and available for everyone to use; if you experience any problems
 with the public nodes, feel free to report to the Neutron Technical Support group (see above).
 
+### How can I check the current status of Neutron's RPCs?
+For the most current information on the status of our RPCs and any scheduled maintenance, please visit our Neutron Status page:
+
+ - [Neutron Status](https://neutron.betteruptime.com)
+
+This page provides real-time updates and alerts regarding the operational status of all Neutron services.
+
 ### What CosmWasm version is used?
 
 We are using a [patched](https://github.com/neutron-org/neutron/blob/e605ed3db4381994ee8185ba4a0ff0877d34e67f/go.mod#L194) 0.45.0 version of `wasmd`.
