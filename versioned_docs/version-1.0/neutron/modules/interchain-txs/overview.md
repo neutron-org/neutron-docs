@@ -23,24 +23,50 @@ a [Sudo() call](https://github.com/CosmWasm/wasmd/blob/288609255ad92dfe5c54eae57
 and a custom [message scheme](https://github.com/neutron-org/neutron/blob/v1.0.4/x/contractmanager/types/sudo.go). You can find a
 complete list of IBC events for each module message in the [messages](./messages) section.
 
-> **Note**: if your Sudo handler fails, the acknowledgment won't be marked as processed inside the IBC module. This will
+> **Note**: if your Sudo handler fails, the acknowledgment will be marked as processed inside the IBC module anyway.
+> The module designed this way to avoid
 > make most IBC relayers try to submit the acknowledgment over and over again. And since the ICA channels are `ORDERED`,
 > ACKs must be processed in the same order as corresponding transactions were sent, meaning no further acknowledgments
-> will be process until the previous one processed successfully.
+> will be process until the previous one processed successfully. In addition, if sudo handler fails, we save the packetId
+> failed to be processed with contract manager's failures [state](../contract-manager/state.md). It is possible to suppress
+> Sudo handler fails by using [cachedContext](#sudo-handlers) with th handlers.
 >
-> We strongly recommend developers to write Sudo handlers very carefully and keep them as simple as possible. If you do
-> want to have elaborate logic in your handler, you should verify the acknowledgement data before making any state
-> changes; that way you can, if the data received with the acknowledgement is incompatible with executing the handler
-> logic normally, return an `Ok()` response immediately, which will prevent the acknowledgement from being resubmitted.
-
 > **Note**: there is no dedicated event for a closed channel (ICA disables all messages related to closing the channels)
 > . Your channel, however, can still be closed if a packet timeout occurs; thus, if you are notified about a packet
 > timeout, you can be sure that the affected channel was closed. Please note that it is generally a good practice to set
 > the packet timeout for your interchain transactions to a really large value.
 >
->  If the timeout occurs anyway, you can just
+> If the timeout occurs anyway, you can just
 > execute [RegisterInterchainAccount message]( /neutron/modules/interchain-txs/messages#msgregisterinterchainaccount) again to
 > recover access to your interchain account.
+
+## Sudo Handlers
+
+Before calling a sudo handler, we create a child context [cachedCtx](#cachedctx), with which we call this handler.
+Calling a handler via a child context has 2 purposes:
+
+1. Suppress the sudo handler error itself, and mark the ibc acknowledgement packet as received and processed. Other way, the error makes relayer send an acknowledgement again and again
+2. Suppress out of gas panic triggered by sudo handler operation
+3. Information about an unsuccessfully processed ack is stored in [state](../contract-manager/state.md).
+
+### CachedCtx
+
+CachedCtx is created with `gas limit = gas limit in the parent context - GasReserve`, where `GasReserve` is a constant equal to 15000.
+This reserve gas is needed to guarantee that [Failure](../contract-manager/state.md) is saved, for example in case a contract has used all the gas it is entitled to and ended with an out of gas panic.
+
+## Failed interchain txs
+
+Not every interchaintx executes succesfully on a remote network. Some of them fails to execute with errors and then you get ibc acknowledgement with `Error` type. In this case, in order to get additional details about the transaction parameters as well as details about the error, you can use the commands `<binary> q interchain-accounts host packet-events <channel-id> <seq-id>`
+Where:
+
+- `channel-id` is the id of the channel on the host side of the interchain accounts
+- `seq-id` - seq of the ibc message received on the host
+
+For example `gaiad q interchain-accounts host packet-events channel-736 1` is a transaction `fund community pool from neutron unclaimed airdrop` on `cosmoshub-4` chain. Because this command is just an alias for the transaction search functionality, it searches for the transaction using the following keys `recv_packet.packet_dst_channel = <channel-id> AND recv_packet.packet_dst_port = <port> AND recv_packet. packet_sequence = <seq-id>`. The node you are accessing may not have this transaction, due to the fact that it was included in the block a long time ago and it has already been removed by the pruning procedure.
+
+Unfortunately, to avoid the nondeterminism associated with error test generation, the error text is severely truncated by redact down to the error code without any additional details, before being saved to the state on the host interchain account side of the module.
+And even the `<binary> q interchain-accounts host packet-events` command is unable to show the full error text
+If you really lack information about the error for diagnostics, you can look at the validator/node logs at the moment of transaction execution. All necessary information will be there.
 
 ## Relaying
 
