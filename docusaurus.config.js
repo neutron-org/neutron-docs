@@ -118,7 +118,7 @@ const config = {
               },
               {
                 label: 'Discord',
-                href: '/', // TODO: add discord link when it's published
+                href: 'https://discord.neutron.org/',
               },
               {
                 label: 'Twitter',

@@ -73,9 +73,9 @@ Admin function to update any of the configuration parameters.
 ```json
 {
   "set_token_info": {
-    // Denomination of axlrUSDC token transfered via IBC
+    // Denomination of axlrUSDC token transferred via IBC
     "usdc_denom": "neutron...",
-    // Denomination of ATOM token transfered via IBC
+    // Denomination of ATOM token transferred via IBC
     "atom_denom": "neutron...",
     "pool_info": {
       //  NTRN-USDC LP Pool address

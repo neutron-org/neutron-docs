@@ -54,7 +54,7 @@ make install
 
 1. go to `neutron/` folder and run `make init`, this will start Neutron and Gaia chains
 2. after `make init` completes, run `make start-rly`, this will start IBC relayer
-3. (if you want to use [ICQ](/tutorials/cosmwasm-icq)) go to `neutron-query-relayer/` folder and run `export $(grep -v '^#' .env.example.dev | xargs) && make dev`, this will start ICQ relayer 
+3. (if you want to use [ICQ](/1.0/tutorials/cosmwasm-icq)) go to `neutron-query-relayer/` folder and run `export $(grep -v '^#' .env.example.dev | xargs) && make dev`, this will start ICQ relayer 
 
 ## Some wallets and RPC's you could use
 

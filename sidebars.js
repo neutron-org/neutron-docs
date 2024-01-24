@@ -182,6 +182,35 @@ const sidebars = {
                             ]
                         },
                         {
+                            label: 'Dex',
+                            type: 'category',
+                            items: [
+                                {
+                                    label: 'Overview',
+                                    type: 'category',
+                                    items: [
+                                        'neutron/modules/dex/overview/overview',
+                                        {
+                                            label: 'Concepts',
+                                            type: 'category',
+                                            items: [
+                                                'neutron/modules/dex/overview/concepts/amms-and-orderbooks',
+                                                'neutron/modules/dex/overview/concepts/liquidity-iteration',
+                                                'neutron/modules/dex/overview/concepts/liquidity-pools',
+                                                'neutron/modules/dex/overview/concepts/pool-reserves',
+                                                'neutron/modules/dex/overview/concepts/swaps',
+                                                'neutron/modules/dex/overview/concepts/fees',
+                                                'neutron/modules/dex/overview/concepts/ticks',
+                                                'neutron/modules/dex/overview/concepts/limit-order-tranches',
+                                            ]
+                                        }
+                                    ],
+                                },
+                                'neutron/modules/dex/messages',
+                                'neutron/modules/dex/client',
+                            ]
+                        },
+                        {
                             label: 'Transfer',
                             type: 'category',
                             items: [
@@ -254,7 +283,8 @@ const sidebars = {
                                             type: 'category',
                                             items: [
                                                 'neutron/modules/3rdparty/osmosis/tokenfactory/overview',
-                                                'neutron/modules/3rdparty/osmosis/tokenfactory/messages'
+                                                'neutron/modules/3rdparty/osmosis/tokenfactory/messages',
+                                                'neutron/modules/3rdparty/osmosis/tokenfactory/params'
                                             ]
                                         },
                                         {
@@ -304,7 +334,15 @@ const sidebars = {
                 'tutorials/cosmwasm_wasmkit',
                 'tutorials/cosmwasm_ica',
                 'tutorials/cosmwasm_icq',
-                'tutorials/integration_tests'
+                'tutorials/integration_tests',
+                {
+                    label: 'Indexers',
+                    type: 'category',
+                    items: [
+                        'tutorials/indexers/intro',
+                        'tutorials/indexers/subquery',
+                    ]
+                }
             ],
         },
         {

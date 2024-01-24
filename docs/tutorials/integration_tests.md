@@ -8,7 +8,7 @@ There is a set of integration tests which cover main Neutron features. If you de
 
 ## Installation
 * `git clone git@github.com:neutron-org/neutron-integration-tests.git`
-* `git clone -b v1.0.4 git@github.com:neutron-org/neutron.git`
+* `git clone -b v2.0.0 git@github.com:neutron-org/neutron.git`
 * `git clone git@github.com:neutron-org/neutron-query-relayer.git`
 * `git clone -b v9.0.3 git@github.com:cosmos/gaia.git`
 * `cd neutron-integration-tests`
