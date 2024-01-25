@@ -14,7 +14,7 @@ A smart-contract can register two types of Interchain Query for particular chain
 
 > :warning: **IMPORTANT NOTE ABOUT KV-QUERIES**
 >
-> **Due to a [bug](https://github.com/cosmos/ics23/issues/134) in ICS23 package, it's currently impossible to query an empty or `nil` from a remote chain.**
+> **Due to a [bug](https://github.com/cosmos/ics23/issues/134) in ICS23 package, it's currently impossible to query an empty or `nil` value from a remote chain.**
 >
 > **Meaning if your KV-query is registered with key `K` and a value under this key is `nil` or empty, submission of such**
 > **KV result will fail due to IAVL-proof verification error: `failed to verify proof: empty value in membership proof`**
