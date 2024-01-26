@@ -61,7 +61,7 @@ And acknoledgement packet follows the way
 
 Using `SudoLimitWrapper` has two purposes:
 
-In case of error/expensive tx
+In case of error/expensive tx:
 
 1. Suppress the sudo handler error itself, and mark the ibc acknowledgement packet as received and processed. Other way, the error makes relayer send an acknowledgement again and again
 2. Limit the amount of gas available for sudo handler execution. Out of gas panic will later be captured by `sudolimitwrapper` and converted into an error.
