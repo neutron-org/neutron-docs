@@ -57,7 +57,7 @@ The interchaintxs module in neutrond configured the following way.
 Wasmd Sudo handler wrapped with [SudoLimitWrapper](../contract-manager/overview.md#sudolimitwrapper)
 
 And acknoledgement packet follows the way
-`OnAcknowledgementPacket` --> [sudolimitwrapper](../contract-manager/overview.md#sudolimitwrapper) --> `wasmd sudo handler`
+`OnAcknowledgementPacket` --> [SudoLimitErapper](../contract-manager/overview.md#sudolimitwrapper) --> `Wasmd Sudo handler`
 
 Using `sudolimitwrapper` has two purposes:
 
