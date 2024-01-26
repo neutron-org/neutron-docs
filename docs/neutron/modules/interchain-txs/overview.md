@@ -53,7 +53,7 @@ If you use interchaintxs module in your application and if your Sudo handler fai
 ## Sudo Handlers
 
 The interchaintxs module in neutrond configured the following way.
-wasmd sudo handler wrapped with [sudolimitwrapper](../contract-manager/overview.md#sudolimitwrapper)
+Wasmd Sudo handler wrapped with [SudoLimitWrapper](../contract-manager/overview.md#sudolimitwrapper)
 
 And acknoledgement packet follows the way
 `OnAcknowledgementPacket` --> [sudolimitwrapper](../contract-manager/overview.md#sudolimitwrapper) --> `wasmd sudo handler`
