@@ -61,23 +61,23 @@ And acknoledgement packet follows the way
 
 Using `SudoLimitWrapper` has two purposes:
 
-In case of error/expensive tx:
-
-1. Suppress the sudo handler error itself, and mark the ibc acknowledgement packet as received and processed. Other way, the error makes relayer send an acknowledgement again and again
+1. Suppress the sudo handler error itself, and mark the ibc acknowledgement packet as received and processed. Other way, the error makes relayer send an acknowledgement again and again. Information about an unsuccessfully processed ack is stored in [state](../contract-manager/state.md).
 2. Limit the amount of gas available for sudo handler execution. Out of gas panic will later be captured by `sudolimitwrapper` and converted into an error.
-3. Information about an unsuccessfully processed ack is stored in [state](../contract-manager/state.md).
 
 ## Failed interchain txs
 
 Not every interchaintx executes succesfully on a remote network. Some of them fails to execute with errors and then you get ibc acknowledgement with `Error` type. In this case, in order to get additional details about the transaction parameters as well as details about the error, you can use the commands `<binary> q interchain-accounts host packet-events <channel-id> <seq-id>`
 Where:
 
+- `binary` is a binary on the chain you are working with
 - `channel-id` is the id of the channel on the host side of the interchain accounts
 - `seq-id` - seq of the ibc message received on the host
 
-For example `gaiad q interchain-accounts host packet-events channel-736 1` is a transaction `fund community pool from neutron unclaimed airdrop` on `cosmoshub-4` chain. Because this command is just an alias for the transaction search functionality, it searches for the transaction using the following keys `recv_packet.packet_dst_channel = <channel-id> AND recv_packet.packet_dst_port = <port> AND recv_packet. packet_sequence = <seq-id>`. The node you are accessing may not have this transaction, due to the fact that it was included in the block a long time ago and it has already been removed by the pruning procedure.
+For example `gaiad q interchain-accounts host packet-events channel-736 1 --node https://cosmos-rpc.quickapi.com:443` is the transaction `fund community pool from neutron unclaimed airdrop` on `cosmoshub-4` chain. The node may remove tx from storage in future. You may need to find another one to get details.
 
-Unfortunately, to avoid the nondeterminism associated with error test generation, the error text is severely truncated by redact down to the error code without any additional details, before being saved to the state on the host interchain account side of the module.
+Because this command is just an alias for the transaction search functionality, it searches for the transaction using the following keys `recv_packet.packet_dst_channel = <channel-id> AND recv_packet.packet_dst_port = <port> AND recv_packet. packet_sequence = <seq-id>`. The node you are accessing may not have this transaction, due to the fact that it was included in the block a long time ago and it has already been removed by the pruning procedure.
+
+Unfortunately, to avoid the nondeterminism associated with error test generation, the error text is severely truncated by [redact down](https://github.com/cosmos/ibc-go/blob/v7.3.1/modules/apps/27-interchain-accounts/host/ibc_module.go#L115) to the error code without any additional details, before being saved to the state on the host interchain account side of the module.
 And even the `<binary> q interchain-accounts host packet-events` command is unable to show the full error text
 If you really lack information about the error for diagnostics, you can look at the validator/node logs at the moment of transaction execution. All necessary information will be there.
 
