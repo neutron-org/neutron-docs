@@ -59,7 +59,7 @@ Wasmd Sudo handler wrapped with [SudoLimitWrapper](../contract-manager/overview.
 And acknoledgement packet follows the way
 `OnAcknowledgementPacket` --> [SudoLimitErapper](../contract-manager/overview.md#sudolimitwrapper) --> `Wasmd Sudo handler`
 
-Using `sudolimitwrapper` has two purposes:
+Using `SudoLimitWrapper` has two purposes:
 
 In case of error/expensive tx
 
