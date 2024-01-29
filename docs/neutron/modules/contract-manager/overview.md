@@ -29,7 +29,7 @@ type WasmKeeper interface {
 It performs two important functions:
 
 1. Make sure that the sudo contract call does not use more gas than allowed by a chain [parameter](#gas-limitation). If the gas limit is exceeded and an out of gas panic occurs inside the sudo call, the wrapper intercepts the panic (only the out of gas panic is intercepted) and converts it to an error.
-2. Capture an error from the sudo handler of the interchaintxs module, either directly initiated by the contract or an error that was received from an out of gas panic and write the error with the data to Failures for further processing
+2. Capture an error from the sudo handler of the interchaintxs module, either directly initiated by the contract or an error that was received from an out of gas panic and write the error with the data to [Failures](#failures-details) for further processing
 
 ### Gas limitation
 
