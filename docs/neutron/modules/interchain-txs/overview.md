@@ -82,7 +82,6 @@ Because this command is just an alias for the transaction search functionality, 
 
 Unfortunately, to avoid the nondeterminism associated with error text generation, the error text is severely truncated by [redact down](https://github.com/cosmos/ibc-go/blob/v7.3.1/modules/apps/27-interchain-accounts/host/ibc_module.go#L115) to the error code without any additional details, before being saved to the state on the host interchain account side of the module.
 And even the `<binary> q interchain-accounts host packet-events` command is unable to show the full error text.
-If you really lack information about the error for diagnostics, you can look at the validator/node logs at the moment of transaction execution. All necessary information will be there.
 
 ## Relaying
 
