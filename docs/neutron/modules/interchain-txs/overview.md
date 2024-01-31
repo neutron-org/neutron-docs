@@ -62,7 +62,7 @@ And acknoledgement packet follows the way
 Using `SudoLimitWrapper` has two purposes:
 
 1. Suppress the sudo handler error itself, and mark the ibc acknowledgement packet as received and processed. Other way, the error makes relayer send an acknowledgement again and again. Information about an unsuccessfully processed ack is stored in [state](../contract-manager/state.md).
-2. Limit the amount of gas available for sudo handler execution. Out of gas panic will later be captured by `sudolimitwrapper` and converted into an error.
+2. Limit the amount of gas available for sudo handler execution. Out of gas panic will later be captured by `SudoLimitWrapper` and converted into an error.
 
 ## Failed interchain txs
 
