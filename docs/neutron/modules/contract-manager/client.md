@@ -113,7 +113,7 @@ neutrond q contractmanager failure-details [address] [failure_id]
 
 <details>
   <summary>Example</summary>
-  Returns failures for specific contract address:
+  Query the detailed error related to a contract's sudo call failure:
 
   ```shell
   neutrond q contractmanager failure-details neutron1nxshmmwrvxa2cp80nwvf03t8u5kvl2ttr8m8f43vamudsqrdvs8qqvfwpj 1
