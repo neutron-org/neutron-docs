@@ -104,7 +104,8 @@ Returns an exact error why contract failed to process certain ibc acknowledgemen
 > **Note**
 > If the node you are making query to either does not index transaction or already cleared the block with the wanted transaction, you get the error - `detailed failure error message not found in node events`. In this case you need to query a node, which:
 >
-> 1) Indexes transactions
+> 1) Indexes transactions.
+>
 > 2) Keeps block with wanted height.
 
 ```shell
