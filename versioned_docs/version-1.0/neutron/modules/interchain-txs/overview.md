@@ -55,8 +55,10 @@ This reserve gas is needed to guarantee that [Failure](../contract-manager/state
 
 ## Failed interchain txs
 
-Not every interchaintx executes succesfully on a remote network. Some of them fails to execute with errors and then you get ibc acknowledgement with `Error` type. In this case, in order to get additional details about the transaction parameters as well as details about the error, you can use the commands `<binary> q interchain-accounts host packet-events <channel-id> <seq-id>`
+Not every interchaintx executes succesfully on a remote network. Some of them fail to execute with errors and then you get ibc acknowledgement with `Error` type. In this case, in order to get additional details about the transaction parameters as well as details about the error, you can use the command:
+`<binary> q interchain-accounts host packet-events <channel-id> <seq-id>`
 Where:
+
 
 - `binary` is a binary on the chain you are working with
 - `channel-id` is the id of the channel on the host side of the interchain accounts
