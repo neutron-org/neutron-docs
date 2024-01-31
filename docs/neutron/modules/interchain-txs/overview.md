@@ -78,7 +78,7 @@ For example `gaiad q interchain-accounts host packet-events channel-736 1 --node
 Because this command is just an alias for the transaction search functionality, it searches for the transaction using the following keys `recv_packet.packet_dst_channel = <channel-id> AND recv_packet.packet_dst_port = <port> AND recv_packet. packet_sequence = <seq-id>`. The node you are accessing may not have this transaction, due to the fact that it was included in the block a long time ago and it has already been removed by the pruning procedure.
 
 Unfortunately, to avoid the nondeterminism associated with error text generation, the error text is severely truncated by [redact down](https://github.com/cosmos/ibc-go/blob/v7.3.1/modules/apps/27-interchain-accounts/host/ibc_module.go#L115) to the error code without any additional details, before being saved to the state on the host interchain account side of the module.
-And even the `<binary> q interchain-accounts host packet-events` command is unable to show the full error text
+And even the `<binary> q interchain-accounts host packet-events` command is unable to show the full error text.
 If you really lack information about the error for diagnostics, you can look at the validator/node logs at the moment of transaction execution. All necessary information will be there.
 
 ## Relaying
