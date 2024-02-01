@@ -66,22 +66,50 @@ Using `SudoLimitWrapper` has two purposes:
 
 ## Failed interchain txs
 
-Not every interchaintx executes succesfully on a remote network. Some of them fail to execute with errors and then you get ibc acknowledgement with `Error` type. In this case, in order to get additional details about the transaction parameters as well as details about the error, you can use the command:
+Not every interchaintx executes succesfully on a remote network. Some of them fail to execute with errors and then you get ibc acknowledgement with `Error` type. The error is passed into the caller contract via sudo call with SudoMsg::Error [varian](../../../tutorials/cosmwasm_ica.md#ibc-events)
 
+Unfortunately, to avoid the nondeterminism associated with error text generation, the error text is severely truncated by [redact down](https://github.com/cosmos/ibc-go/blob/v7.3.1/modules/apps/27-interchain-accounts/host/ibc_module.go#L115) to the error code without any additional details, before converting into AcknowledgementError.
+
+Find the error text is possible if host chain includes ibc-go v7.2.3+, v7.3.2+, v8.0.1+, v8.1+ which include patch [5541](https://github.com/cosmos/ibc-go/pull/5541)
 `<binary> q interchain-accounts host packet-events <channel-id> <seq-id>`
 
 Where:
 
-- `binary` is a binary on the chain you are working with
-- `channel-id` is the id of the channel on the host side of the interchain accounts
-- `seq-id` - seq of the ibc message received on the host
+- `binary` is a binary on the chain you are working with (the remote chain)
+- `channel-id` is the ID of the ICA's channel on the remote chain's side. You can find a couterparty channel-id with CLI command `neutrond q ibc channel end <src-port> <src-channel-id>`
+- `seq-id` - sequence ID of the IBC message received on the remove chain
 
-For example `gaiad q interchain-accounts host packet-events channel-736 1 --node https://cosmos-rpc.quickapi.com:443` is the transaction `fund community pool from neutron unclaimed airdrop` on `cosmoshub-4` chain. The node may remove tx from storage in future. You may need to find another one to get details.
+Output example (filtered events):
 
-Because this command is just an alias for the transaction search functionality, it searches for the transaction using the following keys `recv_packet.packet_dst_channel = <channel-id> AND recv_packet.packet_dst_port = <port> AND recv_packet. packet_sequence = <seq-id>`. The node you are accessing may not have this transaction, due to the fact that it was included in the block a long time ago and it has already been removed by the pruning procedure.
+```json
+{
+"type": "ibccallbackerror-ics27_packet",
+"attributes": [
+    {
+    "key": "ibccallbackerror-module",
+    "value": "interchainaccounts",
+    "index": true
+    },
+    {
+    "key": "ibccallbackerror-host_channel_id",
+    "value": "channel-2",
+    "index": true
+    },
+    {
+    "key": "ibccallbackerror-success",
+    "value": "false",
+    "index": true
+    },
+    {
+    "key": "ibccallbackerror-error",
+    "value": "invalid validator address: decoding bech32 failed: invalid separator index -1: invalid address",
+    "index": true
+    }
+]
+}
+```
 
-Unfortunately, to avoid the nondeterminism associated with error text generation, the error text is severely truncated by [redact down](https://github.com/cosmos/ibc-go/blob/v7.3.1/modules/apps/27-interchain-accounts/host/ibc_module.go#L115) to the error code without any additional details, before being saved to the state on the host interchain account side of the module.
-And even the `<binary> q interchain-accounts host packet-events` command is unable to show the full error text.
+On earlier versions of ibc-go it's barerly possible to get full text error due to [patch](https://github.com/cosmos/ibc-go/commit/fdbb508c1ca68811206d7175fb9e202c1611a43e)
 
 ## Relaying
 
