@@ -353,6 +353,19 @@ const sidebars = {
                 'deployment/mainnet',
             ],
         },
+        {
+            label: 'Other tools',
+            type: 'category',
+            items: [
+                {
+                    label: 'Rehearsal',
+                    type: 'category',
+                    items: [
+                        'other_tools/rehearsal/overview',
+                    ],
+                },
+            ],
+        },
     ]
 };
 
