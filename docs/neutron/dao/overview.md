@@ -9,10 +9,43 @@ parts:
 1. The Neutron DAO,
 2. Multiple subDAOs.
 
+<details>
+  <summary>Chain management</summary>
+
 For privileged actions (e.g., changing network parameters and making software update proposals) Neutron uses
 the [admin-module](https://github.com/Ethernal-Tech/admin-module) fork managed by the Informal team. This module allows
-to specify a list of admin addresses that are able to submit proposals that are automatically executed. Neutron DAO
-smart contract address is added as an admin during genesis, allowing the DAO to manage the network as it sees fit.
+to specify a list of admin addresses that are able to submit proposals that are automatically executed.
+
+The only address that is added to the admin module is the address of the **Chain manager** contract, which implements
+the **chain management model** with two types of permission strategies:
+
+1. **ALLOW_ALL**: gives a given address full access to the admin module, allowing to submit all possible types of
+   privileged messages;
+2. **ALLOW_ONLY**: allows a given address to submit privileged messages of a specific type, with further restrictions if
+   applicable (see below).
+
+For the **ALLOW_ONLY** model, the following types of privileged messages are supported:
+
+| Message type                  | Proposal semantics                                                                                                                                                               | Restrictions                                                                                                                                                    |
+|-------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `params.ParamChangeProposal`  | Legacy proposal type for changing parameters of modules that did not abandon the deprecated params module, e.g., the globalfee module.                                           | Subspace: allows to define the modules in which you can change the params. Key: allows to define what specific parameters can be changed within a given module. |
+| `module_name.MsgUpdateParams` | New-style parameter changes are executed by sending an MsgUpdateParams message to a specific module. Only the authorised address can execute them (e.g., the governance module). | Specific fields (== parameters) of the MsgUpdateParams message.                                                                                                 |
+| `cron.AddSchedule`            | Adds a new execution schedule to the CRON module.                                                                                                                                | —                                                                                                                                                               |
+| `cron.RemoveSchedule`         | Removes an execution schedule from the CRON module.                                                                                                                              | —                                                                                                                                                               |
+
+The following assignment of permission strategies is implemented:
+
+| Entity                       | Strategy                                           |
+|------------------------------|----------------------------------------------------|
+| Neutron DAO core contract    | **ALLOW_ALL**                                      |
+| Gas SubDAO timelock contract | **ALLOW_ONLY** [`globalfee.MinimumGasPricesParam`] |
+
+To enforce the chain management model, the Neutron DAO's pre-propose contract wraps all submitted proposal messages in
+the chain manager’s `ExecuteMessages` message. Same is true for all privileged SubDAOs.
+
+
+</details>
+
 
 ## Neutron DAO
 
@@ -61,13 +94,17 @@ tokens that correspond to a certain amount of LP tokens at a given height.
 Below is the list of Voting Vaults that will be available at launch:
 
 1. **Neutron Vault;**
-2. **Credits Vault** (virtual) — keeps track of the NTRN tokens that are vested in the [Credits](neutron/token-generation-event/credits/overview.md) contract. _You can not add
+2. **Credits Vault** (virtual) — keeps track of the NTRN tokens that are vested in
+   the [Credits](neutron/token-generation-event/credits/overview.md) contract. _You can not add
    tokens or remove tokens from this vault directly_;
-3. **Lockdrop Vault** (virtual) — keeps track of the NTRN tokens that are locked in the [Lockdrop](neutron/token-generation-event/lockdrop/overview.md) contract. You can not add
+3. **Lockdrop Vault** (virtual) — keeps track of the NTRN tokens that are locked in
+   the [Lockdrop](neutron/token-generation-event/lockdrop/overview.md) contract. You can not add
    tokens or remove tokens from this vault directly;
-4. **LP Vesting Vault** (virtual) — keeps track of the NTRN tokens that are vested in the [LP Vesting](neutron/token-generation-event/vesting-lp/overview.md) contract. You can not
+4. **LP Vesting Vault** (virtual) — keeps track of the NTRN tokens that are vested in
+   the [LP Vesting](neutron/token-generation-event/vesting-lp/overview.md) contract. You can not
    add tokens or remove tokens from this vault directly;
-5. **Investors Vault** (virtual) — keeps track of the NTRN tokens that are vested in the early [backers vesting contract](neutron/token-generation-event/investors-vesting/overview.md). You
+5. **Investors Vault** (virtual) — keeps track of the NTRN tokens that are vested in the
+   early [backers vesting contract](neutron/token-generation-event/investors-vesting/overview.md). You
    can not add tokens or remove tokens from this vault directly.
 
 ### Overrule proposals
