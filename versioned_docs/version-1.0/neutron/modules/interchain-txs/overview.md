@@ -98,7 +98,7 @@ Output example (filtered events):
 }
 ```
 
-On earlier versions of ibc-go it's barerly possible to get full text error due to [patch](https://github.com/cosmos/ibc-go/commit/fdbb508c1ca68811206d7175fb9e202c1611a43e)
+On earlier versions of ibc-go it's barely possible to get full text error due to [patch](https://github.com/cosmos/ibc-go/commit/fdbb508c1ca68811206d7175fb9e202c1611a43e)
 
 ## Relaying
 
