@@ -66,7 +66,7 @@ Using `SudoLimitWrapper` has two purposes:
 
 ## Failed interchain txs
 
-Not every interchaintx executes succesfully on a remote network. Some of them fail to execute with errors and then you get ibc acknowledgement with `Error` type. The error is passed into the caller contract via sudo call with SudoMsg::Error [varian](../../../tutorials/cosmwasm_ica.md#ibc-events)
+Not every interchaintx executes succesfully on a remote network. Some of them fail to execute with errors and then you get ibc acknowledgement with `Error` type. The error is passed into the caller contract via sudo call with SudoMsg::Error [variant](../../../tutorials/cosmwasm_ica.md#ibc-events)
 
 Unfortunately, to avoid the nondeterminism associated with error text generation, the error text is severely truncated by [redact down](https://github.com/cosmos/ibc-go/blob/v7.3.1/modules/apps/27-interchain-accounts/host/ibc_module.go#L115) to the error code without any additional details, before converting into AcknowledgementError.
 
@@ -76,8 +76,11 @@ Find the error text is possible if host chain includes ibc-go v7.2.3+, v7.3.2+, 
 Where:
 
 - `binary` is a binary on the chain you are working with (the remote chain)
-- `channel-id` is the ID of the ICA's channel on the remote chain's side. You can find a couterparty channel-id with CLI command `neutrond q ibc channel end <src-port> <src-channel-id>`
-- `seq-id` - sequence ID of the IBC message received on the remove chain
+- `seq-id` - sequence ID of the IBC message sent to the remove chain. The seq-id is returned to the contract in the [SubmitTx](./messages.md#response) response
+- `channel-id` is the ID of the ICA's channel on the remote chain's side. You should know it from registration [procedure](../../../tutorials/cosmwasm-ica.md#2-register-an-interchain-account) via `SudoMsg::OpenAck` from `counterparty_channel_id` field. If you missed it you can always get counterparty channel-id with CLI command `neutrond q ibc channel end <src-port> <src-channel-id>`
+- `src-channel-id` is the channel you intechain account associated with.
+- `src-port` is the channel you intechain account associated with.
+You should know both `src-channel-id` and `src-port` from registration [procedure](../../../tutorials/cosmwasm-ica.md#2-register-an-interchain-account). Also `src-port` is `icacontroller-<contract_address>.<ica_id>` where `ica_id` defined by you during ica registration.
 
 Output example (filtered events):
 
@@ -109,7 +112,10 @@ Output example (filtered events):
 }
 ```
 
-On earlier versions of ibc-go it's barerly possible to get full text error due to [patch](https://github.com/cosmos/ibc-go/commit/fdbb508c1ca68811206d7175fb9e202c1611a43e)
+On earlier versions of ibc-go it's barely possible to get full text error due to [patch](https://github.com/cosmos/ibc-go/commit/fdbb508c1ca68811206d7175fb9e202c1611a43e).
+
+In the IBC error acknowledgement you get ABCI error and a code, e.g. `codespace: wasm, code: 5`
+where codespace usually is `ModuleName`, and `code` is uniq code for the module. `codespace` and `code` pair uniq for the whole app. You can find the error description in source code. Usualy all the error of the module are [placed](https://github.com/CosmWasm/wasmd/blob/5f444cd9d393513e534cbfa9a0e938295c4e84e1/x/wasm/types/errors.go#L25) in `x/<module>/types/errors.go` where `module` is the module where the error was thrown
 
 ## Relaying
 
