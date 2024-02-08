@@ -65,7 +65,7 @@ Find the error text is possible if host chain includes ibc-go v7.2.3+, v7.3.2+, 
 Where:
 
 - `binary` is a binary on the chain you are working with (the remote chain)
-- `seq-id` - sequence ID of the IBC message sent to the remove chain. The seq-id is returned to the contract in the [SubmitTx](./messages.md#response) response
+- `seq-id` - sequence ID of the IBC message sent to the remote chain. The seq-id is returned to the contract in the [SubmitTx](./messages.md#response) response
 - `channel-id` is the ID of the ICA's channel on the remote chain's side. You should know it from registration [procedure](../../../tutorials/cosmwasm-ica.md#2-register-an-interchain-account) via `SudoMsg::OpenAck` from `counterparty_channel_id` field. If you missed it you can always get counterparty channel-id with CLI command `neutrond q ibc channel end <src-port> <src-channel-id>`
 - `src-channel-id` is the channel you intechain account associated with.
 - `src-port` is the port you interchain account is associated with.
