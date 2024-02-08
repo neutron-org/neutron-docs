@@ -64,7 +64,7 @@ Find the error text is possible if host chain includes ibc-go v7.2.3+, v7.3.2+, 
 
 Where:
 
-- `binary` is a binary on the chain you are working with (the remote chain)
+- `binary` is a binary of the chain you are working with (the remote chain)
 - `channel-id` is the ID of the ICA's channel on the remote chain's side. You can find a couterparty channel-id with CLI command `neutrond q ibc channel end <src-port> <src-channel-id>`
 - `seq-id` - sequence ID of the IBC message received on the remove chain
 
