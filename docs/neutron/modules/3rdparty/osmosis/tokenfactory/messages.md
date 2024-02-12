@@ -114,7 +114,7 @@ message MsgSetDenomMetadata {
 **State Modifications:**
 
 - Check that sender of the message is the admin of denom;
-- Modify `Metadata` state entry in bank module to change the metadata for the denom;
+- Modify `Metadata` state entry in `bank` module to change the metadata for the denom;
 
 
 
