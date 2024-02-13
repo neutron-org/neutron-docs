@@ -19,7 +19,7 @@ Thus, single and multiple-choice proposals are primarily consistent regarding pa
 ### Deposit
 
 The deposit amount is **1000 NTRN**. The user (or smart contract) must deposit 1000 NTRN to submit a proposal. The deposit is refunded according to the deposit refund policy.
-The deposit refund policy is "only_passed." It means that the deposit is refunded during the execution of the proposal if it's passed. If a proposal is rejected explicitly or hasn't got a quorum, the deposit stays on the pre-propose module's balance, and the DAO can withdraw it eventually.
+The deposit refund policy, "only_passed," means the deposit is refunded if the proposal passes and is executed. If a proposal is rejected explicitly or hasn't got a quorum, the deposit stays on the pre-propose module's balance, and the DAO can withdraw it eventually.
 
 ### Proposal submission restrictions
 
