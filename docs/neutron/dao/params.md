@@ -24,7 +24,7 @@ The deposit refund policy is "only_passed." It means that the deposit is refunde
 ### Proposal submission restrictions
 
 Open proposal submission is set to "true." It means that anyone can submit a proposal.
-The reasoning for this is that the voting power of Neutron DAO is based on NTRN tokens, and to become a DAO member, one has to have NTRN tokens (even 1untrn is enough). So, a proposal submission restricted to DAO members wouldn't make sense.
+The reasoning behind this is that the voting power in Neutron DAO is based on NTRN tokens; becoming a DAO member requires holding NTRN tokens, with even 1 NTRN being sufficient. So, a proposal submission restricted to DAO members wouldn't make sense.
 
 ### Voting period
 
