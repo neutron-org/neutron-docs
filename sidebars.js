@@ -41,6 +41,7 @@ const sidebars = {
                         'neutron/dao/overview',
                         'neutron/dao/overrules',
                         'neutron/dao/dao-dao-diff',
+                        'neutron/dao/params'
                     ],
                 },
                 {
