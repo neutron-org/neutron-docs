@@ -95,7 +95,7 @@ This threshold should be low by its nature: in controversial cases, the DAO shou
 Of course, it also creates a potential surface for sabotage. A whale big enough or a coordinated telegram group can effectively block any subDAO proposal.
 However, this situation isn't expected in the first place. Secondly, if it happens, it allows DAO to identify the issue of the DAO members' subset being non-aligned (or even malicious) and take the necessary measures to fix it.
 Since DAO has ultimate power over subDAOs, it's possible.
-Considering the subDAO mechanics as a tool to make DAO more efficient by unloading governance pressure, a low threshold is a reasonable trade-off. In the worst case, the DAO rolls back to the default situation, where the DAO itself makes all the decisions.
+Considering the subDAO mechanics as a tool to make DAO more efficient by alleviating governance pressure, a low threshold is a reasonable trade-off. In the worst case, the DAO rolls back to the default situation, where the DAO itself makes all the decisions.
 
 Unlike single and multi proposals, overrule proposals have an "absolute_percentage" type of threshold.
 It means that for a proposal to pass, it's only required to get the threshold of "yes" votes.
