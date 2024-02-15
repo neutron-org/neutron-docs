@@ -60,7 +60,7 @@ For proposals, it means that they can only be executed once the voting period is
 
 The "only_members_execute" parameter is set to "false." It means that anyone can execute a proposal after it passed. The reasoning for this is that the DAO is a decentralized organization, and it's not reasonable to restrict the execution of proposals to DAO members since one can become a DAO member pretty easily by buying 1untrn and depositing it to the NTRN vault. Moreover, it simplifies possible automation.
 
-The "close_proposal_on_execution_failure" option is set to "true."
+The `close_proposal_on_execution_failure` option is set to `true`.
 It means that if a proposal fails to execute, it becomes closed, and there's no way to make another try to execute it.
 It's done for security reasons. It's implied that proposals should be carefully tested before getting submitted to the DAO. Execution failure might be evidence of unexpected changes in the environment or a bug in external contracts. If that's the case, DAO probably doesn't want this proposal to stick until the environment changes.
 
