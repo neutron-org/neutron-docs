@@ -99,7 +99,7 @@ Considering the subDAO mechanics as a tool to make DAO more efficient by allevia
 
 Unlike single and multi proposals, overrule proposals have an `absolute_percentage` type of threshold.
 It means that for a proposal to pass, it's only required to get the threshold of `yes` votes.
-Even if the "no" votes are more than the "yes" votes, the proposal still passes if the "yes" votes are more than the threshold.
+Even if the `no` votes are more than the `yes` votes, the proposal still passes if the `yes` votes are more than the threshold.
 This is done to make overrule proposals pass (and reject the underlying subDAO proposal) even when the subDAO proposal is slightly controversial.
 
 ### Revoting
