@@ -64,7 +64,7 @@ The `close_proposal_on_execution_failure` option is set to `true`.
 It means that if a proposal fails to execute, it becomes closed, and there's no way to make another try to execute it.
 It's done for security reasons. It's implied that proposals should be carefully tested before getting submitted to the DAO. Execution failure might be evidence of unexpected changes in the environment or a bug in external contracts. If that's the case, DAO probably doesn't want this proposal to stick until the environment changes.
 
-For example, there is a malformed external smart contract call in proposal A, and it's discovered during this proposal execution failure. Proposal B was created to adapt it to the proper external smart contract interface and was successfully executed. However, proposal A isn't closed and can be re-executed. The admin of the external smart contract can adapt the interface to proposal A and re-execute it, while the DAO does not plan it. While this case is hypothetical, it's more secure to keep the "close_proposal_on_execution_failure" option as "true."
+For example, there is a malformed external smart contract call in proposal A, and it's discovered during this proposal execution failure. Proposal B was created to adapt it to the proper external smart contract interface and was successfully executed. However, proposal A isn't closed and can be re-executed. The admin of the external smart contract can adapt the interface to proposal A and re-execute it, while the DAO does not plan it. While this case is hypothetical, it's more secure to keep the `close_proposal_on_execution_failure` option as `true`.
 
 ## Overrule proposals
 
