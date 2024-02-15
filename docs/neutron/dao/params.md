@@ -111,7 +111,7 @@ The overrule proposal execution after the end of the voting period makes no sens
 ### Proposal execution parameters
 
 Proposal execution isn't restricted for the same reasons as single and multiple-choice proposals (there's no sense in restricting it + more automation opportunities).
-The "close_proposal_on_execution_failure" option is set to "true."
+The `close_proposal_on_execution_failure` option is set to `true`.
 Because overrule proposals are of a very special format and (in general) are created automatically, the chance of overrule proposals to fail is very low.
 Moreover, the failure during overrule proposal execution indicates some problems with DAO internals.
 In this case, the better strategy is restricting possible permissionless actions, so re-execution is disabled.
