@@ -97,7 +97,7 @@ However, this situation isn't expected in the first place. Secondly, if it happe
 Since DAO has ultimate power over subDAOs, it's possible.
 Considering the subDAO mechanics as a tool to make DAO more efficient by alleviating governance pressure, a low threshold is a reasonable trade-off. In the worst case, the DAO rolls back to the default situation, where the DAO itself makes all the decisions.
 
-Unlike single and multi proposals, overrule proposals have an "absolute_percentage" type of threshold.
+Unlike single and multi proposals, overrule proposals have an `absolute_percentage` type of threshold.
 It means that for a proposal to pass, it's only required to get the threshold of "yes" votes.
 Even if the "no" votes are more than the "yes" votes, the proposal still passes if the "yes" votes are more than the threshold.
 This is done to make overrule proposals pass (and reject the underlying subDAO proposal) even when the subDAO proposal is slightly controversial.
