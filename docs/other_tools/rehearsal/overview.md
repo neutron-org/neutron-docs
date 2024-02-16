@@ -37,7 +37,7 @@ This approach strengthens trust in the blockchain community and helps in prevent
 
 # Directory Structure
 
-- **`./snapshot` Directory:** This directory contains latest snapshot that was downloaded from https://snapshot.neutron.org/ (see `raw` snapshot). If you want to update snapshot simply delete contents of the `snapshot` directory and clear approprite docker volumes.
+- **`./snapshot` Directory:** This directory contains latest snapshot that was downloaded from [Neutron Network Snapshots Service](https://snapshot.neutron.org)(see `raw` snapshot). If you want to update snapshot simply delete contents of the `snapshot` directory and clear appropriate docker volumes.
 - **`./custom` Directory:** This directory contains scripts for fork genesis customization.
 
 ## Using CLI
