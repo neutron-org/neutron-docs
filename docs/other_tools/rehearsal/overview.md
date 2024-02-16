@@ -70,7 +70,7 @@ services:
       - 9090:9090
 ```
 
-where `snapshot` volume contains path to directory with snapshot (should be downloaded automatically), and `custom` contains path to directory with `config.sh` file which congtains custom modifications for forked image but you can omit it.
+where `snapshot` volume contains path to directory with snapshot (should be downloaded automatically), and `custom` contains path to directory with `config.sh` file which contains custom modifications for forked image but you can omit it.
 
 `MAIN_WALLET` set account with enough amount of funds on it for testing purposes.
 
