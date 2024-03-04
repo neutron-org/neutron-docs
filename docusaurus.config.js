@@ -40,6 +40,13 @@ const config = {
           routeBasePath: '/', // Serve the docs at the site's root
           remarkPlugins: [math],
           rehypePlugins: [katex],
+          lastVersion: 'current',
+          versions: {
+            current: {
+              label: '2.0',
+              path: '/',
+            },
+          },
         },
       }),
     ],
@@ -83,6 +90,11 @@ const config = {
             label: 'GitHub',
             position: 'right',
           },
+          {
+            type: 'docsVersionDropdown',
+            position: 'right',
+            dropdownActiveClassDisabled: true,
+          }
         ],
       },
       footer: {
@@ -106,7 +118,7 @@ const config = {
               },
               {
                 label: 'Discord',
-                href: '/', // TODO: add discord link when it's published
+                href: 'https://discord.neutron.org/',
               },
               {
                 label: 'Twitter',

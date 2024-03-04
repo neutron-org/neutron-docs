@@ -1,6 +1,6 @@
 # Events
 
-There is one important event that exists in the ICQ module, which is emitted after any action that happend to a registered Interchain Query:
+There is one important event that exists in the ICQ module, which is emitted after any action that happened to a registered Interchain Query:
 * `EventTypeNeutronMessage` - "neutron"
 
 ### `EventTypeNeutronMessage`

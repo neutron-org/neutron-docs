@@ -12,7 +12,7 @@ We are going to learn how to:
 4. Manage the registered Interchain Queries.
 
 > **Note:** this section assumes that you have basic knowledge of CosmWasm and have some experience in writing smart
-> contracts. You can check out CosmWasm [docs](https://docs.cosmwasm.com/docs/1.0/)
+> contracts. You can check out CosmWasm [docs](https://docs.cosmwasm.com/docs)
 > and [blog posts](https://medium.com/cosmwasm/writing-a-cosmwasm-contract-8fb946c3a516) for entry-level tutorials.
 
 > **Note:** before running any query creation transaction you need to top up your contract address. See [Interchain Queries Overview](../neutron/modules/interchain-queries/overview.md), "Query creation deposit" section.
@@ -30,30 +30,40 @@ libraries to your dependencies section:
 
 ```toml
 [dependencies]
-cosmwasm-std = { version = "1.0.0", features = ["staking"] }
+cosmwasm-std = "1.2.5"
 
 # Other standard dependencies...
 
 # This is a library that simplifies working with ICQ,
 # contains bindings for the Neutron ICQ module (messages, responses, etc.), some default Interchain Queries and provides
 # various helper functions.
-neutron-sdk = { path = "github.com/neutron-org/neutron/packages/neutron-sdk", default-features = false, version = "0.1.0" }
+neutron-sdk = "0.5.0"
 ```
 
 Now you can import the libraries:
 
 ```rust
-use neutron_sdk::bindings::msg::NeutronMsg;
-use neutron_sdk::bindings::query::{NeutronQuery, QueryRegisteredQueryResponse};
-use neutron_sdk::interchain_queries::queries::{
-    query_balance, query_registered_query,
+use neutron_sdk::{
+    bindings::{
+        msg::NeutronMsg,
+        query::{NeutronQuery, QueryRegisteredQueryResponse},
+        types::{Height, KVKey},
+    },
+    interchain_queries::{
+        new_register_balance_query_msg,
+        new_register_transfers_query_msg,
+        queries::{
+            get_registered_query, query_balance,
+        },
+        register_queries::new_register_interchain_query_msg,
+        types::{
+            QueryType, TransactionFilterItem, TransactionFilterOp, TransactionFilterValue,
+            COSMOS_SDK_TRANSFER_MSG_URL, RECIPIENT_FIELD,
+        },
+    },
+    sudo::msg::SudoMsg,
+    NeutronError, NeutronResult,
 };
-use neutron_sdk::interchain_queries::{
-    new_register_balance_query_msg,
-    new_register_transfers_query_msg,
-};
-use neutron_sdk::sudo::msg::SudoMsg;
-use neutron_sdk::{NeutronError, NeutronResult};
 ```
 
 ## 2. Register an Interchain Query
@@ -74,7 +84,7 @@ pub enum ExecuteMsg {
         connection_id: String,
         update_period: u64,
         recipient: String,
-        min_height: Option<u128>,
+        min_height: Option<u64>,
     }
 }
 
@@ -123,9 +133,11 @@ pub fn register_balance_query(
     denom: String,
     update_period: u64,
 ) -> NeutronResult<Response<NeutronMsg>> {
-    let msg = new_register_balance_query_msg(deps, env, connection_id, addr, denom, update_period)?;
+    let msg = new_register_balance_query_msg(connection_id, addr, denom, update_period)?;
+    // wrap into submessage to save {query_id, query_type} on reply that'll later be used to handle sudo kv callback
+    let submsg = SubMsg::reply_on_success(msg, BALANCES_REPLY_ID);
 
-    Ok(Response::new().add_message(msg))
+    Ok(Response::default().add_submessage(submsg))
 }
 
 pub fn register_transfers_query(
@@ -134,7 +146,7 @@ pub fn register_transfers_query(
     connection_id: String,
     recipient: String,
     update_period: u64,
-    min_height: Option<u128>,
+    min_height: Option<u64>,
 ) -> NeutronResult<Response<NeutronMsg>> {
     let msg = new_register_transfers_query_msg(
         deps,
@@ -146,6 +158,49 @@ pub fn register_transfers_query(
     )?;
 
     Ok(Response::new().add_message(msg))
+}
+
+#[entry_point]
+pub fn reply(deps: DepsMut, _: Env, msg: Reply) -> StdResult<Response> {
+    deps.api
+        .debug(format!("WASMDEBUG: reply msg: {:?}", msg).as_str());
+    match msg.id {
+        BALANCES_REPLY_ID => write_balance_query_id_to_reply_id(deps, msg),
+        _ => Err(StdError::generic_err(format!(
+            "unsupported reply message id {}",
+            msg.id
+        ))),
+    }
+}
+
+
+pub const KV_QUERY_ID_TO_CALLBACKS: Map<u64, QueryKind> = Map::new("kv_query_id_to_callbacks");
+
+// contains query kinds that we expect to handle in `sudo_kv_query_result`
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub enum QueryKind {
+    // Balance query
+    Balance,
+    // You can add your handlers to understand what query to deserialize by query_id in sudo callback
+}
+
+// save query_id to query_type information in reply, so that we can understand the kind of query we're getting in sudo kv call
+fn write_balance_query_id_to_reply_id(deps: DepsMut, reply: Reply) -> StdResult<Response> {
+    let resp: MsgRegisterInterchainQueryResponse = serde_json_wasm::from_slice(
+        reply
+            .result
+            .into_result()
+            .map_err(StdError::generic_err)?
+            .data
+            .ok_or_else(|| StdError::generic_err("no result"))?
+            .as_slice(),
+    )
+    .map_err(|e| StdError::generic_err(format!("failed to parse response: {:?}", e)))?;
+
+    // then in success reply handler we do this
+    KV_QUERY_ID_TO_CALLBACKS.save(deps.storage, resp.id, &QueryKind::Balance)?;
+
+    Ok(Response::default())
 }
 ```
 
@@ -163,7 +218,7 @@ In the snippet above, we create the `ExecuteMsg` enum that contains two `Registe
 And implement simple handlers `register_balance_query` and `register_transfers_query` for these messages. Each handler
 uses built-in helpers from Neutron-SDK to create necessary register messages: `new_register_balance_query_msg` and `new_register_transfers_query_msg`:
 * `new_register_balance_query_msg` - is a KV-query, therefore it creates an Interchain Query with necessary KV-keys to read
-from remote chain and build a full `Balance` response from KV-values (you can see a full implementation of the helper in the [SDK source code](https://github.com/neutron-org/neutron-sdk/blob/a47bfac69667da57f8bf6ea81c9f16240e145c6d/packages/neutron-sdk/src/interchain_queries/register_queries.rs#L61)):
+from remote chain and build a full `Balance` response from KV-values (you can see a full implementation of the helper in the [SDK source code](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/packages/neutron-sdk/src/interchain_queries/register_queries.rs#L52)):
 ```rust
 pub fn new_register_balance_query_msg(...) -> NeutronResult<NeutronMsg> {
     // convert bech32 encoded address to a bytes representation
@@ -181,7 +236,7 @@ pub fn new_register_balance_query_msg(...) -> NeutronResult<NeutronMsg> {
 }
 ```
 * `new_register_transfers_query_msg` - is a TX-query, therefore it creates an Interchain Query with necessary TX-filter 
-to receive only required transactions from remote chain (you can see a full implementation of the helper in the [SDK source code](https://github.com/neutron-org/neutron-sdk/blob/a47bfac69667da57f8bf6ea81c9f16240e145c6d/packages/neutron-sdk/src/interchain_queries/register_queries.rs#L95)):
+to receive only required transactions from remote chain (you can see a full implementation of the helper in the [SDK source code](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/packages/neutron-sdk/src/interchain_queries/register_queries.rs#L220)):
 ```rust
 pub fn new_register_transfers_query_msg(...) -> NeutronResult<NeutronMsg> {
     // in this case the function creates filter to receive only transactions with transfer msg in it with a particular recipient
@@ -195,7 +250,7 @@ pub fn new_register_transfers_query_msg(...) -> NeutronResult<NeutronMsg> {
 }
 ```
 
-> **Note:** Neutron SDK is shipped with a lot of helpers to register different Interchain Queries (you can find a full list [here](https://github.com/neutron-org/neutron-sdk/blob/main/packages/neutron-sdk/src/interchain_queries/register_queries.rs)).
+> **Note:** Neutron SDK is shipped with a lot of helpers to register different Interchain Queries (you can find a full list [here](https://github.com/neutron-org/neutron-sdk/blob/v0.6.0/packages/neutron-sdk/src/interchain_queries/v045/register_queries.rs)).
 > But if you don't find some particular register query helper in the SDK, you can always implement your own using implementations from SDK as a reference.
 > We encourage you to open pull requests with your query implementations to make Neutron SDK better and better!
 
@@ -225,9 +280,9 @@ pub fn query(deps: Deps<NeutronQuery>, env: Env, msg: QueryMsg) -> NeutronResult
 In the snippet above we create the `QueryMsg` enum that contains three msgs: `GetRegisteredQuery`, `Balance`, `GetTransfersNumber`, and a `query`
 entrypoint which handles the defined query msgs. 
 
-* the handler of `GetRegisteredQuery` uses [built-in SDK helper](https://github.com/neutron-org/neutron-sdk/blob/a47bfac69667da57f8bf6ea81c9f16240e145c6d/packages/neutron-sdk/src/interchain_queries/queries.rs#L51) `get_registered_query` to get all the information about
+* the handler of `GetRegisteredQuery` uses [built-in SDK helper](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/packages/neutron-sdk/src/interchain_queries/queries.rs#L67) `get_registered_query` to get all the information about
 any registered query by its id;
-* the handler of `Balance` is much more interesting. It uses [built-in SDK helper](https://github.com/neutron-org/neutron-sdk/blob/a47bfac69667da57f8bf6ea81c9f16240e145c6d/packages/neutron-sdk/src/interchain_queries/queries.rs#L87) `query_balance` to query interchain balance:
+* the handler of `Balance` is much more interesting. It uses [built-in SDK helper](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/packages/neutron-sdk/src/interchain_queries/queries.rs#L103) `query_balance` to query interchain balance:
 * the handler of `GetTransfersNumber` will be below in the [section about tx queries handling](#get-results-from-tx-queries).
 
 ```rust
@@ -264,10 +319,10 @@ pub fn query_kv_result<T: KVReconstruct>(
     KVReconstruct::reconstruct(&registered_query_result.result.kv_results)
 }
 ```
-It is built-in into SDK, and it uses `KVReconstruct` [trait](https://github.com/neutron-org/neutron-sdk/blob/a47bfac69667da57f8bf6ea81c9f16240e145c6d/packages/neutron-sdk/src/interchain_queries/types.rs#L148)
+It is built-in into SDK, and it uses `KVReconstruct` [trait](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/packages/neutron-sdk/src/interchain_queries/types.rs#L175)
 to reconstruct KV-storage values into a nice structure.
 Meaning any structure that implements `KVReconstruct` trait can be used with `query_kv_result` helper.
-In our case we want to reconstruct `Balances` from KV-values. `Balances` is a build-in SDK structure and it already [implements](https://github.com/neutron-org/neutron-sdk/blob/a47bfac69667da57f8bf6ea81c9f16240e145c6d/packages/neutron-sdk/src/interchain_queries/types.rs#L176)
+In our case we want to reconstruct `Balances` from KV-values. `Balances` is a build-in SDK structure and it already [implements](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/packages/neutron-sdk/src/interchain_queries/types.rs#L202)
 `KVReconstruct` trait, so no additional functionality is required from developers, you can just import and use it as it is:
 ```rust
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -324,6 +379,32 @@ pub fn sudo_kv_query_result(
             .as_str(),
     );
 
+    // store last KV callback update time
+    KV_CALLBACK_STATS.save(deps.storage, query_id, &env.block.height)?;
+
+    let query_kind = KV_QUERY_ID_TO_CALLBACKS.may_load(deps.storage, query_id)?;
+    match query_kind {
+        Some(QueryKind::Balance) => {
+            let balances: Balances = query_kv_result(deps.as_ref(), query_id)?;
+            let balances_str = balances
+                .coins
+                .iter()
+                .map(|c| c.amount.to_string() + c.denom.as_str())
+                .collect::<Vec<String>>()
+                .join(", ");
+            deps.api
+                .debug(format!("WASMDEBUG: sudo callback; balances: {:?}", balances_str).as_str());
+        }
+        None => {
+            deps.api.debug(
+                format!(
+                    "WASMDEBUG: sudo callback without query kind assigned; query_id: {:?}",
+                    query_id
+                )
+                .as_str(),
+            );
+        }
+    }
     Ok(Response::default())
 }
 ```
@@ -462,7 +543,8 @@ pub fn execute(
             query_id,
             new_keys,
             new_update_period,
-        } => update_interchain_query(query_id, new_keys, new_update_period),
+            new_recipient,
+        } => update_interchain_query(query_id, new_keys, new_update_period, new_recipinet),
         ExecuteMsg::RemoveInterchainQuery { query_id } => remove_interchain_query(query_id),
         ...
     }
@@ -472,8 +554,17 @@ pub fn update_interchain_query(
     query_id: u64,
     new_keys: Option<Vec<KVKey>>,
     new_update_period: Option<u64>,
+    new_recipient: Option<String>,
 ) -> NeutronResult<Response<NeutronMsg>> {
-    let update_msg = NeutronMsg::update_interchain_query(query_id, new_keys, new_update_period);
+    let new_filter = new_recipient.map(|recipient| {
+        vec![TransactionFilterItem {
+            field: RECIPIENT_FIELD.to_string(),
+            op: TransactionFilterOp::Eq,
+            value: TransactionFilterValue::String(recipient),
+        }]
+    });
+
+    let update_msg = NeutronMsg::update_interchain_query(query_id, new_keys, new_update_period, new_filter);
     Ok(Response::new().add_message(update_msg))
 }
 
@@ -486,3 +577,262 @@ pub fn remove_interchain_query(query_id: u64) -> NeutronResult<Response<NeutronM
 In the snippet above we add `UpdateInterchainQuery` and `RemoveInterchainQuery` to our `ExecuteMsg` enum and define corresponding
 handlers `update_interchain_query` and `remove_interchain_query` which, in short, just issue proper [Neutron msgs](/neutron/modules/interchain-queries/messages) to update and remove interchain query.
 In a real world scenario such handlers must have ownership checks.
+
+## Learning to make your own queries that are not in Neutron SDK
+
+Same as in the examples above, to make a query, you need to populate KVKey struct:
+```rust
+pub struct KVKey {
+    /// **path** is a path to the storage (storage prefix) where you want to read value by key (usually name of cosmos-packages module: 'staking', 'bank', etc.)
+    pub path: String,
+
+    /// **key** is a key you want to read from the storage
+    pub key: Binary,
+};
+```
+
+Let's say we want to make interchain query to wasmd module for contract info.
+First thing to understand is that you need to know exact version of that module on a chain that you want to query for data.
+Let's assume we'll query osmosis testnet (osmo-test-5 testnet).
+Here we discover that chain uses [`v16.0.0-rc2-testnet` version](https://github.com/osmosis-labs/testnets/tree/main/testnets/osmo-test-5#details).
+As we can see this version of osmosis uses [custom patched wasmd module](https://github.com/osmosis-labs/osmosis/blob/v16.0.0-rc2-testnet/go.mod#L320).
+
+Now that we have found [this wasmd module](https://github.com/osmosis-labs/wasmd/tree/v0.31.0-osmo-v16), let's understand how the cosmos-sdk stores data. To simplify: Cosmos SDK [store](https://docs.cosmos.network/main/core/store) keeps data as a self-balancing tree where key is an array of bytes. In that tree you can fetch list of elements that share a common prefix and a concrete element if you concatenate prefix with the element key.
+Usually we'll look into [keeper.go](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/keeper/keeper.go) and other files in the `keeper` package to see where and what kind of data it keeps in a store.
+Let's say we want to fetch contract info data. If you look for where contract info is being set, you'll find the store.Set [here](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/keeper/keeper.go#L749), that sets the contract info under the key `types.GetContractAddressKey(contractAddress)`.
+This function is imported using the keys file and it is a common place for storing all key creation helpers. It's usually placed at [/x/modulename/types/keys.go](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go).
+As we can see the key in store is simply [concatenation of ContractKeyPrefix ([]byte{0x02}) and address of the contract that you want to query](https://github.com/osmosis-labs/wasmd/blob/master/x/wasm/types/keys.go#L48).
+
+Now that we now how to create the key, we can rebuild it's creation using rust in cosmwasm:
+```rust
+// https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go#L28
+pub const CONTRACT_KEY_PREFIX: u8 = 0x02;
+
+fn create_contract_address_info_key(addr: AddressBytes) -> StdResult<AddressBytes> {
+    let mut key: Vec<u8> = vec![CONTRACT_KEY_PREFIX];
+    // https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go#L49
+    key.extend_from_slice(addr.as_slice());
+
+    Ok(key)
+}
+```
+
+After that we can write use this key in a function that will create message to register this query:
+```rust
+use neutron_sdk::interchain_queries::helpers::decode_and_convert;
+use neutron_sdk::interchain_queries::types::QueryPayload;
+use neutron_sdk::bindings::types::KVKey;
+use neutron_sdk::bindings::msg::NeutronMsg;
+use cosmwasm_std::Binary;
+
+// https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go#L13
+pub const WASM_STORE_KEY: &str = "wasm";
+
+pub fn new_register_contract_address_info_query_msg(
+    connection_id: String,
+    addr: String,
+    update_period: u64,
+) -> NeutronResult<NeutronMsg> {
+    // We need to decode a bech32 encoded string and converts to base64 encoded bytes.
+    // This is needed since addresses are stored this way in Cosmos SDK.
+    let converted_addr_bytes = decode_and_convert(addr.as_str())?;
+
+    let balance_key = create_contract_address_info_key(converted_addr_bytes)?;
+
+    let kv_key = KVKey {
+        // Path to store, in our case its store of wasmd module (https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/x/wasm/types/keys.go#L13)
+        path: WASM_STORE_KEY.to_string(),
+        key: Binary(balance_key),
+    };
+
+    // Construct NeutronMsg to register interchain query with our constructed kv_key key, connection_id and update_period
+    NeutronMsg::register_interchain_query(
+        QueryPayload::KV(vec![kv_key]),
+        connection_id,
+        update_period,
+    )
+}
+```
+
+By this point we've learned how to register a query with correct key.
+Now to get some meaningful results, you'll need to understand how to get query results.
+For that you'll need to implement reconstruction of results using `KVReconstruct` trait.
+This trait has one function `reconstruct` that takes raw `&[StorageValue]` as an input and returns `NeutronResult<YourStruct>`.
+Argument into the function will have as many items in it as you'll sent keys when registered the query.
+In our case it's length will be 1.
+
+These values are stored as a protobuf encoded value.
+To decode it we'll need to find or describe the type for the protobuf value in rust code.
+
+First find the protobuf type that is used to store the value.
+`ContractInfo` is stored [here](https://github.com/osmosis-labs/wasmd/blob/v0.31.0-osmo-v16/proto/cosmwasm/wasm/v1/types.proto#L75).
+There you have two choises:
+- Use already available implementations - for osmosis they have osmosis-std lib with our type [see this] (https://github.com/osmosis-labs/osmosis-rust/blob/v0.16.1/packages/osmosis-std/src/types/cosmwasm/wasm/v1.rs#L301);
+- Write your own prost protobuf implementation.
+
+First you'll need to import required libs:
+```toml
+osmosis-std = { version = "0.16.1" }
+```
+
+Then you can implement KVReconstruct like this:
+```rust
+use osmosis_std::types::cosmwasm::wasm::v1::ContractInfo as OsmosisContractInfo;
+use neutron_sdk::interchain_queries::types::KVReconstruct;
+use neutron_sdk::bindings::types::StorageValue;
+use neutron_sdk::{NeutronError, NeutronResult};
+
+impl KVReconstruct for ContractInfo {
+    fn reconstruct(storage_values: &[StorageValue]) -> NeutronResult<ContractInfo> {
+        // our query has one key, that means we expect only one item in the slice
+        if storage_values.len() != 1 {
+            return Err(Std(StdError::generic_err(format!(
+                "Not one storage value returned for ContractInfo response: {:?}",
+                storage_values.len()
+            ))));
+        }
+        // take first key
+        let kv = storage_values
+            .first()
+            .ok_or(Std(StdError::generic_err(format!(
+                "Not one storage value returned for ContractInfo response: {:?}",
+                storage_values.len()
+            ))))?;
+        // decode binary value into protobuf struct
+        let osmosis_res = OsmosisContractInfo::decode(kv.value.as_slice())?;
+
+        // construct result using decoded struct
+        let res = ContractInfo {
+            code_id: osmosis_res.code_id,
+            creator: osmosis_res.creator,
+            admin: osmosis_res.admin,
+            label: osmosis_res.label,
+            created: osmosis_res.created.map(|p| AbsoluteTxPosition {
+                block_height: p.block_height,
+                tx_index: p.tx_index,
+            }),
+            ibc_port_id: osmosis_res.ibc_port_id,
+        };
+
+        Ok(res)
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct ContractInfo {
+    // CodeID is the reference to the stored Wasm code
+    pub code_id: u64,
+    // Creator address who initially instantiated the contract
+    pub creator: String,
+    // Admin is an optional address that can execute migrations
+    pub admin: String,
+    // Label is optional metadata to be stored with a contract instance.
+    pub label: String,
+    // Created Tx position when the contract was instantiated.
+    pub created: Option<AbsoluteTxPosition>,
+    pub ibc_port_id: String,
+}
+
+// AbsoluteTxPosition is a unique transaction position that allows for global
+// ordering of transactions.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct AbsoluteTxPosition {
+    // BlockHeight is the block the contract was created at
+    pub block_height: u64,
+    // TxIndex is a monotonic counter within the block (actual transaction index,
+    // or gas consumed)
+    pub tx_index: u64,
+}
+```
+
+Now that our ContractInfo implements KVReconstruct, we can try to check that it's working properly.
+For that we can write something analogous to the [testing.rs test_balance_reconstruct_from_hex](https://github.com/neutron-org/neutron-sdk/blob/main/packages/neutron-sdk/src/interchain_queries/v045/testing.rs#L762).
+
+```rust
+use base64::prelude::*;
+use base64::Engine;
+
+pub const BALANCES_HEX_RESPONSE: &str = "TODO!"; // see the code below on how to find this value
+
+#[test]
+fn test_balance_reconstruct_from_hex() {
+    let bytes = hex::decode(BALANCES_HEX_RESPONSE).unwrap(); // decode hex string to bytes
+    let base64_input = BASE64_STANDARD.encode(bytes); // encode bytes to base64 string
+
+    let s = StorageValue {
+        storage_prefix: String::default(), // not used in reconstruct
+        key: Binary::default(),            // not used in reconstruct
+        value: Binary::from_base64(base64_input.as_str()).unwrap(),
+    };
+    let bank_balances = Balances::reconstruct(&[s]).unwrap();
+    assert_eq!(
+        bank_balances,
+        Balances {
+            coins: vec![StdCoin {
+                denom: String::from("stake"),
+                amount: Uint128::from(99999000u64),
+            }]
+        }
+    );
+```
+
+Not that to write a test we need an example of HEX response for our function that we'll use for `BALANCES_HEX_RESPONSE` constant.
+To do that you'll need to get value using `RPC_PATH/abci_query` GET request with your contructed key and store.
+``
+`data` is your KV key in HEX representation of the binary.
+To construct the key, you can run this code somewhere:
+```rust
+use neutron_sdk::interchain_queries::helpers::decode_and_convert;
+
+let addr = "osmo14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sq2r9g9";
+let converted_addr_bytes = decode_and_convert(addr).unwrap();
+// your newly written `create_contract_address_info_key` function
+let actual = create_contract_address_info_key(converted_addr_bytes).unwrap();
+println!("{:?}", hex::encode(actual))
+```
+
+Then using [abci_query with this key](https://rpc.testnet.osmosis.zone/abci_query?path=%22%2Fstore%2Fwasm%2Fkey%22&data=0x02ade4a5f5803a439835c636395a8d648dee57b2fc90d98dc17fa887159b69638b) you can write a test named `test_contract_info_reconstruct()` that will use returned value as an input to ContractInfo::reconstruct.
+
+See whole test implementation below:
+
+```rust
+use cosmwasm_std::Binary;
+use crate::bindings::types::StorageValue;
+use neutron_sdk::interchain_queries::helpers::decode_and_convert;
+use neutron_sdk::interchain_queries::types::KVReconstruct;
+
+const ABCI_KEY: &str = "02ade4a5f5803a439835c636395a8d648dee57b2fc90d98dc17fa887159b69638b";
+const ABCI_RESULT: &str = "CAESK29zbW8xcWxtd2prZzd1dTRhd2FqdzVhdW5jdGpkY2U5cTY1N2ozMm54czIiCk9zbW81X1Bhd3MqBAiy9g4=";
+
+#[test]
+fn test_contract_info_reconstruct() {
+    let value = base64::decode(ABCI_RESULT).unwrap();
+    let input = StorageValue {
+        storage_prefix: "wasm".to_string(),
+        key: Binary::from(vec![]),
+        value: Binary::from(value),
+    };
+    let contract_info = ContractInfo::reconstruct(&vec![input]);
+    assert!(contract_info.is_ok());
+    assert_eq!(contract_info.unwrap(), ContractInfo {
+        code_id: 1,
+        creator: "osmo1qlmwjkg7uu4awajw5aunctjdce9q657j32nxs2".to_string(),
+        admin: "".to_string(),
+        label: "Osmo5_Paws".to_string(),
+        created: Some(AbsoluteTxPosition { block_height: 244530, tx_index: 0 }),
+        ibc_port_id: "".to_string(),
+    })
+}
+```
+
+Great! Now you can query `ContractInfo` as simple as this:
+```rust
+use neutron_sdk::interchain_queries::query_kv_result;
+
+let contract_info: ContractInfo = query_kv_result(deps, query_id)?;
+```
+
+> WARN: please look into correct version of chain when you search on how keys and data model are stored. Otherwise key construction AND/OR data model can change and you'll fail to query data OR reconstruct it!
+> For example, you can see that in [v0.45.11-ics](https://github.com/cosmos/cosmos-sdk/blob/v0.45.11-ics/x/bank/keeper/send.go#L262) sets balance as `Coin` type and in [v0.46.11](https://github.com/cosmos/cosmos-sdk/blob/v0.46.11/x/bank/keeper/send.go#L290) it sets only the amount as a `String` type. So if you don't change the KVReconstruct for this value, it'll break.

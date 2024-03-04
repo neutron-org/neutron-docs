@@ -24,7 +24,7 @@ You'll have to clone several repositories into a single parent folder. Choose a 
 #### Clone Neutron repositories
 
 ```sh
-git clone https://github.com/neutron-org/neutron.git
+git clone -b v2.0.0 https://github.com/neutron-org/neutron.git
 git clone https://github.com/neutron-org/neutron-integration-tests.git
 git clone https://github.com/neutron-org/neutron-query-relayer.git
 ```

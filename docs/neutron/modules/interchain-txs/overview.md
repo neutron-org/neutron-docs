@@ -20,27 +20,102 @@ A smart contract that tries to register an interchain account or to execute an i
 to receive the IBC events related to these actions. The Interchain Transactions module solves this task by passing these
 IBC events to the smart contract using
 a [Sudo() call](https://github.com/CosmWasm/wasmd/blob/288609255ad92dfe5c54eae572fe7d6010e712eb/x/wasm/keeper/keeper.go#L453)
-and a custom [message scheme](https://github.com/neutron-org/neutron/blob/master/internal/sudo/sudo.go). You can find a
+and a custom [message scheme](https://github.com/neutron-org/neutron/blob/v2.0.0/x/contractmanager/types/sudo.go). You can find a
 complete list of IBC events for each module message in the [messages](./messages) section.
 
-> **Note**: if your Sudo handler fails, the acknowledgment won't be marked as processed inside the IBC module. This will
-> make most IBC relayers try to submit the acknowledgment over and over again. And since the ICA channels are `ORDERED`,
-> ACKs must be processed in the same order as corresponding transactions were sent, meaning no further acknowledgments
-> will be process until the previous one processed successfully.
+## Sudo errors handling
+
+Interchaintxs module configured the following way, all the errors from a sudo handler are being suppressed by [contract manager middleware](/neutron/modules/contract-manager/overview#sudolimitwrapper), sudo handler is limited with [LIMIT](/neutron/modules/contract-manager/overview#gas-limitation) amount of gas
+
+## Importing interchaintxs module
+
+If you use interchaintxs module in your application and if your Sudo handler fails, the acknowledgment will be marked as processed inside the IBC module anyway, without any notes about an error saved into the store. This will make the IBC relayers to successfully submit the acknowledgment and get the fees.
+
+> **Note** You can use a [contracts manager](/neutron/modules/contract-manager/overview#concepts) SudoLimitWrapper as a wrapper for SudoKeeper,
+> exactly like neutron [configured](#sudo-errors-handling) the module
 >
-> We strongly recommend developers to write Sudo handlers very carefully and keep them as simple as possible. If you do
+> **Note** We strongly recommend developers to write Sudo handlers very carefully and keep them as simple as possible. If you do
 > want to have elaborate logic in your handler, you should verify the acknowledgement data before making any state
 > changes; that way you can, if the data received with the acknowledgement is incompatible with executing the handler
 > logic normally, return an `Ok()` response immediately, which will prevent the acknowledgement from being resubmitted.
-
+>
 > **Note**: there is no dedicated event for a closed channel (ICA disables all messages related to closing the channels)
 > . Your channel, however, can still be closed if a packet timeout occurs; thus, if you are notified about a packet
 > timeout, you can be sure that the affected channel was closed. Please note that it is generally a good practice to set
 > the packet timeout for your interchain transactions to a really large value.
 >
->  If the timeout occurs anyway, you can just
+> If the timeout occurs anyway, you can just
 > execute [RegisterInterchainAccount message]( /neutron/modules/interchain-txs/messages#msgregisterinterchainaccount) again to
 > recover access to your interchain account.
+> **Note** Keep in mind, new channel is created
+>
+
+## Sudo Handlers
+
+The interchaintxs module in neutrond configured the following way.
+
+Wasmd Sudo handler wrapped with [SudoLimitWrapper](../contract-manager/overview.md#sudolimitwrapper)
+
+And acknoledgement packet follows the way
+`OnAcknowledgementPacket` --> [SudoLimitWrapper](../contract-manager/overview.md#sudolimitwrapper) --> `Wasmd Sudo handler`
+
+Using `SudoLimitWrapper` has two purposes:
+
+1. Suppress the sudo handler error itself, and mark the ibc acknowledgement packet as received and processed. Other way, the error makes relayer send an acknowledgement again and again. Information about an unsuccessfully processed ack is stored in [state](../contract-manager/state.md).
+2. Limit the amount of gas available for sudo handler execution. Out of gas panic will later be captured by `SudoLimitWrapper` and converted into an error.
+
+## Failed interchain txs
+
+Not every interchaintx executes succesfully on a remote network. Some of them fail to execute with errors and then you get ibc acknowledgement with `Error` type. The error is passed into the caller contract via sudo call with SudoMsg::Error [variant](../../../tutorials/cosmwasm_ica.md#ibc-events)
+
+Unfortunately, to avoid the nondeterminism associated with error text generation, the error text is severely truncated by [redact down](https://github.com/cosmos/ibc-go/blob/v7.3.1/modules/apps/27-interchain-accounts/host/ibc_module.go#L115) to the error code without any additional details, before converting into AcknowledgementError.
+
+Find the error text is possible if host chain includes ibc-go v7.2.3+, v7.3.2+, v8.0.1+, v8.1+ which include patch [5541](https://github.com/cosmos/ibc-go/pull/5541)
+`<binary> q interchain-accounts host packet-events <channel-id> <seq-id>`
+
+Where:
+
+- `binary` is a binary on the chain you are working with (the remote chain)
+- `seq-id` - sequence ID of the IBC message sent to the remote chain. The seq-id is returned to the contract in the [SubmitTx](./messages.md#response) response
+- `channel-id` is the ID of the ICA's channel on the remote chain's side. You should know it from registration [procedure](../../../tutorials/cosmwasm_ica.md#2-register-an-interchain-account) via `SudoMsg::OpenAck` from `counterparty_channel_id` field. If you missed it you can always get counterparty channel-id with CLI command `neutrond q ibc channel end <src-port> <src-channel-id>`
+- `src-channel-id` is the channel you intechain account associated with.
+- `src-port` is the port you interchain account is associated with.
+You should know both `src-channel-id` and `src-port` from registration [procedure](../../../tutorials/cosmwasm_ica.md#2-register-an-interchain-account). Also `src-port` is `icacontroller-<contract_address>.<ica_id>` where `ica_id` defined by you during ica registration.
+
+Output example (filtered events):
+
+```json
+{
+"type": "ibccallbackerror-ics27_packet",
+"attributes": [
+    {
+    "key": "ibccallbackerror-module",
+    "value": "interchainaccounts",
+    "index": true
+    },
+    {
+    "key": "ibccallbackerror-host_channel_id",
+    "value": "channel-2",
+    "index": true
+    },
+    {
+    "key": "ibccallbackerror-success",
+    "value": "false",
+    "index": true
+    },
+    {
+    "key": "ibccallbackerror-error",
+    "value": "invalid validator address: decoding bech32 failed: invalid separator index -1: invalid address",
+    "index": true
+    }
+]
+}
+```
+
+On earlier versions of ibc-go it's barely possible to get full text error due to [patch](https://github.com/cosmos/ibc-go/commit/fdbb508c1ca68811206d7175fb9e202c1611a43e).
+
+In the IBC error acknowledgement you get ABCI error and a code, e.g. `codespace: wasm, code: 5`
+where codespace usually is `ModuleName`, and `code` is uniq code for the module. `codespace` and `code` pair uniq for the whole app. You can find the error description in source code. Usualy all the error of the module are [placed](https://github.com/CosmWasm/wasmd/blob/5f444cd9d393513e534cbfa9a0e938295c4e84e1/x/wasm/types/errors.go#L25) in `x/<module>/types/errors.go` where `module` is the module where the error was thrown
 
 ## Relaying
 

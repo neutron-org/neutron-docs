@@ -18,8 +18,8 @@ The Relayer also listens to the Neutron's `NewBlockHeader` events that are used 
 ### Queries execution
 
 When the update time comes for a query, the Relayer runs the specified query on the remote chain:
-* in case of a KV-query, the Relayer just [reads](https://github.com/neutron-org/cosmos-query-relayer/blob/4542045ab24d2735890e70d4dc525677d5f30c8a/internal/proof/proof_impl/get_storage_values.go#L11)
-necessary KV-keys from the remote chain's storage with [Merkle Proofs](https://github.com/cosmos/cosmos-sdk/blob/ae77f0080a724b159233bd9b289b2e91c0de21b5/docs/interfaces/lite/specification.md). Neutron will need these proofs to [verify](https://github.com/neutron-org/neutron/blob/49c33ff43122cb12ee20e98493e0e2439a94f928/x/interchainqueries/keeper/msg_server.go#L217) validity of KV-results on results submission;
+* in case of a KV-query, the Relayer just [reads](https://github.com/neutron-org/neutron-query-relayer/blob/4542045ab24d2735890e70d4dc525677d5f30c8a/internal/proof/proof_impl/get_storage_values.go#L11)
+necessary KV-keys from the remote chain's storage with [Merkle Proofs](https://github.com/cosmos/cosmos-sdk/blob/ae77f0080a724b159233bd9b289b2e91c0de21b5/docs/interfaces/lite/specification.md). Neutron will need these proofs to [verify](https://github.com/neutron-org/neutron/blob/v2.0.0/x/interchainqueries/keeper/msg_server.go#L228) validity of KV-results on results submission;
 * in case of a TX-query, the Relayer makes a query to the target chain's [Tendermint RPC](https://docs.tendermint.com/v0.33/app-dev/indexing-transactions.html#querying-transactions) 
 to search transactions by message types, events and attributes which were emitted during transactions execution and were 
 [indexed](https://docs.tendermint.com/v0.33/app-dev/indexing-transactions.html) by Tendermint. More about Tx query parameters syntax [in the dedicated section](/neutron/modules/interchain-queries/messages#register-interchain-query). When Relayer submits transactions search results to Neutron chain, it **DOES NOT** include events into result (even if events were used for the query), because [events are not deterministic](https://github.com/tendermint/tendermint/blob/bff63aec83a4cfbb3bba253cfa04737fb21dacb4/types/results.go#L47), therefore they can break blockchain consensus. One more important thing about TX queries is that the Relayer is made the way it only searches for and submits transactions within the trusting period of the Tendermint Light Client. Trusting period is usually calculated as `2/3 * unbonding_period`. Read more about Tendermint Light Client and trusted periods [at this post](https://blog.cosmos.network/light-clients-in-tendermint-consensus-1237cfbda104).
@@ -104,7 +104,7 @@ As it is said in the Relayer's [readme](https://github.com/neutron-org/neutron-q
 Before running the Relayer application for production purposes, you need to create a wallet for the Relayer, top it up, and set up the configuration (refer to the [Configuration](#configuration) section). Also you will most likely need to deploy your own RPC nodes of Neutron and the chain of interest.
 
 - [How to deploy your own Neutron RPC node](/neutron/build-and-run/overview);
-- [How to how to prepare a target chain RPC node for Relayer's usage](/relaying/target-chain).
+- [How to prepare target chain RPC node for Relayer's usage](/relaying/target-chain).
 
 ### Setting up Relayer wallet
 

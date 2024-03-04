@@ -33,6 +33,7 @@ const sidebars = {
                 },
                 'neutron/contribute',
                 'neutron/consumer-chain-launch',
+                'neutron/neutron-core-releases',
                 {
                     label: 'Neutron DAO',
                     type: 'category',
@@ -151,6 +152,14 @@ const sidebars = {
                     type: 'category',
                     items: [
                         {
+                            label: 'Admin module',
+                            type: 'category',
+                            items: [
+                                'neutron/modules/admin-module/overview',
+                                'neutron/modules/admin-module/messages',
+                            ]
+                        },
+                        {
                             label: 'Interchain Transactions',
                             type: 'category',
                             items: [
@@ -170,6 +179,35 @@ const sidebars = {
                                 'neutron/modules/interchain-queries/client',
                                 'neutron/modules/interchain-queries/state',
                                 'neutron/modules/interchain-queries/events'
+                            ]
+                        },
+                        {
+                            label: 'Dex',
+                            type: 'category',
+                            items: [
+                                {
+                                    label: 'Overview',
+                                    type: 'category',
+                                    items: [
+                                        'neutron/modules/dex/overview/overview',
+                                        {
+                                            label: 'Concepts',
+                                            type: 'category',
+                                            items: [
+                                                'neutron/modules/dex/overview/concepts/amms-and-orderbooks',
+                                                'neutron/modules/dex/overview/concepts/liquidity-iteration',
+                                                'neutron/modules/dex/overview/concepts/liquidity-pools',
+                                                'neutron/modules/dex/overview/concepts/pool-reserves',
+                                                'neutron/modules/dex/overview/concepts/swaps',
+                                                'neutron/modules/dex/overview/concepts/fees',
+                                                'neutron/modules/dex/overview/concepts/ticks',
+                                                'neutron/modules/dex/overview/concepts/limit-order-tranches',
+                                            ]
+                                        }
+                                    ],
+                                },
+                                'neutron/modules/dex/messages',
+                                'neutron/modules/dex/client',
                             ]
                         },
                         {
@@ -224,6 +262,19 @@ const sidebars = {
                             type: 'category',
                             items: [
                                 {
+                                    label: 'Cosmos Hub',
+                                    type: 'category',
+                                    items: [
+                                        {
+                                            label: 'Global Fee',
+                                            type: 'category',
+                                            items: [
+                                                'neutron/modules/3rdparty/cosmoshub/globalfee/overview',
+                                            ]
+                                        }
+                                    ],
+                                },
+                                {
                                     type: 'category',
                                     label: 'Osmosis',
                                     items: [
@@ -232,7 +283,8 @@ const sidebars = {
                                             type: 'category',
                                             items: [
                                                 'neutron/modules/3rdparty/osmosis/tokenfactory/overview',
-                                                'neutron/modules/3rdparty/osmosis/tokenfactory/messages'
+                                                'neutron/modules/3rdparty/osmosis/tokenfactory/messages',
+                                                'neutron/modules/3rdparty/osmosis/tokenfactory/params'
                                             ]
                                         },
                                         {
@@ -276,10 +328,22 @@ const sidebars = {
             label: 'Tutorials',
             type: 'category',
             items: [
+                'tutorials/overview',
+                'tutorials/introduction_to_cosmwasm',
+                'tutorials/cosmwasm_remix',
+                'tutorials/cosmwasm_wasmkit',
                 'tutorials/cosmwasm_ica',
                 'tutorials/cosmwasm_icq',
                 'tutorials/integration_tests',
-                'tutorials/new_integration_tests'
+                'tutorials/new_integration_tests',
+                {
+                    label: 'Indexers',
+                    type: 'category',
+                    items: [
+                        'tutorials/indexers/intro',
+                        'tutorials/indexers/subquery',
+                    ]
+                }
             ],
         },
         {
@@ -288,6 +352,19 @@ const sidebars = {
             items: [
                 'deployment/testnet',
                 'deployment/mainnet',
+            ],
+        },
+        {
+            label: 'Other tools',
+            type: 'category',
+            items: [
+                {
+                    label: 'Rehearsal',
+                    type: 'category',
+                    items: [
+                        'other_tools/rehearsal/overview',
+                    ],
+                },
             ],
         },
     ]
