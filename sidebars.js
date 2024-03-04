@@ -278,7 +278,8 @@ const sidebars = {
             items: [
                 'tutorials/cosmwasm_ica',
                 'tutorials/cosmwasm_icq',
-                'tutorials/integration_tests'
+                'tutorials/integration_tests',
+                'tutorials/new_integration_tests'
             ],
         },
         {
