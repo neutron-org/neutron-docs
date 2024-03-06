@@ -125,9 +125,10 @@ be executed.
 
 There is a special *Security subDAO* that can only execute *pause()* methods on the following contracts:
 
-1. All other subDAOs;
-2. [Reserve](/docs/neutron/tokenomics/reserve/overview.md) contract;
-3. [Distribution](/docs/neutron/tokenomics/distribution/overview.md) contract;
+1. Main DAO;
+2. All other subDAOs;
+3. [Reserve](/docs/neutron/tokenomics/reserve/overview.md) contract;
+4. [Distribution](/docs/neutron/tokenomics/distribution/overview.md) contract;
 
 The Security subDAO implements a modified version of the single-choice proposal that only allows to send `pause()`
 messages to smart contracts.
