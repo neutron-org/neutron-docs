@@ -10,7 +10,7 @@ Cron module implement a mechanism to add cron schedules through governance propo
 
 ### High level Mechanism
 - add schedule using governance proposals [Permissioned - Main DAO];
-- remove schedule using governance proposals [Permissioned - Main DAO or Security DAO];
+- remove schedule using governance proposals [Permissioned - Main DAO or Security subDAO];
 - every given block period execute cosmwasm msgs for added schedules.
 
 ### General Mechanics
