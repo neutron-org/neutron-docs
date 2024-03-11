@@ -4,29 +4,7 @@
 
 This section provides a comprehensive overview of the significant changes and updates in Neutron, focusing on the upgrades to Cosmos SDK, Wasmd, and Neutron's internal modules.
 
-## [v3.0.0](https://github.com/neutron-org/neutron/releases/tag/v3.0.0)
-
-### Block SDK integration
-
-Neutron has integrated [Skip's Block SDK](https://docs.skip.money/blocksdk/overview) which allows builders to implement
-different MEV strategies on Neutron.
-
-You can find more info how to use Block SDK here: https://docs.skip.money/blocksdk/searcher-docs
-
-### CW bindings
-
-Neutron V3 contains convenient CW bindings (TODO: links/docs) for [Neutron DEX](neutron/modules/dex/overview/overview.md) module which allows to build smart-contract applications in a more
-efficient way avoiding tricky Stargate messages and queries.
-
-### Golang upgrade
-
-Neutron V3 uses [Golang 1.21](https://go.dev/doc/devel/release#go1.21.0)
-
 ## [v2.0.0](https://github.com/neutron-org/neutron/releases/tag/v2.0.0)
-
-### Dependencies upgrade
-
-Neutron V3 bumps a lot of source code dependencies to the latest versions (at the time of the release) to resolve security and maintaining issues.
 
 #### Cosmos SDK Upgrade
 

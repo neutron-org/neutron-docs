@@ -263,6 +263,19 @@ const sidebars = {
                             type: 'category',
                             items: [
                                 {
+                                    label: 'Skip',
+                                    type: 'category',
+                                    items: [
+                                        {
+                                            label: 'Block SDK',
+                                            type: 'category',
+                                            items: [
+                                                'neutron/modules/3rdparty/skip/block-sdk/overview',
+                                            ]
+                                        }
+                                    ],
+                                },
+                                {
                                     label: 'Cosmos Hub',
                                     type: 'category',
                                     items: [
