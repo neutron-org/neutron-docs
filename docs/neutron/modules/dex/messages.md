@@ -374,7 +374,7 @@ These estimates only consider the gas costs at the message server level and belo
 
 | FIXED_GAS | PER_TICK_GAS |
 |-----------|--------------|
-| 24992     | N/A          |
+| `24992`     | `N/A`          |
 
 ### CancelLimitOrder
 
