@@ -28,7 +28,7 @@ $$newShares = \frac{valueDeposited \cdot totalShares}{valueTotal}$$
 
 By default the `autoswap` option is enabled, which allows use to deposit their full deposit amount.  Autoswap provides a mechanism for users to deposit the entirety of their specified deposit amounts by paying a small fee. The fee for performing an autoswap is deducted from the total number of shares the the user is issued. When calculating share issuance the same formula as above is used for the balanced portion of the deposit, with the following formula use to calculate the shares issues that would unbalance the pool:
 
-$$additionalShares = left_0 \cdot p(-fee) + left_1 \cdot p(i-fee)$$ 
+$$additionalShares = left_0 \cdot p(-fee) + left_1 \cdot p(i-fee)$$
 
 
 
@@ -249,7 +249,7 @@ message MsgCancelLimitOrder {
 
 ## Withdraw Filled Limit Order
 
-### Overview 
+### Overview
 Once a limit order has been filled – either partially or in its entirety, it can be withdrawn at any time. Withdrawing from a limit order credits all available proceeds to the user. Withdraw can be called on a limit order multiple times as new proceeds become available. Withdraw Filled Limit Order Message
 
 ### Withdraw Filled Limit Order Message
@@ -338,3 +338,45 @@ message Params {
 |-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `FeeTiers` uint64           | Fee tiers is the list of allowable fees that can be used for LP deposits                                                                                                                                                                                |
 | `MaxTrueTakerSpread` string | max true taker spread is the maximum difference in price between the stated tick price and the actual price (after rounding) given to the taker. Swaps in pools that result in a price difference greater than `max_true_taker_spread` will be aborted. |
+
+
+# Gas Estimates
+
+Below are basic gas estimates for various Dex operations. Depending on the exact state of the dex and the inputs of the message being sent real gas costs can vary substantially. For operations that touch multiple ticks the gas cost can estimated using the formula: $$gasUsed = fixedGasCost + perTickGas*nTicks$$. These estimates only consider the gas costs at the message server level and below; application level (ie. AnteHandler) gas costs are not included.
+
+### Deposit
+
+| CASE                     | FIXED_GAS | PER_TICK_GAS |
+|--------------------------|-----------|--------------|
+| New pools                | 21825     | 48076        |
+| Adding to existing pools | 19069     | 39100        |
+
+*assumes single-sided deposits
+
+### Withdrawal
+
+| FIXED_GAS | PER_TICK_GAS |
+|-----------|--------------|
+| 21825     | 32215        |
+
+
+### PlaceLimitOrder
+
+| CASE                     | FIXED_GAS | PER_TICK_GAS |
+|--------------------------|-----------|--------------|
+| Taker only limit order   | 44213     | 7779         |
+| Maker only GTC           | 31095     | N/A          |
+| Maker only JIT           | 48095     | N/A          |
+| Maker only GoodTil       | 49107     | N/A          |
+
+### WithdrawLimitOrder
+
+| FIXED_GAS | PER_TICK_GAS |
+|-----------|--------------|
+| 24992     | N/A          |
+
+### CancelLimitOrder
+
+| FIXED_GAS | PER_TICK_GAS |
+|-----------|--------------|
+| 25451     | N/A          |
