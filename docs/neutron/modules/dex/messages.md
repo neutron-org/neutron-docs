@@ -358,7 +358,7 @@ These estimates only consider the gas costs at the message server level and belo
 
 | FIXED_GAS | PER_TICK_GAS |
 |-----------|--------------|
-| 21825     | 32215        |
+| `21825`     | `32215`        |
 
 
 ### PlaceLimitOrder
