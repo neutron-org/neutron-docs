@@ -167,15 +167,15 @@ Fill-or-Kill limit orders are maker limit orders that either successfully swap 1
 
 Immediate-or-Cancel limit orders are maker orders that will swap as much as of the `AmountIn` as possible given available liquidity above the supplied `TickIndex`. Unlike Fill-or-Kill orders they will still successfully complete even if they are only able to partially trade through the `AmountIn` at the `TickIndex` or better.
 
-#### GOOD\_TIL\_CANCELLED&#x20;
+#### GOOD\_TIL\_CANCELLED;
 
 Good-til-Cancelled limit orders are hybrid maker and taker limit orders. They will attempt to trade the supplied `AmountIn` at the `TickIndex` or better. However, if the total `AmountIn` cannot be traded at the limit price they remaining amount will be placed as a maker limit order. The proceeds from the taker portion are deposited into the user’s account immediately, however, the proceeds from the maker portion must be explicitly withdrawn via WithdrawLimitOrder.
 
-#### GOOD\_TIL\_TIME&#x20;
+#### GOOD\_TIL\_TIME;
 
 Good-til-Time limit order function exactly the same as Good-til-Cancelled limit orders first trying to trade as a taker limit order and then placing any remaining amount as a maker limit order. However, the maker portion of the limit order has a specified `ExpirationTime. After the` ExpirationTime\` the order will be cancelled and can no longer be traded against. When withdrawing a Good-til-Time limit order the user will receive both the successfully traded portion of the limit order (TokenOut) as well as any remaining untraded amount (TokenIn).
 
-#### JUST\_IN\_TIME&#x20;
+#### JUST\_IN\_TIME;
 
 Just-in-Time limit orders are an advanced maker limit order order that provides tradeable liquidity for exactly one block. At the end of the same block in which the Just-in-Time order was submitted the order is canceled and any untraded portion will no longer be usable as active liquidity.
 
@@ -271,7 +271,7 @@ message MsgWithdrawFilledLimitOrder {
 
 ### Overview
 
-Withdraw is used to redeem PoolShares for the user’s pro-rata portion of tokens within a liquidity pool. Users can withdraw from a pool at any time. When Withdrawing from a pool they will receive Token0 and Token1 in the same ratio as what is currently present in the pool. When withdrawing the users PoolShares are burned and their account is credited with the withdrawn tokens.&#x20;
+Withdraw is used to redeem PoolShares for the user’s pro-rata portion of tokens within a liquidity pool. Users can withdraw from a pool at any time. When Withdrawing from a pool they will receive Token0 and Token1 in the same ratio as what is currently present in the pool. When withdrawing the users PoolShares are burned and their account is credited with the withdrawn tokens.;
 
 ### Withdraw Message
 
