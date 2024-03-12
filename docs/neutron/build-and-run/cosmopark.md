@@ -31,12 +31,12 @@ git clone https://github.com/neutron-org/neutron-query-relayer.git
 
 #### Clone and prepare Gaia
 
-We use the Gaia network as a target network for interchain operations. We use v9.0.3 for the tests.
+We use the Gaia network as a target network for interchain operations. We use v14.0.0 for the tests.
 
 ```sh
 git clone https://github.com/cosmos/gaia.git
 cd gaia
-git checkout v9.0.3
+git checkout v14.0.0
 ```
 
 ### 3. Build images

@@ -24,17 +24,17 @@ make install
 
 ### 2. Install Gaia
 
-1. clone gaia: `git clone -b v9.0.3 https://github.com/cosmos/gaia.git`
+1. clone gaia: `git clone -b v14.0.0 https://github.com/cosmos/gaia.git`
 2. `cd gaia`
-3. for some reason, gaia v9.0.3 checks if you have go v1.18 installed,
-   not newer, not older, however, it builds fine with go v1.20, so, before
+3. for some reason, gaia v14.0.0 checks if you have go v1.20 installed,
+   not newer, not older, however, it builds fine with newer versions, so, before
    running `make install`, you will have to edit gaia's Makefile on line 110
    like this:
 ```diff
 -$(BUILD_TARGETS): check_version go.sum $(BUILDDIR)/
 +$(BUILD_TARGETS): go.sum $(BUILDDIR)/
 ```
-4. finally, run `make install`
+4. run `make install`
 
 ### 3. Install Hermes
 
