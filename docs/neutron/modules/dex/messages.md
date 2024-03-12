@@ -349,7 +349,7 @@ These estimates only consider the gas costs at the message server level and belo
 
 | CASE                     | FIXED_GAS | PER_TICK_GAS |
 |--------------------------|-----------|--------------|
-| New pools                | 21825     | 48076        |
+| New pools                | `21825`     | `48076`        |
 | Adding to existing pools | 19069     | 39100        |
 
 *assumes single-sided deposits
