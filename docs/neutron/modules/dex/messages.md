@@ -368,7 +368,7 @@ These estimates only consider the gas costs at the message server level and belo
 | Taker only limit order   | `44213`     | `7779`         |
 | Maker only GTC           | `31095`     | `N/A`          |
 | Maker only JIT           | `48095`     | `N/A`          |
-| Maker only GoodTil       | 49107     | N/A          |
+| Maker only GoodTil       | `49107`     | `N/A`          |
 
 ### WithdrawLimitOrder
 
