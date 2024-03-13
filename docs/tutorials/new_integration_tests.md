@@ -20,7 +20,7 @@ Contracts2ts – is a tool that allows to generate typescript clients for set of
 6. `yarn`
 7. `yarn build-images` - Build docker images for the networks used
 7. `yarn build-ts-client` - Build TS client for your contracts
-8. Update the tests in `src/testcases` folder
+8. Implement you own tests in the `src/testcases` folder. The `pump` test files are examples which can be removed
 9. `yarn test`
 
 ## What's inside the tests
