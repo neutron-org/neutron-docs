@@ -1,4 +1,4 @@
-# Improved integration tests for smart-contract developers
+# Integration tests for smart-contract developers
 
 There is an [improved version of integration tests framework](https://github.com/hadronlabs-org/demo-integration-tests) which is used for testing new smart contracts. It is based on top of [Cosmopark](https://github.com/neutron-org/cosmopark/) and [Contracts2ts](https://github.com/neutron-org/contracts2ts). 
 
@@ -23,13 +23,13 @@ Contracts2ts – is a tool that allows to generate typescript clients for set of
 8. Implement you own tests in the `src/testcases` folder. The `pump` test files are examples which can be removed
 9. `yarn test`
 
-## What's inside the tests
+## What's inside the tests (`integration_tests` folder)
 
-`testSuite.ts` contains configuration of the networks used with defined network params and docker image names.
+`src/testSuite.ts` contains configuration of the networks used with defined network params and docker image names.
 
-`testcases` folder contains the tests for the contracts. Each test is a separate file with a set of tests for a contract. Please check the existing tests to understand how to write your own. In the `beforeAll` method you can see the configuration of the networks and the deployment of the contracts.
+`src/testcases` folder contains the tests for the contracts. Each test is a separate file with a set of tests for a contract. Please check the existing tests to understand how to write your own. In the `beforeAll` method you can see the configuration of the networks and the deployment of the contracts.
 
-`vite.config.ts` contains of the configuration for the tests.
+`src/vite.config.ts` contains of the configuration for the tests.
 
 ## Environment variables
 

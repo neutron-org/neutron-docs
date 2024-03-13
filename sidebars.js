@@ -334,8 +334,8 @@ const sidebars = {
                 'tutorials/cosmwasm_wasmkit',
                 'tutorials/cosmwasm_ica',
                 'tutorials/cosmwasm_icq',
-                'tutorials/integration_tests',
-                'tutorials/new_integration_tests',
+                { label: 'Chain integration tests', type: 'doc', id: 'tutorials/integration_tests' },
+                { label: 'Smart-contracts integration tests', type: 'doc', id: 'tutorials/new_integration_tests' },
                 {
                     label: 'Indexers',
                     type: 'category',
