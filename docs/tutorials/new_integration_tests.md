@@ -25,7 +25,7 @@ Contracts2ts – is a tool that allows to generate typescript clients for set of
 
 ## What's inside the tests
 
-`testSuite.ts` contains of configuration of the networks used with defined network params and docker image names.
+`testSuite.ts` contains configuration of the networks used with defined network params and docker image names.
 
 `testcases` folder contains the tests for the contracts. Each test is a separate file with a set of tests for a contract. Please check the existing tests to understand how to write your own. In the `beforeAll` method you can see the configuration of the networks and the deployment of the contracts.
 
