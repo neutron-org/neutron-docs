@@ -17,7 +17,7 @@ To ensure that the state of the contract is consistent, the call to the sudo han
 
 ## SudoLimitWrapper
 
-[SudoLimitWrapper](https://github.com/neutron-org/neutron/blob/v2.0.0/x/contractmanager/ibc_middleware.go#L14) is a middleware wrapper with interface
+[SudoLimitWrapper](https://github.com/neutron-org/neutron/blob/v2.0.3/x/contractmanager/ibc_middleware.go#L14) is a middleware wrapper with interface
 
 ```go
 type WasmKeeper interface {

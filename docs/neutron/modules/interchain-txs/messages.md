@@ -28,17 +28,17 @@ If a contract with the address `neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl
 </details>
 
 <details> 
-  <summary> Neutron v2.0.0 update: Fee Implementation for ICA Registration</summary>
+  <summary> Neutron V2 update: Fee Implementation for ICA Registration</summary>
 
-As of [Neutron v2.0.0](https://github.com/neutron-org/neutron/releases/tag/v2.0.0), we have introduced a new fee structure for the registration of Interchain Accounts (ICAs). Please be aware of the following updates:
+As of [Neutron V2](https://github.com/neutron-org/neutron/releases/tag/v2.0.0), we have introduced a new fee structure for the registration of Interchain Accounts (ICAs). Please be aware of the following updates:
 
 - **[Minimum Fee (minFee)](https://github.com/neutron-org/neutron/blob/c6df465e5f83a811fd1cc98b6ebbf677a55ea21c/x/interchaintxs/types/params.pb.go#L32):** A minimum fee is now required for all new ICA registrations. This fee goes directly to the `FeeCollector` with purpose of preventing spam.
 
 - **`FeeCollector Beneficiary`:** The `FeeCollector` is the designated recipient of the new registration fees, ensuring the economic sustainability of the network. This is the Neutron DAO at the moment.
 
 - **Backwards Compatibility Assurance:**
-  - Contracts and ICAs established with contracts, stored on _Neutron_ before v2.0.0 [will **not**](https://github.com/neutron-org/neutron/blob/c6df465e5f83a811fd1cc98b6ebbf677a55ea21c/x/interchaintxs/keeper/msg_server.go#L51) incur the new registration fee.
-  - This update is fully compatible with previous [Neutron v1 version](https://github.com/neutron-org/neutron/releases/tag/v1.0.4), guaranteeing a smooth transition and no disruption to existing contracts and services.
+  - Contracts and ICAs established with contracts, stored on Neutron before [V2](https://github.com/neutron-org/neutron/releases/tag/v2.0.0) [will **not**](https://github.com/neutron-org/neutron/blob/c6df465e5f83a811fd1cc98b6ebbf677a55ea21c/x/interchaintxs/keeper/msg_server.go#L51) incur the new registration fee.
+  - This update is fully compatible with previous [Neutron V1 version](https://github.com/neutron-org/neutron/releases/tag/v1.0.4), guaranteeing a smooth transition and no disruption to existing contracts and services.
 
 ICA's remote address generation concatenates connection identifier and port identifier to use them as the derivation key for the new account:
 
