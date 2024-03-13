@@ -8,7 +8,7 @@ Cosmopark – is a tool that allows to run multiple networks on the same machine
 
 ## Contracts2ts
 
-Contracts2ts – is a tool that allows to generate typescript clients for set of  contracts. It uses json generated schemas from contracts with `write_api` method.
+Contracts2ts – is a tool that allows to generate typescript clients for set of contracts. It uses json generated schemas from contracts with `write_api` method.
 
 ## How to use
 
