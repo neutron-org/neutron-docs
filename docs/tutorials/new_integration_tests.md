@@ -13,7 +13,7 @@ Contracts2ts – is a tool that allows to generate typescript clients for set of
 ## How to use
 
 1. Clone the [repository](https://github.com/hadronlabs-org/demo-integration-tests)
-2. Replace `contracts` folder with your contracts
+2. Place your own contracts source code in the `contracts` folder. The `pump` contract is just an example which can be removed
 3. Run `make schema` to generate json schemas for your contracts
 4. `make build` - Build your contracts
 5. `cd integration-tests`
