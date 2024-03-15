@@ -1,4 +1,4 @@
-# Integration tests for smart-contract developers
+# Integration tests for smart contracts
 
 There is an [improved version of integration tests framework](https://github.com/hadronlabs-org/demo-integration-tests) which is used for testing new smart contracts. It is based on top of [Cosmopark](https://github.com/neutron-org/cosmopark/) and [Contracts2ts](https://github.com/neutron-org/contracts2ts). 
 
