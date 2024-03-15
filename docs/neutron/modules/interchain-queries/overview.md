@@ -29,13 +29,13 @@ A smart-contract can register two types of Interchain Query for particular chain
 
 
 
-ICQ Relayer keeps track of registered Interchain Queries by querying all existed ICQs at the start of work and by subscribing on [Update](https://github.com/neutron-org/neutron/blob/v2.0.0/x/interchainqueries/keeper/msg_server.go#L305) and [Delete](https://github.com/neutron-org/neutron/blob/v2.0.0/x/interchainqueries/keeper/msg_server.go#L321) events which are emitted in corresponding Neutron handlers. When the ICQ Relayer sees that it's time to perform an interchain query, it makes a necessary RPC call to a remote chain and makes the results available for the Neutron's smart contracts by submitting the result to the module. Read more about it at the [Relayer's page](/relaying/icq-relayer#overview).
+ICQ Relayer keeps track of registered Interchain Queries by querying all existed ICQs at the start of work and by subscribing on [Update](https://github.com/neutron-org/neutron/blob/v2.0.3/x/interchainqueries/keeper/msg_server.go#L305) and [Delete](https://github.com/neutron-org/neutron/blob/v2.0.3/x/interchainqueries/keeper/msg_server.go#L321) events which are emitted in corresponding Neutron handlers. When the ICQ Relayer sees that it's time to perform an interchain query, it makes a necessary RPC call to a remote chain and makes the results available for the Neutron's smart contracts by submitting the result to the module. Read more about it at the [Relayer's page](/relaying/icq-relayer#overview).
 
 Neutron verifies the data and processes the query result depending on the interchain query type:
 * in case of a KV-query, the ICQ module saves the result into module's storage, and passed the query id to the contract's
-[SudoKVQueryResult](https://github.com/neutron-org/neutron/blob/v2.0.0/x/contractmanager/keeper/sudo.go#L211) [handler](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/contracts/neutron_interchain_queries/src/contract.rs#L385);
+[SudoKVQueryResult](https://github.com/neutron-org/neutron/blob/v2.0.3/x/contractmanager/keeper/sudo.go#L211) [handler](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/contracts/neutron_interchain_queries/src/contract.rs#L385);
 * in case of a TX-query, the ICQ module **does not** save the result to the storage, finds the contract that registered the query,
-and passes the full result to the contract's [SudoTXQueryResult](https://github.com/neutron-org/neutron/blob/v2.0.0/x/contractmanager/keeper/sudo.go#L173) [handler](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/contracts/neutron_interchain_queries/src/contract.rs#L267).
+and passes the full result to the contract's [SudoTXQueryResult](https://github.com/neutron-org/neutron/blob/v2.0.3/x/contractmanager/keeper/sudo.go#L173) [handler](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/contracts/neutron_interchain_queries/src/contract.rs#L267).
 
 ## Query creation deposit
 In order to clean up ledger from not used, outdated queries special deposit mechanism is used. [RegisteredQuery](https://github.com/neutron-org/neutron/blob/main/proto/interchainqueries/genesis.proto#L39) contains `deposit` field, this field is used to collect escrow payment for query creation. In order to return escrow payment a `RemoveInterchainQuery` message should be issued.

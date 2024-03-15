@@ -11,9 +11,9 @@ However, if you're working on a smart contract, there's a more elegant way to wr
 
 ## Installation
 * `git clone git@github.com:neutron-org/neutron-integration-tests.git`
-* `git clone -b v2.0.0 git@github.com:neutron-org/neutron.git`
+* `git clone -b v2.0.3 git@github.com:neutron-org/neutron.git`
 * `git clone git@github.com:neutron-org/neutron-query-relayer.git`
-* `git clone -b v9.0.3 git@github.com:cosmos/gaia.git`
+* `git clone -b v14.0.0 git@github.com:cosmos/gaia.git`
 * `cd neutron-integration-tests`
 * \* `make -C setup build-all`
 * `yarn`

@@ -26,5 +26,5 @@ The module requires smart-contracts, which use [Transfer](../transfer/messages#m
 
 When a smart-contract issues `Transfer` or `SubmitTx` message, the fee Module deduct the whole specified fee amount (`ack_fee + timeout_fee + recv_fee`) and locks that amount in the module's escrow address. When a relayer submits `Ack` message for a particular packet, the module sends the specified amount of `ack_fee` to the relayer from the escrow address and return the specified `timeout_fee` to the contract which issued the original `Transfer` or `SubmitTx` message. In case when relayer submits `Timeout` message, things go the other way around: the relayer is refunded with `timeout_fee` and the contract gets `ack_fee` back.
 
-> **Note:** the minimal amount of fee to be specified for the messages above is defined via parameter [`min_fee`](https://github.com/neutron-org/neutron/blob/v2.0.0/proto/feerefunder/params.proto#L13) controlled by governance proposal.
+> **Note:** the minimal amount of fee to be specified for the messages above is defined via parameter [`min_fee`](https://github.com/neutron-org/neutron/blob/v2.0.3/proto/feerefunder/params.proto#L13) controlled by governance proposal.
 If provided fees are less than `min_fee` parameter, `Transfer` or `SubmitTx` or message will be rejected.
