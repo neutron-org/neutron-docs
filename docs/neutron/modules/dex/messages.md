@@ -342,7 +342,10 @@ message Params {
 
 # Gas Estimates
 
-Below are basic gas estimates for various Dex operations. Depending on the exact state of the dex and the inputs of the message being sent real gas costs can vary substantially. For operations that touch multiple ticks the gas cost can be estimated using the formula: $$gasUsed = fixedGasCost + perTickGas*nTicks$$
+Below are basic gas estimates for various Dex operations. Depending on the exact state of the dex and the inputs of the message being sent real gas costs can vary substantially. For operations that touch multiple ticks the gas cost can be estimated using the formula:
+
+$$gasUsed = fixedGasCost + perTickGas*nTicks$$
+
 These estimates only consider the gas costs at the message server level and below; application level (ie. AnteHandler) gas costs are not included.
 
 ### Deposit
