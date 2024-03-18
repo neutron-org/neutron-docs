@@ -1,4 +1,4 @@
-# TickLiquidity
+# Tick Liquidity
 
 `TickLiquidity` structs are used to store liquidity within the Dex. Each tick has a specific price and holds liquidity for a single token. `TickLiquidity` come in two general types – PoolReserves for storing LP positions and LimitOrderTranches for storing maker limit orders. Both types of ticks share several common fields: PairID, TokenIn, TickIndex. PairID refers to the trading pair for which a given tick is used. TokenIn denotes which side of the TradingPair a tick holds liquidity for.
 
