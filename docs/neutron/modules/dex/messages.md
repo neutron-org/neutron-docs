@@ -8,7 +8,7 @@ In Neutron DEX’s concentrated liquidity model, liquidity providers (LPs) can p
 
 ### Deposit Mechanism
 
-When depositing into an LP position (PoolReserves) a user specifies amounts of Token0 and Token1 as well as a TickIndex and a fee. The liquidity is added to the reserves for the respective ticks. Token0 will be deposited into the PoolReserves struct with the matching fee at `TickIndex - fee` and Token 1 will be deposited into the PoolReserves at TickIndex + fee.
+When depositing into an LP position (`PoolReserves`) a user specifies amounts of Token0 and Token1 as well as a TickIndex and a fee. The liquidity is added to the reserves for the respective ticks. Token0 will be deposited into the `PoolReserves` struct with the matching fee at `TickIndex - fee` and Token1 will be deposited into the `PoolReserves` at `TickIndex + fee`.
 
 In the most basic case, when depositing into a pool, the ratio of Token0 to Token1 will be preserved. If a user does not provide tokens in the same ratio, then only a portion of their total deposit will be used so as to maintain the pool ratio.
 
@@ -28,7 +28,7 @@ $$newShares = \frac{valueDeposited \cdot totalShares}{valueTotal}$$
 
 By default the `autoswap` option is enabled, which allows use to deposit their full deposit amount.  Autoswap provides a mechanism for users to deposit the entirety of their specified deposit amounts by paying a small fee. The fee for performing an autoswap is deducted from the total number of shares the the user is issued. When calculating share issuance the same formula as above is used for the balanced portion of the deposit, with the following formula use to calculate the shares issues that would unbalance the pool:
 
-$$additionalShares = left_0 \cdot p(-fee) + left_1 \cdot p(i-fee)$$ 
+$$additionalShares = left_0 \cdot p(-fee) + left_1 \cdot p(i-fee)$$
 
 
 
@@ -151,9 +151,9 @@ Limit orders provide the primary mechanism for trading on the Neutron DEX Dex. L
 
 Maker limit orders provide new liquidity to the dex that can be swapped through by other traders (either via Multihop Swap or a Taker Limit Order.) The liquidity supplied by a maker limit order is stored in a `LimitOrderTranche` at a specific tick. Once the tranche has been fully or partially filled via another order the user can withdraw the proceeds from that tranche. Maker limit orders can also be cancelled at any time. Maker only limit order’s are created with the following order types: GOOD\_TIL\_CANCELLED (will first try to satisfy the order via a taker limit order and only create an maker order if there is insufficient liquidity available above the provided `TickIndex`) JUST\_IN\_TIME GOOD\_TIL\_TIME
 
-Taker limit orders do not add liquidity to the dex, instead they trade against existing TickLiquidity. Taker orders will either fail at the time of transaction or be completed immediately. Successful taker orders will deposit the proceeds directly back into the receiever’s address.
+Taker limit orders do not add liquidity to the dex, instead they trade against existing `TickLiquidity`. Taker orders will either fail at the time of transaction or be completed immediately. Successful taker orders will deposit the proceeds directly back into the receiever’s address.
 
-Rather than supplying a limit price, limit orders take a `TickIndex` as an argument. For maker limit orders this is the tick that the LimitOrderTranche will be placed at. For taker limit order will only trade through liquidity at or above the `TickIndex.` A specific price can be converted to a `TickIndex` using the following formula:
+Rather than supplying a limit price, limit orders take a `TickIndex` as an argument. For maker limit orders this is the tick that the `LimitOrderTranche` will be placed at. For taker limit order will only trade through liquidity at or above the `TickIndex.` A specific price can be converted to a `TickIndex` using the following formula:
 
 $$TickIndex = log_{1.0001}(price)$$
 
@@ -249,7 +249,7 @@ message MsgCancelLimitOrder {
 
 ## Withdraw Filled Limit Order
 
-### Overview 
+### Overview
 Once a limit order has been filled – either partially or in its entirety, it can be withdrawn at any time. Withdrawing from a limit order credits all available proceeds to the user. Withdraw can be called on a limit order multiple times as new proceeds become available. Withdraw Filled Limit Order Message
 
 ### Withdraw Filled Limit Order Message
