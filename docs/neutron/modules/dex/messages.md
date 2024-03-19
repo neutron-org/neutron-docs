@@ -271,7 +271,7 @@ message MsgWithdrawFilledLimitOrder {
 
 ### Overview
 
-Withdraw is used to redeem PoolShares for the user’s pro-rata portion of tokens within a liquidity pool. Users can withdraw from a pool at any time. When Withdrawing from a pool they will receive Token0 and Token1 in the same ratio as what is currently present in the pool. When withdrawing the users PoolShares are burned and their account is credited with the withdrawn tokens.;
+Withdraw is used to redeem PoolShares for the user’s pro-rata portion of tokens within a liquidity pool. Users can withdraw from a pool at any time. When Withdrawing from a pool they will receive Token0 and Token1 in the same ratio as what is currently present in the pool. When withdrawing the users PoolShares are burned and their account is credited with the withdrawn tokens.
 
 ### Withdraw Message
 

@@ -2,7 +2,7 @@
 
 The Dex (decentralized exchange) module contains the central business logic of Neutron DEX. Users may interact with this module to provide liquidity and execute trades according to commonly-accepted exchange semantics.
 
-Neutron DEX, at its core, is a novel AMM design. We are also building a set of features around the AMM in order to enable powerful and sustainable financial markets. At the core of the AMM lays an incredibly simple swap mechanic: liquidity pools that allow traders to buy or sell tokens at a constant price.;
+Neutron DEX, at its core, is a novel AMM design. We are also building a set of features around the AMM in order to enable powerful and sustainable financial markets. At the core of the AMM lays an incredibly simple swap mechanic: liquidity pools that allow traders to buy or sell tokens at a constant price.
 
 Constant-price pools enable a new level of simplicity, flexibility, and capital efficiency which benefits liquidity providers and traders alike. Reasoning about external use cases and core features becomes much easier, leading to an enhanced, simplified user experience.
 
@@ -15,7 +15,7 @@ Constant-price pools enable a new level of simplicity, flexibility, and capital 
 
 **Liquidity Pools**: Holds liquidity, price and fee data that tells users how they can interact with it (i.e., how much they'll get in output on some input). Allows liquidity providers to pool their liquidity together instead of fragmenting it.
 
-**Liquidity Fragmentation**: When liquidity of the same pairs is spread across numerous exchanges or AMMs. This increases the costs of trying to get the best price on a trade.;
+**Liquidity Fragmentation**: When liquidity of the same pairs is spread across numerous exchanges or AMMs. This increases the costs of trying to get the best price on a trade.
 
 **Ticks**: Integers that map to data about the liquidity that can be traded at. The price for tick $$i$$ is $$p(i) = 1.0001^{i}$$.
 
@@ -49,11 +49,11 @@ With _Dynamic Routing,_ Neutron DEX only reveals the in-token and out-token in t
 
 Computer scientist Alan Kay famously said that those who are serious about software build their own hardware. We believe that people who are serious about exchanges own their whole stack.
 
-App-chains (and soon app-rollups) open up a rich design space of unexplored possibilities that can solve some of DeFi’s most urgent problems.;
+App-chains (and soon app-rollups) open up a rich design space of unexplored possibilities that can solve some of DeFi’s most urgent problems.
 
 1. MEV protections can be implemented at the consensus level and/or expressed through more complex application logic, which is not reasonable on generalized smart contracting chains.
-2. Expensive transactions fees and network congestion become less of an issue with app-specific infrastructure.;
-3. New incentive schemes based on order flow and fee markets can put an end to DeFi’s unsustainable token emissions models.;
+2. Expensive transactions fees and network congestion become less of an issue with app-specific infrastructure.
+3. New incentive schemes based on order flow and fee markets can put an end to DeFi’s unsustainable token emissions models.
 
 Neutron DEX strives to be a hub of innovation for pushing the boundaries of what is possible with app-specific infrastructure.
 
@@ -82,7 +82,7 @@ This simple design has significant consequences. Neutron DEX can reach order-boo
 
 **A Quick Note on Fees and Value Accrual**
 
-Concentrated liquidity and orderbooks differ slightly in how liquidity providers accrue value. On concentrated liquidity AMMs, liquidity providers accrue value through a [fee](neutron/modules/dex/overview#fees) that they choose when placing the liquidity. The fee is a predetermined premium that traders pay when using the liquidity to swap between two assets.;
+Concentrated liquidity and orderbooks differ slightly in how liquidity providers accrue value. On concentrated liquidity AMMs, liquidity providers accrue value through a [fee](neutron/modules/dex/overview#fees) that they choose when placing the liquidity. The fee is a predetermined premium that traders pay when using the liquidity to swap between two assets.
 
 Orderbook liquidity providers accrue value through maintaining a bid-ask spread, which entails them offering to sell assets slightly above the current current price and buy them slightly below the current price. It turns out that these two mechanism are actually very similar in that they describe the difference in prices between the best sell and buy prices.
 
