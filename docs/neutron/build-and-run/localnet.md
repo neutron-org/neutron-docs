@@ -17,16 +17,16 @@ Beware: you will have to clone all these repositories in the same parent directo
 ### 1. Install Neutron
 
 ```bash
-git clone -b v2.0.0 https://github.com/neutron-org/neutron
+git clone -b v3.0.1 https://github.com/neutron-org/neutron
 cd neutron
 make install
 ```
 
 ### 2. Install Gaia
 
-1. clone gaia: `git clone -b v9.0.3 https://github.com/cosmos/gaia.git`
+1. clone gaia: `git clone -b v15.0.0 https://github.com/cosmos/gaia.git`
 2. `cd gaia`
-3. for some reason, gaia v9.0.3 checks if you have go v1.18 installed,
+3. for some reason, gaia v15.0.0 checks if you have go v1.18 installed,
    not newer, not older, however, it builds fine with go v1.20, so, before
    running `make install`, you will have to edit gaia's Makefile on line 110
    like this:

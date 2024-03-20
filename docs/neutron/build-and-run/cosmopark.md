@@ -24,19 +24,19 @@ You'll have to clone several repositories into a single parent folder. Choose a 
 #### Clone Neutron repositories
 
 ```sh
-git clone -b v2.0.0 https://github.com/neutron-org/neutron.git
+git clone -b v3.0.1 https://github.com/neutron-org/neutron.git
 git clone https://github.com/neutron-org/neutron-integration-tests.git
 git clone https://github.com/neutron-org/neutron-query-relayer.git
 ```
 
 #### Clone and prepare Gaia
 
-We use the Gaia network as a target network for interchain operations. We use v9.0.3 for the tests.
+We use the Gaia network as a target network for interchain operations. We use v15.0.0 for the tests.
 
 ```sh
 git clone https://github.com/cosmos/gaia.git
 cd gaia
-git checkout v9.0.3
+git checkout v15.0.0
 ```
 
 ### 3. Build images

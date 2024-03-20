@@ -19,7 +19,7 @@ The output should comply with the golang version mentioned in the [Prerequisites
 ### 2. Clone Neutron core repository and cd into it
 
 ```sh
-git clone -b v2.0.0 https://github.com/neutron-org/neutron.git
+git clone -b v3.0.1 https://github.com/neutron-org/neutron.git
 cd neutron
 ```
 
