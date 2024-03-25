@@ -91,4 +91,3 @@ Orderbook liquidity providers accrue value through maintaining a bid-ask spread,
 * [Fees](docs/neutron/modules/dex/overview/concepts/fees.md)
 * [Ticks](docs/neutron/modules/dex/overview/concepts/ticks.md)
 * [Swaps](docs/neutron/modules/dex/overview/concepts/swaps.md)
-* [Limit Orders Tranches](docs/neutron/modules/dex/overview/concepts/limit-order-tranches.md)
