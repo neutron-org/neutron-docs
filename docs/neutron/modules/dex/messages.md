@@ -8,7 +8,7 @@ In Neutron DEX’s concentrated liquidity model, liquidity providers (LPs) can p
 
 ### Deposit Mechanism
 
-When depositing into an LP position (PoolReserves) a user specifies amounts of Token0 and Token1 as well as a TickIndex and a fee. The liquidity is added to the reserves for the respective ticks. Token0 will be deposited into the PoolReserves struct with the matching fee at `TickIndex - fee` and Token 1 will be deposited into the PoolReserves at TickIndex + fee.
+When depositing into an LP position (`PoolReserves`) a user specifies amounts of Token0 and Token1 as well as a TickIndex and a fee. The liquidity is added to the reserves for the respective ticks. Token0 will be deposited into the `PoolReserves` struct with the matching fee at `TickIndex - fee` and Token1 will be deposited into the `PoolReserves` at `TickIndex + fee`.
 
 In the most basic case, when depositing into a pool, the ratio of Token0 to Token1 will be preserved. If a user does not provide tokens in the same ratio, then only a portion of their total deposit will be used so as to maintain the pool ratio.
 
@@ -151,9 +151,9 @@ Limit orders provide the primary mechanism for trading on the Neutron DEX Dex. L
 
 Maker limit orders provide new liquidity to the dex that can be swapped through by other traders (either via Multihop Swap or a Taker Limit Order.) The liquidity supplied by a maker limit order is stored in a `LimitOrderTranche` at a specific tick. Once the tranche has been fully or partially filled via another order the user can withdraw the proceeds from that tranche. Maker limit orders can also be cancelled at any time. Maker only limit order’s are created with the following order types: GOOD\_TIL\_CANCELLED (will first try to satisfy the order via a taker limit order and only create an maker order if there is insufficient liquidity available above the provided `TickIndex`) JUST\_IN\_TIME GOOD\_TIL\_TIME
 
-Taker limit orders do not add liquidity to the dex, instead they trade against existing TickLiquidity. Taker orders will either fail at the time of transaction or be completed immediately. Successful taker orders will deposit the proceeds directly back into the receiever’s address.
+Taker limit orders do not add liquidity to the dex, instead they trade against existing `TickLiquidity`. Taker orders will either fail at the time of transaction or be completed immediately. Successful taker orders will deposit the proceeds directly back into the receiever’s address.
 
-Rather than supplying a limit price, limit orders take a `TickIndex` as an argument. For maker limit orders this is the tick that the LimitOrderTranche will be placed at. For taker limit order will only trade through liquidity at or above the `TickIndex.` A specific price can be converted to a `TickIndex` using the following formula:
+Rather than supplying a limit price, limit orders take a `TickIndex` as an argument. For maker limit orders this is the tick that the `LimitOrderTranche` will be placed at. For taker limit order will only trade through liquidity at or above the `TickIndex.` A specific price can be converted to a `TickIndex` using the following formula:
 
 $$TickIndex = log_{1.0001}(price)$$
 
@@ -167,15 +167,15 @@ Fill-or-Kill limit orders are maker limit orders that either successfully swap 1
 
 Immediate-or-Cancel limit orders are maker orders that will swap as much as of the `AmountIn` as possible given available liquidity above the supplied `TickIndex`. Unlike Fill-or-Kill orders they will still successfully complete even if they are only able to partially trade through the `AmountIn` at the `TickIndex` or better.
 
-#### GOOD\_TIL\_CANCELLED&#x20;
+#### GOOD\_TIL\_CANCELLED;
 
 Good-til-Cancelled limit orders are hybrid maker and taker limit orders. They will attempt to trade the supplied `AmountIn` at the `TickIndex` or better. However, if the total `AmountIn` cannot be traded at the limit price they remaining amount will be placed as a maker limit order. The proceeds from the taker portion are deposited into the user’s account immediately, however, the proceeds from the maker portion must be explicitly withdrawn via WithdrawLimitOrder.
 
-#### GOOD\_TIL\_TIME&#x20;
+#### GOOD\_TIL\_TIME;
 
 Good-til-Time limit order function exactly the same as Good-til-Cancelled limit orders first trying to trade as a taker limit order and then placing any remaining amount as a maker limit order. However, the maker portion of the limit order has a specified `ExpirationTime. After the` ExpirationTime\` the order will be cancelled and can no longer be traded against. When withdrawing a Good-til-Time limit order the user will receive both the successfully traded portion of the limit order (TokenOut) as well as any remaining untraded amount (TokenIn).
 
-#### JUST\_IN\_TIME&#x20;
+#### JUST\_IN\_TIME;
 
 Just-in-Time limit orders are an advanced maker limit order order that provides tradeable liquidity for exactly one block. At the end of the same block in which the Just-in-Time order was submitted the order is canceled and any untraded portion will no longer be usable as active liquidity.
 
@@ -271,7 +271,7 @@ message MsgWithdrawFilledLimitOrder {
 
 ### Overview
 
-Withdraw is used to redeem PoolShares for the user’s pro-rata portion of tokens within a liquidity pool. Users can withdraw from a pool at any time. When Withdrawing from a pool they will receive Token0 and Token1 in the same ratio as what is currently present in the pool. When withdrawing the users PoolShares are burned and their account is credited with the withdrawn tokens.&#x20;
+Withdraw is used to redeem PoolShares for the user’s pro-rata portion of tokens within a liquidity pool. Users can withdraw from a pool at any time. When Withdrawing from a pool they will receive Token0 and Token1 in the same ratio as what is currently present in the pool. When withdrawing the users PoolShares are burned and their account is credited with the withdrawn tokens.
 
 ### Withdraw Message
 
