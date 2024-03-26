@@ -1,5 +1,8 @@
-# Integration tests
-There is a set of integration tests which cover main Neutron features. If you develop a smart contract for Neutron you can add some tests into this set to make sure everything works as expected.
+# Integration tests for chain
+
+There is a set of integration tests which cover main Neutron features. If you're developing a smart contract for Neutron or working on a Neutron module, you can add some tests into this set to make sure everything works as expected.
+
+However, if you're working on a smart contract, there's a more elegant way to write tests for it. See the [integration tests for smart contracts](/tutorials/integration-tests/smart_contracts) tutorial for details.
 
 * [Installation](#Installation)
 * [Running the tests](#Running-the-tests)
