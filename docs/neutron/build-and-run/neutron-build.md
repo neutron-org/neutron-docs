@@ -4,7 +4,7 @@ This page contains information about building Neutron node from sources
 
 ## Prerequisites
 
-- Golang v1.20 ([go releases and instructions](https://go.dev/dl/)).
+- Golang v1.21 ([go releases and instructions](https://go.dev/dl/)).
 
 ## Build and run
 
@@ -33,7 +33,7 @@ The command above will build a Neutron binary and store it under your `$GOBIN` d
 
 ```sh
 neutrond version
-2.0.0
+2.0.3
 ```
 
 If you have problems with PATH-related stuff, please refer to the go releases and instructions link in the [prerequisites](#prerequisites) section.

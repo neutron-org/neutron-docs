@@ -12,13 +12,9 @@ Some examples:
 * Price of tick $$1$$: $$p(-4000) = 1.0001^{4000} \approx 1.4917$$​
 * Price of tick 2: ​$$p(-4000) = 1.0001^{-4000} \approx 0.6703$$
 
-\
-
 
 More specifically price refers to the rate at which Token1 can be converted to Token0. Logically, the converse rate for converting Token0 to Token1 can be expressed as:
 
 $$
 price0To1(i) =  1/1.0001^{i}
 $$
-
-\

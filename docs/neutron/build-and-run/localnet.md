@@ -11,7 +11,7 @@ Beware: you will have to clone all these repositories in the same parent directo
 
 ## Prerequisites
 
-- Go version 1.20 or newer
+- Go version 1.21 or newer
 - Rust toolchain v1.69 or newer
 
 ### 1. Install Neutron
@@ -34,7 +34,7 @@ make install
 -$(BUILD_TARGETS): check_version go.sum $(BUILDDIR)/
 +$(BUILD_TARGETS): go.sum $(BUILDDIR)/
 ```
-4. finally, run `make install`
+4. run `make install`
 
 ### 3. Install Hermes
 
