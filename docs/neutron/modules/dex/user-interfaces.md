@@ -39,6 +39,8 @@ This is where you can trade tokens through an advanced interface with additional
 
 Here for each token pair you can see a live price chart as well as the current liquidity depth and recent trades, and your history of your own recent trades. Using these tools you can place an advanced **Buy** or **Sell** order using the Limit Order card. Here you can select the [order type](/neutron/modules/dex/messages#place-limit-order) you want to use and set its specific options such as how long the order should remain in the market (if relevant).
 
+The charting technology is provided by [TradingView](https://www.tradingview.com/), a platform for traders and investors. It offers advanced charting tools so that you can plan your trade with the context of your own saved notes and measurements, and other features such as major upcoming events in the [TradingView economic calendar](https://www.tradingview.com/economic-calendar/).
+
 ### Portfolio Page
 This is where you can see your assets and deposits on the Neutron chain.
 
