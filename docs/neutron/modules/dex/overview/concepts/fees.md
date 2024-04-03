@@ -2,7 +2,7 @@
 
 _Disclaimer: Liquidity providing into all AMMs is risky and requires due dilligence. While we explain how fees can hypothetically be used to make money, we reccommend that you do your own research before making decisions on how to choose fees and whether to liquidity provide._
 
-Fees are used by liquidity providers to make money from trades using their liquidity. Every time a trade is made, the fee charges traders a slight premium for using the liquidity.&#x20;
+Fees are used by liquidity providers to make money from trades using their liquidity. Every time a trade is made, the fee charges traders a slight premium for using the liquidity.
 
 The best strategy for liquidity providers will not always be to charge traders the highest fee. This is because higher fees also means higher prices, which can be undercut by liquidity being deposited at lower fees or prices. Thus, liquidity providers should be thoughtful in their selection of fees.
 
