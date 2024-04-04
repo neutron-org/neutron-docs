@@ -8,10 +8,7 @@ This section provides a comprehensive overview of the significant changes and up
 
 ### Block SDK integration
 
-Neutron has integrated [Skip's Block SDK](https://docs.skip.money/blocksdk/overview) which allows builders to implement
-different MEV strategies on Neutron.
-
-You can find more info how to use Block SDK here: https://docs.skip.money/blocksdk/searcher-docs
+Neutron has integrated [Skip's Block SDK](neutron/modules/3rdparty/skip/block-sdk/overview.md) which allows builders to implement different MEV strategies on Neutron.
 
 ### CW bindings
 
