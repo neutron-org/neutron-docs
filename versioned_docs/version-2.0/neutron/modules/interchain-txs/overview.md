@@ -20,7 +20,7 @@ A smart contract that tries to register an interchain account or to execute an i
 to receive the IBC events related to these actions. The Interchain Transactions module solves this task by passing these
 IBC events to the smart contract using
 a [Sudo() call](https://github.com/CosmWasm/wasmd/blob/288609255ad92dfe5c54eae572fe7d6010e712eb/x/wasm/keeper/keeper.go#L453)
-and a custom [message scheme](https://github.com/neutron-org/neutron/blob/v2.0.0/x/contractmanager/types/sudo.go). You can find a
+and a custom [message scheme](https://github.com/neutron-org/neutron/blob/v2.0.3/x/contractmanager/types/sudo.go). You can find a
 complete list of IBC events for each module message in the [messages](./messages) section.
 
 ## Sudo errors handling
