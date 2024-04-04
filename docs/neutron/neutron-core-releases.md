@@ -12,7 +12,7 @@ Neutron has integrated [Skip's Block SDK](neutron/modules/3rdparty/skip/block-sd
 
 ### CW bindings
 
-Neutron V3 contains convenient CW bindings (TODO: links/docs) for [Neutron DEX](neutron/modules/dex/overview/overview.md) module which allows to build smart-contract applications in a more
+Neutron V3 contains convenient [CW bindings](https://github.com/neutron-org/neutron/pull/365) for [Neutron DEX](neutron/modules/dex/overview/overview.md) module which allows to build smart-contract applications in a more
 efficient way avoiding tricky Stargate messages and queries.
 
 ### Golang upgrade
