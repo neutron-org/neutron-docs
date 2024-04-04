@@ -14,7 +14,7 @@ Currently, Neutron supports only two type of Block SDK Lanes:
 ## Block SDK Auction parameters on Neutron
 
 > **Note:**
-> All auction parameters are accessible though the [/block-sdk/x/auction/v1/params](https://rpc-kralum.neutron-1.neutron.org//swagger/#/Query/Params) HTTP REST endpoint.
+> All auction parameters are accessible though the [/block-sdk/x/auction/v1/params](https://rest-kralum.neutron-1.neutron.org/swagger/#/Query/Params) HTTP REST endpoint.
 
 In order to participate in an auction, searchers must pay a fee. This fee is paid in the native token of the chain. The fee is determined by the auction parameters, which are set by the chain. The auction parameters are:
 * **MaxBundleSize: `4`** - specifies the maximum number of transactions that can be included in a bundle (bundle = an ordered list of transactions). Bundles must be ≤ this number.
