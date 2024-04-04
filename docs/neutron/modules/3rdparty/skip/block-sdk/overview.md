@@ -1,6 +1,6 @@
 # Overview
 
-🌐 **The Block SDK is a toolkit for building customized blocks.** The Block SDK is a set of Cosmos SDK and ABCI++ primitives that allow chains to fully customize blocks to specific use cases. It turns your chain's blocks into a highway consisting of individual lanes with their own special functionality.
+🌐 **The Block SDK is a toolkit for building customized blocks.** The Block SDK is a set of Cosmos SDK and ABCI++ primitives that allows chains to fully customize blocks to specific use cases. It turns your chain's blocks into a highway consisting of individual lanes with their own special functionality.
 
 Skip has built out a number of plug-and-play lanes on the SDK that your protocol can use, including in-protocol MEV recapture and Oracles! Additionally, the Block SDK can be extended to add your own custom lanes to configure your blocks to exactly fit your application needs.
 
