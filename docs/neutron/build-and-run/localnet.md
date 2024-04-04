@@ -11,7 +11,7 @@ Beware: you will have to clone all these repositories in the same parent directo
 
 ## Prerequisites
 
-- Go version 1.21 or newer
+- Go version 1.20 or newer
 - Rust toolchain v1.69 or newer
 
 ### 1. Install Neutron
@@ -26,15 +26,7 @@ make install
 
 1. clone gaia: `git clone -b v15.0.0 https://github.com/cosmos/gaia.git`
 2. `cd gaia`
-3. for some reason, gaia v15.0.0 checks if you have go v1.18 installed,
-   not newer, not older, however, it builds fine with go v1.20, so, before
-   running `make install`, you will have to edit gaia's Makefile on line 110
-   like this:
-```diff
--$(BUILD_TARGETS): check_version go.sum $(BUILDDIR)/
-+$(BUILD_TARGETS): go.sum $(BUILDDIR)/
-```
-4. run `make install`
+3. run `make install`
 
 ### 3. Install Hermes
 
@@ -45,7 +37,7 @@ cargo install ibc-relayer-cli --bin hermes --version 1.6.0 --locked
 ### 4. Install Neutron Query Relayer
 
 ```bash
-git clone https://github.com/neutron-org/neutron-query-relayer
+git clone -b v0.2.0 https://github.com/neutron-org/neutron-query-relayer
 cd neutron-query-relayer
 make install
 ```
