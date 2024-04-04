@@ -4,7 +4,7 @@
 
 Skip has built out a number of plug-and-play lanes on the SDK that your protocol can use, including in-protocol MEV recapture and Oracles! Additionally, the Block SDK can be extended to add your own custom lanes to configure your blocks to exactly fit your application needs.
 
-> **Note:** you can find more info about Block SDK, how it works and how to use the module in the official Skip's Block SDK docs: You can find more info how to use Block SDK here: https://docs.skip.money/blocksdk/searcher-docs
+> **Note:** you can find more info about Block SDK, how it works and how to use the module in the official Skip's Block SDK docs: https://docs.skip.money/blocksdk/searcher-docs
 
 ## Which Block SDK Lanes does Neutron support?
 Currently, Neutron supports only two type of Block SDK Lanes:
