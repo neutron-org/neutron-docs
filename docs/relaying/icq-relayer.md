@@ -11,6 +11,7 @@ If you are a smart contracts developer and up to develop your dApp on Neutron, y
 All registered Interchain Queries and their parameters are stored in the eponymous module and available by its [query interface](/neutron/modules/interchain-queries/client#queries). The Relayer utilises the module's interface in order to initialise the performing list of queries. This is how the Relayer maintains the list of queries to be executed:
 
 - on initialisation, the ICQ module `RegisteredQueries` query is executed with the `RELAYER_REGISTRY_ADDRESSES` parameter used for the `Owners` field;
+- then the parameter `RELAYER_REGISTRY_QUERY_IDS` will be used to filter out queries if it is not empty;
 - during the rest of the run, the Relayer listens to the ICQ module's `query_update` and `query_removed` [events](/neutron/modules/interchain-queries/events) and modifies the queries list and parameters correspondingly.
 
 The Relayer also listens to the Neutron's `NewBlockHeader` events that are used as a trigger for queries execution. Since each query has its own `update_period`, the Relayer tracks queries execution height and executes only the queries which update time has come.
@@ -85,6 +86,7 @@ This section contains description for all the possible config values that the Re
 ### Relayer application settings
 
 - `RELAYER_REGISTRY_ADDRESSES` — a list of comma-separated smart-contract addresses (registered query owners) for which the Relayer processes interchain queries. If empty, literally all registered queries are processed which is usable if you are up to deploy a public Relayer;
+- `RELAYER_REGISTRY_QUERY_IDS` — a list of comma-separated query IDs which complements to `RELAYER_REGISTRY_ADDRESSES` to further filter out interchain queries being processed. If empty, no queries will be filtered out.
 - `RELAYER_ALLOW_TX_QUERIES` — if true, Relayer will process tx queries (if `false`, Relayer will ignore them). A true value here is mostly usable for a private Relayer because TX queries submission is quite expensive;
 - `RELAYER_ALLOW_KV_CALLBACKS` — if `true`, will pass proofs as sudo callbacks to contracts. A true value here is mostly usable for a private Relayer because KV query callbacks execution is quite expensive. If false, results will simply be submitted to Neutron and become available for smart contracts retrieval;
 - `RELAYER_MIN_KV_UPDATE_PERIOD` — minimal period of queries execution and submission. This value is usable for a public Relayer as a rate limiter because it roughly overrides the queries `update_period` and force queries execution not more often than `N` blocks;
