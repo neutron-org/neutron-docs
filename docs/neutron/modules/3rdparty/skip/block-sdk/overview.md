@@ -20,7 +20,7 @@ In order to participate in an auction, searchers must pay a fee. This fee is pai
 * **MaxBundleSize: `4`** - specifies the maximum number of transactions that can be included in a bundle (bundle = an ordered list of transactions). Bundles must be ≤ this number.
 * **ReserveFee: `0.5 NTRN`** - specifies the bid floor to participate in the auction. Bids that are lower than the reserve fee are ignored.
 * **MinBidIncrement: `0.1 NTRN`** - specifies how much greater each subsequent bid must be (as seen by an individual node) in order to be considered. If the bid is lower than the highest current bid + min bid increment, the bid is ignored.
-* **ProposerFee: `25%`** - defines the portion of the winning bid that goes to the block proposer that proposed the block.
+* **ProposerFee: `25%`** - defines the portion of the winning bid that goes to the goes to the [account module `cons_redistribute`](https://github.com/neutron-org/neutron/blob/v3.0.2/app/app.go#L634) which sends coins to a provider chain where all the rewards will be distributed between validators.
 * **EscrowAccountAddress: `neutron1suhgf5svhu4usrurvxzlgn54ksxmn8gljarjtxqnapv8kjnp4nrstdxvff` ([Neutron Main DAO](/neutron/dao/overview))** - is the address of the account that will receive a portion of the bid proceeds.
 * **FrontRunningProtection: `false`** - determines whether front-running and sandwich protection is enabled.
 
