@@ -86,7 +86,7 @@ This section contains description for all the possible config values that the Re
 ### Relayer application settings
 
 - `RELAYER_REGISTRY_ADDRESSES` — a list of comma-separated smart-contract addresses (registered query owners) for which the Relayer processes interchain queries. If empty, literally all registered queries are processed which is usable if you are up to deploy a public Relayer;
-- `RELAYER_REGISTRY_QUERY_IDS` — a list of comma-separated query IDs which complements to `RELAYER_REGISTRY_ADDRESSES` to further filter out interchain queries being processed. If empty, no queries will be filtered out.
+- `RELAYER_REGISTRY_QUERY_IDS` — a list of comma-separated query IDs which complements to `RELAYER_REGISTRY_ADDRESSES` to further filter out interchain queries being processed. If empty, no queries will be filtered out;
 - `RELAYER_ALLOW_TX_QUERIES` — if true, Relayer will process tx queries (if `false`, Relayer will ignore them). A true value here is mostly usable for a private Relayer because TX queries submission is quite expensive;
 - `RELAYER_ALLOW_KV_CALLBACKS` — if `true`, will pass proofs as sudo callbacks to contracts. A true value here is mostly usable for a private Relayer because KV query callbacks execution is quite expensive. If false, results will simply be submitted to Neutron and become available for smart contracts retrieval;
 - `RELAYER_MIN_KV_UPDATE_PERIOD` — minimal period of queries execution and submission. This value is usable for a public Relayer as a rate limiter because it roughly overrides the queries `update_period` and force queries execution not more often than `N` blocks;
