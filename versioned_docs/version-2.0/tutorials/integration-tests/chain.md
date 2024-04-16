@@ -1,5 +1,8 @@
-# Integration tests
-There is a set of integration tests which cover main Neutron features. If you develop a smart contract for Neutron you can add some tests into this set to make sure everything works as expected.
+# Integration tests for chain
+
+There is a set of integration tests which cover main Neutron features. If you're developing a smart contract for Neutron or working on a Neutron module, you can add some tests into this set to make sure everything works as expected.
+
+However, if you're working on a smart contract, there's a more elegant way to write tests for it. See the [integration tests for smart contracts](/tutorials/integration-tests/smart_contracts) tutorial for details.
 
 * [Installation](#Installation)
 * [Running the tests](#Running-the-tests)
@@ -8,9 +11,9 @@ There is a set of integration tests which cover main Neutron features. If you de
 
 ## Installation
 * `git clone git@github.com:neutron-org/neutron-integration-tests.git`
-* `git clone -b v2.0.0 git@github.com:neutron-org/neutron.git`
-* `git clone git@github.com:neutron-org/neutron-query-relayer.git`
-* `git clone -b v9.0.3 git@github.com:cosmos/gaia.git`
+* `git clone -b v3.0.1 git@github.com:neutron-org/neutron.git`
+* `git clone -b v0.2.0 git@github.com:neutron-org/neutron-query-relayer.git`
+* `git clone -b v15.0.0 git@github.com:cosmos/gaia.git`
 * `cd neutron-integration-tests`
 * \* `make -C setup build-all`
 * `yarn`

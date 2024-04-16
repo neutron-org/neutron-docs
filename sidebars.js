@@ -41,6 +41,7 @@ const sidebars = {
                         'neutron/dao/overview',
                         'neutron/dao/overrules',
                         'neutron/dao/dao-dao-diff',
+                        'neutron/dao/params'
                     ],
                 },
                 {
@@ -195,13 +196,12 @@ const sidebars = {
                                             type: 'category',
                                             items: [
                                                 'neutron/modules/dex/overview/concepts/amms-and-orderbooks',
-                                                'neutron/modules/dex/overview/concepts/liquidity-iteration',
                                                 'neutron/modules/dex/overview/concepts/liquidity-pools',
-                                                'neutron/modules/dex/overview/concepts/pool-reserves',
-                                                'neutron/modules/dex/overview/concepts/swaps',
-                                                'neutron/modules/dex/overview/concepts/fees',
                                                 'neutron/modules/dex/overview/concepts/ticks',
-                                                'neutron/modules/dex/overview/concepts/limit-order-tranches',
+                                                'neutron/modules/dex/overview/concepts/tick-liquidity',
+                                                'neutron/modules/dex/overview/concepts/liquidity-iteration',
+                                                'neutron/modules/dex/overview/concepts/swaps',
+                                                'neutron/modules/dex/overview/concepts/fees'
                                             ]
                                         }
                                     ],
@@ -261,6 +261,19 @@ const sidebars = {
                             label: '3rd Party Modules',
                             type: 'category',
                             items: [
+                                {
+                                    label: 'Skip',
+                                    type: 'category',
+                                    items: [
+                                        {
+                                            label: 'Block SDK',
+                                            type: 'category',
+                                            items: [
+                                                'neutron/modules/3rdparty/skip/block-sdk/overview',
+                                            ]
+                                        }
+                                    ],
+                                },
                                 {
                                     label: 'Cosmos Hub',
                                     type: 'category',
@@ -334,7 +347,14 @@ const sidebars = {
                 'tutorials/cosmwasm_wasmkit',
                 'tutorials/cosmwasm_ica',
                 'tutorials/cosmwasm_icq',
-                'tutorials/integration_tests',
+                {
+                    label: 'Integration tests',
+                    type: 'category',
+                    items: [
+                        { label: 'Chain', type: 'doc', id: 'tutorials/integration-tests/chain' },
+                        { label: 'Smart contracts', type: 'doc', id: 'tutorials/integration-tests/smart_contracts' },
+                    ]
+                },
                 {
                     label: 'Indexers',
                     type: 'category',

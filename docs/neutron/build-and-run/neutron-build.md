@@ -19,7 +19,7 @@ The output should comply with the golang version mentioned in the [Prerequisites
 ### 2. Clone Neutron core repository and cd into it
 
 ```sh
-git clone -b v2.0.0 https://github.com/neutron-org/neutron.git
+git clone -b v3.0.2 https://github.com/neutron-org/neutron.git
 cd neutron
 ```
 
@@ -33,7 +33,7 @@ The command above will build a Neutron binary and store it under your `$GOBIN` d
 
 ```sh
 neutrond version
-2.0.0
+2.0.3
 ```
 
 If you have problems with PATH-related stuff, please refer to the go releases and instructions link in the [prerequisites](#prerequisites) section.
