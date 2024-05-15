@@ -1,50 +1,50 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-const lightCodeTheme = require('prism-react-renderer/themes/github');
-const darkCodeTheme = require('prism-react-renderer/themes/dracula');
-const math = require('remark-math');
-const katex = require('rehype-katex');
+const lightCodeTheme = require("prism-react-renderer/themes/github");
+const darkCodeTheme = require("prism-react-renderer/themes/dracula");
+const math = require("remark-math");
+const katex = require("rehype-katex");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Neutron Docs',
-  tagline: 'Neutron',
-  url: 'http://docs.neutron.org',
-  baseUrl: '/',
-  onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
-  favicon: 'img/favicon.ico',
+  title: "Neutron Docs",
+  tagline: "Neutron",
+  url: "http://docs.neutron.org",
+  baseUrl: "/",
+  onBrokenLinks: "throw",
+  onBrokenMarkdownLinks: "warn",
+  favicon: "img/favicon.ico",
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'neutron-org', // Usually your GitHub org/user name.
-  projectName: 'neutron-docs', // Usually your repo name.
-  deploymentBranch: 'gh-pages',
+  organizationName: "neutron-org", // Usually your GitHub org/user name.
+  projectName: "neutron-docs", // Usually your repo name.
+  deploymentBranch: "gh-pages",
 
   // Even if you don't use internalization, you can use this field to set useful
   // metadata like html lang. For example, if your site is Chinese, you may want
   // to replace "en" with "zh-Hans".
   i18n: {
-    defaultLocale: 'en',
-    locales: ['en'],
+    defaultLocale: "en",
+    locales: ["en"],
   },
 
   presets: [
     [
-      'classic',
+      "classic",
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
-          sidebarPath: require.resolve('./sidebars.js'),
-          routeBasePath: '/', // Serve the docs at the site's root
+          sidebarPath: require.resolve("./sidebars.js"),
+          routeBasePath: "/", // Serve the docs at the site's root
           remarkPlugins: [math],
           rehypePlugins: [katex],
-          lastVersion: 'current',
+          lastVersion: "current",
           versions: {
             current: {
-              label: '3.0',
-              path: '/',
+              label: "4.0",
+              path: "/",
             },
           },
         },
@@ -54,18 +54,18 @@ const config = {
 
   plugins: [
     [
-      require.resolve('@easyops-cn/docusaurus-search-local'),
-      { indexBlog: false, docsRouteBasePath: '/', indexPages: true },
+      require.resolve("@easyops-cn/docusaurus-search-local"),
+      { indexBlog: false, docsRouteBasePath: "/", indexPages: true },
     ],
   ],
 
   stylesheets: [
     {
-      href: 'https://cdn.jsdelivr.net/npm/katex@0.13.24/dist/katex.min.css',
-      type: 'text/css',
+      href: "https://cdn.jsdelivr.net/npm/katex@0.13.24/dist/katex.min.css",
+      type: "text/css",
       integrity:
-          'sha384-odtC+0UGzzFL/6PNoE8rX/SPcQDXBJ+uRepguP4QkPCm2LBxH3FA3y+fKSiJ+AmM',
-      crossorigin: 'anonymous',
+        "sha384-odtC+0UGzzFL/6PNoE8rX/SPcQDXBJ+uRepguP4QkPCm2LBxH3FA3y+fKSiJ+AmM",
+      crossorigin: "anonymous",
     },
   ],
 
@@ -73,65 +73,65 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       navbar: {
-        title: 'Neutron',
+        title: "Neutron",
         logo: {
-          alt: 'Neutron Logo',
-          src: 'img/logo.jpeg',
+          alt: "Neutron Logo",
+          src: "img/logo.jpeg",
         },
         items: [
           {
-            type: 'doc',
-            docId: 'neutron/overview',
-            position: 'left',
-            label: 'Introduction',
+            type: "doc",
+            docId: "neutron/overview",
+            position: "left",
+            label: "Introduction",
           },
           {
-            href: 'https://github.com/neutron-org',
-            label: 'GitHub',
-            position: 'right',
+            href: "https://github.com/neutron-org",
+            label: "GitHub",
+            position: "right",
           },
           {
-            type: 'docsVersionDropdown',
-            position: 'right',
+            type: "docsVersionDropdown",
+            position: "right",
             dropdownActiveClassDisabled: true,
-          }
+          },
         ],
       },
       footer: {
-        style: 'dark',
+        style: "dark",
         links: [
           {
-            title: 'Docs',
+            title: "Docs",
             items: [
               {
-                label: 'Intro',
-                to: '/',
+                label: "Intro",
+                to: "/",
               },
             ],
           },
           {
-            title: 'Community',
+            title: "Community",
             items: [
               {
-                label: 'Stack Overflow',
-                href: 'https://stackoverflow.com/questions/tagged/neutron',
+                label: "Stack Overflow",
+                href: "https://stackoverflow.com/questions/tagged/neutron",
               },
               {
-                label: 'Discord',
-                href: 'https://discord.neutron.org/',
+                label: "Discord",
+                href: "https://discord.neutron.org/",
               },
               {
-                label: 'Twitter',
-                href: 'https://twitter.com/Neutron_org',
+                label: "Twitter",
+                href: "https://twitter.com/Neutron_org",
               },
             ],
           },
           {
-            title: 'More',
+            title: "More",
             items: [
               {
-                label: 'GitHub',
-                href: 'https://github.com/neutron-org/neutron',
+                label: "GitHub",
+                href: "https://github.com/neutron-org/neutron",
               },
             ],
           },
@@ -141,7 +141,7 @@ const config = {
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
-        additionalLanguages: ['go', 'protobuf', 'rust', 'toml'],
+        additionalLanguages: ["go", "protobuf", "rust", "toml"],
       },
     }),
 };

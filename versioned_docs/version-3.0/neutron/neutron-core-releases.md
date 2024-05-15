@@ -4,12 +4,6 @@
 
 This section provides a comprehensive overview of the significant changes and updates in Neutron, focusing on the upgrades to Cosmos SDK, Wasmd, and Neutron's internal modules.
 
-## [v4.0.0](https://github.com/neutron-org/neutron/releases/tag/v4.0.0)
-
-### Slinky integration
-
-Neutron has integrated [Skip's Slinky](neutron/modules/3rdparty/skip/slinky/overview.md) - A general purpose price oracle leveraging ABCI++;
-
 ## [v3.0.0](https://github.com/neutron-org/neutron/releases/tag/v3.0.0)
 
 ### Block SDK integration
@@ -36,19 +30,19 @@ Neutron V3 bumps a lot of source code dependencies to the latest versions (at th
 Neutron has transitioned from Cosmos SDK v0.45 to the more advanced v0.47, encompassing significant improvements and custom adaptations. The key aspects of this upgrade include:
 
 - **Primary Changes:**
-  - Reference to the main [Cosmos SDK v0.47 documentation](https://docs.cosmos.network/v0.47/learn/intro/overview).
-  - Access to the full changelog [here](https://github.com/cosmos/cosmos-sdk/blob/v0.47.6/CHANGELOG.md).
-  - `--broadcast-mode` block was removed. You need to query the result for a TX with neutrond q tx hash instead.
-  - the SDK version includes some key store migration for the CLI. Make sure you backup your private keys before testing this! You can not switch back to v0.45.
-  - We have created [our own fork](https://github.com/neutron-org/cosmos-sdk) of the Cosmos SDK, introducing unique enhancements tailored to our needs:
-    - **Gas Counting Exclusion:** Removal of gas counting in the upgrade module's begin blocker for more consistent gas accounting.
-    - **BankHooks Introduction:** Implementation of [BankHooks](https://github.com/neutron-org/cosmos-sdk/pull/2), a pivotal feature for the new Tokenfactory.
-    - **[Optimized Slashing Calculation](https://github.com/neutron-org/cosmos-sdk/pull/5):** Backporting of slashing missed blocks calculation from Cosmos SDK v0.50.
-    - **CometBFT Transition:** A significant shift to CometBFT for enhanced consensus reliability.
-    - **ABCI 1.0 Support:** Enabling chains to implement their mempool with ABCI 1.0 compatibility.
-    - **Module Parameters Handling:** Deprecation of the [x/params module](https://docs.cosmos.network/v0.47/modules/params). Modules now manage parameters directly.
-    - **IBC-Go Upgrade:** Moving to ibc-go v7 for improved inter-blockchain communication.
-    - **Technical Enhancements:** Several minor yet impactful technical improvements (see full list [here](https://github.com/cosmos/cosmos-sdk/blob/v0.47.6/CHANGELOG.md)).
+    - Reference to the main [Cosmos SDK v0.47 documentation](https://docs.cosmos.network/v0.47/learn/intro/overview).
+    - Access to the full changelog [here](https://github.com/cosmos/cosmos-sdk/blob/v0.47.6/CHANGELOG.md).
+    - `--broadcast-mode` block was removed. You need to query the result for a TX with neutrond q tx hash instead.
+    - the SDK version includes some key store migration for the CLI. Make sure you backup your private keys before testing this! You can not switch back to v0.45.
+    - We have created [our own fork](https://github.com/neutron-org/cosmos-sdk) of the Cosmos SDK, introducing unique enhancements tailored to our needs:
+        - **Gas Counting Exclusion:** Removal of gas counting in the upgrade module's begin blocker for more consistent gas accounting.
+        - **BankHooks Introduction:** Implementation of [BankHooks](https://github.com/neutron-org/cosmos-sdk/pull/2), a pivotal feature for the new Tokenfactory.
+        - **[Optimized Slashing Calculation](https://github.com/neutron-org/cosmos-sdk/pull/5):** Backporting of slashing missed blocks calculation from Cosmos SDK v0.50.
+        - **CometBFT Transition:** A significant shift to CometBFT for enhanced consensus reliability.
+        - **ABCI 1.0 Support:** Enabling chains to implement their mempool with ABCI 1.0 compatibility.
+        - **Module Parameters Handling:** Deprecation of the [x/params module](https://docs.cosmos.network/v0.47/modules/params). Modules now manage parameters directly.
+        - **IBC-Go Upgrade:** Moving to ibc-go v7 for improved inter-blockchain communication.
+        - **Technical Enhancements:** Several minor yet impactful technical improvements (see full list [here](https://github.com/cosmos/cosmos-sdk/blob/v0.47.6/CHANGELOG.md)).
 
 #### Wasmd Upgrade
 
@@ -77,12 +71,11 @@ Enhancements within Neutron focus on integrating new modules, refining existing 
 
 - **ICA Usability Improvements:** Enhanced Interchain Account (ICA) functionality for a more user-friendly and secure experience for developers.
 - **Sudo Execution Error Handling:** Streamlined error message retrieval in the ContractManager module.
-- **New Fee Structure for ICA Creation:** [Introduction](https://github.com/neutron-org/neutron/pull/334) of a fee system for developers creating ICAs on remote chains. [Learn more](/neutron/modules/interchain-txs/messages#msgregisterinterchainaccount)
+- **New Fee Structure for ICA Creation:** [Introduction](https://github.com/neutron-org/neutron/pull/334) of a fee system for developers creating ICAs on remote chains. [Learn more](/neutron/modules/interchain-txs/messages#msgregisterinterchainaccount) 
 
 ##### Adminmodule Rework
 
 - **Module and Governance Alignment:** The admin module has been redesigned to align with the deprecated params module and the new governance proposal handling mechanism in Cosmos SDK v0.47. For more details, visit [Adminmodule Overview](/neutron/modules/admin-module/overview#challenges-related-to-cosmos-sdk-047).
 
-##### Dex module intoduction
-
+##### Dex module intoduction 
 - **Neutrality:** Bringing completely new [dex module](neutron/modules/dex/overview/overview.md). Users may interact with this module to provide liquidity and execute trades according to commonly-accepted exchange semantics.
