@@ -199,9 +199,10 @@ const sidebars = {
                                                 'neutron/modules/dex/overview/concepts/liquidity-pools',
                                                 'neutron/modules/dex/overview/concepts/ticks',
                                                 'neutron/modules/dex/overview/concepts/tick-liquidity',
+                                                'neutron/modules/dex/overview/concepts/fees',
                                                 'neutron/modules/dex/overview/concepts/liquidity-iteration',
-                                                'neutron/modules/dex/overview/concepts/swaps',
-                                                'neutron/modules/dex/overview/concepts/fees'
+                                                'neutron/modules/dex/overview/concepts/swaps'
+
                                             ]
                                         }
                                     ],

@@ -173,7 +173,7 @@ Good-til-Cancelled limit orders are hybrid maker and taker limit orders. They wi
 
 #### GOOD\_TIL\_TIME;
 
-Good-til-Time limit order function exactly the same as Good-til-Cancelled limit orders first trying to trade as a taker limit order and then placing any remaining amount as a maker limit order. However, the maker portion of the limit order has a specified `ExpirationTime. After the` ExpirationTime\` the order will be cancelled and can no longer be traded against. When withdrawing a Good-til-Time limit order the user will receive both the successfully traded portion of the limit order (TokenOut) as well as any remaining untraded amount (TokenIn).
+Good-til-Time limit order function exactly the same as Good-til-Cancelled limit orders first trying to trade as a taker limit order and then placing any remaining amount as a maker limit order. However, the maker portion of the limit order has a specified `ExpirationTime`. After the` ExpirationTime` the order will be cancelled and can no longer be traded against. When withdrawing a Good-til-Time limit order the user will receive both the successfully traded portion of the limit order (TokenOut) as well as any remaining untraded amount (TokenIn).
 
 #### JUST\_IN\_TIME;
 
