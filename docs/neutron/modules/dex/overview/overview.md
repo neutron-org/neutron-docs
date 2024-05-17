@@ -53,9 +53,3 @@ App-chains (and soon app-rollups) open up a rich design space of unexplored poss
 3. New incentive schemes based on order flow and fee markets can put an end to DeFi’s unsustainable token emissions models.
 
 Neutron DEX strives to be a hub of innovation for pushing the boundaries of what is possible with app-specific infrastructure.
-
-* [Concentrated Liquidity AMMs and Orderbooks](docs/neutron/modules/dex/overview/concepts/amms-and-orderbooks.md)
-* [Liquidity Pools](docs/neutron/modules/dex/overview/concepts/liquidity-pools.md)
-* [Ticks](docs/neutron/modules/dex/overview/concepts/ticks.md)
-* [Fees](docs/neutron/modules/dex/overview/concepts/fees.md)
-* [Swaps](docs/neutron/modules/dex/overview/concepts/swaps.md)

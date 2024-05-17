@@ -47,6 +47,7 @@ Request:
 message QueryGetLimitOrderTrancheUserRequest {
   string address = 1;
   string tranche_key = 2;
+  bool calc_withdrawable_shares = 3;
 }
 ```
 
@@ -55,6 +56,12 @@ Response:
 ```protobuf
 message QueryGetLimitOrderTrancheUserResponse {
   LimitOrderTrancheUser limit_order_tranche_user = 1 [(gogoproto.nullable) = true];
+  string withdrawable_shares = 2 [
+    (gogoproto.moretags) = "yaml:\"withdrawable_shares\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = true,
+    (gogoproto.jsontag) = "withdrawable_shares"
+  ];
 }
 
 message LimitOrderTrancheUser {
@@ -64,19 +71,19 @@ message LimitOrderTrancheUser {
   string address = 4;
   string shares_owned = 5 [
     (gogoproto.moretags) = "yaml:\"shares_owned\"",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false,
     (gogoproto.jsontag) = "shares_owned"
   ];
   string shares_withdrawn = 6 [
     (gogoproto.moretags) = "yaml:\"shares_withdrawn\"",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false,
     (gogoproto.jsontag) = "shares_withdrawn"
   ];
   string shares_cancelled = 7 [
     (gogoproto.moretags) = "yaml:\"shares_cancelled\"",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false,
     (gogoproto.jsontag) = "shares_cancelled"
   ];
@@ -89,6 +96,7 @@ message LimitOrderTrancheUser {
 * `QueryGetLimitOrderTrancheUserRequest`: Request message for the `LimitOrderTrancheUser` query.
     * `address` (string): The user address.
     * `tranche_key` (string): The tranche key.
+    * `calc_withdrawable_shares` (bool): option to calculate the number of shares that can be withdrawn
 
 **Sample Query**
 
@@ -595,7 +603,7 @@ Queries the simulated result of a multihop swap
 
 **Proto Messages**
 
-Request: 
+Request:
 
 ```protobuf
 message QueryEstimateMultiHopSwapRequest {
@@ -665,7 +673,7 @@ Queries the simulated result of a limit order placement.
 
 **Proto Messages**
 
-Request: 
+Request:
 ```protobuf
 message QueryEstimatePlaceLimitOrderRequest {
   string creator = 1;
@@ -765,7 +773,7 @@ Queries a pool by pair, tick and fee
 
 **Proto Messages**
 
-Request: 
+Request:
 ```protobuf
 message QueryPoolRequest {
   string pair_id = 1;
@@ -842,14 +850,14 @@ GET "/neutron/dex/pool_metadata/{id}"
 Queries a PoolMetadata by ID
 
 **Proto Messages**:
-Request: 
+Request:
 ```protobuf
 message QueryGetPoolMetadataRequest {
   uint64 id = 1;
 }
 ```
 
-Response: 
+Response:
 ```protobuf
 message PoolMetadata {
   uint64 id = 1;
@@ -876,7 +884,7 @@ message QueryGetPoolMetadataResponse {
 curl /neutron/dex/pool_metadata/{id}
 ```
 
-### GetALLPoolMetadata
+### GetAllPoolMetadata
 ```
 GET "/neutron/dex/pool_metadata"
 ```
