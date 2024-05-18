@@ -219,17 +219,17 @@ Fill-or-Kill limit orders are maker limit orders that either successfully swap 1
 
 Immediate-or-Cancel limit orders are maker orders that will swap as much as of the `AmountIn` as possible given available liquidity above the supplied `LimitSellPrice`. Unlike Fill-or-Kill orders they will still successfully complete even if they are only able to partially trade through the `AmountIn` at the `LimitSellPrice` or better.
 
-#### GOOD\_TIL\_CANCELED
+#### GOOD\_TIL\_CANCELLED
 
-Good-til-Canceled limit orders are hybrid maker and taker limit orders. They will attempt to trade the supplied `AmountIn` at the `TickIndex` or better. However, if the total `AmountIn` cannot be traded at the limit price they remaining amount will be placed as a maker limit order. The proceeds from the taker portion are deposited into the user’s account immediately, however, the proceeds from the maker portion must be explicitly withdrawn via WithdrawLimitOrder.
+Good-til-Cancelled limit orders are hybrid maker and taker limit orders. They will attempt to trade the supplied `AmountIn` at the `TickIndex` or better. However, if the total `AmountIn` cannot be traded at the limit price they remaining amount will be placed as a maker limit order. The proceeds from the taker portion are deposited into the user’s account immediately, however, the proceeds from the maker portion must be explicitly withdrawn via WithdrawLimitOrder.
 
 #### GOOD\_TIL\_TIME;
 
-Good-til-Time limit orders function exactly the same as Good-til-Canceled limit orders, first trying to trade as a taker limit order and then placing any remaining amount as a maker limit order. However, the maker portion of the limit order has a specified `ExpirationTime`. After the` ExpirationTime` the order will be automatically canceled and can no longer be traded against. When withdrawing a Good-til-Time limit order the user will receive both the successfully traded portion of the limit order (`TokenOut`) as well as any remaining untraded amount (`TokenIn`).
+Good-til-Time limit orders function exactly the same as Good-til-Cancelled limit orders, first trying to trade as a taker limit order and then placing any remaining amount as a maker limit order. However, the maker portion of the limit order has a specified `ExpirationTime`. After the` ExpirationTime` the order will be automatically cancelled and can no longer be traded against. When withdrawing a Good-til-Time limit order the user will receive both the successfully traded portion of the limit order (`TokenOut`) as well as any remaining untraded amount (`TokenIn`).
 
 #### JUST\_IN\_TIME;
 
-Just-in-Time limit orders are an advanced maker limit order order that provides tradeable liquidity for exactly one block. They operate the same as GOOD_TIL_TIME limit orders, but have a fixed expiration of one block. At the beginning of the block after  the Just-in-Time order was submitted the order is canceled and any untraded portion will no longer be usable as active liquidity.
+Just-in-Time limit orders are an advanced maker limit order order that provides tradeable liquidity for exactly one block. They operate the same as GOOD_TIL_TIME limit orders, but have a fixed expiration of one block. At the beginning of the block after  the Just-in-Time order was submitted the order is cancelled and any untraded portion will no longer be usable as active liquidity.
 
 ### PlaceLimitOrder Message
 
@@ -282,7 +282,7 @@ enum LimitOrderType {
 | `TokenIn` string                    | Token being “sold”                                                                                                                              |
 | `TokenOut`                          | Token being “bought”                                                                                                                            |
 | `AmountIn` sdk.Int                  | Amount of TokenIn to be traded                                                                                                                  |
-| `OrderType` orderType               | Type of limit order to be used. Must be one of: GOOD\_TIL\_CANCELED, FILL\_OR\_KILL, IMMEDIATE\_OR\_CANCEL, JUST\_IN\_TIME, or GOOD\_TIL\_TIME |
+| `OrderType` orderType               | Type of limit order to be used. Must be one of: GOOD\_TIL\_CANCELLED, FILL\_OR\_KILL, IMMEDIATE\_OR\_CANCEL, JUST\_IN\_TIME, or GOOD\_TIL\_TIME |
 | `LimitSellPrice` sdk.Dec                   | Limit sell price                                                                          |
 | `MaxAmountOut` sdk.Int                   | The maximum `TokenOut` a user wants to receive|
 | `ExpirationTime` time.Time          | Expiration time for order. Only valid for GOOD\_TIL\_TIME limit orders                                                                          |
@@ -291,7 +291,7 @@ enum LimitOrderType {
 
 ### Overview
 
-Standard Taker limit orders (Good-til-cancelled & Good-til-Time) can be canceled at any time if they have not been completely filled. Once a limit order is canceled any remaining “TokenIn” liquidity is returned to the user.
+Standard Taker limit orders (Good-til-cancelled & Good-til-Time) can be cancelled at any time if they have not been completely filled. Once a limit order is cancelled any remaining “TokenIn” liquidity is returned to the user.
 
 NOTE: Canceling a partially filled limit order does not withdraw the traded portion. A separate call must be made to `WithdrawFilledLimitOrder` to withdraw any proceeds from the limit order
 
