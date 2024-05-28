@@ -334,7 +334,6 @@ const sidebars = {
             items: [
                 'relaying/ibc-relayer',
                 'relaying/icq-relayer',
-                'relaying/target-chain',
             ],
         },
         {
