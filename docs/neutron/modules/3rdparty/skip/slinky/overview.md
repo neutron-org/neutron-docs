@@ -1,9 +1,9 @@
 # Overview
-We have integrated the [Slinky](https://skip-protocol-docs.netlify.app/slinky/overview) modules (Oracle & MarketMap) into the Neutron and added WASM bindings to facilitate their usage. This integration enhances our blockchain with reliable, real-time price feeds and market data.
+We have integrated the [Slinky](https://docs.skip.money/slinky/overview) modules (Oracle & MarketMap) into the Neutron and added WASM bindings to facilitate their usage. This integration enhances our blockchain with reliable, real-time price feeds and market data.
 Using `neutron-sdk` you can query these modules via contracts
 
 ### Oracle
-For example usage of these queries in contract, check our related [dev-contract](https://github.com/neutron-org/neutron-dev-contracts/blob/727aa94dff53373e34226d31d5bdcfc66e3a1aaf/contracts/oracle/src/contract.rs#L53)
+For example usage of these queries in contract, check our related [example contract](https://github.com/neutron-org/neutron-sdk/tree/d9abe67f0f62d4ea42d1943af53189ec6674d29e/contracts/marketmaphttps://github.com/neutron-org/neutron-sdk/tree/d9abe67f0f62d4ea42d1943af53189ec6674d29e/contracts/marketmap)
 ```rust 
    pub enum OracleQuery {
    GetAllCurrencyPairs {},
@@ -75,7 +75,7 @@ pub struct GetPricesResponse {
 ### Market Map
 For more detailed descriptions, refer to the [MarketMap README](https://github.com/skip-mev/slinky/blob/main/x/marketmap/README.md).
 
-For example usage of these queries in contract, check our related [dev-contract](https://github.com/neutron-org/neutron-dev-contracts/blob/feat/sdk-50/contracts/marketmap/src/contract.rs#L52) 
+For example usage of these queries in contract, check our related [example conract](https://github.com/neutron-org/neutron-sdk/tree/d9abe67f0f62d4ea42d1943af53189ec6674d29e/contracts/marketmap) 
 ```rust 
    pub enum MarketMapQuery {
     Params {},
