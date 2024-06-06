@@ -383,6 +383,13 @@ const sidebars = {
                         'other_tools/rehearsal/overview',
                     ],
                 },
+                {
+                    label: 'Neutron Flashloans',
+                    type: 'category',
+                    items: [
+                        'other_tools/flashloans/overview',
+                    ],
+                },
             ],
         },
     ]
