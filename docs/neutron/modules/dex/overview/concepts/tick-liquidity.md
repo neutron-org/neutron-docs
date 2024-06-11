@@ -30,7 +30,7 @@ type Pool struct {
 
 ## Pool Reserves
 
-`PoolReserves` are the core components for Neutron DEX’s AMM design. Each `PoolReserves` instance represents a single side of a liquidity pool. They contain all the information needed to perform that swap.  They also nest a Key and a TradePaidId, both of which are used to find the corresponding PoolReserves on the other side of the pool.
+`PoolReserves` are the core components for Neutron DEX’s AMM design. Each `PoolReserves` instance represents a single side of a liquidity pool. They contain all the information needed to perform that swap.  They also nest a `Fee` and a `TradePaidId`, both of which are used to find the corresponding PoolReserves on the other side of the pool.
 
 ```go
 type PoolReserves struct {
@@ -39,7 +39,6 @@ type PoolReserves struct {
     PriceTakerToMaker         PrecDec
     PriceOppositeTakerToMaker PrecDec
 }
-
 type PoolReservesKey struct {
     TradePairId           *TradePairID
     TickIndexTakerToMaker int64
@@ -58,7 +57,7 @@ In the context of LP liquidity, `PoolReserves` exist in reciprocal pairs with on
 * Both PoolsReserves within a pair will have the same fee: $$LowerTick.Key.Fee == UpperTick.Key.Fee$$
 * When swaps occur the tokens will always be added to one side of the liquidity pool and deducted from the other side.
 
-When LP liquidity is deposited with a given fee and price it is added to the `TickLiquidity` instances such that the given fee is already included in the price. For example, if Alice deposits 100 TokenA  and 100TokenB at price 0 (tick 0) with a fee of 1 then both `PoolReserves` representing the `Pool` will be placed at tick  1 with a `PriceTakerToMaker` of 0.999 each. If Bob were to swap 50Token0 for Token1 using Alice’s liquidity his exchange rate would be \~ .999. His 50 Token0 would be deposited into the `Pool`'s `LowerTick0 PoolReserves`at tick 1 and fee 1. and he would receive 49 Token1 which would be deducted from  pool's `LowerTick1` `PoolReserves`.
+When LP liquidity is deposited with a given fee and price it is added to the `TickLiquidity` instances such that the given fee is already included in the price. For example, if Alice deposits 100 TokenA  and 100TokenB at price 1 (tick 0) with a fee of 1 then both `PoolReserves` representing the `Pool` will be placed at tick  1 with a `PriceTakerToMaker` of 0.999 each. If Bob were to swap 50Token0 for Token1 using Alice’s liquidity his exchange rate would be \~ .999. His 50 Token0 would be deposited into the `Pool`'s `LowerTick0 PoolReserves`at tick 1 and fee 1. and he would receive 49 Token1 which would be deducted from  pool's `LowerTick1` `PoolReserves`.
 
 
 It is important to note that multiple `PoolReserves` can exist with the same TickIndex but each one will have a unique fee.
