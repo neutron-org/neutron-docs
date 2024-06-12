@@ -343,11 +343,7 @@ const sidebars = {
     {
       label: "Relaying",
       type: "category",
-      items: [
-        "relaying/ibc-relayer",
-        "relaying/icq-relayer",
-        "relaying/target-chain",
-      ],
+      items: ["relaying/ibc-relayer", "relaying/icq-relayer"],
     },
     {
       label: "Tutorials",
