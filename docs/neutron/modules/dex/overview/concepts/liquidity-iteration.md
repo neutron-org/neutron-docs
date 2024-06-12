@@ -41,14 +41,14 @@ Alice Performs a Swap using a `Taker Limit Order`. She wants to swap $$100$$ `US
 1. The first available `TickLiquidity` holding `ATOM` is a `LimitOrderTranche` at tick $19640$. Since this is a limit order, when swapped through and depleted the liquidity is removed from state and the `USDC` Alice paid is credited to the limit order `Receiver`
 2. Alice swaps up to $71.428$ `USDC` using this pool before depleting the reserves. This will net her $10$ `ATOM` for the swap:
 
- $\text{ATOM available} / \text{exchange rate} = \text{USDC needed}$
+ $\text{ATOM available} / \text{exchange rate} = \text{USDC needed}$    
  $10 / 0.14 = 71.428$
 
 
 3. Alice still has $28.527$ `USDC` she needs to swap, so we move to the next available tick: $-20795$
 This tick offers `ATOM` at a price of $0.123$ `ATOM` per `USDC` and is of type `PoolReserve`. Any USDC alice pays for this swap will be placed in the corresponding poolReserves of the Pool (USDC @ Tick $$-20795$$ .) Alice swaps the remainder of her `USDC` here, resulting in an additional $3.5$ `ATOM`:
 
- $\text{USDC in} * \text{exchange rate} = \text{ATOM out}$
+ $\text{USDC in} * \text{exchange rate} = \text{ATOM out}$  
  $28.527 * 0.123 = 3.5$
 
 4. Done. Alice has swapped $100$ `USDC` for $13.5$ `ATOM` with an average price of $0.135$ `ATOM` per `USDC`.
