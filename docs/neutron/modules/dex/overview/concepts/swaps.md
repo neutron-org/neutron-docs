@@ -9,5 +9,4 @@ When performing a swap we iterate through liquidity (`PoolReserves` & `LimitOrde
     - If swap is called through a `IMMEDIATE\_OR\_CANCEL` limit order it will still succeed if liquidity is exhausted and only a portion of the `AmountIn` has been used. In all other cases a partial fill of a swap will result in a failure.
 2. The `AmountIn` has been hit (ie. the user has swapped through 100% of the supplied `TokenIn`.
 3. `MaxAmountOut` has been set and the `TokenOut` amount is equal to `MaxAmountOut`.
-    - In cases where only a portion of the maxAmountIn is used only the used portion of `TokenIn` will be debited from the user's account.
-x
+    - In cases where only a portion of the `maxAmountIn` is used only the used portion of `TokenIn` will be debited from the user's account.
