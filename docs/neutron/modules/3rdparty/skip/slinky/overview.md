@@ -1,210 +1,115 @@
 # Overview
-We have integrated the [Slinky](https://docs.skip.money/slinky/overview) modules (Oracle & MarketMap) into the Neutron and added WASM bindings to facilitate their usage. This integration enhances our blockchain with reliable, real-time price feeds and market data.
-Using `neutron-sdk` you can query these modules via contracts
 
-### Oracle
-For example usage of these queries in contract, check our related [example contract](https://github.com/neutron-org/neutron-sdk/tree/d9abe67f0f62d4ea42d1943af53189ec6674d29e/contracts/marketmaphttps://github.com/neutron-org/neutron-sdk/tree/d9abe67f0f62d4ea42d1943af53189ec6674d29e/contracts/marketmap)
-```rust 
-   pub enum OracleQuery {
-   GetAllCurrencyPairs {},
-   GetPrice { currency_pair: CurrencyPair },
-   GetPrices { currency_pair_ids: Vec<String> },
-   }
-   ```
+**Slinky** is a revolutionary enshrined oracle built for the highest performance DeFi. It leverages Neutron chain security to provide guaranteed per-block price updates with millisecond refresh rates.
 
-#### GetAllCurrencyPairs
-It is possible to query all pairs currently available
+> **Note:** you can find more info about Slinky and how it works in the official Skip's Slinky docs: https://docs.skip.money/slinky/overview
 
-Request: 
-```rust 
-GetAllCurrencyPairs {}
-``` 
-Response:
-```rust 
-pub struct GetAllCurrencyPairsResponse {
-    pub currency_pairs: Vec<CurrencyPair>,
-}
+## F.A.Q
 
-pub struct CurrencyPair {
-    #[serde(rename(serialize = "Base", deserialize = "Base"))]
-    pub base: String,
-    #[serde(rename(serialize = "Quote", deserialize = "Quote"))]
-    pub quote: String,
-}
-``` 
+### I'm a validator, how should i run Slinky's Sidecar?
 
-#### GetPrice
-Get the price of a specific pair
+Please use [the official](https://github.com/skip-mev/docs/blob/main/docs/slinky/integrations/1-neutron.md) Slinky's documentation how to get the Sidecar up and running.
 
-Request:
-```rust 
-GetPrice { currency_pair: CurrencyPair }
-``` 
-resp:
-```rust 
-pub struct GetPriceResponse {
-    /// **price** represents the quote-price for the CurrencyPair given in
-    /// GetPriceRequest (possibly nil if no update has been made)
-    pub price: QuotePrice,
-    /// **nonce** represents the nonce for the CurrencyPair if it exists in state
-    pub nonce: u64,
-    /// **decimals* represents the number of decimals that the quote-price is
-    /// represented in. For Pairs where ETHEREUM is the quote this will be 18,
-    /// otherwise it will be 8.
-    pub decimals: u64,
-    /// *id** represents the identifier for the CurrencyPair.
-    #[serde(default)]
-    pub id: u64,
-}
-``` 
-#### GetPrices
-Get the prices of a multiple specific pairs.
+### How can i access prices from the Slinky?
+Slinky prices are stored within the [`x/oracle`](https://github.com/skip-mev/slinky/tree/main/x/oracle) module by default.
 
-Request:
-```rust 
-GetPrices { currency_pair_ids: Vec<String> }
-``` 
-Response:
-```rust 
-pub struct GetPricesResponse {
-    /// A list of price responses for the requested currency pairs.
-    pub prices: Vec<GetPriceResponse>,
-}
-``` 
+These prices are updated on a per-block basis, when there is sufficient difference from the last block's price. They can be accessed natively by [CosmWasm smart contracts](TODO:link_to_the_tutorials), by other modules, or by anyone else who has access to chain state.
 
-### Market Map
-For more detailed descriptions, refer to the [MarketMap README](https://github.com/skip-mev/slinky/blob/main/x/marketmap/README.md).
+Slinky market configuration is stored in the [`x/marketmap`](https://github.com/skip-mev/slinky/tree/main/x/marketmap). This module, unlike `x/oracle`, does **not** store price data. Instead, it stores which currency pairs are supported and how they are configured.
 
-For example usage of these queries in contract, check our related [example conract](https://github.com/neutron-org/neutron-sdk/tree/d9abe67f0f62d4ea42d1943af53189ec6674d29e/contracts/marketmap) 
-```rust 
-   pub enum MarketMapQuery {
-    Params {},
-    LastUpdated {},
-    MarketMap {},
-    Market {
-        currency_pair: CurrencyPair,
-    },
-}
-   ```
+#### Getting Supported Assets
 
-#### Params
-Params of the module
+You can find out which assets are supported on Neutron by either running:
 
-Request:
-```rust 
- Params {}
-``` 
-Response:
-```rust 
-pub struct ParamsResponse {
-    pub params: Params,
-}
+1. (via a local running chain): `curl http://<NEUTRON_REST_NODE_ADDRESS>:1317/slinky/marketmap/v1/marketmap`
+2. (via chain app CLI): `neutrond q marketmap marketmap`
+3. (via gRPC): `grpcurl -plaintext <NEUTRON_GRPC_NODE_ADDRESS>:9090 slinky.marketmap.v1.Query/MarketMap`
 
-pub struct Params {
-    pub admin: String,
-    pub market_authorities: Vec<String>,
-}
-``` 
+This will return a JSON list of supported assets with associated metadata.
 
-#### LastUpdated
-The `LastUpdated` endpoint queries the last block height that the market map was updated. This can be consumed by oracle service providers to recognize when their local configurations must be updated using the heavier MarketMap query.
-Request:
-```rust 
- LastUpdated {}
-``` 
-Response:
-```rust 
-pub struct LastUpdatedResponse {
-    pub last_updated: u64,
-}
-``` 
+#### Accessing Slinky Prices over node APIs and RPC
 
-#### Market
-The `MarketMap` queries the full state of the market by given pair.
+To access **all** Slinky prices (as of the last committed block), you can run:
 
-Request:
-```rust 
- Market {
-        currency_pair: CurrencyPair,
+1. (via a local running chain): `curl http://<NEUTRON_REST_NODE_ADDRESS>:1317/slinky/oracle/v1/get_prices`
+2. (via gRPC): `grpcurl -plaintext <NEUTRON_GRPC_NODE_ADDRESS>:9090 slinky.oracle.v1.Query/GetPrices`
+
+To get a **specific** currency pair, you can call:
+
+1. (Get all currency pairs request) `neutrond q oracle currency-pairs`
+2. (Get price request) `neutrond q oracle price [base] [quote]`
+
+#### Price Metadata within Slinky
+
+When calling `getPrices` via the above methods, you are returned an array of `GetPriceResponse`, each of which contains the following metadata about individual prices:
+
+1. `QuotePrice`
+2. nonce
+3. decimals
+4. ID
+
+`GetPriceResponse` looks like this:
+
+```
+    // GetPriceResponse is the response from the GetPrice grpc method exposed from
+    // the x/oracle query service.
+
+    message GetPriceResponse {
+        // QuotePrice represents the quote-price for the CurrencyPair given in
+        // GetPriceRequest (possibly nil if no update has been made)
+        QuotePrice price = 1 [ (gogoproto.nullable) = true ];
+        // nonce represents the nonce for the CurrencyPair if it exists in state
+        uint64 nonce = 2;
+        // decimals represents the number of decimals that the quote-price is
+        // represented in. For Pairs where ETHEREUM is the quote this will be 18,
+        // otherwise it will be 8.
+        uint64 decimals = 3;
+        // ID represents the identifier for the CurrencyPair.
+        uint64 id = 4;
     }
-``` 
-resp:
-```rust 
-pub struct MarketResponse {
-    pub market: Market,
-}
+```
 
-ub struct Market {
-    /// **ticker** is the full list of tickers and their associated configurations
-    /// to be stored on-chain.
-    pub ticker: Ticker,
-    pub provider_configs: Vec<ProviderConfig>,
-}
+Inside `QuotePrice`, you can fetch for the currency-pair:
 
-pub struct ProviderConfig {
-    /// **name** corresponds to the name of the provider for which the configuration is
-    /// being set.
-    pub name: String,
-    /// **off_chain_ticker** is the off-chain representation of the ticker i.e. BTC/USD.
-    /// The off-chain ticker is unique to a given provider and is used to fetch the
-    /// price of the ticker from the provider.
-    pub off_chain_ticker: String,
-    /// **normalize_by_pair** is the currency pair for this ticker to be normalized by.
-    /// For example, if the desired Ticker is BTC/USD, this market could be reached
-    /// using: OffChainTicker = BTC/USDT NormalizeByPair = USDT/USD This field is
-    /// optional and nullable.
-    pub normalize_by_pair: CurrencyPair,
-    /// **invert** is a boolean indicating if the BASE and QUOTE of the market should
-    /// be inverted. i.e. BASE -> QUOTE, QUOTE -> BASE
-    #[serde(default)]
-    pub invert: bool,
-    /// **metadata_json** is a string of JSON that encodes any extra configuration
-    /// for the given provider config.
-    #[serde(rename(serialize = "metadata_JSON", deserialize = "metadata_JSON"))]
-    pub metadata_json: String,
-}
+1. price
+2. timestamp of last update
+3. blockheight of last update
 
-pub struct CurrencyPair {
-    #[serde(rename(serialize = "Base", deserialize = "Base"))]
-    pub base: String,
-    #[serde(rename(serialize = "Quote", deserialize = "Quote"))]
-    pub quote: String,
-}
+`QuotePrice` looks like this:
 
+```
+    // QuotePrice is the representation of the aggregated prices for a CurrencyPair,
+    // where price represents the price of Base in terms of Quote
+    message QuotePrice {
+    string price = 1 [
+        (cosmos_proto.scalar) = "cosmos.Int",
+        (gogoproto.customtype) = "cosmossdk.io/math.Int",
+        (gogoproto.nullable) = false
+    ];
 
-pub struct Ticker {
-    /// **currency_pair** is the currency pair for this ticker.
-    pub currency_pair: CurrencyPair,
-    /// **decimals** is the number of decimal places for the ticker. The number of
-    /// decimal places is used to convert the price to a human-readable format.
-    pub decimals: u64,
-    /// **min_provider_count** is the minimum number of providers required to consider
-    /// the ticker valid.
-    pub min_provider_count: u64,
-    /// **enabled** is the flag that denotes if the Ticker is enabled for price
-    /// fetching by an oracle.
-    #[serde(default)]
-    pub enabled: bool,
-    /// **metadata_json** is a string of JSON that encodes any extra configuration
-    /// for the given ticker. ,
-    #[serde(rename(serialize = "metadata_JSON", deserialize = "metadata_JSON"))]
-    pub metadata_json: String,
-}
+    // BlockTimestamp tracks the block height associated with this price update.
+    // We include block timestamp alongside the price to ensure that smart
+    // contracts and applications are not utilizing stale oracle prices
+    google.protobuf.Timestamp block_timestamp = 2
+        [ (gogoproto.nullable) = false, (gogoproto.stdtime) = true ];
 
-``` 
+    // BlockHeight is height of block mentioned above
+    uint64 block_height = 3;
+    }
+```
 
-#### MarketMap
-The `MarketMap` queries the full state of the market map as well as associated information for every `Market`.
+#### Slinky Price Update Timing
 
-Request:
-```rust 
- MarketMap {}
-``` 
-resp:
-```rust 
-pub struct MarketMap {
-    /// A map of Markets with their structures defined above.
-    pub markets: Map<String, Market>,
-}
+Prices within Slinky committed on a one-block delay, since validators use the vote extensions from block `n-1` to securely submit their price data for block `n`.
 
-``` 
+Most of the time, Slinky feeds will update every single block. This happens when there is a non-insignificant update to the price, and over 66% of validators are correctly running their price-fetching sidecar.
+
+However, an individual Slinky feed will not update on any given block if:
+
+1. (More common) There was not a sufficient enough change from last block's price to surpass the Slinky `min_price_change` parameter. To save network bandwidth, the price won't update.
+2. (Less common) The market is disabled (i.e. not updating) within `x/marketmap`
+3. (Less common) Less than 2/3s of validators (by stake weight) contributed to a price update. This can happen if not enough validators run the Slinky sidecar, or there is a massive, widespread outage across providers.
+
+#### Q: Can I get historical prices in Slinky?
+
+**A:** No, the `x/oracle` module only stores the most recently posted price. However, you can use blockchain indexers or inspect past blocks to see the prices committed on previous heights.
