@@ -8,7 +8,7 @@ The AIMD EIP-1559 fee market is a slight modification to Ethereum's EIP-1559 fee
 
 ## How to query gas prices for all accepted denoms?
 
-1. (via a local running chain): `curl http://<NEUTRON_REST_NODE_ADDRESS>:1317//feemarket/v1/gas_prices`
+1. (via a local running chain): `curl http://<NEUTRON_REST_NODE_ADDRESS>:1317/feemarket/v1/gas_prices`
 2. (via chain app CLI): `neutrond q feemarket gas-prices`
 3. (via gRPC): `grpcurl -plaintext <NEUTRON_GRPC_NODE_ADDRESS>:9090 feemarket.feemarket.v1.Query/GasPrices`
 
@@ -16,7 +16,7 @@ This will return a JSON list of gas prices in all available denoms.
 
 ## How to query a gas price for a particular denom?
 
-1. (via a local running chain): `curl http://<NEUTRON_REST_NODE_ADDRESS>:1317//feemarket/v1/gas_price/{denom}`
+1. (via a local running chain): `curl http://<NEUTRON_REST_NODE_ADDRESS>:1317/feemarket/v1/gas_price/{denom}`
 2. (via chain app CLI): `neutrond q feemarket gas-price {denom}`
 3. (via gRPC): `grpcurl -plaintext <NEUTRON_GRPC_NODE_ADDRESS>:9090 feemarket.feemarket.v1.Query/GasPrice`
 
@@ -24,7 +24,7 @@ This will return a gas prices for a particular denom.
 
 ## How to query the current state of the Feemarket module?
 
-1. (via a local running chain): `curl http://<NEUTRON_REST_NODE_ADDRESS>:1317//feemarket/v1/state`
+1. (via a local running chain): `curl http://<NEUTRON_REST_NODE_ADDRESS>:1317/feemarket/v1/state`
 2. (via chain app CLI): `neutrond q feemarket state`
 3. (via gRPC): `grpcurl -plaintext <NEUTRON_GRPC_NODE_ADDRESS>:9090 feemarket.feemarket.v1.Query/State`
 
@@ -62,7 +62,7 @@ message State {
 
 ## How to query the current params of the Feemarket module?
 
-1. (via a local running chain): `curl http://<NEUTRON_REST_NODE_ADDRESS>:1317//feemarket/v1/params`
+1. (via a local running chain): `curl http://<NEUTRON_REST_NODE_ADDRESS>:1317/feemarket/v1/params`
 2. (via chain app CLI): `neutrond q feemarket params`
 3. (via gRPC): `grpcurl -plaintext <NEUTRON_GRPC_NODE_ADDRESS>:9090 feemarket.feemarket.v1.Query/Params`
 
