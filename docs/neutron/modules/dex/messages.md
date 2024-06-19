@@ -329,7 +329,7 @@ message MsgWithdrawFilledLimitOrder {
 
 | Field                             | Description                                                               |
 |----------------------------------|---------------------------------------------------------------------------|
-| Creator string (sdk.AccAddress)  | Account which controls the limit order and to which proceeds are credited |
+| `Creator` string (sdk.AccAddress)  | Account which controls the limit order and to which proceeds are credited |
 | `TrancheKey` string              | TrancheKey for the target limit order                                     |
 
 
