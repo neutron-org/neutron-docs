@@ -1,6 +1,6 @@
 # Liquidity Iteration
 
-When swapping through liquidity via a Multi-Hop Swap or a Taker Limit Order we iterate through the available `TickLiquidity` to fill the swap order. Liquidity is always iterated through in order of best to worst price (from the taker's perspective.) For each swap, we completely exhaust the available reserves before moving on to the next tick. For `TickLiquidity` instances at the same `TickIndex` they are iterated through in a deterministic order as follows:
+When swapping through liquidity via a Multi-Hop Swap or a Taker Limit Order, we iterate through the available `TickLiquidity` to fill the swap order. Liquidity is always iterated through in order of best to worst price (from the taker's perspective.) For each swap, we completely exhaust the available reserves before moving on to the next tick. For `TickLiquidity` instances at the same `TickIndex` they are iterated through in a deterministic order as follows:
 - `PoolReserves` take priority
 - `LimitOrderTranches` are iterated through when Pool Reserve liquidity is depleted
 - `LimitOrderTranches` are iterated through in alphabetical order of their `TrancheKey` (`LimitOrderTranche.Key.TrancheKey`.)
