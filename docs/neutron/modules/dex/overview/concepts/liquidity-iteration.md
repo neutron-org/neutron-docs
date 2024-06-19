@@ -46,7 +46,7 @@ Alice Performs a Swap using a `Taker Limit Order`. She wants to swap $$100$$ `US
 
 
 3. Alice still has $28.527$ `USDC` she needs to swap, so we move to the next available tick: $-20795$
-This tick offers `ATOM` at a price of $0.123$ `ATOM` per `USDC` and is of type `PoolReserve`. Any USDC alice pays for this swap will be placed in the corresponding poolReserves of the Pool (USDC @ Tick $$-20795$$ .) Alice swaps the remainder of her `USDC` here, resulting in an additional $3.5$ `ATOM`:
+This tick offers `ATOM` at a price of $0.123$ `ATOM` per `USDC` and is of type `PoolReserve`. Any USDC Alice pays for this swap will be placed in the corresponding poolReserves of the Pool (USDC @ Tick $$-20795$$ .) Alice swaps the remainder of her `USDC` here, resulting in an additional $3.5$ `ATOM`:
 
  $\text{USDC in} * \text{exchange rate} = \text{ATOM out}$
  $28.527 * 0.123 = 3.5$
