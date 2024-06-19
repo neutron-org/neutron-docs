@@ -133,7 +133,7 @@ message MsgWithdrawal {
 
 ### Overview
 
-Multihop swap provides a swapping mechanism to achieve better prices by routing through a series of pools. Rather than swapping directly from TokenA to TokenB a user may be able to get a better price if they swap from TokenA to TokenC to TokenD to TokenB. When performing a multohop swap the user provides an array of Denoms that they would like to swap through. For example if the user supplied the following array of Denoms \[`“TokenA”, “TokenC”, “TokenD”, “TokenB”`], the following swaps would be performed: Swap TokenA for TokenC; Swap TokenC for TokenD; Swap TokenD for TokenB.
+Multihop swap provides a swapping mechanism to achieve better prices by routing through a series of pools. Rather than swapping directly from TokenA to TokenB a user may be able to get a better price if they swap from TokenA to TokenC to TokenD to TokenB. When performing a multihop swap the user provides an array of Denoms that they would like to swap through. For example if the user supplied the following array of Denoms \[`“TokenA”, “TokenC”, “TokenD”, “TokenB”`], the following swaps would be performed: Swap TokenA for TokenC; Swap TokenC for TokenD; Swap TokenD for TokenB.
 
 The underlying swaps (hops) within a Multihop Swap are performed using the same mechanism as the basic Swap function. Unlike the the basic swap however, the complete amount of specified by `AmountIn` will always be used. If there is insufficient liquidity in a route to swap 100% of the `AmountIn` the route will fail. Additionally, rather than supply an explicit argument for `TokenIn` the first denom in each `Routes` array is used as the `TokenIn.`
 
