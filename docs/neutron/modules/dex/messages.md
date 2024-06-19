@@ -8,7 +8,7 @@ In Neutron DEX’s concentrated liquidity model, liquidity providers (LPs) can p
 
 ### Deposit Mechanism
 
-When depositing into an LP position (`PoolReserves`) a user specifies amounts of `TokenA` and `TokenB` as well as a `TickIndexAToB` and a fee. The liquidity is added to the reserves for the respective ticks. As a convenience to users, they do not have to know the canonical `Token0` and `Token1` for a pair, instead they can assign pass either denom as `TokenA` or `TokenB`. `TokenA` and `TokenB` along with the `TickIndexAToB` will be normalized according to the canonical [`PairID`](docs/neutron/modules/dex/overview/concepts/tick-liquidity.md#pairid). Token0 will be deposited into the `PoolReserves` struct with the matching fee at `TickIndex - fee` and Token1 will be deposited into the `PoolReserves` at `TickIndex + fee`.
+When depositing into an LP position (`PoolReserves`) a user specifies amounts of `TokenA` and `TokenB` as well as a `TickIndexAToB` and a fee. The liquidity is added to the reserves for the respective ticks. Internally the DEX Normalizes `TokenA` and `TokenB` to `Token0` and `Token1` where `Token0` is the smaller of the 2 alphabetically sorted tokens. As a convenience to users, they do not have to know the canonical `Token0` and `Token1` for a pair, instead they can assign either denom as `TokenA` or `TokenB`. `TokenA` and `TokenB` along with the `TickIndexAToB` will be normalized according to the canonical [`PairID`](docs/neutron/modules/dex/overview/concepts/tick-liquidity.md#pairid). Token0 will be deposited into the `PoolReserves` struct with the matching fee at `TickIndex - fee` and `Token1` will be deposited into the `PoolReserves` at `TickIndex + fee`.
 
 `TickIndexAToB` specifies the tick providing the desired conversion rate from `TokenA` to `TokenB`. This means that `TokenB` will be deposited at $$TickIndexAToB + fee$$ and `TokenA` will be deposited at $$TickIndexAToB\cdot-1 + fee$$.
 
@@ -28,16 +28,19 @@ $$valueDeposited = true_0 + p(i)\cdot true_1$$
 
 $$newShares = \frac{valueDeposited \cdot totalShares}{valueTotal}$$
 
-#### Autoswap
-
-By default the `autoswap` option is enabled, which allows users to deposit their full deposit amount.  Autoswap provides a mechanism for users to deposit the entirety of their specified deposit amounts by paying a small fee. The fee for performing an autoswap is deducted from the total number of shares the the user is issued. When calculating share issuance the same formula as above is used for the balanced portion of the deposit, with the following formula use to calculate the shares issues that would unbalance the pool:
-
-$$additionalShares = left_0 \cdot p(-fee) + left_1 \cdot p(i-fee)$$
-
 
 #### Behind Enemy Lines
 
 In order to maintain basic invariants of the DEX users cannot deposit liquidity at price cheaper than bid price for the opposing liquidity, also known as Behind-Enemy-Lines (BEL). If a deposit is placed BEL it will be ignored, but all other deposits will still succeed. The entire transaction can be failed atomically if the `FailTxOnBEL` option is set to true.
+
+
+#### Autoswap
+
+In rare cases where the target deposit tick has liquidity of both `token0` and `token1` (i.e the pair spread is 0) `autoswap` is required to perform the deposit on that tick. This is to due to an edge case in pool share calculation where users depositing `token1` receive shares withdrawable for `token0` and `token1`. Without paying the autosap fee upfront, users can effectively perform a 'free' swap on that pool. Autoswap will only apply on the specific tick that has both tokens available
+By default the `autoswap` option is enabled, which allows users to deposit their full deposit amount.  Autoswap provides a mechanism for users to deposit the entirety of their specified deposit amounts by paying a small fee. The fee for performing an autoswap is deducted from the total number of shares the the user is issued. When calculating share issuance the same formula as above is used for the balanced portion of the deposit, with the following formula use to calculate the shares issues that would unbalance the pool:
+
+$$additionalShares = left_0 \cdot p(-fee) + left_1 \cdot p(i-fee)$$
+
 
 ### Deposit Message
 ```protobuf
@@ -141,7 +144,7 @@ MultihopSwap also allows users to set an `ExitLimitPrice.` For a route to succee
 
 $$ExitLimitPrice <= \frac{AmountOfExitToken}{AmountIn}$$
 
-Multihop swap also allows users to supply multiple different routes. By default, the first route that does not run out of liquidity, hit the `ExitLimitPrice` or return an error will be used. Multihop swap also provides a `PickBestRoute` option. When `PickBestRoute` is true all routes will be run and the route that results in the greatest amount of the resulting TokenOut at final hop will be used. This option to dynamically pick the best route at runtime significantly reduces the risk of front running.
+Multihop swap also allows users to supply multiple different routes. By default, the first route that does not run out of liquidity, hit the `ExitLimitPrice` or return an error will be used. Multihop swap also provides a `PickBestRoute` option. When `PickBestRoute` is true all routes will be run and the route that results in the greatest amount of the resulting TokenOut at final hop will be used. This option to dynamically pick the best route at runtime significantly reduces the risk of front running. Note that a successful MultiHop swap can produce dust on any pool in swaps through. This dust is credited to the caller.
 
 ### Multihop Swap Message
 
