@@ -355,7 +355,7 @@ message MsgUpdateParams {
 message Params {
   option (gogoproto.goproto_stringer) = false;
   repeated uint64 fee_tiers = 1;
-  uint64 max_JITs_per_block = 3;
+  uint64 max_jits_per_block = 3;
   uint64 good_til_purge_allowance = 4;
   bool paused = 5;
 }
@@ -364,7 +364,7 @@ message Params {
 | Field                       | Description                                                                                                                                                                                                                                             |
 |-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `FeeTiers` uint64           | Fee tiers is the list of allowable fees that can be used for LP deposits                                                                                                                                                                                |
-| `MaxJITsPerBlock` uint64           | Maximum number of JIT limit orders allowed to be placed in a single block                                                                                                                                                                                |
+| `MaxJitsPerBlock` uint64           | Maximum number of JIT limit orders allowed to be placed in a single block                                                                                                                                                                                |
 | `GoodTilPurgeAllowance` uint64           | Amount of gas reserved for purging non-JIT limit orders in `BeginBlocker`                                                                                                                                                                                |
 | `Paused` bool           | Option to disable all messages to the dex |
 
