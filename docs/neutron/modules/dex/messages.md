@@ -68,7 +68,7 @@ message MsgDeposit {
 
 message DepositOptions {
   bool disable_autoswap = 1;
-  bool fail_tx_on_BEL = 2;
+  bool fail_tx_on_bel = 2;
 }
 ```
 
@@ -93,7 +93,7 @@ message DepositOptions {
 | Field                   | Description                                                             |
 |-------------------------| ----------------------------------------------------------------------- |
 | `disable_autoswap` bool | Toggle to use autoswap (default false)                                  |
-| `fail_tx_on_BEL` bool   | Toggle to fail entire transaction if behind-enemy-lines (default false) |
+| `fail_tx_on_bel` bool   | Toggle to fail entire transaction if behind-enemy-lines (default false) |
 
 
 ## Withdrawal
