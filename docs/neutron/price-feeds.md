@@ -1,10 +1,15 @@
-# Price Feeds
+![image](https://github.com/neutron-org/neutron-docs/assets/103267218/35df2f10-5679-41f2-a7e9-39f57c08c7d6)# Price Feeds
 
 Price feeds are specialised tools that provide asset prices data to smart contracts and other consumers. There is a number of on- and off-chain solutions available on Neutron that you as a developer can benefit from.
 
 ## Oracles
 
 An oracle in blockchain is a specialized service that acts as a bridge between the blockchain and the outside world, enabling smart contracts to interact with real-world data and events. Unlike traditional systems that rely on centralized data sources, oracles provide decentralized, tamper-resistant mechanisms to fetch, verify, and relay external information onto the blockchain.
+
+### Slinky (coming soon)
+
+Slinky is an on-chain consensus-level oracle running by the chain validators. Slinky is coming to Neutron in the next release in July 2024. You can read more about the oracle, how it works, its upcoming features and how to use by the link to the oracle's official docs: https://docs.skip.money/slinky/overview/.
+Learn how to easily interact with Slinky using Neutron SDK: https://docs.skip.money/slinky/using-slinky/neutron-sdk.
 
 ### Pyth
 
@@ -17,10 +22,6 @@ Ojo is a decentralized security-first oracle network that sources price data fro
 ### Band
 
 Band is a cross-chain data oracle platform that provides reliable, secure, and real-time data to smart contracts on various blockchain networks. Read more about its architecture, functionalities, client libraries, and tools by the link to the docs: https://docs.bandchain.org/.
-
-### Slinky (upcoming)
-
-Slinky is an on-chain consensus-level oracle running by the chain validators. Slinky is coming to Neutron in the next release in July 2024. You can read more about the oracle, how it works, its upcoming features and how to use by the link to the oracle's official docs: https://docs.skip.money/slinky/overview/
 
 ## On-chain TWAP
 
