@@ -1,7 +1,5 @@
 # Price Feeds
 
-![image](https://github.com/neutron-org/neutron-docs/assets/103267218/35df2f10-5679-41f2-a7e9-39f57c08c7d6)
-
 Price feeds are specialised tools that provide asset prices data to smart contracts and other consumers. There is a number of on- and off-chain solutions available on Neutron that you as a developer can benefit from.
 
 ## Oracles
