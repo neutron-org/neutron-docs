@@ -7,84 +7,104 @@ obtain.
 This CosmWasm onboarding tutorial has one goal: to show the reader that building applications with CosmWasm is not
 scary. Let's get right into it!
 
-## How does a minimal smart contract look?
+## What does a minimal smart contract look like?
 
-A **really** minimal smart contract would be 10 lines long, and would be useless for our purposes. Below is the full
-source code of a compact smart contract that **actually does** something: allows anyone to increase a counter by some
-value. Fun, right? Right.
+A **really** minimal smart contract would be 10 lines long, and would be useless for our purposes. Our smart contract
+is going to be a contract that **actually does** something:
 
-> **Do you notice something?** It's in Rust. Rust is scary, but writing CosmWasm smart contracts is probably the easiest
-> thing you can do with Rust, because everything is single-threaded.
+1. Keeps a `Uint128` value in the storage,
+2. Allows anyone to increase this value by some amount, if the increase amount is less than `100`,
+3. Allows anyone to query the current value from the storage.
 
-> **"How is this minimal? It's 137 lines of code!"** Yes, but 60 of them are comments! Which you need to read carefully,
-> by the way.
+Fun, right? Right. **Here is the full source code** of this contract **on
+Github**: [link](https://github.com/neutron-org/onboarding/blob/main/minimal_contract/src/contract.rs), please have a
+look
+at it. If you like reading raw source code, you can spend some time in this file (we left **a lot** of comments), but we
+are
+going to walk you through everything in this contract right below.
+
+After having a look at the source code, you might have some questions right away, and we will try to address them
+immediately:
+
+1. **"How is this minimal? It's 160 lines of code!"** Yes, but 50% of them are comments!
+2. **"Wait, is this Rust?"** Yes, it's in Rust. Rust is scary, but writing CosmWasm smart contracts is probably the
+   easiest
+   thing you can do with Rust, because everything is single-threaded.
+
+With these initial questions out of the way, let's have a closer look at this contract.
+
+> If you don't care about the implementation details at the moment and just want to see how to deploy and interact with
+> the contract, please have a look at the **How to upload a contract and interact with it?** section.
+
+### Storage
+
+Almost any useful contract manages some storage. In CosmWasm, in order to have storage, you need to initialise it using
+a type from the `cw_storage_plus` package. In our case, it's `Item<Uint128>`:
 
 ```rust
-/// Nobody cares about imports, just ignore them.
-use cosmwasm_std::{entry_point, DepsMut, Env, MessageInfo, Response, StdError, Uint128};
 use cw_storage_plus::Item;
-use neutron_sdk::bindings::msg::NeutronMsg;
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use thiserror::Error;
 
-/// Do you want your contract to have persistent state? If you do, you need
-/// storage items. This particular item stores a (potentially) very large
-/// integer number: Uint128, but you can store any value that can be serialized
-/// and deserialized, including the types that you defined yourself.
 pub const COUNTER: Item<Uint128> = Item::new("counter");
+```
 
-/// This code gets executed when you instantiate your contract. It's one
-/// of the 3 most important entry points in CosmWasm: instantiate(),
-/// execute(), and query().
-///
-/// Any instantiate() entrypoint expects 4 arguments:
-///     - deps: most importantly, gives you access to the storage
-///     - env:  keeps information about the execution environment,
-///             e.g., the address of the current contract
-///     - info: keeps information about the message that is currently
-///             executed, e.g., the address of the message sender
-///     - msg:  the InstantiateMsg that you define yourself.
-///
-/// InstantiateMsg is defined below.
+This will make CosmWasm allocate some space in the persistent storage for a single `Uint128` value under the
+`"counter"` key. As a smart contract developer, you don't care about this key at all, but you must make sure that
+each storage item has a unique key.
+
+Saving single integers is kind of lame, but don't worry: **you can save almost anything to storage**. For example, **you
+can save vectors**: `Item<Vec<Uint128>>`.
+
+Or **you can save the types that you created yourself** (just make sure you added the fancy derive macro to the type
+declaration):
+
+```rust
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct Config {
+    pub important_parameter: String,
+}
+
+pub const CONFIG: Item<Config> = Item::new("config");
+```
+
+For maps, `cw_storage_plus` has a special `Map` type, in which you can also map pretty much anything to anything, if it
+serialises properly:
+
+```rust
+pub const EXAMPLE_MAP: Map<Uint128, Uint128> = Map::new("example-map");
+```
+
+> **More storage types:** `cw_storage_plus` has even more storage types, some of which allow you to track the height at
+> which a certain value was saved to your storage item.
+
+> **A note about project layout:** usually all storage items and storage types are defined in a separate
+> file (`src/state.rs`), alongside the `src/contract.rs` file. Here we define everything in one place for the sake of
+> simplicity.
+
+### Instantiation
+
+```rust
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
-    // The return type of this entrypoint is Result<Response<NeutronMsg>, ContractError>.
-    // Without going too much into the details, it means that this entrypoint can either
-    // return a valid Result, or a ContractError. The ContractError type is defined below.
 ) -> Result<Response<NeutronMsg>, ContractError> {
-    // Here we save the initial value from the InstantiateMsg to the COUNTER
-    // storage item. Saving data to storage consumes gas!
-    //
-    // This operation can also return
     COUNTER.save(deps.storage, &msg.initial_value)?;
 
     Ok(Response::new()
-        // We add some attributes to the response with information about the current call.
-        // It's useful for debugging.
         .add_attribute("action", "instantiate")
         .add_attribute("initial_value", msg.initial_value)
         .add_attribute("contract_address", env.contract.address)
         .add_attribute("sender", info.sender.to_string()))
 }
 
-/// You define this message. Any data that is necessary to set up
-/// your new contract should be added there.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct InstantiateMsg {
     /// In our exciting minimal contract, we set the initial value for a counter.
     initial_value: Uint128,
 }
 
-/// If this was really a **minimal** example, we would not define our own error type,
-/// and would simply return Err(StdError::generic_err("error message")) in case of an
-/// error.
-///
-/// However, in most cases you want to define contract-specific errors, which we do below.
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
     /// Keep access to the StdError, just in case.
@@ -96,64 +116,30 @@ pub enum ContractError {
     #[error("Can not increment by more than 100 (got {amount})")]
     InvalidIncreaseAmount { amount: Uint128 },
 }
-
-/// This is the execute() entrypoint. Users that want to perform **actions**
-/// that modify the contract state (as opposed to running queries, which do not
-/// modify state) need to send one of the variants of the ExecuteMsg to this
-/// entry point. The ExecuteMsg is en enum that is defined below.
-///
-/// This entrypoint expects the same arguments that instantiate() does, but instead
-/// of InstantiateMsg, it needs the ExecuteMsg.
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute(
-    deps: DepsMut,
-    _env: Env, // We don't use Env in uor implementation, hence the underscore
-    info: MessageInfo,
-    msg: ExecuteMsg,
-) -> Result<Response<NeutronMsg>, ContractError> {
-    // The `match` here tries to parse msg into any of the known variants of ExecuteMsg.
-    // If it's not possible, the user will get an error.
-    match msg {
-        ExecuteMsg::IncreaseCount { amount } => {
-            // Return the InvalidIncreaseAmount error if the user tries to increase
-            // by more than 100. We save this value in a well-named constant
-            // MAX_INCREASE_AMOUNT because we are nice people.
-            if amount.gt(&MAX_INCREASE_AMOUNT) {
-                return Err(ContractError::InvalidIncreaseAmount { amount });
-            }
-
-            // We need to increase the counter. Step 1: load the current value.
-            // This operation consumes gas!
-            let mut counter = COUNTER.load(deps.storage)?;
-
-            // Step 2: add the user value to the value loaded from the storage.
-            counter += amount;
-
-            // Step 3: save the increased amount to the storage.
-            COUNTER.save(deps.storage, &counter)?;
-
-            Ok(Response::default()
-                .add_attribute("action", "execute_add")
-                .add_attribute("amount", amount.to_string())
-                .add_attribute("sender", info.sender))
-        }
-    }
-}
-
-/// ExecuteMsg is the enum that defines the messages that the user can
-/// send to the contract.
-///
-/// You only need messages for actions that require
-/// state modification; for read-only actions, you have the query() entry
-/// point (see below)
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ExecuteMsg {
-    /// This message allows the user to specify a Uint128 amount,
-    /// to be added to the COUNTER storage item value.
-    IncreaseCount { amount: Uint128 },
-}
-
-/// Don't use magic numbers in your code! Move them to constants instead.
-pub const MAX_INCREASE_AMOUNT: Uint128 = Uint128::new(100u128);
 ```
+
+#### Contract life cycle and entry points
+
+The creation of a contract involves **two steps**: first you need to **upload** the compiled contract binary to the
+chain,
+which makes Neutron save the binary under a unique `code_id`. Then you need to **instantiate** a contract from this
+`code_id`, which will result in Neutron creating an actual contract that you can interact with.
+
+> Multiple contracts can be created from the same `code_id` without the need to re-upload the binary. Each contract
+> with have a unique address.
+
+The **instantiation process can be customised** by the contract creator by defining an `InstantiateMsg` and implementing
+the `instantiate()` entry point.
+
+> The `instantiate()` entry point is one of the 3 main contract entry points, the other 2 being `execute()`
+> and `query()`, which we are going to discuss right after `instantiate()`.
+
+> There are 3 more entry points that we are not going to discuss in Part 1 of this tutorial: `migrate()`, `reply()`,
+> and `sudo()`.
+
+#### Implementing the `instantiate()` entry point
+
+
+
+
+## How to upload a contract and interact with it?
