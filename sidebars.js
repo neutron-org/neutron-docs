@@ -362,7 +362,14 @@ const sidebars = {
                         'tutorials/indexers/intro',
                         'tutorials/indexers/subquery',
                     ]
-                }
+                },
+                {
+                    label: 'Onboarding',
+                    type: 'category',
+                    items: [
+                        { label: 'Part 1: Minimal application', type: 'doc', id: 'tutorials/onboarding/part-1-minimal-application' },
+                    ]
+                },
             ],
         },
         {
