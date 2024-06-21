@@ -16,12 +16,10 @@ is going to be a contract that **actually does** something:
 2. Allows anyone to increase this value by some amount, if the increase amount is less than `100`,
 3. Allows anyone to query the current value from the storage.
 
-Fun, right? Right. **Here is the full source code** of this contract **on
-Github**: [link](https://github.com/neutron-org/onboarding/blob/main/minimal_contract/src/contract.rs), please have a
-look
-at it. If you like reading raw source code, you can spend some time in this file (we left **a lot** of comments), but we
-are
-going to walk you through everything in this contract right below.
+Fun, right? Right. **Here is the full source code** of this contract
+on [Github](https://github.com/neutron-org/onboarding/blob/main/minimal_contract/src/contract.rs), please have a
+look at it. If you like reading raw source code, you can spend some time in this file (we left **a lot** of comments),
+but we are going to walk you through everything there in this part of the tutorial.
 
 After having a look at the source code, you might have some questions right away, and we will try to address them
 immediately:
@@ -82,42 +80,6 @@ pub const EXAMPLE_MAP: Map<Uint128, Uint128> = Map::new("example-map");
 
 ### Instantiation
 
-```rust
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn instantiate(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    msg: InstantiateMsg,
-) -> Result<Response<NeutronMsg>, ContractError> {
-    COUNTER.save(deps.storage, &msg.initial_value)?;
-
-    Ok(Response::new()
-        .add_attribute("action", "instantiate")
-        .add_attribute("initial_value", msg.initial_value)
-        .add_attribute("contract_address", env.contract.address)
-        .add_attribute("sender", info.sender.to_string()))
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct InstantiateMsg {
-    /// In our exciting minimal contract, we set the initial value for a counter.
-    initial_value: Uint128,
-}
-
-#[derive(Error, Debug, PartialEq)]
-pub enum ContractError {
-    /// Keep access to the StdError, just in case.
-    #[error(transparent)]
-    Std(#[from] StdError),
-
-    /// We will return this error if the user tries to increment the counter by
-    /// more than 100. For no particular reason.
-    #[error("Can not increment by more than 100 (got {amount})")]
-    InvalidIncreaseAmount { amount: Uint128 },
-}
-```
-
 #### Contract life cycle and entry points
 
 The creation of a contract involves **two steps**: first you need to **upload** the compiled contract binary to the
@@ -139,7 +101,68 @@ the `instantiate()` entry point.
 
 #### Implementing the `instantiate()` entry point
 
+```rust
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+pub struct InstantiateMsg {
+    initial_value: Uint128,
+}
 
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn instantiate(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: InstantiateMsg,
+) -> Result<Response<NeutronMsg>, ContractError> {
+    COUNTER.save(deps.storage, &msg.initial_value)?;
 
+    Ok(Response::new()
+        .add_attribute("action", "instantiate")
+        .add_attribute("initial_value", msg.initial_value)
+        .add_attribute("contract_address", env.contract.address)
+        .add_attribute("sender", info.sender.to_string()))
+}
+```
+
+In the snippet above, 2 things happen: the definition of `InstantiateMsg`, and the implementation of the `instantiate()`
+entry point.
+
+`InstantiateMsg` can carry any information we might find useful while populating our new contract. In our
+case, we decided to use `InstantiateMsg` to set the initial value of the `COUNTER` storage item that was initialised in
+the previous section.
+
+> You need to add the `#[derive(Serialize, <...> JsonSchema)]` derive macro to the definitions of your custom types (so
+> that they can be properly serialised by Rust).
+
+> A common practice in the CosmWasm world is to define a `Config` type, create a storage item for it and then to set the
+> initial values for `Config` parameters in the `InstantiateMsg`.
+
+The `instantiate()` entry point, expects the following arguments:
+
+* **deps**: most importantly, gives you access to the _storage_ and the _querier_ (we'll discuss queries later),
+* **env**:  keeps information about the execution environment, e.g., the address of the current contract,
+* **info**: keeps information about the message that is currently executed, e.g., the address of the message sender,
+* **msg**:  the `InstantiateMsg` that we just defined.
+
+Most entry points expect a very similar set of arguments, with slight variations.
+
+The return type of this entry point is `Result<Response<NeutronMsg>, ContractError>`. In simple terms, this means that
+the entry point can either return a valid `Response` or a `ContractError`. We'll define `ContractError` in the next
+section.
+
+Our `instantiate()` implementation sets the value of the `COUNTER` storage item to `InstantiateMsg.initial_value`. This
+is our first time saving something to storage, which is quite exciting!
+
+Here are some key points to remember:
+
+1. Reading and writing to storage consumes gas, which costs money.
+2. Storage operations can potentially fail (though they usually succeed). In our implementation, any error is
+   immediately returned by the `instantiate()` function, thanks to the `?` operator at the end of the `.save()` call.
+   It's also possible to handle errors manually using Rust's `match`
+   operator ([Rust documentation](https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html#matching-on-different-errors)).
+
+Finally, in our `instantiate()` implementation, we add **attributes** to the successful `Response`. This helps with
+debugging (we'll cover this in the last section of Part 1). Adding attributes to your response acts like a form of
+logging. Alternatively, we could just return `Ok(Response::new())`, and that would work perfectly fine.
 
 ## How to upload a contract and interact with it?
