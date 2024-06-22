@@ -193,12 +193,33 @@ implementing the `instantiate()` entrypoint and the `InstantiateMsg`.
 See it in action: [link](https://github.com/neutron-org/onboarding/blob/main/minimal_contract/src/contract.rs#L16-L63)
 :::
 
+#### InstantiateMsg
+
 ```rust
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct InstantiateMsg {
     initial_value: Uint128,
 }
+```
 
+In the snippet above, 2 things happen: the definition of `InstantiateMsg`, and the implementation of the `instantiate()`
+entry point.
+
+`InstantiateMsg` can carry any information we might find useful while populating our new contract. In our
+case, we decided to use `InstantiateMsg` to set the initial value of the `COUNTER` storage item that was initialised in
+the previous section.
+
+> **Note:** You need to add the `#[derive(Serialize, <...> JsonSchema)]` derive macro to the definitions of your custom
+> types (so
+> that they can be properly serialised by Rust).
+
+> **Note:** A common practice in the CosmWasm world is to define a `Config` type, create a storage item for it and then
+> to set the
+> initial values for `Config` parameters in the `InstantiateMsg`.
+
+#### `instantiate()` entrypoint
+
+```rust
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
@@ -216,19 +237,6 @@ pub fn instantiate(
 }
 ```
 
-In the snippet above, 2 things happen: the definition of `InstantiateMsg`, and the implementation of the `instantiate()`
-entry point.
-
-`InstantiateMsg` can carry any information we might find useful while populating our new contract. In our
-case, we decided to use `InstantiateMsg` to set the initial value of the `COUNTER` storage item that was initialised in
-the previous section.
-
-> You need to add the `#[derive(Serialize, <...> JsonSchema)]` derive macro to the definitions of your custom types (so
-> that they can be properly serialised by Rust).
-
-> A common practice in the CosmWasm world is to define a `Config` type, create a storage item for it and then to set the
-> initial values for `Config` parameters in the `InstantiateMsg`.
-
 The `instantiate()` entry point expects the following arguments:
 
 * **deps**: most importantly, gives you access to the _storage_ and the _querier_ (we'll discuss queries later),
@@ -236,25 +244,38 @@ The `instantiate()` entry point expects the following arguments:
 * **info**: keeps information about the message that is currently executed, e.g., the address of the message sender,
 * **msg**:  the `InstantiateMsg` that we just defined.
 
-Most entry points expect a very similar set of arguments, with slight variations.
-
-The return type of this entry point is `Result<Response<NeutronMsg>, ContractError>`. In simple terms, this means that
-the entry point can either return a valid `Response` or a `ContractError`. We'll define `ContractError` in the next
-section.
+> **Note:** `deps`, `env`, `info` and `msg` values are provided automatically by the `wasmd` module when executing a
+> contract's entrypoint. Most entry points expect a very similar set of arguments, with slight variations.
 
 Our `instantiate()` implementation sets the value of the `COUNTER` storage item to `InstantiateMsg.initial_value`. This
 is our first time saving something to storage, which is quite exciting!
 
-Here are some key points to remember:
-
-1. Reading and writing to storage consumes gas, which costs money.
-2. Storage operations can potentially fail (though they usually succeed). In our implementation, any error is
-   immediately returned by the `instantiate()` function, thanks to the `?` operator at the end of the `.save()` call.
-   It's also possible to handle errors manually using Rust's `match`
-   operator ([Rust documentation](https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html#matching-on-different-errors)).
+> **Note:** Reading and writing to storage consumes gas, which costs money.
 
 Finally, in our `instantiate()` implementation, we add **attributes** to the successful `Response`. This helps with
 debugging (we'll cover this in the last section of Part 1). Adding attributes to your response acts like a form of
 logging. Alternatively, we could just return `Ok(Response::new())`, and that would work perfectly fine.
+
+<details><summary><b>Important information:</b> errors and errors handling</summary>
+<p>
+
+The return type of our entrypoint is `Result<Response<NeutronMsg>, ContractError>`. In simple terms, this means that
+it can either return a valid `Response` or a `ContractError`.
+
+If this was really a **minimal** example, we would not define our own error type, and would simply
+return `Err(StdError::
+generic_err("error message"))` in case of an error. However, in most cases you want to define contract-specific errors,
+which we will do in the next section.
+
+You might not have noticed it, but in our implementation of the `instantiate()` entrypoint we do some minimal error
+handling!
+
+Storage operations can potentially fail (although they usually succeed). In our implementation, if the `.save()` call
+fails for whatever reason, we immediately propagate the error by putting the `?` operator at the end of the `.save()`
+call. It's also possible to handle errors manually using Rust's `match`
+operator (see [Rust documentation](https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html#matching-on-different-errors)).
+
+</p>
+</details>
 
 ## How to upload a contract and interact with it?
