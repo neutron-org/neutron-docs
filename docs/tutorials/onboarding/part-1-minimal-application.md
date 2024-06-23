@@ -7,13 +7,13 @@ But the knowledge of how to write smart contracts for Cosmos SDK chains is sacre
 obtain.
 
 This CosmWasm onboarding tutorial has one goal: to show the reader that building applications with CosmWasm is not
-scary. Let's get right into it!
+scary.
 
 In **Part 1** of this tutorial you will learn how to:
 
-1. Create a simple, yet functional smart contract using CosmWasm;
-2. Write unit- and integration tests for it;
-3. Build a React web application that interacts with your smart contract,
+1. Create a simple, yet functional smart contract using CosmWasm.
+2. Implement unit- and integration tests for it.
+3. Build a React web application that interacts with your smart contract.
 4. Deploy your web3 application locally and on the Neutron testnet.
 
 ## What are Neutron smart contracts?
@@ -26,18 +26,30 @@ less scary.
 <p>
 
 Neutron is a [Cosmos SDK](https://github.com/cosmos/cosmos-sdk) chain, which means that it's a collection of **modules**
-(`bank`, `dex`, etc.) running on top of the [CometBFT](https://github.com/cometbft/cometbft) consensus.
+(`bank`, `dex`, etc.) running on top of the [CometBFT](https://github.com/cometbft/cometbft) consensus. Each module
+defines a set of **messages** that it can process. A single **transaction** can include multiple messages to more than
+one module.
 
-The only thing that a user cares about is **interacting with the blockchain**, which in case of Neutron means **sending
-messages** to the Neutron modules. For example, if you want to send some `untrn` to your friend, you will need to
-execute a transaction containing an `MsgSend` message for the `bank` module (see the Cosmos
-SDK [docs](https://docs.cosmos.network/main/user/run-node/txs) for more details).
+To **interact with Neutron**, you need to **send messages** to Neutron modules. For example, if you want to send
+some `untrn` to your friend, you will need to execute a transaction containing
+an `MsgSend` message to the `bank` module. This message might look like this:
 
-As a user, usually you don't have to deal with raw messages yourself — it's done for you either by the CLI or by a UI
-that you are using.
+```json
+{
+  "@type": "/cosmos.bank.v1beta1.MsgSend",
+  "from_address": "neutron1cvsh2c2vasktkh7krt2w2dhyt0njs0adh5ewqv",
+  "to_address": "neutron1vqwe5hda0sjn0tyhd2w2trk7hktksav2c2hsvc",
+  "amount": [
+    {
+      "denom": "untrn",
+      "amount": "42"
+    }
+  ]
+}
+```
 
-To reiterate: each Neutron module defines a set of messages that it can parse and process. Interacting with Neutron
-means sending messages to Neutron modules. That's it, it's that simple.
+As a user, usually you don't have to deal with raw messages yourself — it's done for you either by the CLI or by a UI.
+You'll examples of using the CLI later on in this document.
 
 </p>
 </details>
@@ -69,13 +81,12 @@ For now, the main thing that you need to know about the `wasmd` messages is that
 That's because **smart contract developers can define the messages that the contract is able to process.**
 
 In the snippet above, the message under the `"msg"` key is a message to a smart contract identified by the `"contract"`
-address within the `wasmd` module. If you include the message above in a transaction, the following sequence of events
-will happen:
+address. If you include the message above in a transaction, the following sequence of events will happen:
 
-1. Neutron will identify that the incoming message needs to be sent to the `wasmd` module,
-2. The `wasmd` module will look up the contract binary by its address and load it,
+1. Neutron will identify that the incoming message needs to be sent to the `wasmd` module.
+2. The `wasmd` module will look up the contract binary by its address and load it.
 3. The `wasmd` module will take message under the `"msg""` key and will pass it to the `execute()` entrypoint of
-   the contract,
+   the contract.
 4. The contract will try to parse the incoming data into the `"increase_count"` message that is defined on the contract
    level, and will execute the handler associated with it.
 
@@ -88,9 +99,9 @@ will happen:
 The creation of a contract involves **three steps**:
 
 1. First you need to **compile** the contract binary (more on that in the **How to upload a contract and interact with
-   it?** section),
+   it?** section).
 2. Then you need to **upload** the contract binary to the chain by sending an `MsgStoreCode` to the `wasmd` module,
-   which makes Neutron save the binary under a unique `code_id`,
+   which makes Neutron save the binary under a unique `code_id`.
 3. Lastly, you need to **instantiate** a contract from this `code_id` by sending an `MsgInstantiateContract` to
    the `wasmd` module, which will result in Neutron creating an actual contract address that you can interact with.
 
@@ -98,7 +109,7 @@ After a contract was instantiated, you can start to send messages to it using th
 module. Multiple contracts can be created from the same `code_id` without the need to re-upload the binary, and each
 instance with have a unique address.
 
-There are **3 main contract entry points** that you need to know about that are used by `wasmd` to pass
+There are **3 main contract entry points** that you need to know about that are used by the `wasmd` module to pass
 messages to the contract: `instantiate()`, `execute()` and `query()`.
 
 </p>
@@ -110,8 +121,8 @@ A **really** minimal smart contract would be about 10 lines long, and would be u
 contract
 is going to be a contract that **actually does** something:
 
-1. Keeps a `Uint128` value in the storage,
-2. Allows anyone to increase this value by some amount, if the increase amount is less than `100`,
+1. Keeps a `Uint128` value in the storage.
+2. Allows anyone to increase this value by some amount, if the increase amount is less than `100`.
 3. Allows anyone to query the current value from the storage.
 
 Fun, right? Right. **Check out the full source code** of this contract
@@ -210,12 +221,13 @@ case, we decided to use `InstantiateMsg` to set the initial value of the `COUNTE
 the previous section.
 
 > **Note:** You need to add the `#[derive(Serialize, <...> JsonSchema)]` derive macro to the definitions of your custom
-> types (so
-> that they can be properly serialised by Rust).
+> types (so that they can be properly serialised by Rust).
 
 > **Note:** A common practice in the CosmWasm world is to define a `Config` type, create a storage item for it and then
-> to set the
-> initial values for `Config` parameters in the `InstantiateMsg`.
+> to set the initial values for `Config` parameters in the `InstantiateMsg`.
+
+> **A note about project layout:** usually all messages are defined in a separate file (`src/state.rs`), alongside
+> the `src/contract.rs` file. Here we define everything in one place for the sake of simplicity.
 
 #### `instantiate()` entrypoint
 
@@ -263,9 +275,8 @@ The return type of our entrypoint is `Result<Response<NeutronMsg>, ContractError
 it can either return a valid `Response` or a `ContractError`.
 
 If this was really a **minimal** example, we would not define our own error type, and would simply
-return `Err(StdError::
-generic_err("error message"))` in case of an error. However, in most cases you want to define contract-specific errors,
-which we will do in the next section.
+return `Err(StdError::generic_err("error message"))` in case of an error. However, in most cases you want to define
+contract-specific errors, which we will do in the next section.
 
 You might not have noticed it, but in our implementation of the `instantiate()` entrypoint we do some minimal error
 handling!
@@ -273,9 +284,102 @@ handling!
 Storage operations can potentially fail (although they usually succeed). In our implementation, if the `.save()` call
 fails for whatever reason, we immediately propagate the error by putting the `?` operator at the end of the `.save()`
 call. It's also possible to handle errors manually using Rust's `match`
-operator (see [Rust documentation](https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html#matching-on-different-errors)).
+operator (
+see [Rust documentation](https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html#matching-on-different-errors)).
 
 </p>
 </details>
+
+### Executing messages: how do I make a contract do something?
+
+#### `ExecuteMsg`: defining the set of possible actions
+
+```rust
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ExecuteMsg {
+    IncreaseCount { amount: Uint128 },
+}
+```
+
+> **Note:** `#[serde(rename_all = "snake_case")]` is used to achieve "standard" JSON representation of messages. E.g.,
+> the JSON representation of the `IncreaseCount` message will look like this: `{"increase_count": {"amount": "42"}}`
+
+When you start developing a contract, the first thing that you need to figure out is what actions to you want the
+contract to perform.
+
+In the snippet above, we define the `ExecuteMsg` enum that has a single variant: the `IncreaseCount` message, which
+a `Uint128` amount field. This means that our contract is going to be able to process only one type of message.
+
+Let's say that upon receiving this message, the contract must increase the `COUNTER` storage item value by the `amount`
+specified in the message, if the `amount` is less than 100. Matching this particular logic to the `IncreaseCount`
+message type is done in the `execute()` entrypoint.
+
+#### `execute()` entrypoint: defining handlers for messages
+
+```rust
+pub const MAX_INCREASE_AMOUNT: Uint128 = Uint128::new(100u128);
+
+#[derive(Error, Debug, PartialEq)]
+pub enum ContractError {
+    /// Keep access to the StdError, just in case.
+    #[error(transparent)]
+    Std(#[from] StdError),
+
+    /// We will return this error if the user tries to increment the counter by
+    /// more than 100. For no particular reason.
+    #[error("Can not increment by more than 100 (got {amount})")]
+    InvalidIncreaseAmount { amount: Uint128 },
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn execute(
+    deps: DepsMut,
+    _env: Env, // We don't use Env in our implementation, hence the underscore
+    info: MessageInfo,
+    msg: ExecuteMsg,
+) -> Result<Response<NeutronMsg>, ContractError> {
+    match msg {
+        ExecuteMsg::IncreaseCount { amount } => execute_increase_amount(deps, info, amount),
+    }
+}
+
+pub fn execute_increase_amount(
+    deps: DepsMut,
+    info: MessageInfo,
+    amount: Uint128,
+) -> Result<Response<NeutronMsg>, ContractError> {
+    if amount.gt(&MAX_INCREASE_AMOUNT) {
+        return Err(ContractError::InvalidIncreaseAmount { amount });
+    }
+
+    let mut counter = COUNTER.load(deps.storage)?;
+
+    counter += amount;
+    COUNTER.save(deps.storage, &counter)?;
+
+    Ok(Response::default()
+        .add_attribute("action", "execute_add")
+        .add_attribute("amount", amount.to_string())
+        .add_attribute("sender", info.sender))
+}
+```
+
+In most contracts, the `execute()` entry point doesn’t contain specific logic itself; it simply delegates tasks to the
+appropriate handlers based on the message type. That’s exactly what we did in the snippet above: we implemented
+the `execute_increase_amount()` handler and directed our contract to use it when an `IncreaseCount` message is received.
+
+> **Note:** If the incoming message cannot be parsed into any known message type, an error will be returned.
+
+Here are a few important points:
+
+1. We set the maximum allowed increase amount using the `MAX_INCREASE_AMOUNT` constant, following best practices.
+2. We defined the `ContractError` type to return custom errors. The `InvalidIncreaseAmount` variant includes
+   the `amount` parameter to make the error message more informative.
+3. If the user tries to increase the counter by more than `MAX_INCREASE_AMOUNT`, we return an error. (First time in this
+   tutorial, right? **Exciting!**)
+4. If the user input is valid, we load the current counter value from storage, increase it by the specified amount, and
+   save the new value back to storage.
+5. Similar to the `instantiate()` implementation, we add some attributes to the response to facilitate easier debugging.
 
 ## How to upload a contract and interact with it?
