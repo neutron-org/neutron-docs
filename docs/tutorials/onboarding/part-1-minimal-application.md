@@ -198,8 +198,9 @@ pub const EXAMPLE_MAP: Map<Uint128, Uint128> = Map::new("example-map");
 
 :::tip TL;DR
 
-Before you can interact with a contract, you need to write the code that **instantiates** it. This is done by
-implementing the `instantiate()` entrypoint and the `InstantiateMsg`.
+Implement the `instantiate()` entrypoint and the `InstantiateMsg` message to have custom instantiation logic for your
+contract.
+
 
 See it in action: [link](https://github.com/neutron-org/onboarding/blob/main/minimal_contract/src/contract.rs#L16-L63)
 :::
@@ -290,7 +291,16 @@ see [Rust documentation](https://doc.rust-lang.org/book/ch09-02-recoverable-erro
 </p>
 </details>
 
-### Executing messages: how do I make a contract do something?
+### Processing messages: how do I make a contract do something?
+
+:::tip TL;DR
+
+Define all possible messages that your contract needs to know how to process, implement handlers for each of those
+messages, and match the messages to handlers in the `execute()` entrypoint.
+
+See it in action: [link](https://github.com/neutron-org/onboarding/blob/main/minimal_contract/src/contract.rs#L66-L147)
+:::
+
 
 #### `ExecuteMsg`: defining the set of possible actions
 
