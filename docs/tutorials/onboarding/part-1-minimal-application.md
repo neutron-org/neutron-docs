@@ -12,9 +12,8 @@ scary.
 In **Part 1** of this tutorial you will learn how to:
 
 1. Create a simple, yet functional smart contract using CosmWasm.
-2. Implement unit- and integration tests for it.
+2. Deploy your web3 application locally and on the Neutron testnet.
 3. Build a React web application that interacts with your smart contract.
-4. Deploy your web3 application locally and on the Neutron testnet.
 
 ## What are Neutron smart contracts?
 
@@ -103,19 +102,21 @@ The creation of a contract involves **three steps**:
 2. Then you need to **upload** the contract binary to the chain by sending an `MsgStoreCode` to the `wasmd` module,
    which makes Neutron save the binary under a unique `code_id`.
 3. Lastly, you need to **instantiate** a contract from this `code_id` by sending an `MsgInstantiateContract` to
-   the `wasmd` module, which will result in Neutron creating an actual contract address that you can interact with.
+   the `wasmd` module, which will pass the instantiation message to the contract's `instantiate()` entrypoint and create
+   an actual contract address that you can interact with.
 
 After a contract was instantiated, you can start to send messages to it using the `MsgExecuteContract` of the `wasmd`
 module. Multiple contracts can be created from the same `code_id` without the need to re-upload the binary, and each
 instance with have a unique address.
 
-There are **3 main contract entry points** that you need to know about that are used by the `wasmd` module to pass
-messages to the contract: `instantiate()`, `execute()` and `query()`.
+There are **3 main contract entry points** that you need to know about that are used by the `wasmd` module to interact
+with a contract: `instantiate()`, `execute()` and `query()`. We are going to implement all of them in this part of our
+tutorial.
 
 </p>
 </details>
 
-## What does a minimal smart contract look like?
+## What does a Neutron smart contract look like?
 
 A **really** minimal smart contract would be about 10 lines long, and would be useless for our purposes. Our smart
 contract
@@ -138,17 +139,23 @@ immediately:
    easiest
    thing you can do with Rust, because everything is single-threaded.
 
-With these initial questions out of the way, let's have a closer look at this contract.
+:::warning The Choice
+With these initial questions out of the way, **you now have a choice**:
 
-> If you don't care about the implementation details at the moment and just want to see how to deploy and interact with
-> the contract, please have a look at the **How to upload a contract and interact with it?** section.
+1. You can proceed directly to the **How to deploy and execute?** section at the end of this document to learn how to
+   use CLI to run a Neutron localnet, deploy our example contract and interact with it,
+2. Or you can read the **How do I write a smart contract for Neutron?** section first if you want to understand the
+   inner workings of our example contract.
+:::
+
+## How do I write a smart contract for Neutron?
 
 ### Storage: how to I store data?
 
 :::tip TL;DR
 Use `cw_storage_plus::Item` and `cw_storage_plus::Map` types to store standard and custom types.
 
-See it in action: [link](https://github.com/neutron-org/onboarding/blob/main/minimal_contract/src/contract.rs#L14)
+See it in context: [link](https://github.com/neutron-org/onboarding/blob/main/minimal_contract/src/contract.rs#L17)
 :::
 
 Storing data is essential, that's why we start with it. Almost any useful contract manages some storage. In CosmWasm, in
@@ -190,7 +197,7 @@ pub const EXAMPLE_MAP: Map<Uint128, Uint128> = Map::new("example-map");
 > **More storage types:** `cw_storage_plus` has even more storage types, some of which allow you to track the height at
 > which a certain value was saved to your storage item.
 
-> **A note about project layout:** usually all storage items and storage types are defined in a separate
+> **A note on project layout:** usually all storage items and storage types are defined in a separate
 > file (`src/state.rs`), alongside the `src/contract.rs` file. Here we define everything in one place for the sake of
 > simplicity.
 
@@ -201,8 +208,7 @@ pub const EXAMPLE_MAP: Map<Uint128, Uint128> = Map::new("example-map");
 Implement the `instantiate()` entrypoint and the `InstantiateMsg` message to have custom instantiation logic for your
 contract.
 
-
-See it in action: [link](https://github.com/neutron-org/onboarding/blob/main/minimal_contract/src/contract.rs#L16-L63)
+See it in context: [link](https://github.com/neutron-org/onboarding/blob/main/minimal_contract/src/contract.rs#L19-L64)
 :::
 
 #### InstantiateMsg
@@ -227,7 +233,7 @@ the previous section.
 > **Note:** A common practice in the CosmWasm world is to define a `Config` type, create a storage item for it and then
 > to set the initial values for `Config` parameters in the `InstantiateMsg`.
 
-> **A note about project layout:** usually all messages are defined in a separate file (`src/state.rs`), alongside
+> **A note on project layout:** usually all messages are defined in a separate file (`src/state.rs`), alongside
 > the `src/contract.rs` file. Here we define everything in one place for the sake of simplicity.
 
 #### `instantiate()` entrypoint
@@ -295,12 +301,11 @@ see [Rust documentation](https://doc.rust-lang.org/book/ch09-02-recoverable-erro
 
 :::tip TL;DR
 
-Define all possible messages that your contract needs to know how to process, implement handlers for each of those
-messages, and match the messages to handlers in the `execute()` entrypoint.
+Define all possible messages that your contract needs to process, implement handlers for each of those messages, and
+match the messages to handlers in the `execute()` entrypoint.
 
-See it in action: [link](https://github.com/neutron-org/onboarding/blob/main/minimal_contract/src/contract.rs#L66-L147)
+See it in context: [link](https://github.com/neutron-org/onboarding/blob/main/minimal_contract/src/contract.rs#L66-L147)
 :::
-
 
 #### `ExecuteMsg`: defining the set of possible actions
 
@@ -324,6 +329,9 @@ a `Uint128` amount field. This means that our contract is going to be able to pr
 Let's say that upon receiving this message, the contract must increase the `COUNTER` storage item value by the `amount`
 specified in the message, if the `amount` is less than 100. Matching this particular logic to the `IncreaseCount`
 message type is done in the `execute()` entrypoint.
+
+> **A note on project layout:** usually all messages are defined in a separate file (`src/msgs.rs`), alongside the
+> `src/contract.rs` file. Here we define everything in one place for the sake of simplicity.
 
 #### `execute()` entrypoint: defining handlers for messages
 
@@ -359,13 +367,21 @@ pub fn execute_increase_amount(
     info: MessageInfo,
     amount: Uint128,
 ) -> Result<Response<NeutronMsg>, ContractError> {
+    // Return the InvalidIncreaseAmount error if the user tries to increase
+    // by more than 100. We save this value in a well-named constant
+    // MAX_INCREASE_AMOUNT because we are nice people.
     if amount.gt(&MAX_INCREASE_AMOUNT) {
         return Err(ContractError::InvalidIncreaseAmount { amount });
     }
 
+    // We need to increase the counter. Step 1: load the current value.
+    // This operation consumes gas!
     let mut counter = COUNTER.load(deps.storage)?;
 
+    // Step 2: add the user value to the value loaded from the storage.
     counter += amount;
+
+    // Step 3: save the increased amount to the storage.
     COUNTER.save(deps.storage, &counter)?;
 
     Ok(Response::default()
@@ -392,4 +408,68 @@ Here are a few important points:
    save the new value back to storage.
 5. Similar to the `instantiate()` implementation, we add some attributes to the response to facilitate easier debugging.
 
-## How to upload a contract and interact with it?
+### Querying data: how do I... query data?
+
+:::tip TL;DR
+
+Define all possible query messages that your contract needs to process, implement handlers for each of those messages,
+and match the messages to handlers in the `query()` entrypoint.
+
+See it in context: [link](https://github.com/neutron-org/onboarding/blob/main/minimal_contract/src/contract.rs#L66-L147)
+:::
+
+Querying the raw storage data from a smart contract is **technically** possible, but is not very convenient. If you want
+your contract to provide information about it state, you need to (guess what?) implement the `QueryMsg` and the
+`query()` entrypoint. The process is very similar to what we did with the `execute()` entrypoint, the only difference
+being that in the `query()` entrypoint you can not modify the state, and that you don't have the `MessageInfo` data in
+it.
+
+```rust
+#[cw_serde]
+#[derive(QueryResponses)]
+pub enum QueryMsg {
+    /// A query message to get the current value of COUNTER. The #[returns(Uint128)]
+    /// derive marco here is required to generate proper JSON schemas for out smart
+    /// contract.
+    #[returns(Uint128)]
+    CurrentValue {},
+}
+
+/// We could simply read the Uint128 value from storage and return it as is,
+/// but in general it's better to provide a custom response types for your
+/// queries.
+#[cw_serde]
+pub struct CurrentValueResponse {
+    pub current_value: Uint128,
+}
+
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    // Similar to execute(), we try to parse msg into any of the known variants of QueryMsg.
+    match msg {
+        QueryMsg::CurrentValue {} => query_current_value(deps),
+    }
+}
+
+pub fn query_current_value(deps: Deps) -> StdResult<Binary> {
+    let current_value = &COUNTER.load(deps.storage)?;
+    // to_json_binary is a handy helper function from cosmwasm_std that allows you
+    // to convert any properly defined Rust type to StdResult<Binary>.
+    to_json_binary(&CurrentValueResponse {
+        current_value: current_value.clone(),
+    })
+}
+```
+
+A few things to note here:
+
+* Creating custom response types for your queries is not necessary, but is a good practice, even if you only return a
+  single number.
+* If our contract was a bit more complicated, we could, of course, create a query message with some query parameters,
+  and process the query taking the query parameters into account.
+* You are not limited to only reading your own storage values in the `query()` entrypoint; you can also query other
+  contracts, and even modules, if necessary. We'll teach you how to do it in **Part 2** of this tutorial.
+
+> **A note on project layout:** usually all custom response types are defined in a separate file (`src/query.rs`),
+> alongside the `src/contract.rs` file. Here we define everything in one place for the sake of simplicity.
+
+## How to deploy and execute?
