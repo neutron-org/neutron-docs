@@ -146,7 +146,7 @@ With these initial questions out of the way, **you now have a choice**:
    use CLI to run a Neutron localnet, deploy our example contract and interact with it,
 2. Or you can read the **How do I write a smart contract for Neutron?** section first if you want to understand the
    inner workings of our example contract.
-:::
+   :::
 
 ## How do I write a smart contract for Neutron?
 
@@ -443,6 +443,7 @@ pub struct CurrentValueResponse {
     pub current_value: Uint128,
 }
 
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     // Similar to execute(), we try to parse msg into any of the known variants of QueryMsg.
     match msg {
@@ -473,3 +474,167 @@ A few things to note here:
 > alongside the `src/contract.rs` file. Here we define everything in one place for the sake of simplicity.
 
 ## How to deploy and execute?
+
+### Prepare the environment
+
+First of all, you need to install Rust: https://doc.rust-lang.org/cargo/getting-started/installation.html. After
+installing Rust, you need a wasm target for cargo:
+
+```bash
+rustup target add wasm32-unknown-unknown
+```
+
+Next, install Docker: https://docs.docker.com/engine/install/, because you need Docker to build reproducible wasm
+binaries.
+
+Create a directory for this tutorial, e.g.:
+
+```
+mkdir neutron-cosmwasm-tutorial-part-1 && cd neutron-cosmwasm-tutorial-part-1
+```
+
+Finally, clone the onboarding tutorial repo:
+
+```bash
+git clone git@github.com:neutron-org/onboarding.git
+cd onboarding
+```
+
+### Run the localnet
+
+First, install the `cosmopark` tool that allows you to run custom Neutron localnet setups (input `y` when prompted to
+install the package):
+
+```bash
+npx @neutron-org/cosmopark --help
+```
+
+Next, build the images that are required to run a localnet of Neutron consisting of Neutron itself, Gaia, and IBC
+relayer and an interchain queries relayer. This might be a bit of overkill for our current purposes, but it's good
+to know how to run a real world setup:
+
+```bash
+./dockerfiles/build-all.sh
+```
+
+Next, start the local network:
+
+```bash
+npx @neutron-org/cosmopark start localnet_config.json
+```
+
+> **Note:** if you want to shut down the localnet, run `docker-compose -f docker-compose-main.yml -p main down`.
+
+Now you have several containers running on your local machine. One of them is `main-neutron_ics-1`, which is the
+container running Neutron.
+
+In order to execute any messages, you need to import a key using one of the localnet mnemonics:
+
+```bash
+neutrond keys add demowallet1 --recover
+> Enter your bip39 mnemonic
+> kiwi valid tiger wish shop time exile client metal view spatial ahead
+
+- address: neutron13nfu3ct5xkr0vlswgk3gl9zazp7zan88edz67j
+  name: demowallet1
+  pubkey: '{"@type":"/cosmos.crypto.secp256k1.PubKey","key":"AqVGLu0hlIfruwPYSddOyDmiy7a2kZ0mJ3Qan8vwzXak"}'
+  type: local
+```
+
+To make sure that everything works well, query the balance of your account:
+
+```bash
+neutrond q bank balances neutron13nfu3ct5xkr0vlswgk3gl9zazp7zan88edz67j --node tcp://0.0.0.0:26657
+```
+
+> **Note:** `tcp://0.0.0.0:26657` is a port exposed by the `main-neutron_ics-1` container.
+
+### Compile the contract binary
+
+Go to the `minimal_contract` project directory in the `onboarding` repository:
+
+```bash
+cd onboarding/minimal_contract
+```
+
+Then build the contract binary:
+
+```bash
+cd minimal_contract
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/optimizer:0.15.0
+cd ..
+```
+
+You will find the compiled binary in `artifacts/minimal_contract.wasm`.
+
+### Upload the contract
+
+First, you need to upload the contract binary (copy the `txhash` value from the last line of the command output!):
+
+```bash
+neutrond tx wasm store minimal_contract/artifacts/minimal_contract.wasm --node tcp://0.0.0.0:26657 --chain-id ntrntest --gas 1500000 --fees 4000untrn --from demowallet1
+```
+
+Next, you need to get the `code_id` of the binary that you just uploaded:
+
+```bash
+neutrond q tx 855C2F0D3E120D986B65EB250BBB3C24ED38F7251E928F03DB96AF8186C00973 --output json --node tcp://0.0.0.0:26657 | jq ".events[8]"  
+{
+  "type": "store_code",
+  "attributes": [
+    {
+      "key": "code_checksum",
+      "value": "5aca867b2af7295c7ff224dd62605a8f1601ccee73161ed41e4c43034327f021",
+      "index": true
+    },
+    {
+      "key": "code_id",
+      "value": "19",
+      "index": true
+    }
+  ]
+}
+```
+
+You can see in the output above that the `code_id` of our contract binary is `19`. Now that we know it, we can finally
+instantiate our contract (once again, copy the `txhash` value):
+
+```bash
+neutrond tx wasm instantiate 19 '{"initial_value": "42"}' --label minimal_contract --no-admin --node tcp://0.0.0.0:26657 --from demowallet1 --chain-id ntrntest --gas 1500000 --fees 4000untrn
+```
+
+Then query the transaction details to get the address of the instantiated contract:
+
+```bash
+neutrond q tx B45E9D20A5744A81C2C3B0E75D0E740E56E0E0FD20206DDFC77F6FCFE11333B8 --output json --node tcp://0.0.0.0:26657 | jq ".events[8]"
+{
+  "type": "instantiate",
+  "attributes": [
+    {
+      "key": "_contract_address",
+      "value": "neutron1nxshmmwrvxa2cp80nwvf03t8u5kvl2ttr8m8f43vamudsqrdvs8qqvfwpj",
+      "index": true
+    },
+    {
+      "key": "code_id",
+      "value": "19",
+      "index": true
+    }
+  ]
+}
+```
+
+**Congratulations!** The contract is now instantiated, and is ready to process our messages.
+
+### Interact with the contract
+
+Now that the contract is instantiated, let's first see whether what that current value of the counter is:
+
+```bash
+neutrond q wasm contract-state smart neutron1nxshmmwrvxa2cp80nwvf03t8u5kvl2ttr8m8f43vamudsqrdvs8qqvfwpj '{"current_value": {}}' --output json --node tcp://0.0.0.0:26657
+{"data":{"current_value":"42"}}
+```
+
