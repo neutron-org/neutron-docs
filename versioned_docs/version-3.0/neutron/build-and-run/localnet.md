@@ -11,7 +11,7 @@ Beware: you will have to clone all these repositories in the same parent directo
 
 ## Prerequisites
 
-- Go version 1.20 or newer
+- Go version 1.21 or newer
 - Rust toolchain v1.69 or newer
 
 ### 1. Install Neutron

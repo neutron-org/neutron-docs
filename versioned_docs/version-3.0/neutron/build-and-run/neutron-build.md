@@ -4,7 +4,7 @@ This page contains information about building Neutron node from sources
 
 ## Prerequisites
 
-- Golang v1.20 ([go releases and instructions](https://go.dev/dl/)).
+- Golang v1.21 ([go releases and instructions](https://go.dev/dl/)).
 
 ## Build and run
 
