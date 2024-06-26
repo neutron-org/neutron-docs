@@ -714,6 +714,9 @@ neutrond q wasm contract-state smart neutron1nyuryl5u5z04dx4zsqgvsuw7fe8gl2f77yu
 {"data":{"current_value":"42"}}
 ```
 
+> **Important note:** we have the number as a string here because that's how `Uint128` is represented (it's a potentially
+> very big number). When using `Uint128` value in JSON, you need to provide them as strings.
+
 The current value is `42`, which means that our instantiate message did its job. Let's now increase the value by
 `1` by sending an `IncreaseCount` message to it:
 
@@ -734,3 +737,6 @@ neutrond q wasm contract-state smart neutron1nyuryl5u5z04dx4zsqgvsuw7fe8gl2f77yu
   '{"current_value": {}}' --output json --node tcp://0.0.0.0:26657
 {"data":{"current_value":"43"}}
 ```
+
+## How to create a UI for my contract?
+
