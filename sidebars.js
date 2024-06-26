@@ -40,6 +40,7 @@ const sidebars = {
                 'neutron/contribute',
                 'neutron/consumer-chain-launch',
                 'neutron/neutron-core-releases',
+                'neutron/price-feeds',
                 {
                     label: 'Neutron DAO',
                     type: 'category',
