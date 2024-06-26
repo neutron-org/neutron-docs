@@ -146,7 +146,8 @@ With these initial questions out of the way, **you now have a choice**:
    use CLI to run a Neutron localnet, deploy our example contract and interact with it,
 2. Or you can read the **How do I write a smart contract for Neutron?** section first if you want to understand the
    inner workings of our example contract.
-   :::
+
+:::
 
 ## How do I write a smart contract for Neutron?
 
@@ -478,19 +479,34 @@ A few things to note here:
 ### Prepare the environment
 
 First of all, you need to install Rust: https://doc.rust-lang.org/cargo/getting-started/installation.html. After
-installing Rust, you need a wasm target for cargo:
+installing Rust, you need to add a wasm target for cargo:
 
 ```bash
 rustup target add wasm32-unknown-unknown
 ```
 
-Next, install Docker: https://docs.docker.com/engine/install/, because you need Docker to build reproducible wasm
-binaries.
+Next, install Docker: https://docs.docker.com/engine/install/. You need Docker to build reproducible wasm
+binaries and to run the localnet.
 
 Create a directory for this tutorial, e.g.:
 
 ```
 mkdir neutron-cosmwasm-tutorial-part-1 && cd neutron-cosmwasm-tutorial-part-1
+```
+
+Next, you need to get a `neutrond` binary. If you don't have Go installed, install Go 1.21 (https://go.dev/dl/).
+
+Clone the Neutron repository and install the `neutrond` binary:
+
+```bash
+git clone https://github.com/neutron-org/neutron && cd neutron && make install && cd ..
+```
+
+This will put the `neutrond` binary to your `$GOPATH/bin`. If you don't have `$GOPATH/bin` exported yet, export it now
+to be able to execute the binary conveniently from anywhere on your machine:
+
+```bash
+export PATH=$PATH:$GOPATH/bin
 ```
 
 Finally, clone the onboarding tutorial repo:
@@ -517,13 +533,17 @@ to know how to run a real world setup:
 ./dockerfiles/build-all.sh
 ```
 
-Next, start the local network:
+Then, start the local network:
 
 ```bash
-npx @neutron-org/cosmopark start localnet_config.json
+npx @neutron-org/cosmopark@latest start localnet_config.json
+🚀 Starting
+{"level":30,"time":1719406723924,"pid":85823,"hostname":"Andreis-MBP","chain":"neutron","msg":"Starting ics chain neutron"}
+{"level":30,"time":1719406733176,"pid":85823,"hostname":"Andreis-MBP","chain":"gaia","msg":"Starting default chain gaia"}
+🥳 Done
 ```
 
-> **Note:** if you want to shut down the localnet, run `docker-compose -f docker-compose-main.yml -p main down`.
+> **Note:** if you want to shut down the localnet, run `npx @neutron-org/cosmopark@latest stop localnet_config.json`.
 
 Now you have several containers running on your local machine. One of them is `main-neutron_ics-1`, which is the
 container running Neutron.
@@ -541,13 +561,25 @@ neutrond keys add demowallet1 --recover
   type: local
 ```
 
+> **Note:** you can find more demo mnemonics in the `localnet_config.json` file.
+
+> **Important note:** you can also import your account from a Ledger by
+> running `neutrond keys add my_ledger_account --ledger`. Your private key won't be transferred, obviously; to use
+> an account created this way to execute transactions you will always need to specify the `--ledger` flag in addition
+> to the flags normally provided to a command.
+
 To make sure that everything works well, query the balance of your account:
 
 ```bash
 neutrond q bank balances neutron13nfu3ct5xkr0vlswgk3gl9zazp7zan88edz67j --node tcp://0.0.0.0:26657
-```
+balances:
+- amount: "999975000"
+  denom: untrn
+pagination:
+  next_key: null
+  total: "0"
 
-> **Note:** `tcp://0.0.0.0:26657` is a port exposed by the `main-neutron_ics-1` container.
+```
 
 ### Compile the contract binary
 
@@ -560,7 +592,6 @@ cd onboarding/minimal_contract
 Then build the contract binary:
 
 ```bash
-cd minimal_contract
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="$(basename "$(pwd)")_cache",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
@@ -568,20 +599,44 @@ docker run --rm -v "$(pwd)":/code \
 cd ..
 ```
 
-You will find the compiled binary in `artifacts/minimal_contract.wasm`.
+You will find the compiled binary in `minimal_contract/artifacts/minimal_contract.wasm`.
 
 ### Upload the contract
 
 First, you need to upload the contract binary (copy the `txhash` value from the last line of the command output!):
 
 ```bash
-neutrond tx wasm store minimal_contract/artifacts/minimal_contract.wasm --node tcp://0.0.0.0:26657 --chain-id ntrntest --gas 1500000 --fees 4000untrn --from demowallet1
+neutrond tx wasm store minimal_contract/artifacts/minimal_contract.wasm \
+ --node tcp://0.0.0.0:26657 --chain-id ntrntest --gas 1500000 \
+ --fees 4000untrn --from demowallet1
 ```
+
+Let's see what the command arguments stand for here, because **it's very important for your general understanding of how
+Neutron works**:
+
+* `minimal_contract/artifacts/minimal_contract.wasm`: path to the compiled contract binary.
+* `--node tcp://0.0.0.0:26657`: address of the Neutron node's RPC endpoint. This particular port is exposed by
+  the `main-neutron_ics-1` container that we started in the previous section; for mainnet RPC providers, please visit
+  the [mainnet chain registry](https://github.com/cosmos/chain-registry/blob/master/neutron/chain.json#L208); for
+  testnet RPC providers, please visit
+  the [testnet chain registry](https://github.com/cosmos/chain-registry/blob/master/testnets/neutrontestnet/chain.json#L151).
+* `--chain-id ntrntest`: the chain identifier; any running Cosmos chain has an identifier that you need to provide for
+  all `tx` commands. We gave this identifier to our localnet in the `localnet_config.json` file. You can find the
+  mainnet `chain_id` [here](https://github.com/cosmos/chain-registry/blob/master/neutron/chain.json#L7), and the
+  testnet `chain_id` [here](https://github.com/cosmos/chain-registry/blob/master/testnets/neutrontestnet/chain.json#L7).
+* `--gas 1500000`: the gas limit for this transaction; if your gas limit is too low, the transaction will fail. If the
+  transaction failed, you can query the transaction details (shown below) to see what amount of gas was actually
+  consumed by the transaction.
+* `--fees 4000untrn`: the amount that you are ready to pay for executing the transaction; if your fee is too low, the
+  transaction will fail. If the transaction failed, you can query the transaction details (shown below) to see what fee
+  was actually required to execute the transaction.
+* `--from demowallet1`: the account that you are using to sign this transaction.
 
 Next, you need to get the `code_id` of the binary that you just uploaded:
 
 ```bash
-neutrond q tx 855C2F0D3E120D986B65EB250BBB3C24ED38F7251E928F03DB96AF8186C00973 --output json --node tcp://0.0.0.0:26657 | jq ".events[8]"  
+neutrond q tx 855C2F0D3E120D986B65EB250BBB3C24ED38F7251E928F03DB96AF8186C00973 --output json \
+  --node tcp://0.0.0.0:26657 | jq ".events[8]"  
 {
   "type": "store_code",
   "attributes": [
@@ -603,10 +658,22 @@ You can see in the output above that the `code_id` of our contract binary is `19
 instantiate our contract (once again, copy the `txhash` value):
 
 ```bash
-neutrond tx wasm instantiate 19 '{"initial_value": "42"}' --label minimal_contract --no-admin --node tcp://0.0.0.0:26657 --from demowallet1 --chain-id ntrntest --gas 1500000 --fees 4000untrn
+neutrond tx wasm instantiate 19 '{"initial_value": "42"}' --label minimal_contract \
+  --no-admin --node tcp://0.0.0.0:26657 --from demowallet1 --chain-id ntrntest \
+  --gas 1500000 --fees 4000untrn
 ```
 
-Then query the transaction details to get the address of the instantiated contract:
+Lets have a look at the transaction arguments and flags once again:
+
+* `19`: the `code_id` that we got after uploading our compiled binary. As we mentioned previously, you can instantiate
+  multiple identical contracts from one `code_id`!
+* `'{"initial_value": "42"}'`: that's our `InstantiateMsg` that we defined in our contract. If we provided a JSON that
+  could not be parsed into `InstantiateMsg`, we would receive an error.
+* `--label minimal_contract`: every CosmWasm contract needs to have a user-defined label.
+* `--no-admin` means that we created our contract without an admin address. The admin address can _migrate_ a contract,
+  which is a topic that we are going to discuss in **Part 2** of this tutorial.
+
+Now, we need to query the transaction details to get the address of the instantiated contract:
 
 ```bash
 neutrond q tx B45E9D20A5744A81C2C3B0E75D0E740E56E0E0FD20206DDFC77F6FCFE11333B8 --output json --node tcp://0.0.0.0:26657 | jq ".events[8]"
@@ -615,7 +682,7 @@ neutrond q tx B45E9D20A5744A81C2C3B0E75D0E740E56E0E0FD20206DDFC77F6FCFE11333B8 -
   "attributes": [
     {
       "key": "_contract_address",
-      "value": "neutron1nxshmmwrvxa2cp80nwvf03t8u5kvl2ttr8m8f43vamudsqrdvs8qqvfwpj",
+      "value": "neutron1nyuryl5u5z04dx4zsqgvsuw7fe8gl2f77yufynauuhklnnmnjncqcls0tj",
       "index": true
     },
     {
@@ -629,12 +696,41 @@ neutrond q tx B45E9D20A5744A81C2C3B0E75D0E740E56E0E0FD20206DDFC77F6FCFE11333B8 -
 
 **Congratulations!** The contract is now instantiated, and is ready to process our messages.
 
+:::warning Contract addresses
+
+The address of your contract might be different from what you see in this tutorial. Make sure that you are replacing
+the addresses from the commands below with the address of **your** contract!
+
+:::
+
 ### Interact with the contract
 
-Now that the contract is instantiated, let's first see whether what that current value of the counter is:
+Now that the contract is instantiated and we know its address, let's first see whether what that current value of the
+counter is:
 
 ```bash
-neutrond q wasm contract-state smart neutron1nxshmmwrvxa2cp80nwvf03t8u5kvl2ttr8m8f43vamudsqrdvs8qqvfwpj '{"current_value": {}}' --output json --node tcp://0.0.0.0:26657
+neutrond q wasm contract-state smart neutron1nyuryl5u5z04dx4zsqgvsuw7fe8gl2f77yufynauuhklnnmnjncqcls0tj \
+  '{"current_value": {}}' --output json --node tcp://0.0.0.0:26657
 {"data":{"current_value":"42"}}
 ```
 
+The current value is `42`, which means that our instantiate message did its job. Let's now increase the value by
+`1` by sending an `IncreaseCount` message to it:
+
+```bash
+neutrond tx wasm execute neutron1nyuryl5u5z04dx4zsqgvsuw7fe8gl2f77yufynauuhklnnmnjncqcls0tj \
+  '{"increase_count": {"amount": "1"}}' --node tcp://0.0.0.0:26657 --from demowallet1 \
+  --chain-id ntrntest --gas 1500000 --fees 4000untrn
+```
+
+* `neutron1nyuryl5u5z04dx4zsqgvsuw7fe8gl2f77yufynauuhklnnmnjncqcls0tj`: the address of our instantiated contract.
+* `'{"increase_count": {"amount": "1"}}'`: the JSON representation of the `ExecuteMsg::IncreaseCount` message that we
+  defined in our contract.
+
+If we query the contract once again, we'll see that the current value was increased by 1:
+
+```bash
+neutrond q wasm contract-state smart neutron1nyuryl5u5z04dx4zsqgvsuw7fe8gl2f77yufynauuhklnnmnjncqcls0tj \
+  '{"current_value": {}}' --output json --node tcp://0.0.0.0:26657
+{"data":{"current_value":"43"}}
+```
