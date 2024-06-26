@@ -11,6 +11,7 @@ If you are a smart contracts developer and up to develop your dApp on Neutron, y
 All registered Interchain Queries and their parameters are stored in the eponymous module and available by its [query interface](/neutron/modules/interchain-queries/client#queries). The Relayer utilises the module's interface in order to initialise the performing list of queries. This is how the Relayer maintains the list of queries to be executed:
 
 - on initialisation, the ICQ module `RegisteredQueries` query is executed with the `RELAYER_REGISTRY_ADDRESSES` parameter used for the `Owners` field;
+- then the parameter `RELAYER_REGISTRY_QUERY_IDS` will be used to filter out queries if it is not empty;
 - during the rest of the run, the Relayer listens to the ICQ module's `query_update` and `query_removed` [events](/neutron/modules/interchain-queries/events) and modifies the queries list and parameters correspondingly.
 
 The Relayer also listens to the Neutron's `NewBlockHeader` events that are used as a trigger for queries execution. Since each query has its own `update_period`, the Relayer tracks queries execution height and executes only the queries which update time has come.
@@ -69,9 +70,9 @@ This section contains description for all the possible config values that the Re
 - `RELAYER_NEUTRON_CHAIN_GAS_ADJUSTMENT` — gas multiplier used in order to avoid underestimating;
 - `RELAYER_NEUTRON_CHAIN_CONNECTION_ID` — Neutron chain connection ID; Relayer will only relay events for this connection;
 - `RELAYER_NEUTRON_CHAIN_DEBUG` — flag to run neutron chain provider in debug mode;
-- `RELAYER_NEUTRON_CHAIN_KEYRING_BACKEND` — described [here](https://docs.cosmos.network/master/run-node/keyring.html#the-kwallet-backend);
+- `RELAYER_NEUTRON_CHAIN_KEYRING_BACKEND` — described [here](https://docs.cosmos.network/main/user/run-node/keyring#available-backends-for-the-keyring);
 - `RELAYER_NEUTRON_CHAIN_OUTPUT_FORMAT` — Neutron chain provider output format;
-- `RELAYER_NEUTRON_CHAIN_SIGN_MODE_STR` — described [here](https://docs.cosmos.network/master/core/transactions.html#signing-transactions), also consider use short variation, e.g. `direct`.
+- `RELAYER_NEUTRON_CHAIN_SIGN_MODE_STR` — described [here](https://docs.cosmos.network/main/learn/advanced/transactions#signing-transactions), also consider use short variation, e.g. `direct`.
 
 ### Target chain node settings
 
@@ -85,12 +86,13 @@ This section contains description for all the possible config values that the Re
 ### Relayer application settings
 
 - `RELAYER_REGISTRY_ADDRESSES` — a list of comma-separated smart-contract addresses (registered query owners) for which the Relayer processes interchain queries. If empty, literally all registered queries are processed which is usable if you are up to deploy a public Relayer;
+- `RELAYER_REGISTRY_QUERY_IDS` — a list of comma-separated query IDs which complements to `RELAYER_REGISTRY_ADDRESSES` to further filter out interchain queries being processed. If empty, no queries will be filtered out;
 - `RELAYER_ALLOW_TX_QUERIES` — if true, Relayer will process tx queries (if `false`, Relayer will ignore them). A true value here is mostly usable for a private Relayer because TX queries submission is quite expensive;
 - `RELAYER_ALLOW_KV_CALLBACKS` — if `true`, will pass proofs as sudo callbacks to contracts. A true value here is mostly usable for a private Relayer because KV query callbacks execution is quite expensive. If false, results will simply be submitted to Neutron and become available for smart contracts retrieval;
 - `RELAYER_MIN_KV_UPDATE_PERIOD` — minimal period of queries execution and submission. This value is usable for a public Relayer as a rate limiter because it roughly overrides the queries `update_period` and force queries execution not more often than `N` blocks;
 - `RELAYER_STORAGE_PATH` — path to leveldb storage, will be created on the given path if it doesn't exist. It is required if `RELAYER_ALLOW_TX_QUERIES` is `true`;
 - `RELAYER_QUERIES_TASK_QUEUE_CAPACITY` — capacity of the channel that is used to send messages from subscriber to Relayer. Better set to a higher value to avoid problems with Tendermint websocket subscriptions;
-- `RELAYER_CHECK_SUBMITTED_TX_STATUS_DELAY` — delay in seconds between TX query submission and the result handling checking (more about this in the [TX submission section](#a-bit-of-technical-details-about-tx-submission));
+- `RELAYER_CHECK_SUBMITTED_TX_STATUS_DELAY` — delay in seconds between TX query submission and the result handling checking (more about this in the [TX submission section](#a-bit-of-technical-details-about-queries));
 - `RELAYER_INITIAL_TX_SEARCH_OFFSET` - Only for transaction queries. If set to non zero and no prior search height exists, it will initially set search height to (last_height - X). One example of usage of it will be if you have lots of old tx's on first start you don't need. Keep in mind that it will affect each newly created transaction query. To get a better understanding about how this works read the [dedicated section](#beacons-in-tx-queries);
 - `RELAYER_WEBSERVER_PORT` — listener address for webserver json api you can query and prometheus metrics;
 - `RELAYER_IGNORE_ERRORS_REGEX` - regular expression to match errors that should be ignored. If the error matches the regex, the Relayer will ignore it and will not retry the submission. For any other errors, the Relayer will exit with an error.
@@ -101,10 +103,7 @@ As it is said in the Relayer's [readme](https://github.com/neutron-org/neutron-q
 
 ## Prerequisites
 
-Before running the Relayer application for production purposes, you need to create a wallet for the Relayer, top it up, and set up the configuration (refer to the [Configuration](#configuration) section). Also you will most likely need to deploy your own RPC nodes of Neutron and the chain of interest.
-
-- [How to deploy your own Neutron RPC node](/neutron/build-and-run/overview);
-- [How to prepare target chain RPC node for Relayer's usage](/relaying/target-chain).
+Before running the Relayer application for production purposes, you need to [create a wallet for the Relayer](#setting-up-relayer-wallet), and set up the [configuration](#configuration). Also you need to have [nodes that will serve for the Relayer's needs](#getting-server-nodes-for-neutron-and-target-chain).
 
 ### Setting up Relayer wallet
 
@@ -126,6 +125,14 @@ Global Flags:
 2. Then execute `neutrond keys add relayer --keyring-backend test` to create an account in the default keyring directory;
 3. Use `relayer` as the `RELAYER_NEUTRON_CHAIN_SIGN_KEY_NAME`, `test` as the `RELAYER_NEUTRON_CHAIN_KEYRING_BACKEND`, and pass the keyring directory as a volume to the Relayer's docker container using the keyring path in the container as the `RELAYER_NEUTRON_CHAIN_HOME_DIR`;
 4. Get the Relayer's wallet address and top its balance up. If you're running the Relayer on the testnet, use the official Neutron faucet. For the mainnet, get some NTRN for the address.
+
+### Getting server nodes for Neutron and target chain
+
+The Relayer requires a REST and an RPC nodes for Neutron, and an RPC node for the target chain.
+
+One of the options here is to run your own nodes. For the Neutron nodes refer to the [Build and run](/neutron/build-and-run/overview) section of Neutron docs. For the target chain refer to the respective documentation section of the target chain.
+
+Another option for both (Neutron and target) chains is to use public nodes. You can find them listed in the [Cosmos chain registry](https://github.com/cosmos/chain-registry/tree/master) repository. For example, here's [a list of RPC, REST and gRPC Neutron nodes](https://github.com/cosmos/chain-registry/blob/master/neutron/chain.json) (look for the `"apis"` key in the JSON), and you can find similar lists for many other Cosmos chains in the repository.
 
 ## Running the Relayer
 
