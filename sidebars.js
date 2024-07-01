@@ -576,10 +576,17 @@ const sidebars = {
                         "neutron/modules/3rdparty/skip/feemarket/overview",
                       ],
                     },
-                  ],
-                },
-                {
-                  label: "Cosmos Hub",
+                                        {
+                                            label: 'Slinky',
+                                            type: 'category',
+                                            items: [
+                                                'neutron/modules/3rdparty/skip/slinky/overview',
+                                            ]
+                                        }
+                                    ],
+                                },
+                                {
+                                    label: "Cosmos Hub",
                   type: "category",
                   items: [
                     {
