@@ -13,4 +13,4 @@ refinancing, taking advantage of price discrepancies or temporary liquidity need
 The `neutron-flashloans` contract facilitates providing flash loans to smart contracts operating on the Neutron network. The `neutron-flashloans` contract does not hold any funds. Instead, it uses `authz` permission from the `source` address to execute `/cosmos.bank.v1beta1.MsgSend` on its behalf. For this particular instance, the `source` address is the [Treasury (Neutron DAO core)](https://neutron.celat.one/neutron-1/contracts/neutron1suhgf5svhu4usrurvxzlgn54ksxmn8gljarjtxqnapv8kjnp4nrstdxvff) contract address.
 
 - **contract address**: TODO add celatone link to the contract instance when deployed
-- **usage**: https://github.com/neutron-org/neutron-dao/blob/main/contracts/dao/neutron-flashloans
+- **source code and usage manual**: https://github.com/neutron-org/neutron-dao/blob/main/contracts/dao/neutron-flashloans
