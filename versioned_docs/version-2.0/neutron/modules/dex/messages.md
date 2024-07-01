@@ -177,7 +177,7 @@ Good-til-Time limit order function exactly the same as Good-til-Cancelled limit 
 
 #### JUST\_IN\_TIME;
 
-Just-in-Time limit orders are an advanced maker limit order order that provides tradeable liquidity for exactly one block. At the end of the same block in which the Just-in-Time order was submitted the order is canceled and any untraded portion will no longer be usable as active liquidity.
+Just-in-Time limit orders are an advanced maker limit order order that provides tradeable liquidity for exactly one block. At the end of the same block in which the Just-in-Time order was submitted the order is cancelled and any untraded portion will no longer be usable as active liquidity.
 
 ### PlaceLimitOrder Message
 
@@ -226,7 +226,7 @@ message MsgPlaceLimitOrder {
 
 ### Overview
 
-Standard Taker limit orders (Good-til-cancelled & Good-til-Time) can be canceled at any time if they have not been completely filled. Once a limit order is canceled any remaining “TokenIn” liquidity is returned to the user.
+Standard Taker limit orders (Good-til-cancelled & Good-til-Time) can be cancelled at any time if they have not been completely filled. Once a limit order is cancelled any remaining “TokenIn” liquidity is returned to the user.
 
 NOTE: Canceling a partially filled limit order does not withdraw the traded portion. A separate call must be made to `WithdrawFilledLimitOrder` to withdraw any proceeds from the limit order
 

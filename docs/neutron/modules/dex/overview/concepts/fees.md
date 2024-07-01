@@ -8,7 +8,7 @@ The best strategy for liquidity providers will not always be to charge traders t
 
 A rule of thumb on choosing fees is that liquidity providers typically choose higher fees on pairs with more volatility.
 
-* Less volatile assets (like stablecoin pairs) carry little to no risk of loss-versus-balancing (LVR) and impermanent loss (loss-versus-holding) for liquidity providers. It is relatively straightforward to LP and make a price prediction. This means that attracting order flow is very competitive and fees may end up becoming a race to the bottom. A typical strategy might be to deploy a lot of liquidity at very close to and at the peg price with the lowest fee tier.
+* Less volatile assets (like stablecoin pairs) carry little to no risk of loss-versus-balancing (LVR) and impermanent loss (loss-versus-holding or IL) for liquidity providers. It is relatively straightforward to LP and make a price prediction. This means that attracting order flow is very competitive and fees may end up becoming a race to the bottom. A typical strategy might be to deploy a lot of liquidity at very close to and at the peg price with the lowest fee tier.
 * More volatile assets are subject to higher LVR and IL. LPs may spread their liquidity across a wider range to capture more volume. This additional volume and lack of liquidity concentration makes it more suitable for LPs to charge higher fees.
 
 ### Basic Fee Math

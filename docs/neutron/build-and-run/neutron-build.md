@@ -4,7 +4,7 @@ This page contains information about building Neutron node from sources
 
 ## Prerequisites
 
-- Golang v1.20 ([go releases and instructions](https://go.dev/dl/)).
+- Golang v1.22 ([go releases and instructions](https://go.dev/dl/)).
 
 ## Build and run
 
@@ -19,7 +19,7 @@ The output should comply with the golang version mentioned in the [Prerequisites
 ### 2. Clone Neutron core repository and cd into it
 
 ```sh
-git clone -b v3.0.2 https://github.com/neutron-org/neutron.git
+git clone -b v4.0.1 https://github.com/neutron-org/neutron.git
 cd neutron
 ```
 
