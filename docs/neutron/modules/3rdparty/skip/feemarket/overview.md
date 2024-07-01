@@ -18,7 +18,7 @@ This will return a JSON list of gas prices in all available denoms.
 
 1. (via a local running chain): `curl http://<NEUTRON_REST_NODE_ADDRESS>:1317/feemarket/v1/gas_price/{denom}`
 2. (via chain app CLI): `neutrond q feemarket gas-price {denom}`
-3. (via gRPC): `grpcurl -plaintext <NEUTRON_GRPC_NODE_ADDRESS>:9090 feemarket.feemarket.v1.Query/GasPrice`
+3. (via gRPC): `grpcurl -d '{"denom":"{denom}"}'  -plaintext <NEUTRON_GRPC_NODE_ADDRESS>:9090 feemarket.feemarket.v1.Query/GasPrice`
 
 This will return a gas prices for a particular denom.
 
