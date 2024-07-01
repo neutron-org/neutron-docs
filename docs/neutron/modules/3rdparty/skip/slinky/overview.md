@@ -31,7 +31,7 @@ This will return a JSON list of supported assets with associated metadata.
 
 To access **all** Slinky prices (as of the last committed block), you can run:
 
-1. (via a local running chain): `curl http://<NEUTRON_REST_NODE_ADDRESS>:1317/slinky/oracle/v1/get_prices`
+1. (via a local running chain): `curl http://<NEUTRON_REST_NODE_ADDRESS>:1317/slinky/oracle/v1/get_prices?currency_pair_ids=ADA%2FUSD&currency_pair_ids=ADA%2FUSD`
 2. (via gRPC): `grpcurl -plaintext <NEUTRON_GRPC_NODE_ADDRESS>:9090 slinky.oracle.v1.Query/GetPrices`
 
 To get a **specific** currency pair, you can call:
