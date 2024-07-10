@@ -1,6 +1,6 @@
 # User Interfaces
 
-You can use Neutron DEX by directly crafting [DEX messages](/neutron/modules/dex/messages) and sending them through transactions in your own scripts, but you can also use various user interfaces to interact with the Dex. We are working with several partners in the Neutron ecosystem (such as [Astroport](https://app.astroport.fi)) that use Neutron DEX and by using these applications you can benefit from the Dex's features.
+You can use Neutron DEX by directly crafting [DEX messages](/neutron/modules/dex/messages) and sending them through transactions in your own scripts, but you can also use various user interfaces to interact with the Dex. We are working with several partners in the Neutron [ecosystem](https://app.neutron.org/ecosystem) (such as [Astroport](https://app.astroport.fi)) that use Neutron DEX and by using these applications you can benefit from the Dex's features.
 
 We also provide a reference UI: the Duality UI as described here, to show an integration of all of the Dex's functions.
 
