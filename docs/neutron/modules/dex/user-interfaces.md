@@ -1,8 +1,8 @@
 # User Interfaces
 
-You can use Neutron DEX by directly crafting [DEX messages](/neutron/modules/dex/messages) and sending them through transactions in your own scripts, but you can also use various user interfaces to interact with the Dex.
+You can use Neutron DEX by directly crafting [DEX messages](/neutron/modules/dex/messages) and sending them through transactions in your own scripts, but you can also use various user interfaces to interact with the DEX.
 
-We are working with several partners in the Neutron [ecosystem](https://app.neutron.org/ecosystem) (such as [Astroport](https://app.astroport.fi)) that use Neutron DEX and by using these applications you can benefit from the Dex's features. We also provide a UI as described here in the Neutron app for placing orders on the DEX.
+We are working with several partners in the Neutron [ecosystem](https://app.neutron.org/ecosystem) (such as [Astroport](https://app.astroport.fi)) that use Neutron DEX and by using these applications you can benefit from the DEX's features. We also provide a UI as described here in the Neutron app for placing orders on the DEX.
 
 ## Neutron app
 
@@ -61,6 +61,6 @@ In the sidebar you can view your current asset balances on the Neutron chain.
 
 The Neutron app bridge is available at [app.neutron.org/bridge](https://app.neutron.org/bridge)
 
-This is where you can bring tokens from other chains onto the Neutron chain for trading on the Dex.
+This is where you can bring tokens from other chains onto the Neutron chain for trading on the DEX.
 
 You can see the amount of tokens you currently hold on the Neutron chain and bring more tokens into the Neutron chain or withdraw them out of the Neutron chain.
