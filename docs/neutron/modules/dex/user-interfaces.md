@@ -52,7 +52,7 @@ The form simulates a trade of the current order to determine the result amount a
 
 Your order history for the token pair is near the bottom of the page.
 
-Here you can see the details of your active "open" orders in the **Trades** tab and your completed "closed" orders in the **Order Histtory** tab. Active orders are orders that are not yet complete, depending on the current order state you may be able to [withdraw](/neutron/modules/dex/messages#withdraw-filled-limit-order) the swapped order amount or [cancel](/neutron/modules/dex/messages#cancel-limit-order-message) the unswapped order amount. Closed orders in the **Order History** are no longer actionable.
+Here you can see the details of your active "open" orders in the **Trades** tab and your completed "closed" orders in the **Order Histtory** tab. Active orders are orders that are not yet complete, depending on the current order state you may be able to [withdraw](/neutron/modules/dex/messages#withdraw-filled-limit-order) the swapped order amount or [cancel](/neutron/modules/dex/messages#cancel-limit-order) the unswapped order amount. Closed orders in the **Order History** are no longer actionable.
 
 #### Your portfolio Balance
 In the sidebar you can view your current asset balances on the Neutron chain.

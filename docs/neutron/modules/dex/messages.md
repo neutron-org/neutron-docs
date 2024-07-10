@@ -222,7 +222,7 @@ message MsgPlaceLimitOrder {
 | `OrderType` orderType               | Type of limit order to be used. Must be one of: GOOD\_TIL\_CANCELLED, FILL\_OR\_KILL, IMMEDIATE\_OR\_CANCEL, JUST\_IN\_TIME, or GOOD\_TIL\_TIME |
 | `ExpirationTime` time.Time          | Expiration time for order. Only valid for GOOD\_TIL\_TIME limit orders                                                                          |
 
-## Cancel Limit Order Message
+## Cancel Limit Order
 
 ### Overview
 
