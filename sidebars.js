@@ -34,6 +34,7 @@ const sidebars = {
                 'neutron/contribute',
                 'neutron/consumer-chain-launch',
                 'neutron/neutron-core-releases',
+                'neutron/price-feeds',
                 {
                     label: 'Neutron DAO',
                     type: 'category',
@@ -263,6 +264,19 @@ const sidebars = {
                             type: 'category',
                             items: [
                                 {
+                                    label: 'Skip',
+                                    type: 'category',
+                                    items: [
+                                        {
+                                            label: 'Block SDK',
+                                            type: 'category',
+                                            items: [
+                                                'neutron/modules/3rdparty/skip/block-sdk/overview',
+                                            ]
+                                        }
+                                    ],
+                                },
+                                {
                                     label: 'Cosmos Hub',
                                     type: 'category',
                                     items: [
@@ -322,7 +336,6 @@ const sidebars = {
             items: [
                 'relaying/ibc-relayer',
                 'relaying/icq-relayer',
-                'relaying/target-chain',
             ],
         },
         {
@@ -335,7 +348,14 @@ const sidebars = {
                 'tutorials/cosmwasm_wasmkit',
                 'tutorials/cosmwasm_ica',
                 'tutorials/cosmwasm_icq',
-                'tutorials/integration_tests',
+                {
+                    label: 'Integration tests',
+                    type: 'category',
+                    items: [
+                        { label: 'Chain', type: 'doc', id: 'tutorials/integration-tests/chain' },
+                        { label: 'Smart contracts', type: 'doc', id: 'tutorials/integration-tests/smart_contracts' },
+                    ]
+                },
                 {
                     label: 'Indexers',
                     type: 'category',

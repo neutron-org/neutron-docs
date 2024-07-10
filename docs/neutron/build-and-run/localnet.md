@@ -17,14 +17,14 @@ Beware: you will have to clone all these repositories in the same parent directo
 ### 1. Install Neutron
 
 ```bash
-git clone -b v2.0.3 https://github.com/neutron-org/neutron
+git clone -b v3.0.2 https://github.com/neutron-org/neutron
 cd neutron
 make install
 ```
 
 ### 2. Install Gaia
 
-1. clone gaia: `git clone -b v14.0.0 https://github.com/cosmos/gaia.git`
+1. clone gaia: `git clone -b v15.0.0 https://github.com/cosmos/gaia.git`
 2. `cd gaia`
 3. run `make install`
 
