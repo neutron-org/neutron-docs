@@ -11,13 +11,13 @@ Beware: you will have to clone all these repositories in the same parent directo
 
 ## Prerequisites
 
-- Go version 1.20 or newer
-- Rust toolchain v1.69 or newer
+- Go version 1.22 or newer
+- Rust toolchain v1.73 or newer
 
 ### 1. Install Neutron
 
 ```bash
-git clone -b v3.0.2 https://github.com/neutron-org/neutron
+git clone -b v4.0.1 https://github.com/neutron-org/neutron
 cd neutron
 make install
 ```

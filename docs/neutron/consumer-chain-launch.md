@@ -90,7 +90,7 @@ You need to initialize the Consumer chain node before assigning a key. Initializ
 	
 	# switch to version to be used
 	# the version might change
-	# You should have go >1.20 installed in order to build binary
+	# You should have go >1.22 installed in order to build binary
 	$ git checkout v1.0.1
 	$ make install
 	
