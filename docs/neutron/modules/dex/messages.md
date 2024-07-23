@@ -290,7 +290,7 @@ enum LimitOrderType {
 | `MaxAmountOut` sdk.Int                   | The maximum `TokenOut` a user wants to receive|
 | `ExpirationTime` time.Time          | Expiration time for order. Only valid for GOOD\_TIL\_TIME limit orders                                                                          |
 
-## Cancel Limit Order Message
+## Cancel Limit Order
 
 ### Overview
 
