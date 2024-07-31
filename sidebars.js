@@ -177,10 +177,10 @@ const sidebars = {
                             type: 'category',
                             items: [
                                 'neutron/modules/interchain-queries/overview',
-                                'neutron/modules/interchain-queries/messages',
-                                'neutron/modules/interchain-queries/client',
-                                'neutron/modules/interchain-queries/state',
-                                'neutron/modules/interchain-queries/events'
+                                'neutron/modules/interchain-queries/api',
+                                'neutron/modules/interchain-queries/explanation',
+                                'neutron/modules/interchain-queries/how-to',
+                                'neutron/modules/interchain-queries/known-bugs'
                             ]
                         },
                         {
