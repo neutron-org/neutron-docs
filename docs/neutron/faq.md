@@ -46,7 +46,7 @@ This page provides real-time updates and alerts regarding the operational status
 
 ### What CosmWasm version is used?
 
-We are using a [patched](https://github.com/neutron-org/neutron/blob/e605ed3db4381994ee8185ba4a0ff0877d34e67f/go.mod#L194) 0.45.0 version of `wasmd`.
+We are using a [patched](https://github.com/neutron-org/neutron/blob/5def8658ff80afe6851d3992afde0e002b7a82c8/go.mod#L257) 0.51.0 version of `wasmd`.
 
 ### Where is the testnet faucet?
 

@@ -31,7 +31,6 @@ const sidebars = {
             "neutron/build-and-run/localnet",
           ],
         },
-        "neutron/contribute",
         "neutron/consumer-chain-launch",
         "neutron/neutron-core-releases",
         "neutron/price-feeds",

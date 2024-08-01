@@ -2,7 +2,7 @@
 
 ## Overview
 
-The [Admin module](https://github.com/neutron-org/admin-module/tree/feat/admin-module-sdk47) in the Neutron network is a central governance tool, enabling the DAO to propose and execute pivotal operations. Developed using the [cosmos-sdk](https://github.com/cosmos/cosmos-sdk), this module is upgraded to align with the `Cosmos SDK 0.47`.
+The [Admin module](https://github.com/neutron-org/admin-module) in the Neutron network is a central governance tool, enabling the DAO to propose and execute pivotal operations. Developed using the [cosmos-sdk](https://github.com/cosmos/cosmos-sdk), this module is upgraded to align with the `Cosmos SDK 0.50`.
 
 
 ## Concepts
@@ -27,12 +27,9 @@ We achieve governance through a dual mechanism approach. A message, structured a
 
 The Admin module in Neutron utilizes both the aforementioned proposal mechanisms. Specifically, these are executed within the msg.server of the admin module, ensuring seamless integration with the larger Neutron infrastructure. Our commitment is to keep abreast of the cosmos-sdk updates while preserving the unique governance structure that Neutron network requires.
 
-### Whitelisting
-As soon as we want to control the list of proposals that may be executed via adminmodule, we have [a simple whitelisting](https://github.com/neutron-org/neutron/blob/update-sdk47/app/proposals_allowlisting.go) mechanism.
+## Challenges related to Cosmos SDK 0.47 and Cosmos SDK 0.50
 
-## Challenges related to Cosmos SDK 0.47
-
-Transitioning to `Cosmos SDK 0.47` introduced several hurdles:
+Transitioning to `Cosmos SDK 0.47` and `Cosmos SDK 0.50`  introduced several hurdles:
 
 - **Original Admin Module's Dormancy:** Prior to [V2](https://github.com/neutron-org/neutron/releases/tag/v2.0.0), Neutron used the [original Admin Module](https://github.com/Ethernal-Tech/admin-module). This module, no longer actively maintained, needs an upgrade.
 
@@ -43,16 +40,10 @@ Transitioning to `Cosmos SDK 0.47` introduced several hurdles:
 ### Enhancements & Solutions
 
 #### ProposalExecuteMessage Binding
-Introduced a new [`ProposalExecuteMessage`](https://github.com/neutron-org/neutron/blob/261f47c30dcfc7cd51eef2b78bd770abd059208b/wasmbinding/bindings/msg.go#L105) binding, allowing the AdminModule to process any type of Cosmos message. A [signer verification](https://github.com/neutron-org/neutron/blob/261f47c30dcfc7cd51eef2b78bd770abd059208b/wasmbinding/message_plugin.go#L441) ensures authenticity.
-
-#### Whitelisting of Executable Messages
-Implemented a [whitelist mechanism](https://github.com/neutron-org/neutron/blob/261f47c30dcfc7cd51eef2b78bd770abd059208b/app/proposals_allowlisting.go#L48) to ensure that only pre-approved messages are executed.
-
-#### Legacy Proposals & Handler
-For ensuring backward compatibility, we have retained [ClientUpdateProposal, UpgradeProposal, and ParamChangeProposal](https://github.com/neutron-org/neutron/blob/261f47c30dcfc7cd51eef2b78bd770abd059208b/wasmbinding/bindings/msg.go#L102). Additionally, a handler named `MsgSubmitProposalLegacy` has been [introduced](https://github.com/neutron-org/admin-module/blob/feat/admin-module-sdk47/x/adminmodule/keeper/msg_server_submit_proposal_legacy.go) for pre-sdk47 proposals.
+Introduced a new [`ProposalExecuteMessage`](https://github.com/neutron-org/neutron/blob/5def8658ff80afe6851d3992afde0e002b7a82c8/wasmbinding/bindings/msg.go#L107) binding, allowing the AdminModule to process any type of Cosmos message. A [signer verification](https://github.com/neutron-org/neutron/blob/5def8658ff80afe6851d3992afde0e002b7a82c8/wasmbinding/message_plugin.go#L563) ensures authenticity.
 
 #### Revamped MsgSubmitProposal
-The [`MsgSubmitProposal`](https://github.com/neutron-org/admin-module/blob/feat/admin-module-sdk47/x/adminmodule/keeper/msg_server_submit_proposal.go) has been redesigned to handle any type of Cosmos message.
+The [`MsgSubmitProposal`](https://github.com/neutron-org/admin-module/blob/master/x/adminmodule/keeper/msg_server_submit_proposal.go) has been redesigned to handle any type of Cosmos message.
 
 #### Streamlined Logic and Execution
 We've removed unnecessary logic and the cache context, leading to immediate proposal execution within the msgServer/keeper and the removal of Active and Inactive queues.

@@ -20,7 +20,7 @@ A smart contract that tries to register an interchain account or to execute an i
 to receive the IBC events related to these actions. The Interchain Transactions module solves this task by passing these
 IBC events to the smart contract using
 a [Sudo() call](https://github.com/CosmWasm/wasmd/blob/288609255ad92dfe5c54eae572fe7d6010e712eb/x/wasm/keeper/keeper.go#L453)
-and a custom [message scheme](https://github.com/neutron-org/neutron/blob/v2.0.3/x/contractmanager/types/sudo.go). You can find a
+and a custom [message scheme](https://github.com/neutron-org/neutron/blob/main/x/contractmanager/types/sudo.go). You can find a
 complete list of IBC events for each module message in the [messages](./messages) section.
 
 ## Sudo errors handling
@@ -37,17 +37,7 @@ If you use interchaintxs module in your application and if your Sudo handler fai
 > **Note** We strongly recommend developers to write Sudo handlers very carefully and keep them as simple as possible. If you do
 > want to have elaborate logic in your handler, you should verify the acknowledgement data before making any state
 > changes; that way you can, if the data received with the acknowledgement is incompatible with executing the handler
-> logic normally, return an `Ok()` response immediately, which will prevent the acknowledgement from being resubmitted.
->
-> **Note**: there is no dedicated event for a closed channel (ICA disables all messages related to closing the channels)
-> . Your channel, however, can still be closed if a packet timeout occurs; thus, if you are notified about a packet
-> timeout, you can be sure that the affected channel was closed. Please note that it is generally a good practice to set
-> the packet timeout for your interchain transactions to a really large value.
->
-> If the timeout occurs anyway, you can just
-> execute [RegisterInterchainAccount message]( /neutron/modules/interchain-txs/messages#msgregisterinterchainaccount) again to
-> recover access to your interchain account.
-> **Note** Keep in mind, new channel is created
+> logic normally, return an `Ok()` response immediately, which will prevent the acknowledgement from being resubmitted
 >
 
 ## Sudo Handlers
@@ -129,7 +119,7 @@ in [Hermes](https://github.com/informalsystems/ibc-rs) you can do this by adding
 [chains.packet_filter]
 policy = 'allow'
 list = [
-    # allow relaying only for chanels created by a certain contract  
+    # allow relaying only for chanels created by a certain contract
     ['icacontroller-neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq*', '*'],
 ]
 ```
