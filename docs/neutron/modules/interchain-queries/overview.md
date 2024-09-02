@@ -69,7 +69,7 @@ You can see more info, examples and recommendations about proper transactions re
 [{"field": "{eventType}.{attributeKey}", "val": "{attributeValue}", "op": "gte"}, ...]
 ```
 
-Maximum allowed amount of filters is 32. Supplying more filters than allowed will return an error.
+Maximum allowed amount of filters is defined by a module's param `MaxTransactionsFilters`, the default value is 32. Supplying more filters than allowed will return an error.
 
 Supported operators:
 * `eq`
@@ -155,7 +155,7 @@ By understanding the usage of the `transactions_filter` field, developers and us
 2. **Incrementally Refine**: If needed, add additional filters incrementally to refine the results, testing at each stage to ensure relevance.
 3. **Avoid Redundancy**: Ensure that each filter adds value to the query and that there are no redundant or conflicting filters.
 4. **Test Performance**: Consider testing the query with different numbers of filters to gauge performance and result relevance, especially if using many filters.
-5. **Use the Maximum Limit Wisely**: Note that the maximum allowed amount of 32 filters is a technical constraint.
+5. **Use the Maximum Limit Wisely**: Note there is a maximum allowed amount of filters defined by a module's param `MaxTransactionsFilters`.
 
 ##### How Many Filters Do You Need?
 
