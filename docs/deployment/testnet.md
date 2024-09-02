@@ -30,11 +30,11 @@
 
 | Name                    | Address                                                                                                                                                                             |
 |-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Lido Satellite (pion-1) | [neutron1xdtwh5jr4zjx8g3zh29jud75c666wua7tsmum3ajm6ylf782etfs60dj2h](https://neutron.celat.one/pion-1/contracts/neutron1xdtwh5jr4zjx8g3zh29jud75c666wua7tsmum3ajm6ylf782etfs60dj2h) |
-| GMP Helper (Görli)      | [0x1C100406FCe76830c7B0396E082F7a8C45a000e4](https://goerli.etherscan.io/address/0x1C100406FCe76830c7B0396E082F7a8C45a000e4)                                                        |
+| Lido Satellite (pion-1) | [neutron1pf7u5tqkc9xc5l2xjqzsufc467ccmjxw68v5hl0k5gaye7zer3tqvrucam](https://neutron.celat.one/pion-1/contracts/neutron1pf7u5tqkc9xc5l2xjqzsufc467ccmjxw68v5hl0k5gaye7zer3tqvrucam) |
+| GMP Helper (Sepolia)      | [0x5b154522aa5CDDCed12515719E1d4dFf76F2b37b](https://sepolia.etherscan.io/address/0x5b154522aa5CDDCed12515719E1d4dFf76F2b37b)                                                        |
 
 ### Denoms
 
 | Symbol   | Denom                                                                               |
 |----------|-------------------------------------------------------------------------------------|
-| `wstETH` | `factory/neutron1xdtwh5jr4zjx8g3zh29jud75c666wua7tsmum3ajm6ylf782etfs60dj2h/wstETH` |
+| `wstETH` | `factory/neutron1pf7u5tqkc9xc5l2xjqzsufc467ccmjxw68v5hl0k5gaye7zer3tqvrucam/wstETH` |

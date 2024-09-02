@@ -11,27 +11,27 @@ Beware: you will have to clone all these repositories in the same parent directo
 
 ## Prerequisites
 
-- Go version 1.20 or newer
-- Rust toolchain v1.69 or newer
+- Go version 1.22 or newer
+- Rust toolchain v1.73 or newer
 
 ### 1. Install Neutron
 
 ```bash
-git clone -b v3.0.2 https://github.com/neutron-org/neutron
+git clone -b main https://github.com/neutron-org/neutron
 cd neutron
 make install
 ```
 
 ### 2. Install Gaia
 
-1. clone gaia: `git clone -b v15.0.0 https://github.com/cosmos/gaia.git`
+1. clone gaia: `git clone -b v19.0.0 https://github.com/cosmos/gaia.git`
 2. `cd gaia`
 3. run `make install`
 
 ### 3. Install Hermes
 
 ```bash
-cargo install ibc-relayer-cli --bin hermes --version 1.6.0 --locked
+cargo install ibc-relayer-cli --bin hermes --version 1.10.1 --locked
 ```
 
 ### 4. Install Neutron Query Relayer
@@ -46,7 +46,7 @@ make install
 
 1. go to `neutron/` folder and run `make init`, this will start Neutron and Gaia chains
 2. after `make init` completes, run `make start-rly`, this will start IBC relayer
-3. (if you want to use [ICQ](/tutorials/cosmwasm_icq)) go to `neutron-query-relayer/` folder and run `export $(grep -v '^#' .env.example.dev | xargs) && make dev`, this will start ICQ relayer 
+3. (if you want to use [ICQ](/tutorials/cosmwasm_icq)) go to `neutron-query-relayer/` folder and run `export $(grep -v '^#' .env.example.dev | xargs) && make dev`, this will start ICQ relayer
 
 ## Some wallets and RPC's you could use
 

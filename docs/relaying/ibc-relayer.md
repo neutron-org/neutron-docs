@@ -1,6 +1,6 @@
 # IBC Relayer
 
-The following information is based off of [this guide](https://docs.osmosis.zone/developing/relaying/relay.html#prerequisites) created by [Osmosis Team](https://osmosis.zone).
+The following information is based off of [this guide](https://docs.osmosis.zone/osmosis-core/relaying/relayer-guide) created by [Osmosis Team](https://osmosis.zone).
 
 ## Minimum Requirements
 
@@ -112,7 +112,7 @@ sudo apt install librust-openssl-dev build-essential git
 
 ## Build & setup Hermes
 
-> Use rust version `1.71.0` to install, otherwise it might not compile!
+> Use rust version `1.76.0` to install, otherwise it might not compile!
 
 This will install hermes into `$HOME/.cargo/bin/` directory:
 ```sh
@@ -130,8 +130,8 @@ Check hermes version & config dir setup
 ```sh
 hermes version
 
-2023-08-07T15:27:49.236821Z  INFO ThreadId(01) running Hermes v1.6.0
-hermes 1.6.0
+2023-08-07T15:27:49.236821Z  INFO ThreadId(01) running Hermes v1.10.1
+hermes 1.10.1
 ```
 
 Edit hermes config (use ports according to the port configuration we set above, add only chains you want to relay)
@@ -169,7 +169,7 @@ trust_threshold = { numerator = '1', denominator = '3' }
 [chains.packet_filter]
 policy = 'allow'
 list = [
-    # allow relaying only for chanels created by a certain contract  
+    # allow relaying only for chanels created by a certain contract
     ['icacontroller-neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq*', '*'],
 ]
 
@@ -200,13 +200,14 @@ trust_threshold = { numerator = '1', denominator = '3' }
 [chains.packet_filter]
 policy = 'allow'
 list = [
-    # allow relaying only for chanels created by a certain contract  
+    # allow relaying only for chanels created by a certain contract
     ['icacontroller-neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq*', '*'],
 ]
-
 ```
 
-Add your relayer wallet to Hermes' keyring (located in $HOME/.hermes/keys)
+> **Note:** please refer to the official Hermes [documentation](https://hermes.informal.systems/documentation/configuration/description.html) if you want more deep understanding of config.
+
+Add your relayer wallet to Hermes' keyring (located in `$HOME/.hermes/keys`)
 
 Best practice is to use the same mnemonic over all networks. Do not use your relaying-addresses for anything else because it will lead to account sequence errors.
 

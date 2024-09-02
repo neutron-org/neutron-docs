@@ -6,9 +6,9 @@ Price feeds are specialised tools that provide asset prices data to smart contra
 
 An oracle in blockchain is a specialized service that acts as a bridge between the blockchain and the outside world, enabling smart contracts to interact with real-world data and events. Unlike traditional systems that rely on centralized data sources, oracles provide decentralized, tamper-resistant mechanisms to fetch, verify, and relay external information onto the blockchain.
 
-### Slinky (coming soon)
+### Slinky
 
-Slinky is an on-chain consensus-level oracle running by the chain validators. Slinky is coming to Neutron in the next release in July 2024. You can read more about the oracle, how it works, its upcoming features and how to use by the link to the oracle's official docs: https://docs.skip.money/slinky/overview/. Learn how to easily interact with Slinky using Neutron SDK: https://docs.skip.money/slinky/using-slinky/neutron-sdk.
+Slinky is an on-chain consensus-level oracle running by the chain validators. You can read more about the oracle, how it works, it's features and how to use by the link to the oracle's official docs: https://docs.skip.money/slinky/overview/. Learn how to easily interact with Slinky using Neutron SDK: https://docs.skip.money/slinky/using-slinky/neutron-sdk.
 
 ### Pyth
 
