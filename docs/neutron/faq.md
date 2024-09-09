@@ -18,7 +18,7 @@ We encourage everyone to use the Mintscan explorer:
 - Mainnet (`neutron-1`): https://mintscan.io/neutron;
 - Testnet (`pion-1`): https://mintscan.io/neutron-testnet.
 
-We also recommend to use this awesome smart contracts [explorer](https://neutron.celat.one/mainnet/query?contract=neutron1suhgf5svhu4usrurvxzlgn54ksxmn8gljarjtxqnapv8kjnp4nrstdxvff) by Celatone: it provides a great UI to
+We also recommend to use this awesome smart contracts [explorer](https://neutron.celat.one/neutron-1) by Celatone: it provides a great UI to
 upload, query and execute contracts.
 
 ### Where to download latest snapshots?
