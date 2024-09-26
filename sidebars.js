@@ -368,6 +368,7 @@ const sidebars = {
                     type: 'category',
                     items: [
                         { label: 'Part 1: Minimal application', type: 'doc', id: 'tutorials/onboarding/part-1-minimal-application' },
+                        { label: 'Part 2: Calling Modules and Contracts', type: 'doc', id: 'tutorials/onboarding/part-2-calling-modules-and-contracts' },
                     ]
                 },
             ],
