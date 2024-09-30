@@ -11,6 +11,10 @@ There are two places to check out:
   technical questions to the devs. Please note that non-technical questions and spam can result in an immediate ban;
 - **Neutron Dev Blog** (https://t.me/+GK5KVutIvQhhNmNi): a channel for various technical notes from the dev team.
 
+### I think I’ve found a vulnerability, what should I do?
+
+Check out our bug bounty program on Immunefi: https://immunefi.com/bug-bounty/neutron
+
 ### Where is the block explorer?
 
 We encourage everyone to use the Mintscan explorer:
