@@ -4,7 +4,7 @@
 
 This document specifies the Cron module for the Neutron network.
 
-Cron module implement a mechanism to add cron schedules through governance proposals to execute arbitrary cosmwasm messages with given period.
+The Cron module implements a mechanism to add cron schedules through governance proposals to execute arbitrary CosmWasm messages with a given period.
 
 ## Concepts
 
