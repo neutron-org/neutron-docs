@@ -40,7 +40,7 @@ The following assignment of permission strategies is implemented:
 | Neutron DAO core contract    | **ALLOW_ALL**                                      |
 | Gas SubDAO timelock contract | **ALLOW_ONLY** [`globalfee.MinimumGasPricesParam`] |
 
-Neither the Neutron DAO, nor the privileged SubDAOs are forced to pass their messages through the cChain manager. If 
+Neither the Neutron DAO, nor the privileged SubDAOs are forced to pass their messages through the Chain manager. If 
 any DAO or SubDAO needs to perform a privileged action, they need to wrap the messages they need to execute in a message to
 the Chain manager.
 
