@@ -2,7 +2,7 @@
 
 ### CreateDenom
 Creates a denom of `factory/{creator address}/{subdenom}` given the denom creator address and the subdenom. Subdenoms can contain `[a-zA-Z0-9./]`.
-``` {.go}
+```protobuf
 message MsgCreateDenom {
   string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
   string subdenom = 2 [ (gogoproto.moretags) = "yaml:\"subdenom\"" ];
@@ -10,7 +10,7 @@ message MsgCreateDenom {
 ```
 
 **State Modifications:**
-- Fund [Neutron DAO Treasury](/neutron/dao/overview) with the denom creation fee from the creator address, specified in `Params`; 
+- Fund [Neutron DAO Treasury](/neutron/dao/overview) with the denom creation fee from the creator address, specified in `Params`;
 - Consume an amount of gas corresponding to the `DenomCreationGasConsume` parameter specified in `Params`;
 - Set `DenomMetaData` via bank keeper;
 - Set `AuthorityMetadata` for the given denom to store the admin for the created denom `factory/{creator address}/{subdenom}`. Admin is automatically set as the Msg sender;
@@ -18,7 +18,7 @@ message MsgCreateDenom {
 
 ### Mint
 Minting of a specific denom is only allowed for the creator of the denom registered during `CreateDenom`
-``` {.go}
+```protobuf
 message MsgMint {
   string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
   cosmos.base.v1beta1.Coin amount = 2 [
@@ -38,7 +38,7 @@ message MsgMint {
 
 ### Burn
 Burning of a specific denom is only allowed for the creator of the denom registered during `CreateDenom`
-``` {.go}
+```protobuf
 message MsgBurn {
   string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
   cosmos.base.v1beta1.Coin amount = 2 [
@@ -58,7 +58,7 @@ message MsgBurn {
 
 ### ForceTransfer
 Force transferring of a specific denom is only allowed for the creator of the denom registered during `CreateDenom`.
-``` {.go}
+```protobuf
 message MsgForceTransfer {
   option (amino.name) = "osmosis/tokenfactory/force-transfer";
 
@@ -85,7 +85,7 @@ message MsgForceTransfer {
 ### ChangeAdmin
 Change the admin of a denom. Note, this is only allowed to be called by the current admin of the denom.
 
-```go
+```protobuf
 message MsgChangeAdmin {
   string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
   string denom = 2 [ (gogoproto.moretags) = "yaml:\"denom\"" ];
@@ -99,7 +99,7 @@ message MsgChangeAdmin {
 Setting of metadata for a specific denom is only allowed for the admin of the denom.
 It allows the overwriting of the denom metadata in the bank module.
 
-```go
+```protobuf
 // MsgSetDenomMetadata is the sdk.Msg type for allowing an admin account to set
 // the denom's bank metadata
 message MsgSetDenomMetadata {
@@ -120,7 +120,14 @@ message MsgSetDenomMetadata {
 
 ### SetBeforeSendHook
 Allowing to assign a CosmWasm contract to call with a BeforeSend hook for a specific denom is only allowed for the creator of the denom registered during `CreateDenom`.
-``` {.go}
+
+> :warning: **Note!** :warning:
+>
+> `SetBeforeSendHook` can only be called on denoms where the `denom`, `creator` and
+> `code_id` for the `contract_addr` match a `WhitelistedHook` in module's [params](http://localhost:3000/neutron/modules/3rdparty/osmosis/tokenfactory/params).
+> For hooks to be whitelist a governance proposal must be created to [update module's params](http://localhost:3000/neutron/modules/3rdparty/osmosis/tokenfactory/messages#updateparams).
+
+```protobuf
 message MsgSetBeforeSendHook {
   option (amino.name) = "osmosis/tokenfactory/set-beforesend-hook";
 
@@ -142,10 +149,24 @@ message MsgSetBeforeSendHook {
 ### UpdateParams
 Updates [params](/neutron/modules/3rdparty/osmosis/tokenfactory/params) of the module.
 
-```go
-message MsgChangeAdmin {
-  string sender = 1 [ (gogoproto.moretags) = "yaml:\"sender\"" ];
-  cosmos.bank.v1beta1.Metadata metadata = 2 [ (gogoproto.moretags) = "yaml:\"metadata\"", (gogoproto.nullable)   = false ];
+```protobuf
+// MsgUpdateParams is the MsgUpdateParams request type.
+//
+// Since: 0.47
+message MsgUpdateParams {
+  option (amino.name) = "interchainqueries/MsgUpdateParams";
+  option (cosmos.msg.v1.signer) = "authority";
+
+  // Authority is the address of the governance account.
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // params defines the x/tokenfactory parameters to update.
+  //
+  // NOTE: All parameters must be supplied.
+  Params params = 2 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 ```
 
