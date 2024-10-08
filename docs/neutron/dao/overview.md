@@ -16,7 +16,7 @@ For privileged actions (e.g., changing network parameters and making software up
 the [admin-module](https://github.com/Ethernal-Tech/admin-module) fork managed by the Informal team. This module allows
 to specify a list of admin addresses that are able to submit proposals that are automatically executed.
 
-The only address that is added to the admin module is the address of the **Chain manager** contract, which implements
+The only two addresses that are added to the admin module is the Neutron DAO core contract and the address of the **Chain manager** contract, which implements
 the **chain management model** with two types of permission strategies:
 
 1. **ALLOW_ALL**: gives a given address full access to the admin module, allowing to submit all possible types of
@@ -48,7 +48,7 @@ By empowering privileged subDAOs to make specific parameter changes, the network
 The main DAO retains ultimate control by granting and revoking permissions, ensuring that the broader governance framework remains intact and secure.
 
 Neither the Neutron DAO, nor the privileged SubDAOs are forced to pass their messages through the Chain manager. If 
-any DAO or SubDAO needs to perform a privileged action, they need to wrap the messages they need to execute in a message to
+any SubDAO needs to perform a privileged action, they need to wrap the messages they need to execute in a message to
 the Chain manager.
 
 </details>
