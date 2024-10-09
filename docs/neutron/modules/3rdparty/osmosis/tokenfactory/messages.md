@@ -124,8 +124,8 @@ Allowing to assign a CosmWasm contract to call with a BeforeSend hook for a spec
 > :warning: **Note!** :warning:
 >
 > `SetBeforeSendHook` can only be called on denoms where the `denom`, `creator` and
-> `code_id` for the `contract_addr` match a `WhitelistedHook` in module's [params](http://localhost:3000/neutron/modules/3rdparty/osmosis/tokenfactory/params).
-> For hooks to be whitelist a governance proposal must be created to [update module's params](http://localhost:3000/neutron/modules/3rdparty/osmosis/tokenfactory/messages#updateparams).
+> `code_id` for the `contract_addr` match a `WhitelistedHook` in module's [params](/neutron/modules/3rdparty/osmosis/tokenfactory/params).
+> For hooks to be whitelist a governance proposal must be created to [update module's params](/neutron/modules/3rdparty/osmosis/tokenfactory/messages#updateparams).
 
 ```protobuf
 message MsgSetBeforeSendHook {
