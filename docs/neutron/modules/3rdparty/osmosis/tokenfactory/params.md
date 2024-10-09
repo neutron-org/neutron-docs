@@ -2,6 +2,14 @@
 
 The TokenFactory module uses params in this format:
 ```protobuf
+// WhitelistedHook describes a beforeSendHook which is allowed to be added and executed
+// SetBeforeSendHook can only be called on denoms where the denom creator and
+// code_id for the `contract_addr` match a WhitelistedHook
+message WhitelistedHook {
+  uint64 code_id = 1 [(gogoproto.customname) = "CodeID"];
+  string denom_creator = 2;
+}
+
 // Params defines the parameters for the tokenfactory module.
 message Params {
   // DenomCreationFee defines the fee to be charged on the creation of a new
@@ -22,7 +30,10 @@ message Params {
     (gogoproto.nullable) = true
   ];
 
-  // FeeCollectorAddress is the address where fees collected from denom creation are sent to
+  // FeeCollectorAddress is the address where fees collected from denom creation
+  // are sent to
   string fee_collector_address = 3;
+  // whitelisted_hooks is the list of hooks which are allowed to be added and executed
+  repeated WhitelistedHook whitelisted_hooks = 4;
 }
 ```
