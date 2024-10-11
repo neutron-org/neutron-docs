@@ -11,6 +11,10 @@ There are two places to check out:
   technical questions to the devs. Please note that non-technical questions and spam can result in an immediate ban;
 - **Neutron Dev Blog** (https://t.me/+GK5KVutIvQhhNmNi): a channel for various technical notes from the dev team.
 
+### I think I’ve found a vulnerability, what should I do?
+
+Check out our bug bounty program on Immunefi: https://immunefi.com/bug-bounty/neutron
+
 ### Where is the block explorer?
 
 We encourage everyone to use the Mintscan explorer:
@@ -18,7 +22,7 @@ We encourage everyone to use the Mintscan explorer:
 - Mainnet (`neutron-1`): https://mintscan.io/neutron;
 - Testnet (`pion-1`): https://mintscan.io/neutron-testnet.
 
-We also recommend to use this awesome smart contracts [explorer](https://neutron.celat.one/mainnet/query?contract=neutron1suhgf5svhu4usrurvxzlgn54ksxmn8gljarjtxqnapv8kjnp4nrstdxvff) by Celatone: it provides a great UI to
+We also recommend to use this awesome smart contracts [explorer](https://neutron.celat.one/neutron-1) by Celatone: it provides a great UI to
 upload, query and execute contracts.
 
 ### Where to download latest snapshots?
