@@ -179,7 +179,7 @@ const sidebars = {
                 "neutron/modules/interchain-queries/api",
                 "neutron/modules/interchain-queries/explanation",
                 "neutron/modules/interchain-queries/how-to",
-                "neutron/modules/interchain-queries/known-bug"'
+                "neutron/modules/interchain-queries/known-bugs",
               ],
             },
             {
