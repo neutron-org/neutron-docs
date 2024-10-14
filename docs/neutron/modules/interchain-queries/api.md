@@ -1,12 +1,12 @@
 # API
 
-This page contains the interchainqueries module's interface description: the endpoints the module exposes and the sudo messages the module issues. Each endpoint is explained in a dedicated section with links to request and response models, and an example of interaction with the module via the endpoint. The links to the request and response models also provide more information about request parameters and response values.
+This page contains the `interchainqueries` module's interface description: the endpoints the module exposes and the `sudo` messages the module issues. Each endpoint is explained in a dedicated section with links to request and response models, and an example of interaction with the module via the endpoint. The links to the request and response models also provide more information about request parameters and response values.
 
 Please be aware that the examples do not necessarily reflect the current state on the chain; they are listed here only to visualize the request formation and response payload in a user-friendly way.
 
 **Endpoints**
 
-This section lists piblic RPC API of the interchainqueries module.
+This section lists piblic RPC API of the `interchainqueries` module.
 
 Queries:
 - [Params](#params);
@@ -24,7 +24,7 @@ Messages:
 
 **Sudo**
 
-This section lists sudo messages issued by the interchainqueries module to smart contracts owning Interchain Queries.
+This section lists `sudo` messages issued by the `interchainqueries` module to smart contracts owning Interchain Queries.
 
 - [MessageTxQueryResult](#messagetxqueryresult)
 - [MessageKvQueryResult](#messagekvqueryresult)
@@ -261,7 +261,7 @@ curl -X 'GET' \
 
 ### RegisterInterchainQuery
 
-Registers a new Interchain Query in the interchainqueries module. This message is supposed to be issues only by a smart contract. The caller contract is charged a query registration deposit automatically in the amount defined as the module's query deposit parameter. The deposit is paid back on the query removal. Make sure to have enough assets on the contract's account at the time of the message execution.
+Registers a new Interchain Query in the `interchainqueries` module. This message is supposed to be issues only by a smart contract. The caller contract is charged a query registration deposit automatically in the amount defined as the module's query deposit parameter. The deposit is paid back on the query removal. Make sure to have enough assets on the contract's account at the time of the message execution.
 
 Returns an ID assigned to the registered query. Handle this message response via a reply handler in order to make use of the ID.
 
@@ -332,7 +332,7 @@ Updates params of the interchainqueries module. Only callable by the module's au
 
 ### MessageTxQueryResult
 
-MessageTxQueryResult is the model of the sudo message sent to a smart contract on a TX-typed Interchain Query result submission. The owner of a TX-typed Interchain Query must define a `sudo` entry_point for handling `tx_query_result` messages and place the needed logic there. The `tx_query_result` handler is treated by the interchainqueries module as a callback that is called each time a TX-typed query result is submitted.
+MessageTxQueryResult is the model of the `sudo` message sent to a smart contract on a TX-typed Interchain Query result submission. The owner of a TX-typed Interchain Query must define a `sudo` entry_point for handling `tx_query_result` messages and place the needed logic there. The `tx_query_result` handler is treated by the `interchainqueries` module as a callback that is called each time a TX-typed query result is submitted.
 
 - [Message model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/contractmanager/types#MessageTxQueryResult)
 - [Message model in neutron-sdk](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/sudo/msg/enum.SudoMsg.html#variant.TxQueryResult)
@@ -347,9 +347,9 @@ Events emission on failure:
 
 ### MessageKvQueryResult
 
-MessageKVQueryResult is the model of the sudo message sent to a smart contract on a KV-typed Interchain Query result submission. If the owner of a KV-typed Interchain Query wants to handle the query updates, it must define a `sudo` entry_point for handling `kv_query_result` messages and place the needed logic there. The `kv_query_result` handler is treated by the interchainqueries module as a callback that is called each time a KV-typed query result is submitted.
+MessageKVQueryResult is the model of the `sudo` message sent to a smart contract on a KV-typed Interchain Query result submission. If the owner of a KV-typed Interchain Query wants to handle the query updates, it must define a `sudo` entry_point for handling `kv_query_result` messages and place the needed logic there. The `kv_query_result` handler is treated by the `interchainqueries` module as a callback that is called each time a KV-typed query result is submitted.
 
-Note that there is no query result sent, only the query ID. In order to access the actual result, use the Query/QueryResult RPC of the interchainqueries module.
+Note that there is no query result sent, only the query ID. In order to access the actual result, use the Query/QueryResult RPC of the `interchainqueries` module.
 
 - [Message model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/contractmanager/types#MessageKVQueryResult)
 - [Message model in neutron-sdk](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/sudo/msg/enum.SudoMsg.html#variant.KVQueryResult)
