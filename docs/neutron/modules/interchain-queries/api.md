@@ -342,6 +342,7 @@ Events emission on failure:
     - attributes with the failure parameters: `_contract_address`, `failure_id`, `error`.
 
 **Might be interesting:**
+- [What are entry points and sudo calls?](/neutron/modules/interchain-queries/explanation#what-are-entry-points-and-sudo-calls)
 - [What happens if a sudo callback to a smart contract owning an Interchain Query fails?](/neutron/modules/interchain-queries/explanation#what-happens-if-a-sudo-callback-to-a-smart-contract-owning-an-interchain-query-fails)
 
 ### MessageKvQueryResult
@@ -358,4 +359,5 @@ Events emission on failure:
     - attributes with the failure parameters: `_contract_address`, `failure_id`, `error`.
 
 **Might be interesting:**
+- [What are entry points and sudo calls?](/neutron/modules/interchain-queries/explanation#what-are-entry-points-and-sudo-calls)
 - [What happens if a sudo callback to a smart contract owning an Interchain Query fails?](/neutron/modules/interchain-queries/explanation#what-happens-if-a-sudo-callback-to-a-smart-contract-owning-an-interchain-query-fails)

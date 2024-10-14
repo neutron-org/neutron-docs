@@ -49,6 +49,14 @@ An Interchain Query relayer is an off-chain application that serves the needs of
 - Interchain Queries execution: reading of remote chain's state based on the parameters defined in the Interchain Query being executed, fidning proofs for the read data;
 - Query results submission: passing of the retrieved data and proofs to the `interchainqueries` module and, through that, to respective smart contracts.
 
+## What's the role of IBC connections in Interchain Queries and how to choose one?
+
+IBC [clients](https://ibc.cosmos.network/v8/ibc/overview/#clients) and [connections](https://ibc.cosmos.network/v8/ibc/overview/#connections) play significant role in Interchain Queries authenticity. It is the initialisation of an IBC connection that is responsible for IBC clients creation and verification that their states are correct for their respective counterparties, and it is the states of the IBC clients of an IBC connection that is responsible for Interchain Query results verification. One must choose the connection ID for their Interchain Queries wisely for it will define the trustworthiness of the whole Interchain Queries based application.
+
+There are two options how to find an IBC connection ID for one's needs:
+- [Choose one of already existing IBC connections](/neutron/modules/interchain-queries/how-to#how-to-chose-the-right-ibc-connection-id-for-an-interchain-query-and-verify-it);
+- Create an IBC connection between the chains yourself. For example, the [Hermes IBC relayer is capable of doing so](https://hermes.informal.systems/documentation/commands/path-setup/connections.html#establish-connection).
+
 ## Why is there a query creation deposit?
 
 In order to clean up ledger from not used, outdated queries, a special deposit mechanism is used. [RegisterInterchainQuery](/neutron/modules/interchain-queries/api#registerinterchainquery) message contains the `deposit` field which is used to collect escrow payment for query creation. In order to return escrow payment, a [RemoveInterchainQuery](/neutron/modules/interchain-queries/api#removeinterchainquery) message should be issued.
@@ -91,6 +99,26 @@ If compare to the KV-typed Interchain Queries which have the last result stored 
 - hashes of transactions that have been successfully processed by the owner smart contract to avoid multiple processing of the same transactions, and
 - [failures appeared during sudo calls](#what-happens-if-a-sudo-callback-to-a-smart-contract-owning-an-interchain-query-fails).
 
+## What are entry points and sudo calls?
+
+[Entry points](https://docs.cosmwasm.com/core/entrypoints) are where your contract can be called from the outside world. [Sudo](https://docs.cosmwasm.com/core/entrypoints/sudo) calls are messages issued by the chain itself. They are routed to a special `sudo` `entry_point` which can only be accessed by the chain.
+
+## Limited gas for sudo calls
+
+The `interchainqueries` module uses the [contractmanager](/neutron/modules/contract-manager/overview) module under the hood for `sudo` operations. The `contractmanager` module doesn't allow extensive `sudo` callbacks and [has a justified strict gas limitation for them](/neutron/modules/contract-manager/overview#gas-limitation). The limit is defined by the `sudo_call_gas_limit` `contractmanager` module's parameter.
+
+It is recommended by the `contractmanager` module to separate `sudo` callback and computations to different handlers in case the computations go beyond the allocated gas. For example, one can store `sudo` callback payload in the contract's state, and then read it and handle during an additional outer `execute` call to the contract.
+
 ## What happens if a sudo callback to a smart contract owning an Interchain Query fails?
 
 In this case, the `interchainqueries` module will store the failure in the [contractmanager](/neutron/modules/contract-manager/overview) module with all information about the query and a redacted (shortened to codespace and error code) error message. A full error message is emitted as an [event](https://docs.cosmos.network/v0.50/learn/advanced/events) on a failure (see the [message events emission](/neutron/modules/interchain-queries/api#sudo) for details). Note that the `out of gas` errors are stored as failures, too. Failed query result submissions can be read from the `contractmanager` module and resubmitted to the `interchainqueries` module. More info about the read and resubmit operations by the link to the [contractmanager](/neutron/modules/contract-manager/overview) module documentation.
+
+## How Interchain Query results are removed?
+
+When someone successfully issues a [RemoveInterchainQuery](/neutron/modules/interchain-queries/api#removeinterchainquery) message, the results of the respective Interchain Query stored on chain are removed depending on the type of the Interchain Query:
+- KV query results are just single records in the store with a known removal gas consumption. So they are removed in the scope of the removal message handling;
+- TX query results are hashes of remote chain transactions. Each of the hashes is a single record in the store, so the gas comsumption for the removal depends on the number of hashes to be removed. This uncertainty is the reason why the TX query results removal is placed at the EndBlock and distributed to small governance-controlled size batches. The removal message handling only marks the TX-typed Interchain Query as a one to be removed, and then in each EndBlock there's a number of its hashes removed. The number is defined by the `tx_query_removal_limit` [module parameter](/neutron/modules/interchain-queries/api#params).
+
+## Configuring your own remote chain RPC node for TX ICQ usage
+
+If running your own RPC node for the target chain, make sure to [configure](https://docs.cometbft.com/v0.38/core/configuration) its `indexer` parameter the way it is sufficient for the transactions filter you define for your queries.
