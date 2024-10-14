@@ -1,5 +1,60 @@
 # How To
 
+## How to chose the right IBC connection ID for an Interchain Query and verify it?
+
+Let's find an IBC connection between Neutron and CosmosHub.
+
+1. Go to [map of zones](https://mapofzones.com/zones/neutron-1/peers?columnKey=ibcVolumeIn&period=7d). There might be several connections between two chains, so pick one of them. For Neutron and CosmosHub, let's pick the `connection-0`.
+
+2. Go to [Neutron's chain registry page](https://github.com/cosmos/chain-registry/blob/master/neutron/chain.json), pick an RPC node from the `apis` section, and specify it in the following `neutrond` queries using the `--node` flag.
+
+3. Find out the IBC client ID and the counterparty IBC info for the `connection-0` IBC connection:
+
+```
+neutrond q ibc connection end connection-0 --node https://rpc-voidara.neutron-1.neutron.org
+
+connection:
+  client_id: 07-tendermint-0
+  counterparty:
+    client_id: 07-tendermint-1119
+    connection_id: connection-809
+    ...
+```
+
+4. Check if the Neutron side IBC client's counterparty chain ID matches the ID of the chain you're up to point your Interchain Queries to:
+
+```
+neutrond q ibc client state 07-tendermint-0 --node https://rpc-voidara.neutron-1.neutron.org
+
+client_state:
+  ...
+  chain_id: cosmoshub-4 << matches the CosmosHub chain ID
+  ...
+```
+
+5. Go to [CosmosHub's chain registry page](https://github.com/cosmos/chain-registry/blob/master/cosmoshub/chain.json), pick an RPC node from the `apis` section, and specify it in the following `gaiad` queries using the `--node` flag.
+
+6. Using the counterparty IBC info retrieved at the third step of this HowTo, do the opposite side checks: check that the CosmosHub's side IBC connection and client's counterparty info corresponds to Neutron's side IBC connection and client's info:
+
+```
+gaiad q ibc connection end connection-809 --node https://cosmoshub.tendermintrpc.lava.build:443
+
+connection:
+  client_id: 07-tendermint-1119 << matches the third step's connection.counterparty.client_id
+  counterparty:
+    client_id: 07-tendermint-0  << matches the third step's connection.client_id
+    connection_id: connection-0  << matches the third step's connection-id query parameter
+```
+
+```
+gaiad q ibc client state 07-tendermint-1119 --node https://cosmoshub.tendermintrpc.lava.build:443
+
+client_state:
+  ...
+  chain_id: neutron-1 << matches the Neutron chain ID
+  ...
+```
+
 ## How to register an Interchain Query using neutron-sdk
 
 1. Find the register Interchain Query helper function that your needs require in the [neutron-sdk](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/interchain_queries/v045/register_queries/index.html) repository. For this particular example, let's choose the [new_register_balances_query_msg](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/interchain_queries/v045/register_queries/fn.new_register_balances_query_msg.html) function.
