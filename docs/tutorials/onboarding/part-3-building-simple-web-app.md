@@ -1,4 +1,4 @@
-# Part 3: Building a simple Web Application
+# Part 3: Building Simple Web Application
 
 For UI we'll be using:
 - [Next.js](https://nextjs.org/) as a framework
@@ -7,7 +7,7 @@ For UI we'll be using:
 
 The final result of this tutorial can be found at https://github.com/neutron-org/onboarding/tree/main/minimal_ui.
 
-![Web App screenshot](/img/onboarding_minimal_ui.png)
+![Web Application Screenshot](/img/onboarding_minimal_ui.png)
 
 ## Setup Next.js app
 
@@ -27,7 +27,7 @@ npx create-next-app@latest minimal_ui
 cd minimal_ui
 ```
 
-3. Install shadcn-ui:
+3. Install shadcn-ui and add components:
 
 ```bash
 npx shadcn@latest init --defaults
@@ -57,17 +57,23 @@ import { assets, chains } from "chain-registry";
 import React from "react";
 import "@interchain-ui/react/styles";
 
-// This is a Neutron Localnet chain, we need to add it manually because it's not in chain-registry
+// This is a Neutron Localnet chain, we need to add it manually because it's not in the chain registry.
+// This new chain can be based on Neutron Testnet, we just need to adjust some parameters.
 const localnetChain: Chain = (() => {
   const chain = chains.find((chain) => chain.chain_name === "neutrontestnet");
   assert(chain);
   return {
     ...chain,
+    // Chain ID is a unique identifier for the chain. You can find one in `localnet_config.json`.
     chain_id: "ntrntest",
+    // Chain name is another unique identifier for the chain that is used in CosmosKit.
     chain_name: "neutronlocalnet",
+    // Pretty name is a human readable name for the chain.
     pretty_name: "Neutron Localnet",
     apis: {
       ...chain.apis,
+      // RPC and REST endpoints are used to communicate with the chain.
+      // We provide proxy endpoints here, which can be found in the "First launch" section.
       rpc: [{ address: "http://localhost:3001/proxy" }],
       rest: [{ address: "http://localhost:3002/proxy" }],
     },
@@ -92,8 +98,8 @@ export const CosmosKitProvider = ({
   <ChainProvider
     chains={[...chains, localnetChain]}
     assetLists={[...assets, localnetAssets]}
-    // We need to specify gas price to be able to sign transactions
-    // The provided value works just fine for the localnet
+    // We need to specify gas price to be able to sign transactions.
+    // The provided value works just fine for the localnet.
     signerOptions={{
       signingCosmwasm: () => ({
         gasPrice: GasPrice.fromString('0.01untrn'),
@@ -186,7 +192,7 @@ export default function Home() {
 
 Now we have a simple UI that can connect to a wallet.
 
-Before we can do anything with the local chain, we need to launch a proxy for the localnet.
+Before we can do anything with the local chain, we need to launch a [Local CORS Proxy](https://www.npmjs.com/package/local-cors-proxy) for the localnet.
 Run the following commands in a separate terminals and keep them in the background:
 
 ```bash
