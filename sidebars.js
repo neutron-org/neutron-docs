@@ -258,6 +258,11 @@ const sidebars = {
               ],
             },
             {
+              label: "IBC Rate Limis",
+              type: "category",
+              items: ["neutron/modules/ibc-rate-limits/overview"],
+            },
+            {
               label: "3rd Party Modules",
               type: "category",
               items: [
