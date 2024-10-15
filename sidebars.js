@@ -277,6 +277,13 @@ const sidebars = {
                         "neutron/modules/3rdparty/skip/block-sdk/overview",
                       ],
                     },
+                    {
+                      label: "Slinky",
+                      type: "category",
+                      items: [
+                        "neutron/modules/3rdparty/skip/slinky/overview",
+                      ],
+                    }
                   ],
                 },
                 {
