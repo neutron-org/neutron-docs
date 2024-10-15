@@ -876,64 +876,6 @@ export default function RootLayout({
 }
 ```
 
-### Install React Query
-
-React Query is a library that allows you to fetch data from a server and store it in the client's cache.
-It will be used to fetch data from a contract and keep it updated.
-
-1. Install packages:
-
-```bash
-npm install --save @tanstack/react-query
-```
-
-2. Create context `src/contexts/Query.tsx` with the following content:
-
-```tsx
-"use client";
-
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-const queryClient = new QueryClient();
-
-export const QueryProvider = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
-};
-```
-
-3. Add the context to `src/app/layout.tsx`:
-
-```tsx
-import { CosmosKitProvider } from "@/contexts/CosmosKit";
-import { QueryProvider } from "@/contexts/Query";
-import type { Metadata } from "next";
-import "./globals.css";
-
-export const metadata: Metadata = {
-  title: "Minimal UI",
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en">
-      <body>
-        <QueryProvider>
-          <CosmosKitProvider>
-            {children}
-          </CosmosKitProvider>
-        </QueryProvider>
-      </body>
-    </html>
-  );
-}
-```
-
 ### Create a wallet button component
 
 This component will be used to open CosmosKit wallets modal and perform connection to a wallet.
@@ -1053,10 +995,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useChain } from "@cosmos-kit/react";
-import { useQuery } from "@tanstack/react-query";
 import assert from "assert";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+// Your contract address here
 const CONTRACT_ADDRESS =
   "neutron1nyuryl5u5z04dx4zsqgvsuw7fe8gl2f77yufynauuhklnnmnjncqcls0tj";
 
@@ -1066,19 +1008,18 @@ const useCounter = () => {
     true
   );
 
-  const { data: value, refetch: refetchValue } = useQuery({
-    queryKey: ["counter/value"],
-    queryFn: async () => {
-      const client = await getCosmWasmClient();
+  const [value, setValue] = useState<string | undefined>();
 
-      const { current_value } = (await client.queryContractSmart(
-        CONTRACT_ADDRESS,
-        { current_value: {} }
-      )) as { current_value: string };
+  const fetchValue = useCallback(async () => {
+    const client = await getCosmWasmClient();
 
-      return current_value;
-    },
-  });
+    const { current_value } = (await client.queryContractSmart(
+      CONTRACT_ADDRESS,
+      { current_value: {} }
+    )) as { current_value: string };
+
+    setValue(current_value);
+  }, [getCosmWasmClient]);
 
   const increaseValue = useCallback(
     async (amount: string) => {
@@ -1097,12 +1038,16 @@ const useCounter = () => {
         "auto"
       );
 
-      void refetchValue();
+      void fetchValue();
 
       return transactionHash;
     },
-    [address, getSigningCosmWasmClient, refetchValue]
+    [address, getSigningCosmWasmClient, fetchValue]
   );
+
+  useEffect(() => {
+    void fetchValue();
+  },[fetchValue]);
 
   return { value, increaseValue };
 };
