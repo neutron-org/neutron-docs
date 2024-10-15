@@ -802,7 +802,7 @@ const localnetChain: Chain = (() => {
   assert(chain);
   return {
     ...chain,
-    chain_id: "test-1",
+    chain_id: "ntrntest",
     chain_name: "neutronlocalnet",
     pretty_name: "Neutron Localnet",
     apis: {
@@ -983,7 +983,7 @@ export default function Home() {
 
 Now we have a simple UI that can connect to a wallet.
 
-Before we can do anything with the local chain, we need to lauch we have to start a proxy for the localnet.
+Before we can do anything with the local chain, we need to launch a proxy for the localnet.
 Run the following commands in a separate terminals and keep them in the background:
 
 ```bash
@@ -991,7 +991,7 @@ npx local-cors-proxy@latest --proxyUrl http://0.0.0.0:26657 --port 3001
 npx local-cors-proxy@latest --proxyUrl http://0.0.0.0:1317 --port 3002
 ```
 
-Ater that you can start the app:
+After that you can start the app:
 
 ```bash
 npm run dev
