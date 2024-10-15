@@ -7,6 +7,8 @@ For UI we'll be using:
 
 The final result of this tutorial can be found at https://github.com/neutron-org/onboarding/tree/main/minimal_ui.
 
+![Web App screenshot](/img/onboarding_minimal_ui.png)
+
 ## Setup Next.js app
 
 1. Install [Node.js](https://nodejs.org/) v18 or higher.
