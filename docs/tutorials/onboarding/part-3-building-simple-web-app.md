@@ -1,4 +1,4 @@
-# Part 3: Building Simple Web Application
+# Part 3: Building a simple Web Application
 
 For UI we'll be using:
 - [Next.js](https://nextjs.org/) as a framework
