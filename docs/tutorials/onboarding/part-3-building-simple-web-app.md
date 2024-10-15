@@ -93,7 +93,7 @@ export const CosmosKitProvider = ({
     // We need to specify gas price to be able to sign transactions
     // The provided value works just fine for the localnet
     signerOptions={{
-      signingCosmWasm: () => ({
+      signingCosmwasm: () => ({
         gasPrice: GasPrice.fromString('0.01untrn'),
       }),
       signingStargate: () => ({
