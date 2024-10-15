@@ -143,6 +143,55 @@ export default function RootLayout({
 }
 ```
 
+## Brief overview of CosmosKit
+
+CosmosKit is a library that allows you to easily communicate with different Cosmos chains and wallets.
+To use it you setup a context with a list of chains and wallets you want to support.
+
+Then you can use the `useChain` hook to connect to communicate with a specific chain like this:
+
+```ts
+const {
+  address,
+  connect,
+  disconnect,
+  getCosmWasmClient,
+  getSigningCosmWasmClient,
+} = useChain("neutronlocalnet", true);
+
+// `address` is the address of the connected wallet.
+// It is undefined if no wallet is connected.
+console.log('Your address:', address ?? 'Not connected');
+
+// `connect` is a function that opens a modal to connect to a wallet.
+await connect();
+
+// `disconnect` is a function to disconnect from a wallet.
+await disconnect();
+
+// `getCosmWasmClient` is a function that returns a CosmWasmClient for the connected chain.
+// This client is used to make queries.
+const client = await getCosmWasmClient();
+const balance = await client.getBalance(address, "untrn");
+console.log('Your balance:', balance);
+
+// `getSigningCosmWasmClient` is a function that returns a SigningCosmWasmClient for the connected chain.
+// This client is used to sign transactions.
+const client = await getSigningCosmWasmClient();
+const { transactionHash } = await client.sendTokens(
+  address,
+  receiver,
+  [
+    {
+      amount: '1000000',
+      denom: 'untrn',
+    },
+  ],
+  'auto',
+);
+console.log('TX hash:', transactionHash);
+```
+
 ## Create a wallet button component
 
 This component will be used to open CosmosKit wallets modal and perform connection to a wallet.
@@ -212,7 +261,7 @@ Now you should see a wallet button and should be able to connect to a wallet.
 
 ## Interact with the contract
 
-To interact with the contract we'll be using `CosmWasmClient` and `SigningCosmWasmClient` from [CosmJS](https://github.com/cosmos/cosmjs/tree/main). It's alredy installed along with CosmosKit.
+To interact with the contract we'll be using `CosmWasmClient` and `SigningCosmWasmClient` from [CosmJS](https://github.com/cosmos/cosmjs/tree/main).
 
 Querying value from the contract:
 
