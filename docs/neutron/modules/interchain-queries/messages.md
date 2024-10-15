@@ -34,7 +34,7 @@ message KVKey {
 }
 ```
 
-> **Note:** the maximum allowed number of KVKey values for a single InterchainQuery equals to 32.
+> **Note:** the maximum allowed number of KVKey values for a single InterchainQuery is defined by a module's param `MaxKvQueryKeysCount`, default value is 32.
 
 Currently `query_type` can take the following values:
 * `kv` - query **values** from Cosmos-SDK KV-storage on remote chain which are stored under some **keys**. In this case `kv_keys` must be filled in.

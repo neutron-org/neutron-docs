@@ -4,6 +4,23 @@
 
 This section provides a comprehensive overview of the significant changes and updates in Neutron, focusing on the upgrades to Cosmos SDK, Wasmd, and Neutron's internal modules.
 
+## [v5.0.0](https://github.com/neutron-org/neutron/releases/tag/v5.0.0)
+
+### IBC Rate Limits integration
+Neutron has integrated [IBC Rate Limits module](/neutron/modules/ibc-rate-limits/overview) - a module that is responsible for adding a governance-configurable rate limit to IBC transfers.;
+
+### Cron module improvements
+* Now messages can also be executed in BeginBlocker;
+
+### Wasmd Upgrade
+
+Our custom fork of [wasmd](https://github.com/neutron-org/wasmd), based on version [0.53](https://github.com/CosmWasm/wasmd/blob/v0.53.0/CHANGELOG.md), brings forward these notable changes:
+### Notable changes:
+- Upgrade to [CosmWasm 2.1.0](https://github.com/CosmWasm/wasmvm/releases/tag/v2.1.0)
+
+### IBC-GO upgrade to [v8.5.1](https://github.com/cosmos/ibc-go/releases/tag/v8.5.1)
+
+
 ## [v4.0.0](https://github.com/neutron-org/neutron/releases/tag/v4.0.0)
 
 ### Slinky integration
