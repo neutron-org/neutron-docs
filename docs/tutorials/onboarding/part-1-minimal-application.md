@@ -746,6 +746,8 @@ For UI we'll be using:
 - [shadcn-ui](https://ui.shadcn.com/) for components
 - [CosmosKit](https://docs.cosmology.zone/cosmos-kit) for wallets
 
+The final result of this tutorial can be found at https://github.com/neutron-org/onboarding/tree/main/minimal_ui.
+
 ### Setup Next.js app
 
 1. Install [Node.js](https://nodejs.org/) v18 or higher.
