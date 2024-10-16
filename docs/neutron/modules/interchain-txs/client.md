@@ -6,12 +6,6 @@ The Interchain Transactions module only processes messages from smart contract a
 
 ## Queries
 
-The query commands allow users to query the module.
-
-```shell
-simd query bank --help
-```
-
 ### interchain-account
 
 The `interchain-account` command allows users to query the interchain account address for a combination of owner-address, connection-id and interchain-account-id:
