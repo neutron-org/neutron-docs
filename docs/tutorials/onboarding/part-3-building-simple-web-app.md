@@ -115,7 +115,7 @@ export const CosmosKitProvider = ({
 );
 ```
 
-3. Add the context to `src/app/layout.tsx`:
+3. Add context by replacing the content of `src/app/layout.tsx` with the following:
 
 ```tsx
 import { CosmosKitProvider } from "@/contexts/CosmosKit";
@@ -149,6 +149,10 @@ CosmosKit is a library that allows you to easily communicate with different Cosm
 To use it you setup a context with a list of chains and wallets you want to support.
 
 Then you can use the `useChain` hook to connect to communicate with a specific chain like this:
+
+:::tip
+The code below is an example of how to use CosmosKit. Don't copy it to the project
+:::
 
 ```ts
 const {
@@ -246,6 +250,9 @@ Run the following commands in a separate terminals and keep them in the backgrou
 
 ```bash
 npx local-cors-proxy@latest --proxyUrl http://0.0.0.0:26657 --port 3001
+```
+
+```bash
 npx local-cors-proxy@latest --proxyUrl http://0.0.0.0:1317 --port 3002
 ```
 
