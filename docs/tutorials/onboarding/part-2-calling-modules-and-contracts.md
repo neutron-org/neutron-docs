@@ -144,7 +144,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> StdResult<Response> {
         )?;
 
         // check if counter value from a was not actually updated by checking previous counter value we sent in SubMsg and current counter value from a query
-        if current_counter_value_via_query.current_value > previous_counter {
+        if current_counter_value_via_query.current_value <= previous_counter {
             return Err(StdError::generic_err(
                 "counter from SubMsg does not equal to a counter from query",
             ));
