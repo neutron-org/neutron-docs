@@ -1,14 +1,16 @@
 # Part 3: Building a simple Web Application
 
-For UI we'll be using:
+In this part of the tutorial, we will learn how to build a simple web application that will interact with the contract
+from the first part of this tutorial series. You need to have Neutron up and running, and the contract to be instantiated.
+You can learn how to do all of that by following the first part of this tutorial.
+
+To build the UI, we will be using:
 
 - [Next.js](https://nextjs.org/) as a framework
 - [shadcn-ui](https://ui.shadcn.com/) for components
 - [CosmosKit](https://docs.cosmology.zone/cosmos-kit) for wallets
 
 The final result of this tutorial can be found at https://github.com/neutron-org/onboarding/tree/main/minimal_ui.
-
-![Web Application Screenshot](/img/onboarding_minimal_ui.png)
 
 ## Setup Next.js app
 
@@ -154,16 +156,16 @@ To use it you setup a context with a list of chains and wallets you want to supp
 Then you can use the `useChain` hook to connect to communicate with a specific chain like this:
 
 :::tip
-The code below is an example of how to use CosmosKit. Don't copy it to the project
+The code below is an example of how to use CosmosKit. Don't copy it to the project!
 :::
 
 ```ts
 const {
-  address,
-  connect,
-  disconnect,
-  getCosmWasmClient,
-  getSigningCosmWasmClient,
+    address,
+    connect,
+    disconnect,
+    getCosmWasmClient,
+    getSigningCosmWasmClient,
 } = useChain("neutronlocalnet", true);
 
 // `address` is the address of the connected wallet.
@@ -185,16 +187,16 @@ console.log("Your balance:", balance);
 // `getSigningCosmWasmClient` is a function that returns a SigningCosmWasmClient for the connected chain.
 // This client is used to sign transactions.
 const client = await getSigningCosmWasmClient();
-const { transactionHash } = await client.sendTokens(
-  address,
-  receiver,
-  [
-    {
-      amount: "1000000",
-      denom: "untrn",
-    },
-  ],
-  "auto"
+const {transactionHash} = await client.sendTokens(
+    address,
+    receiver,
+    [
+        {
+            amount: "1000000",
+            denom: "untrn",
+        },
+    ],
+    "auto"
 );
 console.log("TX hash:", transactionHash);
 ```
@@ -252,7 +254,8 @@ Now we have a simple UI that can connect to a wallet. Let's try it out.
 
 1. Install [Keplr Wallet Extension](https://www.keplr.app/#extension).
 
-2. When prompted to create a wallet, click `Import an existing wallet` and then click `Use recovery phrase or private key`.
+2. When prompted to create a wallet, click `Import an existing wallet` and then
+   click `Use recovery phrase or private key`.
 
 3. Enter mnemonic from [Part 1](/tutorials/onboarding/part-1-minimal-application#run-the-localnet):
 
@@ -262,7 +265,8 @@ Now we have a simple UI that can connect to a wallet. Let's try it out.
 
 ### Run CORS Proxy
 
-Before we can do anything with the local chain, we need to launch a [Local CORS Proxy](https://www.npmjs.com/package/local-cors-proxy) for the localnet.
+Before we can do anything with the local chain, we need to launch
+a [Local CORS Proxy](https://www.npmjs.com/package/local-cors-proxy) for the localnet.
 Run the following commands in a separate terminals and keep them in the background:
 
 ```bash
@@ -285,23 +289,25 @@ Now you should see a wallet button and should be able to connect to a wallet.
 
 ## Interact with the contract
 
-In this UI we provide an example of interacting with the contract created in [Part 1](/tutorials/onboarding/part-1-minimal-application).
+In this UI we provide an example of interacting with the contract created
+in [Part 1](/tutorials/onboarding/part-1-minimal-application).
 
 :::warning Contract address
 The address of your contract might be different from what you see in this tutorial. Make sure that you are replacing
 the addresses from the commands below with the address of **your** contract!
 :::
 
-To interact with the contract we'll be using `CosmWasmClient` and `SigningCosmWasmClient` from [CosmJS](https://github.com/cosmos/cosmjs/tree/main).
+To interact with the contract we'll be using `CosmWasmClient` and `SigningCosmWasmClient`
+from [CosmJS](https://github.com/cosmos/cosmjs/tree/main).
 
 Querying value from the contract:
 
 ```ts
 const client = await getCosmWasmClient();
 
-const { current_value } = (await client.queryContractSmart(
-  "neutron1nyuryl5u5z04dx4zsqgvsuw7fe8gl2f77yufynauuhklnnmnjncqcls0tj",
-  { current_value: {} }
+const {current_value} = (await client.queryContractSmart(
+    "neutron1nyuryl5u5z04dx4zsqgvsuw7fe8gl2f77yufynauuhklnnmnjncqcls0tj",
+    {current_value: {}}
 )) as Promise<{ current_value: string }>;
 
 console.log(current_value);
@@ -312,15 +318,15 @@ Executing a message:
 ```ts
 const client = await getSigningCosmWasmClient();
 
-const { transactionHash } = await client.execute(
-  address,
-  "neutron1nyuryl5u5z04dx4zsqgvsuw7fe8gl2f77yufynauuhklnnmnjncqcls0tj",
-  {
-    increase_count: {
-      amount: "1",
+const {transactionHash} = await client.execute(
+    address,
+    "neutron1nyuryl5u5z04dx4zsqgvsuw7fe8gl2f77yufynauuhklnnmnjncqcls0tj",
+    {
+        increase_count: {
+            amount: "1",
+        },
     },
-  },
-  "auto"
+    "auto"
 );
 
 console.log(transactionHash);

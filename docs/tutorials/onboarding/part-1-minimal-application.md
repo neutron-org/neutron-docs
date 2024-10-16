@@ -13,7 +13,6 @@ In **Part 1** of this tutorial you will learn how to:
 
 1. Create a simple, yet functional smart contract using CosmWasm.
 2. Deploy your web3 application locally and on the Neutron testnet.
-3. Build a React web application that interacts with your smart contract.
 
 ## What are Neutron smart contracts?
 
@@ -469,7 +468,7 @@ A few things to note here:
 * If our contract was a bit more complicated, we could, of course, create a query message with some query parameters,
   and process the query taking the query parameters into account.
 * You are not limited to only reading your own storage values in the `query()` entrypoint; you can also query other
-  contracts, and even modules, if necessary. We'll teach you how to do it in **Part 2** of this tutorial.
+  contracts, and even modules, if necessary. We'll teach you how to do it in **Part 3** of this tutorial.
 
 > **A note on project layout:** usually all custom response types are defined in a separate file (`src/query.rs`),
 > alongside the `src/contract.rs` file. Here we define everything in one place for the sake of simplicity.
@@ -671,8 +670,7 @@ Lets have a look at the transaction arguments and flags once again:
 * `'{"initial_value": "42"}'`: that's our `InstantiateMsg` that we defined in our contract. If we provided a JSON that
   could not be parsed into `InstantiateMsg`, we would receive an error.
 * `--label minimal_contract`: every CosmWasm contract needs to have a user-defined label.
-* `--no-admin` means that we created our contract without an admin address. The admin address can _migrate_ a contract,
-  which is a topic that we are going to discuss in **Part 2** of this tutorial.
+* `--no-admin` means that we created our contract without an admin address. The admin address can _migrate_ a contract.
 
 Now, we need to query the transaction details to get the address of the instantiated contract:
 
@@ -738,3 +736,9 @@ neutrond q wasm contract-state smart neutron1nyuryl5u5z04dx4zsqgvsuw7fe8gl2f77yu
   '{"current_value": {}}' --output json --node tcp://0.0.0.0:26657
 {"data":{"current_value":"43"}}
 ```
+
+## Conclusion
+
+In this first part of the tutorial, you learned how to create a simple, yet functional smart contract using CosmWasm, 
+and to deploy and interact with it locally. In the second part of the tutorial, you will learn how to interact with
+Neutron modules and other smart contracts.
