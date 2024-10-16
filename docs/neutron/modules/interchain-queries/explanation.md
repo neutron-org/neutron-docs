@@ -23,7 +23,7 @@ A typical flow of KV-typed Interchain Queries usage is as follows:
 
 ## How do TX-typed Interchain Queries work?
 
-The meaning of a TX Interchain Query is to get a secured subscription on transactions happening on a remote chain from a smart contract. Such a secured access is based on:
+The meaning of a TX Interchain Query is to get a secured subscription on transactions happening on a remote chain from a smart contract. Such a subscription is based on:
 - transaction execution [events](https://docs.cosmos.network/v0.50/learn/advanced/events) emission. In a word, events are structured logs of actions that take place within the blockchain;
 - [tx_search](https://docs.cometbft.com/v0.38/app-dev/indexing-transactions#querying-transactions-events) RPC. This RPC allows to search for transactions based on events they emit.
 
@@ -54,7 +54,7 @@ An Interchain Query relayer is an off-chain application that serves the needs of
 IBC [clients](https://ibc.cosmos.network/v8/ibc/overview/#clients) and [connections](https://ibc.cosmos.network/v8/ibc/overview/#connections) play significant role in Interchain Queries authenticity. It is the initialisation of an IBC connection that is responsible for IBC clients creation and verification that their states are correct for their respective counterparties, and it is the states of the IBC clients of an IBC connection that is responsible for Interchain Query results verification. One must choose the connection ID for their Interchain Queries wisely for it will define the trustworthiness of the whole Interchain Queries based application.
 
 There are two options how to find an IBC connection ID for one's needs:
-- [Choose one of already existing IBC connections](/neutron/modules/interchain-queries/how-to#how-to-chose-the-right-ibc-connection-id-for-an-interchain-query-and-verify-it);
+- [Choose one of already existing IBC connections](/neutron/modules/interchain-queries/how-to#how-to-choose-the-right-ibc-connection-id-for-an-interchain-query-and-verify-it);
 - Create an IBC connection between the chains yourself. For example, the [Hermes IBC relayer is capable of doing so](https://hermes.informal.systems/documentation/commands/path-setup/connections.html#establish-connection).
 
 ## Why is there a query creation deposit?

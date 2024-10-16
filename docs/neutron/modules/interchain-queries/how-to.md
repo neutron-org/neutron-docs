@@ -1,6 +1,6 @@
 # How To
 
-## How to chose the right IBC connection ID for an Interchain Query and verify it?
+## How to choose the right IBC connection ID for an Interchain Query and verify it
 
 Let's find an IBC connection between Neutron and CosmosHub.
 
