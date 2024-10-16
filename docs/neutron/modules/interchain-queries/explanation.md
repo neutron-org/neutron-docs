@@ -121,4 +121,4 @@ When someone successfully issues a [RemoveInterchainQuery](/neutron/modules/inte
 
 ## Configuring your own remote chain RPC node for TX ICQ usage
 
-If running your own RPC node for the target chain, make sure to [configure](https://docs.cometbft.com/v0.38/core/configuration) its `indexer` parameter the way it is sufficient for the transactions filter you define for your queries.
+If running your own RPC node for the target chain, make sure to configure its `pruning` parameter in the [app.toml](https://docs.cosmos.network/v0.50/learn/advanced/config) file and `indexer` parameter in the [config.toml](https://docs.cometbft.com/v0.38/core/configuration) file the way it is sufficient for the transactions filter you define for your queries.

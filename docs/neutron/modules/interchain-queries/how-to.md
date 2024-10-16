@@ -55,6 +55,49 @@ client_state:
   ...
 ```
 
+## How to find out what transaction filter to use
+
+Let's imagine that we need our Interchain Query based smart contract to know about undelegations done by `cosmos17s3uhcvrwrsp2ldjvxp8rseyc3ulpchdry87hp` on CosmosHub.
+
+1. Find out what is the current version of the `staking` module (imported from `cosmos-sdk`) CosmosHub runs and go to the module's source code:
+
+    1.1. Find the git repository and currently running version of CosmosHub in the [chain registry](https://github.com/cosmos/chain-registry/blob/e346b6dbc0d901eec5e8704e0a7736bfdaa3dca9/cosmoshub/chain.json#L36-L37) (use the main branch to get the up-to-date info) — `v19.2.0`;
+
+    1.2. Find the [cosmos-sdk](https://github.com/cosmos/gaia/blob/v19.1.0/go.mod#L24) import in the `go.mod` file of the `gaia` repository of `v19.2.0` — `v0.50.9`;
+
+    1.3. Open the `staking` module's source code in [cosmos-sdk with tag v0.50.9](https://github.com/cosmos/cosmos-sdk/tree/v0.50.9/x/staking).
+
+2. Find the [Undelegate](https://github.com/cosmos/cosmos-sdk/blob/8bfcf554275c1efbb42666cc8510d2da139b67fa/x/staking/keeper/msg_server.go#L391-L392) entry point of the `staking` module's keeper.
+
+3. Find the [event emission part](https://github.com/cosmos/cosmos-sdk/blob/8bfcf554275c1efbb42666cc8510d2da139b67fa/x/staking/keeper/msg_server.go#L447-L455) of the Undelegate handler code.
+
+4. Pairing the emitted event type and required attributes, compose an exhaustive transaction filter. In this case, it's `unbond.delegator=cosmos17s3uhcvrwrsp2ldjvxp8rseyc3ulpchdry87hp` (`types.EventTypeUnbond`.`types.AttributeKeyDelegator`=`cosmos17s3uhcvrwrsp2ldjvxp8rseyc3ulpchdry87hp`).
+
+5. Try out the result query string in `gaiad q txs` query to make sure it works as expected:
+
+```
+gaiad q txs --query "unbond.delegator='cosmos17s3uhcvrwrsp2ldjvxp8rseyc3ulpchdry87hp'"
+
+...
+txs:
+- code: 0
+  ...
+  height: "22645909"
+  ...
+    body:
+      ...
+      messages:
+      - '@type': /cosmos.staking.v1beta1.MsgUndelegate
+        amount:
+          amount: "20045172"
+          denom: uatom
+        delegator_address: cosmos17s3uhcvrwrsp2ldjvxp8rseyc3ulpchdry87hp
+        validator_address: cosmosvaloper1zqgheeawp7cmqk27dgyctd80rd8ryhqs6la9wc
+```
+
+**Might be interesting:**
+- [Configuring your own remote chain RPC node for TX ICQ usage](/neutron/modules/interchain-queries/explanation#configuring-your-own-remote-chain-rpc-node-for-tx-icq-usage)
+
 ## How to register an Interchain Query using neutron-sdk
 
 1. Find the register Interchain Query helper function that your needs require in the [neutron-sdk](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/interchain_queries/v045/register_queries/index.html) repository. For this particular example, let's choose the [new_register_balances_query_msg](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/interchain_queries/v045/register_queries/fn.new_register_balances_query_msg.html) function.
