@@ -4,11 +4,17 @@
 
 Let's find an IBC connection between Neutron and CosmosHub.
 
-1. Go to [map of zones](https://mapofzones.com/zones/neutron-1/peers?columnKey=ibcVolumeIn&period=7d). There might be several connections between two chains, so pick one of them. For Neutron and CosmosHub, let's pick the `connection-0`.
+#### 1. Find an already existing IBC connection using an explorer
 
-2. Go to [Neutron's chain registry page](https://github.com/cosmos/chain-registry/blob/master/neutron/chain.json), pick an RPC node from the `apis` section, and specify it in the following `neutrond` queries using the `--node` flag.
+Go to [map of zones](https://mapofzones.com/zones/neutron-1/peers?columnKey=ibcVolumeIn&period=7d). There might be several connections between two chains, so pick one of them. For Neutron and CosmosHub, let's pick the `connection-0`.
 
-3. Find out the IBC client ID and the counterparty IBC info for the `connection-0` IBC connection:
+#### 2. Pick a neutron RPC node from the chain registry repo
+
+Go to [Neutron's chain registry page](https://github.com/cosmos/chain-registry/blob/master/neutron/chain.json), pick an RPC node from the `apis` section, and specify it in the following `neutrond` queries using the `--node` flag.
+
+#### 3. Gather neutron side info about the picket IBC connection
+
+Find out the IBC client ID and the counterparty IBC info for the `connection-0` IBC connection:
 
 ```
 neutrond q ibc connection end connection-0 --node https://rpc-voidara.neutron-1.neutron.org
@@ -21,7 +27,9 @@ connection:
     ...
 ```
 
-4. Check if the Neutron side IBC client's counterparty chain ID matches the ID of the chain you're up to point your Interchain Queries to:
+#### 4. Check the IBC connection counterparty chain ID
+
+Check if the Neutron side IBC client's counterparty chain ID matches the ID of the chain you're up to point your Interchain Queries to:
 
 ```
 neutrond q ibc client state 07-tendermint-0 --node https://rpc-voidara.neutron-1.neutron.org
@@ -32,9 +40,13 @@ client_state:
   ...
 ```
 
-5. Go to [CosmosHub's chain registry page](https://github.com/cosmos/chain-registry/blob/master/cosmoshub/chain.json), pick an RPC node from the `apis` section, and specify it in the following `gaiad` queries using the `--node` flag.
+#### 5. Pick a CosmosHub RPC node from the chain registry repo
 
-6. Using the counterparty IBC info retrieved at the third step of this HowTo, do the opposite side checks: check that the CosmosHub's side IBC connection and client's counterparty info corresponds to Neutron's side IBC connection and client's info:
+Go to [CosmosHub's chain registry page](https://github.com/cosmos/chain-registry/blob/master/cosmoshub/chain.json), pick an RPC node from the `apis` section, and specify it in the following `gaiad` queries using the `--node` flag.
+
+#### 6. Make sure the CosmosHub's side counterparty is Neutron
+
+Using the counterparty IBC info retrieved at the third step of this HowTo, do the opposite side checks: check that the CosmosHub's side IBC connection and client's counterparty info corresponds to Neutron's side IBC connection and client's info:
 
 ```
 gaiad q ibc connection end connection-809 --node https://cosmoshub.tendermintrpc.lava.build:443
@@ -59,21 +71,29 @@ client_state:
 
 Let's imagine that we need our Interchain Query based smart contract to know about undelegations done by `cosmos17s3uhcvrwrsp2ldjvxp8rseyc3ulpchdry87hp` on CosmosHub.
 
-1. Find out what is the current version of the `staking` module (imported from `cosmos-sdk`) CosmosHub runs and go to the module's source code:
+#### 1. Find the up-to-date source code of the staking module
 
-    1.1. Find the git repository and currently running version of CosmosHub in the [chain registry](https://github.com/cosmos/chain-registry/blob/e346b6dbc0d901eec5e8704e0a7736bfdaa3dca9/cosmoshub/chain.json#L36-L37) (use the main branch to get the up-to-date info) — `v19.2.0`;
+Find out what is the current version of the `staking` module (imported from `cosmos-sdk`) CosmosHub runs and go to the module's source code:
 
-    1.2. Find the [cosmos-sdk](https://github.com/cosmos/gaia/blob/v19.1.0/go.mod#L24) import in the `go.mod` file of the `gaia` repository of `v19.2.0` — `v0.50.9`;
+1. Find the git repository and currently running version of CosmosHub in the [chain registry](https://github.com/cosmos/chain-registry/blob/e346b6dbc0d901eec5e8704e0a7736bfdaa3dca9/cosmoshub/chain.json#L36-L37) (use the main branch to get the up-to-date info) — `v19.2.0`;
+2. Find the [cosmos-sdk](https://github.com/cosmos/gaia/blob/v19.1.0/go.mod#L24) import in the `go.mod` file of the `gaia` repository of `v19.2.0` — `v0.50.9`;
+3. Open the `staking` module's source code in [cosmos-sdk with tag v0.50.9](https://github.com/cosmos/cosmos-sdk/tree/v0.50.9/x/staking).
 
-    1.3. Open the `staking` module's source code in [cosmos-sdk with tag v0.50.9](https://github.com/cosmos/cosmos-sdk/tree/v0.50.9/x/staking).
+#### 2. Find the handler that manages undelegations
 
-2. Find the [Undelegate](https://github.com/cosmos/cosmos-sdk/blob/8bfcf554275c1efbb42666cc8510d2da139b67fa/x/staking/keeper/msg_server.go#L391-L392) entry point of the `staking` module's keeper.
+Find the [Undelegate](https://github.com/cosmos/cosmos-sdk/blob/8bfcf554275c1efbb42666cc8510d2da139b67fa/x/staking/keeper/msg_server.go#L391-L392) entry point of the `staking` module's keeper.
 
-3. Find the [event emission part](https://github.com/cosmos/cosmos-sdk/blob/8bfcf554275c1efbb42666cc8510d2da139b67fa/x/staking/keeper/msg_server.go#L447-L455) of the Undelegate handler code.
+#### 3. Find the events emitted on undelegations
 
-4. Pairing the emitted event type and required attributes, compose an exhaustive transaction filter. In this case, it's `unbond.delegator=cosmos17s3uhcvrwrsp2ldjvxp8rseyc3ulpchdry87hp` (`types.EventTypeUnbond`.`types.AttributeKeyDelegator`=`cosmos17s3uhcvrwrsp2ldjvxp8rseyc3ulpchdry87hp`).
+Find the [event emission part](https://github.com/cosmos/cosmos-sdk/blob/8bfcf554275c1efbb42666cc8510d2da139b67fa/x/staking/keeper/msg_server.go#L447-L455) of the Undelegate handler code.
 
-5. Try out the result query string in `gaiad q txs` query to make sure it works as expected:
+#### 4. Create a transactions query using the events
+
+Pairing the emitted event type and required attributes, compose an exhaustive transaction filter. In this case, it's `unbond.delegator=cosmos17s3uhcvrwrsp2ldjvxp8rseyc3ulpchdry87hp` (`types.EventTypeUnbond`.`types.AttributeKeyDelegator`=`cosmos17s3uhcvrwrsp2ldjvxp8rseyc3ulpchdry87hp`).
+
+#### 5. Try to get some results using the query
+
+Try out the result query string in `gaiad q txs` query to make sure it works as expected:
 
 ```
 gaiad q txs --query "unbond.delegator='cosmos17s3uhcvrwrsp2ldjvxp8rseyc3ulpchdry87hp'"
