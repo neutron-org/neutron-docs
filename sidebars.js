@@ -344,6 +344,15 @@ const sidebars = {
         "tutorials/cosmwasm_ica",
         "tutorials/cosmwasm_icq",
         {
+            label: 'Onboarding',
+            type: 'category',
+            items: [
+                { label: 'Part 1: Minimal application', type: 'doc', id: 'tutorials/onboarding/part-1-minimal-application' },
+                { label: 'Part 2: Calling Modules and Contracts', type: 'doc', id: 'tutorials/onboarding/part-2-calling-modules-and-contracts' },
+                { label: 'Part 3: Building a simple Web Application', type: 'doc', id: 'tutorials/onboarding/part-3-building-simple-web-app' },
+            ]
+        },
+        {
           label: "Integration tests",
           type: "category",
           items: [
