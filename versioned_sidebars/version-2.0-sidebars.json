@@ -303,11 +303,7 @@
     {
       "label": "Relaying",
       "type": "category",
-      "items": [
-        "relaying/ibc-relayer",
-        "relaying/icq-relayer",
-        "relaying/target-chain"
-      ]
+      "items": ["relaying/ibc-relayer", "relaying/icq-relayer"]
     },
     {
       "label": "Tutorials",
@@ -323,27 +319,29 @@
           "label": "Integration tests",
           "type": "category",
           "items": [
-            { "label": "Chain", "type": "doc", "id": "tutorials/integration-tests/chain" },
-            { "label": "Smart contracts", "type": "doc", "id": "tutorials/integration-tests/smart_contracts" }
+            {
+              "label": "Chain",
+              "type": "doc",
+              "id": "tutorials/integration-tests/chain"
+            },
+            {
+              "label": "Smart contracts",
+              "type": "doc",
+              "id": "tutorials/integration-tests/smart_contracts"
+            }
           ]
         },
         {
           "label": "Indexers",
           "type": "category",
-          "items": [
-            "tutorials/indexers/intro",
-            "tutorials/indexers/subquery"
-          ]
+          "items": ["tutorials/indexers/intro", "tutorials/indexers/subquery"]
         }
       ]
     },
     {
       "label": "Deployed contracts",
       "type": "category",
-      "items": [
-        "deployment/testnet",
-        "deployment/mainnet"
-      ]
+      "items": ["deployment/testnet", "deployment/mainnet"]
     },
     {
       "label": "Other tools",
@@ -352,9 +350,7 @@
         {
           "label": "Rehearsal",
           "type": "category",
-          "items": [
-            "other_tools/rehearsal/overview"
-          ]
+          "items": ["other_tools/rehearsal/overview"]
         }
       ]
     }

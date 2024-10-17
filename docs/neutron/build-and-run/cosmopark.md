@@ -5,7 +5,7 @@ This page contains information about building and running Neutron node interconn
 ## Prerequisites
 
 - Docker engine;
-- Golang v1.20 ([go releases and instructions](https://go.dev/dl/)).
+- Golang v1.22 ([go releases and instructions](https://go.dev/dl/)).
 
 ## Build and run
 
@@ -24,19 +24,19 @@ You'll have to clone several repositories into a single parent folder. Choose a 
 #### Clone Neutron repositories
 
 ```sh
-git clone -b v3.0.2 https://github.com/neutron-org/neutron.git
+git clone -b main https://github.com/neutron-org/neutron.git
 git clone https://github.com/neutron-org/neutron-integration-tests.git
 git clone -b v0.2.0 https://github.com/neutron-org/neutron-query-relayer.git
 ```
 
 #### Clone and prepare Gaia
 
-We use the Gaia network as a target network for interchain operations. We use v15.0.0 for the tests.
+We use the Gaia network as a target network for interchain operations. We use v19.0.0 for the tests.
 
 ```sh
 git clone https://github.com/cosmos/gaia.git
 cd gaia
-git checkout v15.0.0
+git checkout v19.0.0
 ```
 
 ### 3. Build images
