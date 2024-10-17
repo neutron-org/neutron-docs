@@ -220,7 +220,7 @@ Fill-or-Kill limit orders are taker limit orders that either successfully swap 1
 
 #### IMMEDIATE\_OR\_CANCEL
 
-Immediate-or-Cancel limit orders are maker orders that will swap as much as of the `AmountIn` as possible given available liquidity above the supplied `LimitSellPrice`. Unlike Fill-or-Kill orders they will still successfully complete even if they are only able to partially trade through the `AmountIn` at the `LimitSellPrice` or better.
+Immediate-or-Cancel limit orders are taker orders that will swap as much as of the `AmountIn` as possible given available liquidity above the supplied `LimitSellPrice`. Unlike Fill-or-Kill orders they will still successfully complete even if they are only able to partially trade through the `AmountIn` at the `LimitSellPrice` or better.
 
 #### GOOD\_TIL\_CANCELLED
 
