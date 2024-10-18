@@ -17,7 +17,7 @@ To ensure that the state of the contract is consistent, the call to the sudo han
 
 ## SudoLimitWrapper
 
-[SudoLimitWrapper](https://github.com/neutron-org/neutron/blob/v2.0.3/x/contractmanager/ibc_middleware.go#L14) is a middleware wrapper with interface
+[SudoLimitWrapper](https://github.com/neutron-org/neutron/blob/v4.2.4/x/contractmanager/ibc_middleware.go#L16) is a middleware wrapper with interface
 
 ```go
 type WasmKeeper interface {
@@ -37,7 +37,7 @@ To make sure there are no exploits with infinite recursion of IBC messages which
 
 If your contract exceeds this constant `LIMIT`, it will terminate sudo handler call and save a `Failure` with full call info. You can [resubmit failure](#resubmitfailure) from this contract.
 
-The `LIMIT` is defined by [`SudoCallGasLimit`](https://github.com/neutron-org/neutron/blob/v2.0.2/x/contractmanager/types/params.pb.go#L29) module's parameter.
+The `LIMIT` is defined by [`SudoCallGasLimit`](https://github.com/neutron-org/neutron/blob/v4.2.4/x/contractmanager/types/params.pb.go#L29) module's parameter.
 
 We provide an ability to resubmit bindings through the contract that initiated the IBC transaction.
 
@@ -67,7 +67,7 @@ See examples on how to resubmit failure for [interchain txs](https://github.com/
 
 ## Binding queries
 
-Failures for contract address can be queried using [bindings](https://github.com/neutron-org/neutron/blob/feat/contract-manager-resubmit/wasmbinding/bindings/query.go#L39).
+Failures for contract address can be queried using [bindings](https://github.com/neutron-org/neutron/blob/v4.2.4/wasmbinding/bindings/query.go#L48).
 
 Query request struct should be like:
 
@@ -100,4 +100,4 @@ You're encouraged to use our neutron-sdk implementation in contracts - [request]
 
 ## Failures details
 
-In the case of a contract-initiated error, the error is stored in [Failure](state.md). Since raw errors are not part of the consensus and cannot guarantee determinism when saved to the state, errors saved in `Failure` are redacted to `codespace + code_id` using the [RedactError](https://github.com/neutron-org/neutron/blob/v2.0.2/x/contractmanager/keeper/failure.go#L109) function. At the same time, we emit the full text of the error into transaction events that do not affect the consensus and if you need to get detailed information about the error returned by the contract, you need to find the transaction in which the redacted error occurred and see the events in which we emit the error. To simplify this procedure we added a special [cli query](./client.md#failure-details), the error can be found by the `Failure.Address` and the `Failure.Id`.
+In the case of a contract-initiated error, the error is stored in [Failure](state.md). Since raw errors are not part of the consensus and cannot guarantee determinism when saved to the state, errors saved in `Failure` are redacted to `codespace + code_id` using the [RedactError](https://github.com/neutron-org/neutron/blob/v4.2.4/x/contractmanager/keeper/failure.go#L117) function. At the same time, we emit the full text of the error into transaction events that do not affect the consensus and if you need to get detailed information about the error returned by the contract, you need to find the transaction in which the redacted error occurred and see the events in which we emit the error. To simplify this procedure we added a special [cli query](./client.md#failure-details), the error can be found by the `Failure.Address` and the `Failure.Id`.
