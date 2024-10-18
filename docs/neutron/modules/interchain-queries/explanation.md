@@ -87,6 +87,16 @@ The permissions to execute [RemoveInterchainQuery](/neutron/modules/interchain-q
 
     `beyond_service_period = current_height > query.last_submitted_result_local_height + params.query_submit_timeout && current_height > query.registered_at_height + params.query_submit_timeout`
 
+## Why is it mandatory to do contract's side verification of submitted TX Interchain Query results?
+
+One important thing to keep in mind regarding Interchain Queries is that result submissions are permissionless. This means that anyone — not just your designated relayer — can submit the results of the Interchain Queries that your contract registered to the `interchainqueries` module.
+
+However, since events are not part of the consensus and are not included in the transaction result (and therefore not included in the TX-typed Interchain Queries result submission), the `interchainqueries` module cannot verify whether the submitted transactions actually match the criteria set by the Interchain Query’s transaction filters.
+
+Because of this limitation, it's essential to implement additional checks in your `SudoTXQueryResult` handler to ensure the submitted transactions meet your query's transaction filters criteria. You should at least verify that the messages in the transaction body have the correct message types and values. For example, if considering an Interchain Query that [gets Undelegate transactions issued by a concrete address](/neutron/modules/interchain-queries/how-to#how-to-find-out-what-transaction-filter-to-use), the verification will have to check that the message type is `/cosmos.staking.v1beta1.MsgUndelegate` and that the delegator address is `cosmos17s3uhcvrwrsp2ldjvxp8rseyc3ulpchdry87hp`. The way to go is to have these two kinds of checks for each transaction filter in your query.
+
+Without these checks, a malicious relayer could submit a fully valid Tendermint transaction that doesn't meet your defined transaction filters, potentially compromising your business logic. For the example above, if you don't check the delegator address, anyone's Undelegate transactions will pass.
+
 ## Why is the Proof field nullified in QueryResult RPC response?
 
 The `interchainqueries` module only needs KV proofs during the submission process to verify the values being submitted against the proofs. If save them afterwards, they'll just increase chain's space without any reasonable further usage. The KV results saved on chain can be trusted as cryptographically proved because they are verified at the very beginning — by the module at the submission step.
