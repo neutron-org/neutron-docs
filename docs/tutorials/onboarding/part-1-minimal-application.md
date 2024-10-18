@@ -538,8 +538,9 @@ Then, start the local network:
 npx @neutron-org/cosmopark@latest start localnet_config.json
 🚀 Starting
 {"level":30,"time":1719406723924,"pid":85823,"hostname":"Andreis-MBP","chain":"neutron","msg":"Starting ics chain neutron"}
-{"level":30,"time":1719406733176,"pid":85823,"hostname":"Andreis-MBP","chain":"gaia","msg":"Starting default chain gaia"}
+<...>
 🥳 Done
+{"level":20,"time":1729261511883,"pid":52118,"hostname":"Andreis-MBP","context":"main","msg":"cosmopark started"}
 ```
 
 > **Note:** if you want to shut down the localnet, run `npx @neutron-org/cosmopark@latest stop localnet_config.json`.
@@ -595,7 +596,7 @@ docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="$(basename "$(pwd)")_cache",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   --platform linux/amd64 \
-  cosmwasm/optimizer:0.15.0
+  cosmwasm/optimizer:0.16.0
 cd ..
 ```
 
@@ -607,8 +608,8 @@ First, you need to upload the contract binary (copy the `txhash` value from the 
 
 ```bash
 neutrond tx wasm store minimal_contract/artifacts/minimal_contract.wasm \
- --node tcp://0.0.0.0:26657 --chain-id ntrntest --gas 1500000 \
- --fees 4000untrn --from demowallet1
+ --node tcp://0.0.0.0:26657 --chain-id ntrntest --gas 3000000 \
+ --fees 10000untrn --from demowallet1
 ```
 
 Let's see what the command arguments stand for here, because **it's very important for your general understanding of how
@@ -647,7 +648,7 @@ neutrond q tx 855C2F0D3E120D986B65EB250BBB3C24ED38F7251E928F03DB96AF8186C00973 -
     },
     {
       "key": "code_id",
-      "value": "19",
+      "value": "20",
       "index": true
     }
   ]
@@ -658,14 +659,14 @@ You can see in the output above that the `code_id` of our contract binary is `19
 instantiate our contract (once again, copy the `txhash` value):
 
 ```bash
-neutrond tx wasm instantiate 19 '{"initial_value": "42"}' --label minimal_contract \
+neutrond tx wasm instantiate 20 '{"initial_value": "42"}' --label minimal_contract \
   --no-admin --node tcp://0.0.0.0:26657 --from demowallet1 --chain-id ntrntest \
-  --gas 1500000 --fees 4000untrn
+  --gas 3000000 --fees 10000untrn
 ```
 
 Lets have a look at the transaction arguments and flags once again:
 
-* `19`: the `code_id` that we got after uploading our compiled binary. As we mentioned previously, you can instantiate
+* `20`: the `code_id` that we got after uploading our compiled binary. As we mentioned previously, you can instantiate
   multiple identical contracts from one `code_id`!
 * `'{"initial_value": "42"}'`: that's our `InstantiateMsg` that we defined in our contract. If we provided a JSON that
   could not be parsed into `InstantiateMsg`, we would receive an error.
@@ -686,7 +687,7 @@ neutrond q tx B45E9D20A5744A81C2C3B0E75D0E740E56E0E0FD20206DDFC77F6FCFE11333B8 -
     },
     {
       "key": "code_id",
-      "value": "19",
+      "value": "20",
       "index": true
     }
   ]

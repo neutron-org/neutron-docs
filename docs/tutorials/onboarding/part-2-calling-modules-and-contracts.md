@@ -373,7 +373,7 @@ docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="$(basename "$(pwd)")_cache",target=/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   --platform linux/amd64 \
-  cosmwasm/optimizer:0.15.0
+  cosmwasm/optimizer:0.16.0
 cd ..
 ```
 
@@ -385,8 +385,8 @@ Now, you need to upload the contract binary (copy the `txhash` value from the la
 
 ```bash
 neutrond tx wasm store calling_modules_and_contracts/artifacts/calling_modules_and_contracts.wasm \
- --node tcp://0.0.0.0:26657 --chain-id ntrntest --gas 2000000 \
- --fees 40000untrn --from demowallet1
+ --node tcp://0.0.0.0:26657 --chain-id ntrntest --gas 3000000 \
+ --fees 100000untrn --from demowallet1
 ```
 
 Next, you need to get the `code_id` of the binary that you just uploaded:
@@ -404,25 +404,25 @@ neutrond q tx 855C2F0D3E120D986B65EB250BBB3C24ED38F7251E928F03DB96AF8186C00973 -
     },
     {
       "key": "code_id",
-      "value": "20",
+      "value": "21",
       "index": true
     }
   ]
 }
 ```
 
-You can see in the output above that the `code_id` of our contract binary is `19`. Now that we know it, we can finally
+You can see in the output above that the `code_id` of our contract binary is `21`. Now that we know it, we can finally
 instantiate our contract (once again, copy the `txhash` value):
 
 ```bash
-neutrond tx wasm instantiate 19 '{"minimal_contract_address": "neutron1nyuryl5u5z04dx4zsqgvsuw7fe8gl2f77yufynauuhklnnmnjncqcls0tj"}' --label minimal_contract \
+neutrond tx wasm instantiate 21 '{"minimal_contract_address": "neutron1nyuryl5u5z04dx4zsqgvsuw7fe8gl2f77yufynauuhklnnmnjncqcls0tj"}' --label minimal_contract \
   --no-admin --node tcp://0.0.0.0:26657 --from demowallet1 --chain-id ntrntest \
   --gas 1500000 --fees 4000untrn
 ```
 
 Lets have a look at the transaction arguments and flags once again:
 
-* `20`: the `code_id` that we got after uploading our compiled binary. As we mentioned previously, you can instantiate
+* `21`: the `code_id` that we got after uploading our compiled binary. As we mentioned previously, you can instantiate
   multiple identical contracts from one `code_id`!
 * `'{"minimal_contract_address": "neutron1nyuryl5u5z04dx4zsqgvsuw7fe8gl2f77yufynauuhklnnmnjncqcls0tj"}'`: that's
   our `InstantiateMsg` that we defined in our contract. If we provided a JSON that
@@ -476,11 +476,10 @@ At first, let's see the counter of the Minimal Contract:
 ```bash
 neutrond q wasm contract-state smart neutron1nyuryl5u5z04dx4zsqgvsuw7fe8gl2f77yufynauuhklnnmnjncqcls0tj \
   '{"current_value": {}}' --output json --node tcp://0.0.0.0:26657
-{"data":{"current_value":"42"}}
+{"data":{"current_value":"43"}}
 ```
 
-Let's now increase the value by
-`1` by sending an `IncreaseCount` message to **our contract**:
+Let's now increase the value by `1` by sending an `IncreaseCount` message to **our contract**:
 
 ```bash
 neutrond tx wasm execute neutron1jarq7kgdyd7dcfu2ezeqvg4w4hqdt3m5lv364d8mztnp9pzmwwwqjw7fvg \
@@ -497,7 +496,7 @@ If we query the Minimal contract once again, we'll see that the current value wa
 ```bash
 neutrond q wasm contract-state smart neutron1nyuryl5u5z04dx4zsqgvsuw7fe8gl2f77yufynauuhklnnmnjncqcls0tj \
   '{"current_value": {}}' --output json --node tcp://0.0.0.0:26657
-{"data":{"current_value":"43"}}
+{"data":{"current_value":"44"}}
 ```
 
 So our contract did his job successfully!
@@ -549,7 +548,7 @@ cause `10 USD * ~0.4 = ~25 NTRN`.
 
 Let's check it out!
 
-Let's try to send it to our Minimal Contract instance
+Let's try to send it to our Minimal Contract instance:
 
 ```bash
 neutrond tx wasm execute neutron1jarq7kgdyd7dcfu2ezeqvg4w4hqdt3m5lv364d8mztnp9pzmwwwqjw7fvg  '{"send_ntrn": {"to_address":"neutron1nyuryl5u5z04dx4zsqgvsuw7fe8gl2f77yufynauuhklnnmnjncqcls0tj", "usd_amount": "1000000"}}' --node tcp://0.0.0.0:26657 --from demowallet1 \
