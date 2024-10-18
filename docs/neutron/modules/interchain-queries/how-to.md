@@ -197,7 +197,7 @@ pub fn reply(_deps: DepsMut, _env: Env, msg: Reply) -> NeutronResult<Response> {
 }
 ```
 
-## How to register a KV-typed Interchain Query with custom keys
+## How to register a KV Interchain Query with custom keys
 
 If your KV Interchain Query cannot be covered with the helpers from the [Interchain Queries related package](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/interchain_queries/v045/register_queries/index.html) in the [neutron-sdk](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk), you will need to define the KVKeys for your query yourself and pass it to the [NeutronMsg::register_interchain_query](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/bindings/msg/enum.NeutronMsg.html#method.register_interchain_query) helper. For this particular example, let's register an [Account](https://github.com/cosmos/cosmos-sdk/blob/c29844f9e1ccc76ba68b8c0d931f3b0ad3885e13/proto/cosmos/auth/v1beta1/query.proto#L27-L31) Interchain Query to `cosmos-hub`.
 
@@ -302,7 +302,7 @@ pub fn reply(_deps: DepsMut, _env: Env, msg: Reply) -> NeutronResult<Response> {
 
 5. Use the assigned Interchain Query ID to distinguish between different Interchain Queries in [QueryResult](/neutron/modules/interchain-queries/api#queryresult) calls and [SudoMsg::KVQueryResult](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/sudo/msg/enum.SudoMsg.html) callbacks.
 
-## How to register a TX-typed Interchain Query with custom keys
+## How to register a TX Interchain Query with custom keys
 
 TODO
 

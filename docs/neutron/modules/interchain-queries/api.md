@@ -139,7 +139,7 @@ curl -X 'GET' \
 
 **Might be interesting:**
 - [Why is the Proof field nullified in QueryResult RPC response?](/neutron/modules/interchain-queries/explanation#why-is-the-proof-field-nullified-in-queryresult-rpc-response)
-- [Why doesn't interchainqueries module store TX-typed query results?](/neutron/modules/interchain-queries/explanation#why-doesnt-interchainqueries-module-store-tx-typed-query-results)
+- [Why doesn't interchainqueries module store TX query results?](/neutron/modules/interchain-queries/explanation#why-doesnt-interchainqueries-module-store-tx-query-results)
 
 ### RegisteredQuery
 
@@ -192,7 +192,7 @@ curl -X 'GET' \
 
 **Might be interesting:**
 - [Why is the Proof field nullified in QueryResult RPC response?](/neutron/modules/interchain-queries/explanation#why-is-the-proof-field-nullified-in-queryresult-rpc-response)
-- [Why doesn't interchainqueries module store TX-typed query results?](/neutron/modules/interchain-queries/explanation#why-doesnt-interchainqueries-module-store-tx-typed-query-results)
+- [Why doesn't interchainqueries module store TX query results?](/neutron/modules/interchain-queries/explanation#why-doesnt-interchainqueries-module-store-tx-query-results)
 
 ### QueryResult
 
@@ -232,7 +232,7 @@ curl -X 'GET' \
 
 **Might be interesting:**
 - [Why is the Proof field nullified in QueryResult RPC response?](/neutron/modules/interchain-queries/explanation#why-is-the-proof-field-nullified-in-queryresult-rpc-response)
-- [Why doesn't interchainqueries module store TX-typed query results?](/neutron/modules/interchain-queries/explanation#why-doesnt-interchainqueries-module-store-tx-typed-query-results)
+- [Why doesn't interchainqueries module store TX query results?](/neutron/modules/interchain-queries/explanation#why-doesnt-interchainqueries-module-store-tx-query-results)
 
 ### LastRemoteHeight
 
@@ -276,8 +276,8 @@ Events emission on success:
 
 **Might be interesting:**
 - [How to register an Interchain Query using neutron-sdk](/neutron/modules/interchain-queries/how-to#how-to-register-an-interchain-query-using-neutron-sdk)
-- [How to register a KV-typed Interchain Query with custom keys](/neutron/modules/interchain-queries/how-to#how-to-register-a-kv-typed-interchain-query-with-custom-keys)
-- [How to register a TX-typed Interchain Query with custom keys](/neutron/modules/interchain-queries/how-to#how-to-register-a-tx-typed-interchain-query-with-custom-keys)
+- [How to register a KV Interchain Query with custom keys](/neutron/modules/interchain-queries/how-to#how-to-register-a-kv-interchain-query-with-custom-keys)
+- [How to register a TX Interchain Query with custom keys](/neutron/modules/interchain-queries/how-to#how-to-register-a-tx-interchain-query-with-custom-keys)
 - [Why is there a query creation deposit?](/neutron/modules/interchain-queries/how-to#why-is-there-a-query-creation-deposit)
 - [Impossibility to retrieve and prove KV data with nil values](/neutron/modules/interchain-queries/known-bugs#impossibility-to-retrieve-and-prove-kv-data-with-nil-values)
 
@@ -332,7 +332,7 @@ Updates params of the interchainqueries module. Only callable by the module's au
 
 ### MessageTxQueryResult
 
-MessageTxQueryResult is the model of the `sudo` message sent to a smart contract on a TX-typed Interchain Query result submission. The owner of a TX-typed Interchain Query must define a `sudo` entry_point for handling `tx_query_result` messages and place the needed logic there. The `tx_query_result` handler is treated by the `interchainqueries` module as a callback that is called each time a TX-typed query result is submitted.
+MessageTxQueryResult is the model of the `sudo` message sent to a smart contract on a TX Interchain Query result submission. The owner of a TX Interchain Query must define a `sudo` entry_point for handling `tx_query_result` messages and place the needed logic there. The `tx_query_result` handler is treated by the `interchainqueries` module as a callback that is called each time a TX query result is submitted.
 
 - [Message model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/contractmanager/types#MessageTxQueryResult)
 - [Message model in neutron-sdk](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/sudo/msg/enum.SudoMsg.html#variant.TxQueryResult)
@@ -347,7 +347,7 @@ Events emission on failure:
 
 ### MessageKvQueryResult
 
-MessageKVQueryResult is the model of the `sudo` message sent to a smart contract on a KV-typed Interchain Query result submission. If the owner of a KV-typed Interchain Query wants to handle the query updates, it must define a `sudo` entry_point for handling `kv_query_result` messages and place the needed logic there. The `kv_query_result` handler is treated by the `interchainqueries` module as a callback that is called each time a KV-typed query result is submitted.
+MessageKVQueryResult is the model of the `sudo` message sent to a smart contract on a KV Interchain Query result submission. If the owner of a KV Interchain Query wants to handle the query updates, it must define a `sudo` entry_point for handling `kv_query_result` messages and place the needed logic there. The `kv_query_result` handler is treated by the `interchainqueries` module as a callback that is called each time a KV query result is submitted.
 
 Note that there is no query result sent, only the query ID. In order to access the actual result, use the Query/QueryResult RPC of the `interchainqueries` module.
 
