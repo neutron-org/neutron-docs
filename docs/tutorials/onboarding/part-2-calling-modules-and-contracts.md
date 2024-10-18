@@ -507,7 +507,7 @@ First of all, let's top up our contract with some NTRNs, since it must have some
 tokens to other addresses:
 
 ```bash
-neutrond tx bank send $(neutrond keys show demowallet1 -a) neutron1jarq7kgdyd7dcfu2ezeqvg4w4hqdt3m5lv364d8mztnp9pzmwwwqjw7fvg 100000000000untrn --node tcp://0.0.0.0:26657 --from demowallet1 \
+neutrond tx bank send $(neutrond keys show demowallet1 -a) neutron1jarq7kgdyd7dcfu2ezeqvg4w4hqdt3m5lv364d8mztnp9pzmwwwqjw7fvg 100000000untrn --node tcp://0.0.0.0:26657 --from demowallet1 \
   --chain-id ntrntest --gas 1500000 --fees 4000untrn
 ```
 
