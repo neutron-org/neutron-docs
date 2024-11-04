@@ -120,22 +120,47 @@ txs:
 
 ## How to register an Interchain Query using neutron-sdk
 
+This section contains a step-by-step guide on how to register an Interchain Query using the [neutron-sdk](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk) library and handle the query results in a smart contract.
+
 #### 1. Find the appropriate helper function in Neutron SDK
 
 Find the register Interchain Query helper function that your needs require in the [neutron-sdk](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/interchain_queries/v045/register_queries/index.html) repository. For this particular example, let's choose the [new_register_balances_query_msg](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/interchain_queries/v045/register_queries/fn.new_register_balances_query_msg.html) function.
 
-#### 2. Use the helper to register an Interchain Query
+:::note Couldn't find the required helper function?
+If there is no predefined helper function suitable for your needs in [neutron-sdk](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk), proceed to the [How to register a KV Interchain Query with custom keys](/neutron/modules/interchain-queries/how-to#how-to-register-a-kv-interchain-query-with-custom-keys) section.
+:::
 
-From your contract, broadcast the message created by the helper function as a [submessage](https://docs.cosmwasm.com/docs/smart-contracts/message/submessage/):
+#### 2. Define Interchain Query registration entry point
+
+Implement an `execute` message handler in your contract that will process Interchain Query registration using the helper function as a [submessage](https://docs.cosmwasm.com/docs/smart-contracts/message/submessage/):
 
 ```rust
+use neutron_sdk::interchain_queries::v047::register_queries::new_register_balances_query_msg;
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn execute(
+    _deps: DepsMut,
+    env: Env,
+    _info: MessageInfo,
+    msg: ExecuteMsg,
+) -> NeutronResult<Response> {
+    match msg {
+        ExecuteMsg::RegisterBalancesQuery {
+            connection_id,
+            addr,
+            denoms,
+            update_period,
+        } => register_balances_query(env, connection_id, addr, denoms, update_period),
+    }
+}
+
 pub fn register_balances_query(
     env: Env,
     connection_id: String,
     addr: String,
     denoms: Vec<String>,
     update_period: u64,
-) -> NeutronResult<Response<CosmosMsg>> {
+) -> NeutronResult<Response> {
     let msg = new_register_balances_query_msg(
         env.contract.address,
         connection_id,
@@ -148,18 +173,21 @@ pub fn register_balances_query(
     Ok(Response::new().add_submessage(SubMsg {
         id: REGISTER_BALANCES_ICQ_REPLY_ID,
         payload: to_json_binary(&addr)?,
-        msg: CosmosMsg::Custom(msg),
+        msg: msg,
         gas_limit: None,
         reply_on: ReplyOn::Success,
     }))
 }
 ```
-[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/cc29b8dd70db1bbc969c6f48350fdbaa4fb1bbaf/contracts/docs/interchainqueries/howto/register_kv_icq/src/contract.rs#L64-L87)
+[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9918d0f03739af5acca954d80bb7bb468cd1b14c/contracts/docs/interchainqueries/howto/register_kv_icq/src/contract.rs#L47-L87)
 
 #### 3. Define Interchain Query registration response handling
 
-In the reply handler, decode the submessage result as a [MsgRegisterInterchainQueryResponse](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/bindings/msg/struct.MsgRegisterInterchainQueryResponse.html) (TODO: replace bindings link with neutron-sdk link) to get access to the assigned Interchain Query ID.
+In the reply handler, decode the submessage result as a [MsgRegisterInterchainQueryResponse](https://docs.rs/neutron-std/4.2.2-rc/neutron_std/types/neutron/interchainqueries/struct.MsgRegisterInterchainQueryResponse.html) to get access to the assigned Interchain Query ID.
+
 ```rust
+use neutron_std::types::neutron::interchainqueries::MsgRegisterInterchainQueryResponse;
+
 #[entry_point]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> NeutronResult<Response> {
     match msg.id {
@@ -187,13 +215,15 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> NeutronResult<Response> {
     }
 }
 ```
-[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/cc29b8dd70db1bbc969c6f48350fdbaa4fb1bbaf/contracts/docs/interchainqueries/howto/register_kv_icq/src/contract.rs#L113-L138)
+[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9918d0f03739af5acca954d80bb7bb468cd1b14c/contracts/docs/interchainqueries/howto/register_kv_icq/src/contract.rs#L113-L138)
 
 #### 4. Define Interchain Query results submission handling
 
-Get the submitted Interchain Query result from the `interchainqueries` module's storage by the query ID and handle it.
+Get the submitted Interchain Query result from the `interchainqueries` module's storage using [query_balance](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/interchain_queries/v047/queries/fn.query_balance.html) helper function and handle it.
 
 ```rust
+use neutron_sdk::interchain_queries::v047::queries::query_balance;
+
 /// The contract's callback for KV query results. Note that only the query id is provided, so you
 /// need to read the query result from the state.
 pub fn sudo_kv_query_result(deps: DepsMut, env: Env, query_id: u64) -> NeutronResult<Response> {
@@ -209,112 +239,193 @@ pub fn sudo_kv_query_result(deps: DepsMut, env: Env, query_id: u64) -> NeutronRe
     Ok(Response::default())
 }
 ```
-[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/cc29b8dd70db1bbc969c6f48350fdbaa4fb1bbaf/contracts/docs/interchainqueries/howto/register_kv_icq/src/contract.rs#L140-L153)
+[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9918d0f03739af5acca954d80bb7bb468cd1b14c/contracts/docs/interchainqueries/howto/register_kv_icq/src/contract.rs#L140-L153)
+
+#### 5. Perform Interchain Query registration
+
+Broadcast a [ExecuteMsg::RegisterBalancesQuery](https://github.com/neutron-org/neutron-dev-contracts/blob/9918d0f03739af5acca954d80bb7bb468cd1b14c/contracts/docs/interchainqueries/howto/register_kv_icq/src/msg.rs#L10-L15) message to the contract with required parameters.
 
 ## How to register a KV Interchain Query with custom keys
 
-If your KV Interchain Query cannot be covered with the helpers from the [Interchain Queries related package](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/interchain_queries/v045/register_queries/index.html) in the [neutron-sdk](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk), you will need to define the KVKeys for your query yourself and pass it to the [NeutronMsg::register_interchain_query](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/bindings/msg/enum.NeutronMsg.html#method.register_interchain_query) helper. For this particular example, let's register an [Account](https://github.com/cosmos/cosmos-sdk/blob/c29844f9e1ccc76ba68b8c0d931f3b0ad3885e13/proto/cosmos/auth/v1beta1/query.proto#L27-L31) Interchain Query to `cosmos-hub`.
+If your KV Interchain Query cannot be covered with the helpers from the [Interchain Queries related package](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/interchain_queries/v045/register_queries/index.html) of [neutron-sdk](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk), you will need to define the KVKeys for your query yourself. For this particular example, let's register an [Account](https://github.com/cosmos/cosmos-sdk/blob/853dbbf3e84900214137805d78e325ecd56fd68f/proto/cosmos/auth/v1beta1/query.proto#L27-L31) Interchain Query to `cosmos-hub` `v21.0.0`.
 
-1. Figure out how the data path to the required data is constructed and what the data model is. This can be done by the module's code investigation. Start with finding the [respective auth module gRPC handler](https://github.com/cosmos/cosmos-sdk/blob/c29844f9e1ccc76ba68b8c0d931f3b0ad3885e13/x/auth/keeper/grpc_query.go#L69-L95) and then go deeper until you find what info exactly is written to the KVStore and at what path.
+#### 1. Figure out the respective data path and model 
+
+Figure out how the data path to the required data is constructed and what the data model is. This can be done by the module's code investigation. Start with finding the [respective auth module gRPC handler](https://github.com/cosmos/cosmos-sdk/blob/853dbbf3e84900214137805d78e325ecd56fd68f/x/auth/keeper/grpc_query.go#L62-L63) and then go deeper until you find what info exactly is written to the KVStore and at what path.
 
 For this example, the information we require from the module's code is:
-- the store key for the module is [acc](https://github.com/cosmos/cosmos-sdk/blob/c29844f9e1ccc76ba68b8c0d931f3b0ad3885e13/x/auth/types/keys.go#L11-L12);
-- the data path is constructed as [AddressStoreKeyPrefix](https://github.com/cosmos/cosmos-sdk/blob/c29844f9e1ccc76ba68b8c0d931f3b0ad3885e13/x/auth/types/keys.go#L22-L23) + [base64-encoded address](https://github.com/cosmos/cosmos-sdk/blob/c29844f9e1ccc76ba68b8c0d931f3b0ad3885e13/x/auth/types/keys.go#L34);
-- the data model is [BaseAccount](https://github.com/cosmos/cosmos-sdk/blob/c29844f9e1ccc76ba68b8c0d931f3b0ad3885e13/x/auth/types/auth.pb.go#L29-L37).
+- the store key used at [module's keeper initialisation](https://github.com/cosmos/gaia/blob/db2cc90315161d6730551d795558aaa7664aea6f/app/keepers/keepers.go#L207) is [acc](https://github.com/cosmos/cosmos-sdk/blob/853dbbf3e84900214137805d78e325ecd56fd68f/x/auth/types/keys.go#L11-L12);
+- the data path is constructed as [accounts store prefix](https://github.com/cosmos/cosmos-sdk/blob/853dbbf3e84900214137805d78e325ecd56fd68f/x/auth/types/keys.go#L22-L23) + [hex address representation](https://github.com/cosmos/cosmos-sdk/blob/853dbbf3e84900214137805d78e325ecd56fd68f/x/auth/keeper/grpc_query.go#L72-L76);
+- the data model is [BaseAccount](https://github.com/cosmos/cosmos-sdk/blob/853dbbf3e84900214137805d78e325ecd56fd68f/x/auth/types/auth.pb.go#L29-L37).
 
-2. From your contract, broadcast the message created by the helper function as a [submessage](https://docs.cosmwasm.com/docs/smart-contracts/message/submessage/). Use the [decode_and_convert](https://docs.rs/neutron-sdk/0.8.0/neutron_sdk/interchain_queries/helpers/fn.decode_and_convert.html) helper function for bech32 address conversion.
+#### 2. Define Interchain Query registration entry point
+
+Implement an `execute` message handler in your contract that will process Interchain Query registration by broadcasting a [MsgRegisterInterchainQuery](https://docs.rs/neutron-std/4.2.2-rc/neutron_std/types/neutron/interchainqueries/struct.MsgRegisterInterchainQuery.html) message as a [submessage](https://docs.cosmwasm.com/docs/smart-contracts/message/submessage/). Use the data path info found at the previous step as the parameters of the message.
+
 ```rust
-use cosmwasm_std::{
-    Binary, CosmosMsg, Response, SubMsg, ReplyOn,
-};
-use neutron_sdk::{
-    bindings::{
-        msg::NeutronMsg,
-        types::KVKey,
-    },
-    interchain_queries::helpers::decode_and_convert,
-    interchain_queries::types::QueryPayload,
-    NeutronResult,
+use neutron_std::types::neutron::interchainqueries::MsgRegisterInterchainQuery;
+
+/// Store key for standard **auth** Cosmos-SDK module
+pub const AUTH_STORE_KEY: &str = "acc";
+/// Storage prefix for account-by-address store
+/// <https://github.com/cosmos/cosmos-sdk/blob/853dbbf3e84900214137805d78e325ecd56fd68f/x/auth/types/keys.go#L22-L23>
+pub const ACCOUNTS_PREFIX: u8 = 0x01;
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn execute(
+    _deps: DepsMut,
+    env: Env,
+    _info: MessageInfo,
+    msg: ExecuteMsg,
+) -> NeutronResult<Response> {
+    match msg {
+        ExecuteMsg::RegisterAccountQuery {
+            connection_id,
+            addr,
+            update_period,
+        } => register_account_query(env, connection_id, addr, update_period),
+    }
 }
 
-/// Name of the standard **auth** Cosmos-SDK module
-const AUTH_STORE_KEY: &str = "acc";
-/// Storage prefix for account-by-address store
-/// <https://github.com/cosmos/cosmos-sdk/blob/c29844f9e1ccc76ba68b8c0d931f3b0ad3885e13/x/auth/types/keys.go#L22-L23>
-const ADDRESS_STORE_PREFIX: u8 = 0x01;
-
-/// Reply ID used to tell this kind of reply call apart.
-const REGISTER_ACCOUNT_ICQ_REPLY_ID: u64 = 1;
-
-/// Registers an account ICQ for a given address.
-pub fn register_account_icq(
+pub fn register_account_query(
+    env: Env,
     connection_id: String,
     addr: String,
     update_period: u64,
-) -> NeutronResult<Response<NeutronMsg>> {
-    let mut key: Vec<u8> = vec![ADDRESS_STORE_PREFIX];
-    key.extend_from_slice(&decode_and_convert(&addr)?);
-    // Construct an ICQ registration message
-    let msg = NeutronMsg::register_interchain_query(
-        QueryPayload::KV(vec![{
-            KVKey {
-                path: AUTH_STORE_KEY.to_string(),
-                key: Binary::from(key),
-            }
-        }]),
+) -> NeutronResult<Response> {
+    // compose key as accounts store prefix + hex address representation
+    let mut key: Vec<u8> = vec![ACCOUNTS_PREFIX];
+    key.extend_from_slice(decode_and_convert(&addr)?.as_slice());
+
+    let msg = MsgRegisterInterchainQuery {
+        query_type: QueryType::KV.into(),
+        keys: vec![KvKey {
+            path: AUTH_STORE_KEY.to_string(),
+            key: key,
+        }],
+        transactions_filter: String::default(),
         connection_id,
         update_period,
-    )?;
+        sender: env.contract.address.to_string(),
+    };
 
     // Send the ICQ registration message as a submessage to receive a reply callback
     Ok(Response::new().add_submessage(SubMsg {
         id: REGISTER_ACCOUNT_ICQ_REPLY_ID,
-        payload: Binary::default(),
-        msg: CosmosMsg::Custom(msg),
+        payload: to_json_binary(&addr)?,
+        msg: msg.into(),
         gas_limit: None,
         reply_on: ReplyOn::Success,
     }))
 }
 ```
+[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9918d0f03739af5acca954d80bb7bb468cd1b14c/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/contract.rs#L56-L102)
 
-3. 
+#### 3. Define Interchain Query registration response handling
 
-4. In the reply handler, decode the submessage result as a [MsgRegisterInterchainQueryResponse](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/bindings/msg/struct.MsgRegisterInterchainQueryResponse.html) to get access to the assigned Interchain Query ID.
+In the reply handler, decode the submessage result as a [MsgRegisterInterchainQueryResponse](https://docs.rs/neutron-std/4.2.2-rc/neutron_std/types/neutron/interchainqueries/struct.MsgRegisterInterchainQueryResponse.html) to get access to the assigned Interchain Query ID.
+
 ```rust
-use cosmwasm_std::{
-    entry_point, DepsMut, Env, Reply, Response, StdError,
-};
-use neutron_sdk::{
-    bindings::msg::MsgRegisterInterchainQueryResponse,
-    NeutronResult,
-};
-
-/// Reply ID used to tell this kind of reply call apart.
-const REGISTER_ACCOUNT_ICQ_REPLY_ID: u64 = 1;
+use neutron_std::types::neutron::interchainqueries::MsgRegisterInterchainQueryResponse;
 
 #[entry_point]
-pub fn reply(_deps: DepsMut, _env: Env, msg: Reply) -> NeutronResult<Response> {
+pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> NeutronResult<Response> {
     match msg.id {
         REGISTER_ACCOUNT_ICQ_REPLY_ID => {
-            let resp: MsgRegisterInterchainQueryResponse = serde_json_wasm::from_slice(
-                &msg.result
+            // decode the reply msg result as MsgRegisterInterchainQueryResponse
+            let resp = MsgRegisterInterchainQueryResponse::decode(
+                msg.result
                     .into_result()
                     .map_err(StdError::generic_err)?
                     .msg_responses[0]
+                    .clone()
                     .value
-                    .to_vec(),
-            )
-            .map_err(|e| StdError::generic_err(format!("failed to parse response: {:?}", e)))?;
+                    .to_vec()
+                    .as_slice(),
+            )?;
 
-            ...
+            // memorize the address that corresponds to the query id to use it later in the
+            // SudoMsg::KVQueryResult handler.
+            let addr: String = from_json(&msg.payload)?;
+            ICQ_ID_TO_WATCHED_ADDR.save(deps.storage, resp.id, &addr)?;
+
+            Ok(Response::default())
         }
-
-        ...
+        _ => Err(NeutronError::InvalidReplyID(msg.id)),
     }
 }
 ```
+[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9918d0f03739af5acca954d80bb7bb468cd1b14c/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/contract.rs#L128-L153)
 
-5. Use the assigned Interchain Query ID to distinguish between different Interchain Queries in [QueryResult](/neutron/modules/interchain-queries/api#queryresult) calls and [SudoMsg::KVQueryResult](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/sudo/msg/enum.SudoMsg.html) callbacks.
+#### 4. Implement reconstruction of the query result
+
+Define how the query result should be reconstructed from [StorageValue](https://docs.rs/neutron-std/4.2.2-rc/neutron_std/types/neutron/interchainqueries/struct.StorageValue.html) into a BaseAccount instance:
+
+```rust
+use neutron_sdk::interchain_queries::types::KVReconstruct;
+use neutron_std::types::neutron::interchainqueries::StorageValue;
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+/// A structure that can be reconstructed from **StorageValues**'s for the **Account Interchain Query**.
+pub struct BaseAccount {
+    pub address: String,
+    pub account_number: String,
+    pub sequence: String,
+}
+
+impl KVReconstruct for BaseAccount {
+    fn reconstruct(storage_values: &[StorageValue]) -> NeutronResult<BaseAccount> {
+        if storage_values.len() != 1 {
+            return Err(NeutronError::InvalidQueryResultFormat(
+                "storage_values length is not 1".into(),
+            ));
+        }
+
+        // first level value is Any as sdk.AccountI implementation:
+        // https://github.com/cosmos/cosmos-sdk/blob/853dbbf3e84900214137805d78e325ecd56fd68f/types/account.go#L9-L32
+        let any_value: Any = Any::decode(storage_values[0].value.as_slice())?;
+        // second level value is BaseAccount:
+        // https://github.com/cosmos/cosmos-sdk/blob/853dbbf3e84900214137805d78e325ecd56fd68f/x/auth/types/auth.pb.go#L29-L37
+        let std_acc: StdBaseAccount = StdBaseAccount::decode(any_value.value.as_slice())?;
+        Ok(BaseAccount {
+            address: std_acc.address,
+            account_number: std_acc.account_number.to_string(),
+            sequence: std_acc.sequence.to_string(),
+        })
+    }
+}
+```
+[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9918d0f03739af5acca954d80bb7bb468cd1b14c/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/types.rs#L10-L38)
+
+#### 5. Define Interchain Query results submission handling
+
+Get the submitted Interchain Query result from the `interchainqueries` module's storage using [query_kv_result](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/interchain_queries/queries/fn.query_kv_result.html) helper function and handle it.
+
+```rust
+use neutron_sdk::interchain_queries::queries::query_kv_result;
+use crate::types::BaseAccount;
+
+/// The contract's callback for KV query results. Note that only the query id is provided, so you
+/// need to read the query result from the state.
+pub fn sudo_kv_query_result(deps: DepsMut, query_id: u64) -> NeutronResult<Response> {
+    // Get the last submitted ICQ result from the Neutron ICQ module storage and decode it
+    // as BaseAccount using its KVReconstruct::reconstruct implementation.
+    let account_resp: BaseAccount = query_kv_result(deps.as_ref(), query_id)?;
+    // Get the address that was registered for the ICQ
+    let addr = ICQ_ID_TO_WATCHED_ADDR.load(deps.storage, query_id)?;
+
+    // Put your business logic here
+    // For this example we just preserve the freshly fetched account in the contract's state
+    REMOTE_ACCOUNTS.save(deps.storage, addr, &account_resp)?;
+
+    Ok(Response::default())
+}
+```
+[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9918d0f03739af5acca954d80bb7bb468cd1b14c/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/contract.rs#L155-L169)
+
+#### 6. Perform Interchain Query registration
+
+Broadcast a [ExecuteMsg::RegisterAccountQuery](https://github.com/neutron-org/neutron-dev-contracts/blob/9918d0f03739af5acca954d80bb7bb468cd1b14c/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/msg.rs#L10-L14) message to the contract with required parameters.
 
 ## How to register a TX Interchain Query with custom keys
 
