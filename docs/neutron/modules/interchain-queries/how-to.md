@@ -14,22 +14,29 @@ Go to [Neutron's chain registry page](https://github.com/cosmos/chain-registry/b
 
 #### 3. Gather neutron side info about the picket IBC connection
 
-Find out the IBC client ID and the counterparty IBC info for the `connection-0` IBC connection:
+Find out the IBC client ID and the counterparty IBC info for the `connection-0` IBC connection.
+
+<details> 
+    <summary>Show code</summary>
 
 ```
 neutrond q ibc connection end connection-0 --node https://rpc-voidara.neutron-1.neutron.org
 
 connection:
-  client_id: 07-tendermint-0
-  counterparty:
+client_id: 07-tendermint-0
+counterparty:
     client_id: 07-tendermint-1119
     connection_id: connection-809
     ...
 ```
+</details>
 
 #### 4. Check the IBC connection counterparty chain ID
 
-Check if the Neutron side IBC client's counterparty chain ID matches the ID of the chain you're up to point your Interchain Queries to:
+Check if the Neutron side IBC client's counterparty chain ID matches the ID of the chain you're up to point your Interchain Queries to.
+
+<details> 
+    <summary>Show code</summary>
 
 ```
 neutrond q ibc client state 07-tendermint-0 --node https://rpc-voidara.neutron-1.neutron.org
@@ -39,6 +46,7 @@ client_state:
   chain_id: cosmoshub-4 << matches the CosmosHub chain ID
   ...
 ```
+</details>
 
 #### 5. Pick a CosmosHub RPC node from the chain registry repo
 
@@ -46,7 +54,10 @@ Go to [CosmosHub's chain registry page](https://github.com/cosmos/chain-registry
 
 #### 6. Make sure the CosmosHub's side counterparty is Neutron
 
-Using the counterparty IBC info retrieved at the third step of this HowTo, do the opposite side checks: check that the CosmosHub's side IBC connection and client's counterparty info corresponds to Neutron's side IBC connection and client's info:
+Using the counterparty IBC info retrieved at the third step of this HowTo, do the opposite side checks: check that the CosmosHub's side IBC connection and client's counterparty info corresponds to Neutron's side IBC connection and client's info.
+
+<details> 
+    <summary>Show code</summary>
 
 ```
 gaiad q ibc connection end connection-809 --node https://cosmoshub.tendermintrpc.lava.build:443
@@ -66,6 +77,7 @@ client_state:
   chain_id: neutron-1 << matches the Neutron chain ID
   ...
 ```
+</details>
 
 ## How to find out what transaction filter to use
 
@@ -93,7 +105,10 @@ Pairing the emitted event type and required attributes, compose an exhaustive tr
 
 #### 5. Try to get some results using the query
 
-Try out the result query string in `gaiad q txs` query to make sure it works as expected:
+Try out the result query string in `gaiad q txs` query to make sure it works as expected.
+
+<details> 
+    <summary>Show code</summary>
 
 ```
 gaiad q txs --query "unbond.delegator='cosmos17s3uhcvrwrsp2ldjvxp8rseyc3ulpchdry87hp'"
@@ -114,6 +129,7 @@ txs:
         delegator_address: cosmos17s3uhcvrwrsp2ldjvxp8rseyc3ulpchdry87hp
         validator_address: cosmosvaloper1zqgheeawp7cmqk27dgyctd80rd8ryhqs6la9wc
 ```
+</details>
 
 **Might be interesting:**
 - [Configuring your own remote chain RPC node for TX ICQ usage](/neutron/modules/interchain-queries/explanation#configuring-your-own-remote-chain-rpc-node-for-tx-icq-usage)
@@ -132,7 +148,10 @@ If there is no predefined helper function suitable for your needs in [neutron-sd
 
 #### 2. Define Interchain Query registration entry point
 
-Implement an `execute` message handler in your contract that will process Interchain Query registration using the helper function as a [submessage](https://docs.cosmwasm.com/docs/smart-contracts/message/submessage/):
+Implement an `execute` message handler in your contract that will process Interchain Query registration using the helper function as a [submessage](https://docs.cosmwasm.com/docs/smart-contracts/message/submessage/).
+
+<details> 
+    <summary>Show code</summary>
 
 ```rust
 use neutron_sdk::interchain_queries::v047::register_queries::new_register_balances_query_msg;
@@ -180,10 +199,14 @@ pub fn register_balances_query(
 }
 ```
 [View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9918d0f03739af5acca954d80bb7bb468cd1b14c/contracts/docs/interchainqueries/howto/register_kv_icq/src/contract.rs#L47-L87)
+</details>
 
 #### 3. Define Interchain Query registration response handling
 
 In the reply handler, decode the submessage result as a [MsgRegisterInterchainQueryResponse](https://docs.rs/neutron-std/4.2.2-rc/neutron_std/types/neutron/interchainqueries/struct.MsgRegisterInterchainQueryResponse.html) to get access to the assigned Interchain Query ID.
+
+<details> 
+    <summary>Show code</summary>
 
 ```rust
 use neutron_std::types::neutron::interchainqueries::MsgRegisterInterchainQueryResponse;
@@ -216,10 +239,14 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> NeutronResult<Response> {
 }
 ```
 [View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9918d0f03739af5acca954d80bb7bb468cd1b14c/contracts/docs/interchainqueries/howto/register_kv_icq/src/contract.rs#L113-L138)
+</details>
 
 #### 4. Define Interchain Query results submission handling
 
 Get the submitted Interchain Query result from the `interchainqueries` module's storage using [query_balance](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/interchain_queries/v047/queries/fn.query_balance.html) helper function and handle it.
+
+<details> 
+    <summary>Show code</summary>
 
 ```rust
 use neutron_sdk::interchain_queries::v047::queries::query_balance;
@@ -240,6 +267,7 @@ pub fn sudo_kv_query_result(deps: DepsMut, env: Env, query_id: u64) -> NeutronRe
 }
 ```
 [View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9918d0f03739af5acca954d80bb7bb468cd1b14c/contracts/docs/interchainqueries/howto/register_kv_icq/src/contract.rs#L140-L153)
+</details>
 
 #### 5. Perform Interchain Query registration
 
@@ -261,6 +289,9 @@ For this example, the information we require from the module's code is:
 #### 2. Define Interchain Query registration entry point
 
 Implement an `execute` message handler in your contract that will process Interchain Query registration by broadcasting a [MsgRegisterInterchainQuery](https://docs.rs/neutron-std/4.2.2-rc/neutron_std/types/neutron/interchainqueries/struct.MsgRegisterInterchainQuery.html) message as a [submessage](https://docs.cosmwasm.com/docs/smart-contracts/message/submessage/). Use the data path info found at the previous step as the parameters of the message.
+
+<details> 
+    <summary>Show code</summary>
 
 ```rust
 use neutron_std::types::neutron::interchainqueries::MsgRegisterInterchainQuery;
@@ -320,10 +351,14 @@ pub fn register_account_query(
 }
 ```
 [View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9918d0f03739af5acca954d80bb7bb468cd1b14c/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/contract.rs#L56-L102)
+</details>
 
 #### 3. Define Interchain Query registration response handling
 
 In the reply handler, decode the submessage result as a [MsgRegisterInterchainQueryResponse](https://docs.rs/neutron-std/4.2.2-rc/neutron_std/types/neutron/interchainqueries/struct.MsgRegisterInterchainQueryResponse.html) to get access to the assigned Interchain Query ID.
+
+<details> 
+    <summary>Show code</summary>
 
 ```rust
 use neutron_std::types::neutron::interchainqueries::MsgRegisterInterchainQueryResponse;
@@ -356,10 +391,14 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> NeutronResult<Response> {
 }
 ```
 [View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9918d0f03739af5acca954d80bb7bb468cd1b14c/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/contract.rs#L128-L153)
+</details>
 
 #### 4. Implement reconstruction of the query result
 
-Define how the query result should be reconstructed from [StorageValue](https://docs.rs/neutron-std/4.2.2-rc/neutron_std/types/neutron/interchainqueries/struct.StorageValue.html) into a BaseAccount instance:
+Define how the query result should be reconstructed from [StorageValue](https://docs.rs/neutron-std/4.2.2-rc/neutron_std/types/neutron/interchainqueries/struct.StorageValue.html) into a BaseAccount instance.
+
+<details> 
+    <summary>Show code</summary>
 
 ```rust
 use neutron_sdk::interchain_queries::types::KVReconstruct;
@@ -396,10 +435,14 @@ impl KVReconstruct for BaseAccount {
 }
 ```
 [View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9918d0f03739af5acca954d80bb7bb468cd1b14c/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/types.rs#L10-L38)
+</details>
 
 #### 5. Define Interchain Query results submission handling
 
 Get the submitted Interchain Query result from the `interchainqueries` module's storage using [query_kv_result](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/interchain_queries/queries/fn.query_kv_result.html) helper function and handle it.
+
+<details> 
+    <summary>Show code</summary>
 
 ```rust
 use neutron_sdk::interchain_queries::queries::query_kv_result;
@@ -422,6 +465,7 @@ pub fn sudo_kv_query_result(deps: DepsMut, query_id: u64) -> NeutronResult<Respo
 }
 ```
 [View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9918d0f03739af5acca954d80bb7bb468cd1b14c/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/contract.rs#L155-L169)
+</details>
 
 #### 6. Perform Interchain Query registration
 
