@@ -471,10 +471,159 @@ pub fn sudo_kv_query_result(deps: DepsMut, query_id: u64) -> NeutronResult<Respo
 
 Broadcast a [ExecuteMsg::RegisterAccountQuery](https://github.com/neutron-org/neutron-dev-contracts/blob/9918d0f03739af5acca954d80bb7bb468cd1b14c/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/msg.rs#L10-L14) message to the contract with required parameters.
 
-## How to register a TX Interchain Query with custom keys
+## How to register and handle a TX Interchain Query
 
-TODO
+This section contains a brief guide on how to register a TX Interchain Query and handle the query results using [neutron-std](https://docs.rs/neutron-std/4.2.2-rc/neutron_std) and [neutron-sdk](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk) libraries in a smart contract.
 
-https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/bindings/msg/enum.NeutronMsg.html#method.register_interchain_query
+#### 1. Find out what transaction filter to use
 
-https://docs.cosmos.network/v0.50/build/modules/bank#events
+Figure out the appropriate [tx_search](https://docs.cometbft.com/v0.38/app-dev/indexing-transactions#querying-transactions-events) query that would match transactions you need to process. This is described in the [How to find out what transaction filter to use](/neutron/modules/interchain-queries/how-to#how-to-find-out-what-transaction-filter-to-use) section.
+
+#### 2. Define Interchain Query registration entry point
+
+Implement an `execute` message handler in your contract that will process Interchain Query registration by broadcasting a [MsgRegisterInterchainQuery](https://docs.rs/neutron-std/4.2.2-rc/neutron_std/types/neutron/interchainqueries/struct.MsgRegisterInterchainQuery.html) message. Use the `tx_search` query found at the previous step to parametrize the message.
+
+<details> 
+    <summary>Show code</summary>
+
+```rust
+use neutron_std::types::neutron::interchainqueries::MsgRegisterInterchainQuery;
+
+/// Unbond delegator attribute key.
+/// https://github.com/cosmos/cosmos-sdk/blob/8bfcf554275c1efbb42666cc8510d2da139b67fa/x/staking/keeper/msg_server.go#L447-L455
+const UNBOND_DELEGATOR_ATTR: &str = "unbond.delegator";
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn execute(
+    _deps: DepsMut,
+    env: Env,
+    _info: MessageInfo,
+    msg: ExecuteMsg,
+) -> NeutronResult<Response> {
+    match msg {
+        ExecuteMsg::RegisterUndelegationsQuery {
+            connection_id,
+            addr,
+            update_period,
+        } => register_undelegations_query(env, connection_id, addr, update_period),
+    }
+}
+
+pub fn register_undelegations_query(
+    env: Env,
+    connection_id: String,
+    addr: String,
+    update_period: u64,
+) -> NeutronResult<Response> {
+    let msg = MsgRegisterInterchainQuery {
+        query_type: QueryType::TX.into(),
+        keys: vec![],
+        // the result filter is unbond.delegator=addr
+        transactions_filter: to_string(&vec![TransactionFilterItem {
+            field: UNBOND_DELEGATOR_ATTR.to_string(),
+            op: TransactionFilterOp::Eq,
+            value: TransactionFilterValue::String(addr.clone()),
+        }])
+        .map_err(|e| StdError::generic_err(e.to_string()))?,
+        connection_id,
+        update_period,
+        sender: env.contract.address.to_string(),
+    };
+
+    Ok(Response::default().add_message(msg))
+}
+```
+[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9977666069741116cd95200ffb6ae05ab0834eae/contracts/docs/interchainqueries/howto/register_tx_icq/src/contract.rs#L55-L93)
+</details>
+
+#### 3. Define Interchain Query results submission handling
+
+Decode the transaction and its messages, implement the [contract's side verification of submitted TX Interchain Query results](/neutron/modules/interchain-queries/explanation#why-is-it-mandatory-to-do-contracts-side-verification-of-submitted-tx-interchain-query-results) and results handling.
+
+<details> 
+    <summary>Show code</summary>
+
+```rust
+use neutron_sdk::sudo::msg::SudoMsg;
+use cosmos_sdk_proto::cosmos::staking::v1beta1::MsgUndelegate;
+use cosmos_sdk_proto::cosmos::tx::v1beta1::{TxBody, TxRaw};
+
+const STAKING_UNDELEGATE_MSG_URL: &str = "/cosmos.staking.v1beta1.MsgUndelegate";
+
+#[entry_point]
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> NeutronResult<Response> {
+    match msg {
+        SudoMsg::TxQueryResult {
+            query_id,
+            height,
+            data,
+        } => sudo_tx_query_result(deps, env, query_id, height, data),
+        _ => Ok(Response::default()),
+    }
+}
+
+/// The contract's callback for TX query results.
+pub fn sudo_tx_query_result(
+    deps: DepsMut,
+    _env: Env,
+    query_id: u64,
+    _height: Height,
+    data: Binary,
+) -> NeutronResult<Response> {
+    // Decode the transaction data
+    let tx: TxRaw = TxRaw::decode(data.as_slice())?;
+    let body: TxBody = TxBody::decode(tx.body_bytes.as_slice())?;
+
+    // Get the registered query by ID and retrieve the delegator address from query's transaction filter
+    let registered_query: RegisteredQuery = get_registered_query(deps.as_ref(), query_id)?;
+    let query_tx_filter: Vec<TransactionFilterItem> =
+        serde_json_wasm::from_str(registered_query.transactions_filter.as_str())?;
+    let delegator = match &query_tx_filter[0].value {
+        TransactionFilterValue::String(s) => s.clone(),
+        _ => {
+            return Err(NeutronError::Std(StdError::generic_err(
+                "undelegations transaction filter value must be a String",
+            )))
+        }
+    };
+
+    // the contract's side verification of submitted TX Interchain Query results part
+    let mut new_undelegations: Vec<Coin> = vec![];
+    for msg in body.messages.iter() {
+        // Narrow down the messages to only MsgUndelegate ones
+        if msg.type_url != STAKING_UNDELEGATE_MSG_URL {
+            continue;
+        }
+        // Narrow down the MsgUndelegate messages to only those that match the delegator address
+        let undelegate_msg = MsgUndelegate::decode(msg.value.as_slice())?;
+        if undelegate_msg.delegator_address != delegator {
+            continue;
+        }
+
+        #[allow(clippy::unwrap_used)]
+        let undelegation_amount = undelegate_msg.amount.unwrap();
+        new_undelegations.push(Coin {
+            denom: undelegation_amount.denom,
+            amount: Uint128::from_str(undelegation_amount.amount.as_str())?,
+        });
+    }
+
+    // Put your business logic here
+    // For this example we just preserve the new undelegations in the state
+    if !new_undelegations.is_empty() {
+        let mut undelegations = UNDELEGATED_AMOUNTS
+            .may_load(deps.storage, delegator.clone())?
+            .unwrap_or_default();
+        undelegations.extend(new_undelegations);
+        UNDELEGATED_AMOUNTS.save(deps.storage, delegator, &undelegations)?;
+    }
+
+    Ok(Response::default())
+}
+```
+[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9977666069741116cd95200ffb6ae05ab0834eae/contracts/docs/interchainqueries/howto/register_tx_icq/src/contract.rs#L115-L184)
+</details>
+
+#### 4. Perform Interchain Query registration
+
+Broadcast a [ExecuteMsg::RegisterUndelegationsQuery](https://github.com/neutron-org/neutron-dev-contracts/blob/9977666069741116cd95200ffb6ae05ab0834eae/contracts/docs/interchainqueries/howto/register_tx_icq/src/msg.rs#L10-L14) message to the contract with required parameters.
