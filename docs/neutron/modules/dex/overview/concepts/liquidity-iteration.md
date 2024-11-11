@@ -58,19 +58,14 @@ This tick offers `ATOM` at a price of $8$ `USDC` per `ATOM` and is of type `Pool
 $$
 \begin{aligned}
 AmountOut &= \frac{AmountIn}{Price}\\
-\\
 &= \frac{28.73}{1.0001^{20795}}\\
-\\
 &= 3.59
 \end{aligned}
 $$
 
 
 
- $\text{USDC in} * \text{exchange rate} = \text{ATOM out}$
- $28.527 * 0.123 = 3.5$
-
-4. Done. Alice has swapped $100$ `USDC` for $13.5$ `ATOM` with an average price of $0.135$ `ATOM` per `USDC`.
+4. Done. Alice has swapped $100$ `USDC` for $13.59$ `ATOM` with an average price of $0.136$ `ATOM` per `USDC`.
 
 NOTE: For the clarity of this example we are assuming that the `PoolReserves` have a fee of zero. In a real world scenario almost all `PoolReserves` will have a fee. In a scenario with fees `TokenIn` will be added to $Tick * -1 + (2\cdot fee$). Learn more about fees in the [PoolReserves](tick-liquidity#pool-reserves) section.
 
