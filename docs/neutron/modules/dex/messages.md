@@ -321,7 +321,7 @@ enum LimitOrderType {
 
 ### Overview
 
-Standard Maker limit orders (Good-til-cancelled & Good-til-Time) can be cancelled at any (even if they have been filled). Once a limit order is cancelled any remaining `TokenIn` as well as `TokenOut` profits are returned to the `Creaator`.
+Standard Maker limit orders (Good-til-cancelled & Good-til-Time) can be cancelled at any time (even if they have been filled). Once a limit order is cancelled any remaining `TokenIn` as well as `TokenOut` profits are returned to the `Creaator`.
 
 ### Cancel Limit Order Message
 
