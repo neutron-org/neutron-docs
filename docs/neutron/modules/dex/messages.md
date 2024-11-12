@@ -38,7 +38,7 @@ In order to maintain basic invariants of the DEX users cannot deposit liquidity 
 
 In rare cases where the target deposit pool has liquidity of both `token0` and `token1`, `autoswap` is required to perform the deposit on that tick. Adding an autoswap fee prevents users from getting "free" swaps.  For example, a user could deposit single-sided liquidity into a 2-sided and then withdraw both `Token0` and `Token1`.
 
-By default the `autoswap` option is enabled, which allows users to deposit their full deposit amount.  Autoswap provides a mechanism for users to deposit the entirety of their specified deposit amounts by paying a fee equal to what it would cost to swap their deposit into a matching ratio. The fee for performing an autoswap is deducted from the total number of shares the the user is issued. To calculate the amount amount of tokens to charge the autoswap fee against we use the following formula.
+By default the `autoswap` option is enabled, which allows users to deposit their full deposit amount.  Autoswap provides a mechanism for users to deposit the entirety of their specified deposit amounts by paying a fee equal to what it would cost to swap their deposit into a matching ratio. The fee for performing an autoswap is deducted from the total number of shares the the user is issued. To calculate the amount of tokens to charge the autoswap fee against we use the following formula.
 
 $$\frac{existingReserves_0}{existingReserves_1} = \frac{amountDeposited_0 + price \cdot s} {amountDeposited_1 - s}$$
 
