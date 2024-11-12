@@ -236,7 +236,7 @@ Immediate-or-Cancel limit orders are taker orders that will swap as much as of t
 
 #### GOOD\_TIL\_CANCELLED
 
-Good-til-Cancelled limit orders are hybrid maker and taker limit orders. They will attempt to trade the supplied `AmountIn` at the `LimitSellPrice` or better. However, if the total `AmountIn` cannot be traded at the limit price they remaining amount will be placed as a maker limit order. The proceeds from the taker portion are deposited into the user’s account immediately, however, the proceeds from the maker portion must be explicitly withdrawn via WithdrawLimitOrder.
+Good-til-Cancelled limit orders are hybrid maker and taker limit orders. They will attempt to trade the supplied `AmountIn` at the `LimitSellPrice` or better. However, if the total `AmountIn` cannot be traded at the limit price the remaining amount will be placed as a maker limit order. The proceeds from the taker portion are deposited into the user’s account immediately, however, the proceeds from the maker portion must be explicitly withdrawn via WithdrawLimitOrder.
 
 #### GOOD\_TIL\_TIME;
 
