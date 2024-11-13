@@ -721,5 +721,5 @@ timeout, **you can be sure that the affected channel was closed**.
 > value.
 
 If the timeout occurs anyway, you can just
-execute [RegisterInterchainAccount message]( /neutron/modules/interchain-txs/messages#msgregisterinterchainaccount) again to
+execute [RegisterInterchainAccount message](/neutron/modules/interchain-txs/messages#msgregisterinterchainaccount) again to
 recover access to your interchain account.
