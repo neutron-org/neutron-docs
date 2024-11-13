@@ -257,6 +257,9 @@ curl -X 'GET' \
 ```
 </details>
 
+**Might be interesting:**
+-[What's the role of IBC connections in Interchain Queries and how to choose one?](/neutron/modules/interchain-queries/explanation#whats-the-role-of-ibc-connections-in-interchain-queries-and-how-to-choose-one)
+
 ## Messages
 
 ### RegisterInterchainQuery
@@ -275,10 +278,11 @@ Events emission on success:
     - other attributes with query parameters: `query_id`, `connection_id`, `owner`, `type`, `tx_filter`, `kv_key`.
 
 **Might be interesting:**
-- [How to register an Interchain Query using neutron-sdk](/neutron/modules/interchain-queries/how-to#how-to-register-an-interchain-query-using-neutron-sdk)
-- [How to register a KV Interchain Query with custom keys](/neutron/modules/interchain-queries/how-to#how-to-register-a-kv-interchain-query-with-custom-keys)
-- [How to register a TX Interchain Query with custom keys](/neutron/modules/interchain-queries/how-to#how-to-register-a-tx-interchain-query-with-custom-keys)
-- [Why is there a query creation deposit?](/neutron/modules/interchain-queries/how-to#why-is-there-a-query-creation-deposit)
+- [How to choose the right IBC connection ID for an Interchain Query and verify it](/neutron/modules/interchain-queries/how-to#how-to-choose-the-right-ibc-connection-id-for-an-interchain-query-and-verify-it)
+- [How to find out what transaction filter to use](/neutron/modules/interchain-queries/how-to#how-to-find-out-what-transaction-filter-to-use)
+- [How to register and handle a KV Interchain Query](/neutron/modules/interchain-queries/how-to#how-to-register-and-handle-a-kv-interchain-query)
+- [How to register and handle a TX Interchain Query](/neutron/modules/interchain-queries/how-to#how-to-register-and-handle-a-tx-interchain-query)
+- [Why is there a query creation deposit?](/neutron/modules/interchain-queries/explanation#why-is-there-a-query-creation-deposit)
 - [Impossibility to retrieve and prove KV data with nil values](/neutron/modules/interchain-queries/known-bugs#impossibility-to-retrieve-and-prove-kv-data-with-nil-values)
 
 ### SubmitQueryResult
@@ -289,6 +293,8 @@ Submits a result of an Interchain Query execution to the chain. This message han
 - [Response model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgSubmitQueryResultResponse)
 
 **Might be interesting:**
+- [What are entry points and sudo calls?](/neutron/modules/interchain-queries/explanation#what-are-entry-points-and-sudo-calls)
+- [Limited gas for sudo calls](/neutron/modules/interchain-queries/explanation#limited-gas-for-sudo-calls)
 - [What happens if a sudo callback to a smart contract owning an Interchain Query fails?](/neutron/modules/interchain-queries/explanation#what-happens-if-a-sudo-callback-to-a-smart-contract-owning-an-interchain-query-fails)
 - [Impossibility to retrieve and prove KV data with nil values](/neutron/modules/interchain-queries/known-bugs#impossibility-to-retrieve-and-prove-kv-data-with-nil-values)
 
@@ -307,6 +313,7 @@ Events emission on success:
 
 **Might be interesting:**
 - [What are the rules for creation deposit refund?](/neutron/modules/interchain-queries/explanation#what-are-the-rules-for-creation-deposit-refund)
+- [How Interchain Query results are removed?](/neutron/modules/interchain-queries/explanation#how-interchain-query-results-are-removed)
 
 ### UpdateInterchainQuery
 
@@ -343,7 +350,10 @@ Events emission on failure:
 
 **Might be interesting:**
 - [What are entry points and sudo calls?](/neutron/modules/interchain-queries/explanation#what-are-entry-points-and-sudo-calls)
+- [Limited gas for sudo calls](/neutron/modules/interchain-queries/explanation#limited-gas-for-sudo-calls)
 - [What happens if a sudo callback to a smart contract owning an Interchain Query fails?](/neutron/modules/interchain-queries/explanation#what-happens-if-a-sudo-callback-to-a-smart-contract-owning-an-interchain-query-fails)
+- [Why is it mandatory to do contract's side verification of submitted TX Interchain Query results?](/neutron/modules/interchain-queries/explanation#why-is-it-mandatory-to-do-contracts-side-verification-of-submitted-tx-interchain-query-results)
+- [Why doesn't interchainqueries module store TX query results?](/neutron/modules/interchain-queries/explanation#why-doesnt-interchainqueries-module-store-tx-query-results)
 
 ### MessageKvQueryResult
 
@@ -360,4 +370,6 @@ Events emission on failure:
 
 **Might be interesting:**
 - [What are entry points and sudo calls?](/neutron/modules/interchain-queries/explanation#what-are-entry-points-and-sudo-calls)
+- [Limited gas for sudo calls](/neutron/modules/interchain-queries/explanation#limited-gas-for-sudo-calls)
 - [What happens if a sudo callback to a smart contract owning an Interchain Query fails?](/neutron/modules/interchain-queries/explanation#what-happens-if-a-sudo-callback-to-a-smart-contract-owning-an-interchain-query-fails)
+- [Impossibility to retrieve and prove KV data with nil values](/neutron/modules/interchain-queries/known-bugs#impossibility-to-retrieve-and-prove-kv-data-with-nil-values)

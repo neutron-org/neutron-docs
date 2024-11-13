@@ -79,6 +79,9 @@ client_state:
 ```
 </details>
 
+**Might be interesting:**
+- [What's the role of IBC connections in Interchain Queries and how to choose one?](/neutron/modules/interchain-queries/explanation#whats-the-role-of-ibc-connections-in-interchain-queries-and-how-to-choose-one)
+
 ## How to find out what transaction filter to use
 
 Let's imagine that we need our Interchain Query based smart contract to know about undelegations done by `cosmos17s3uhcvrwrsp2ldjvxp8rseyc3ulpchdry87hp` on CosmosHub.
@@ -132,6 +135,7 @@ txs:
 </details>
 
 **Might be interesting:**
+- [How do TX Interchain Queries work?](/neutron/modules/interchain-queries/explanation#how-do-tx-interchain-queries-work)
 - [Configuring your own remote chain RPC node for TX ICQ usage](/neutron/modules/interchain-queries/explanation#configuring-your-own-remote-chain-rpc-node-for-tx-icq-usage)
 
 ## How to register and handle a KV Interchain Query
@@ -281,6 +285,11 @@ pub fn sudo_kv_query_result(deps: DepsMut, env: Env, query_id: u64) -> NeutronRe
 #### 5. Perform Interchain Query registration
 
 Broadcast a [ExecuteMsg::RegisterBalancesQuery](https://github.com/neutron-org/neutron-dev-contracts/blob/9977666069741116cd95200ffb6ae05ab0834eae/contracts/docs/interchainqueries/howto/register_kv_icq/src/msg.rs#L10-L15) message to the contract with required parameters.
+
+**Might be interesting:**
+- [What are entry points and sudo calls?](/neutron/modules/interchain-queries/explanation#what-are-entry-points-and-sudo-calls)
+- [Limited gas for sudo calls](/neutron/modules/interchain-queries/explanation#limited-gas-for-sudo-calls)
+- [What happens if a sudo callback to a smart contract owning an Interchain Query fails?](/neutron/modules/interchain-queries/explanation#what-happens-if-a-sudo-callback-to-a-smart-contract-owning-an-interchain-query-fails)
 
 ## How to register and handle a KV Interchain Query with custom keys
 
@@ -489,6 +498,11 @@ pub fn sudo_kv_query_result(deps: DepsMut, query_id: u64) -> NeutronResult<Respo
 
 Broadcast a [ExecuteMsg::RegisterAccountQuery](https://github.com/neutron-org/neutron-dev-contracts/blob/9977666069741116cd95200ffb6ae05ab0834eae/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/msg.rs#L10-L14) message to the contract with required parameters.
 
+**Might be interesting:**
+- [What are entry points and sudo calls?](/neutron/modules/interchain-queries/explanation#what-are-entry-points-and-sudo-calls)
+- [Limited gas for sudo calls](/neutron/modules/interchain-queries/explanation#limited-gas-for-sudo-calls)
+- [What happens if a sudo callback to a smart contract owning an Interchain Query fails?](/neutron/modules/interchain-queries/explanation#what-happens-if-a-sudo-callback-to-a-smart-contract-owning-an-interchain-query-fails)
+
 ## How to register and handle a TX Interchain Query
 
 This section contains a brief guide on how to register a TX Interchain Query and handle the query results using [neutron-std](https://docs.rs/neutron-std/4.2.2-rc/neutron_std) and [neutron-sdk](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk) libraries in a smart contract.
@@ -645,3 +659,9 @@ pub fn sudo_tx_query_result(
 #### 4. Perform Interchain Query registration
 
 Broadcast a [ExecuteMsg::RegisterUndelegationsQuery](https://github.com/neutron-org/neutron-dev-contracts/blob/9977666069741116cd95200ffb6ae05ab0834eae/contracts/docs/interchainqueries/howto/register_tx_icq/src/msg.rs#L10-L14) message to the contract with required parameters.
+
+**Might be interesting:**
+- [Why is it mandatory to do contract's side verification of submitted TX Interchain Query results?](/neutron/modules/interchain-queries/explanation#why-is-it-mandatory-to-do-contracts-side-verification-of-submitted-tx-interchain-query-results)
+- [What are entry points and sudo calls?](/neutron/modules/interchain-queries/explanation#what-are-entry-points-and-sudo-calls)
+- [Limited gas for sudo calls](/neutron/modules/interchain-queries/explanation#limited-gas-for-sudo-calls)
+- [What happens if a sudo callback to a smart contract owning an Interchain Query fails?](/neutron/modules/interchain-queries/explanation#what-happens-if-a-sudo-callback-to-a-smart-contract-owning-an-interchain-query-fails)
