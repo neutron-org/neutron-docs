@@ -15,7 +15,7 @@ We are going to learn how to:
 > contracts. You can check out CosmWasm [docs](https://docs.cosmwasm.com/docs)
 > and [blog posts](https://medium.com/cosmwasm/writing-a-cosmwasm-contract-8fb946c3a516) for entry-level tutorials.
 
-> **Note:** before running any query creation transaction you need to top up your contract address. See [Interchain Queries Overview](../neutron/modules/interchain-queries/overview.md), "Query creation deposit" section.
+> **Note:** before running any query creation transaction you need to top up your contract address in order to pay for the [query creation deposit](/neutron/modules/interchain-queries/explanation#why-is-there-a-query-creation-deposit).
 
 ## The complete example
 
@@ -204,8 +204,7 @@ fn write_balance_query_id_to_reply_id(deps: DepsMut, reply: Reply) -> StdResult<
 }
 ```
 
-> **Note:** the ICQ module's `RegisterInterchainQueryMsg` message [returns](/neutron/modules/interchain-queries/messages#register-interchain-query)
-> an identifier of newly registered Interchain Query in response. So in a real world scenario you should implement a `reply` handler in your contract
+> **Note:** the ICQ module's [RegisterInterchainQueryMsg](/neutron/modules/interchain-queries/api#registerinterchainquery) message returns an identifier of newly registered Interchain Query in response. So in a real world scenario you should implement a `reply` handler in your contract
 > to catch the identifier after the registration, so you'll be able to work with the registered query later.
 
 In the snippet above, we create the `ExecuteMsg` enum that contains two `Register` messages for two different queries:
@@ -575,7 +574,7 @@ pub fn remove_interchain_query(query_id: u64) -> NeutronResult<Response<NeutronM
 ```
 
 In the snippet above we add `UpdateInterchainQuery` and `RemoveInterchainQuery` to our `ExecuteMsg` enum and define corresponding
-handlers `update_interchain_query` and `remove_interchain_query` which, in short, just issue proper [Neutron msgs](/neutron/modules/interchain-queries/messages) to update and remove interchain query.
+handlers `update_interchain_query` and `remove_interchain_query` which, in short, just issue proper [Neutron msgs](/neutron/modules/interchain-queries/api) to update and remove interchain query.
 In a real world scenario such handlers must have ownership checks.
 
 ## Learning to make your own queries that are not in Neutron SDK
