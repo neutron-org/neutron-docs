@@ -216,11 +216,11 @@ Rather than supplying a limit price, limit orders take a `TickIndex` as an argum
 
 #### FILL\_OR\_KILL
 
-Fill-or-Kill limit orders are maker limit orders that either successfully swap 100% of the supplied `AmountIn` or return an error. If there is insufficient liquidity to complete the trade at or above the supplied `LimitSellPrice` a Fill-or-Kill order will return an error of `ErrFoKLimitOrderNotFilled.`
+Fill-or-Kill limit orders are taker limit orders that either successfully swap 100% of the supplied `AmountIn` or return an error. If there is insufficient liquidity to complete the trade at or above the supplied `LimitSellPrice` a Fill-or-Kill order will return an error of `ErrFoKLimitOrderNotFilled.`
 
 #### IMMEDIATE\_OR\_CANCEL
 
-Immediate-or-Cancel limit orders are maker orders that will swap as much as of the `AmountIn` as possible given available liquidity above the supplied `LimitSellPrice`. Unlike Fill-or-Kill orders they will still successfully complete even if they are only able to partially trade through the `AmountIn` at the `LimitSellPrice` or better.
+Immediate-or-Cancel limit orders are taker orders that will swap as much as of the `AmountIn` as possible given available liquidity above the supplied `LimitSellPrice`. Unlike Fill-or-Kill orders they will still successfully complete even if they are only able to partially trade through the `AmountIn` at the `LimitSellPrice` or better.
 
 #### GOOD\_TIL\_CANCELLED
 
