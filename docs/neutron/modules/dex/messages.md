@@ -8,7 +8,7 @@ In Neutron DEX’s concentrated liquidity model, liquidity providers (LPs) can p
 
 ### Deposit Mechanism
 
-When depositing into an LP position (`PoolReserves`) a user specifies amounts of `TokenA` and `TokenB` as well as a `TickIndexAToB` and a fee. The liquidity is added to the reserves for the respective ticks. Internally the DEX Normalizes `TokenA` and `TokenB` to `Token0` and `Token1` where `Token0` is the smaller of the 2 alphabetically sorted tokens. As a convenience to users, they do not have to know the canonical `Token0` and `Token1` for a pair, instead they can assign either denom as `TokenA` or `TokenB`. `TokenA` and `TokenB` along with the `TickIndexAToB` will be normalized according to the canonical [`PairID`](docs/neutron/modules/dex/overview/concepts/tick-liquidity.md#pairid). Token0 will be deposited into the `PoolReserves` struct with the matching fee at `TickIndex - fee` and `Token1` will be deposited into the `PoolReserves` at `TickIndex + fee`.
+When depositing into an LP position (`PoolReserves`) a user specifies amounts of `TokenA` and `TokenB` as well as a `TickIndexAToB` and a `fee`. The liquidity is added to the reserves for the respective ticks. Internally the DEX Normalizes `TokenA` and `TokenB` to `Token0` and `Token1` where `Token0` is the smaller of the 2 alphabetically sorted tokens. As a convenience to users, they do not have to know the canonical `Token0` and `Token1` for a pair, instead they can assign either denom as `TokenA` or `TokenB`. `TokenA` and `TokenB` along with the `TickIndexAToB` will be normalized according to the canonical [`PairID`](docs/neutron/modules/dex/overview/concepts/tick-liquidity.md#pairid).
 
 `TickIndexAToB` specifies the tick providing the desired conversion rate from `TokenA` to `TokenB`. This means that `TokenB` will be deposited at $$TickIndexAToB + fee$$ and `TokenA` will be deposited at $$TickIndexAToB\cdot-1 + fee$$.
 
@@ -36,11 +36,25 @@ In order to maintain basic invariants of the DEX users cannot deposit liquidity 
 
 #### Autoswap
 
-In rare cases where the target deposit tick has liquidity of both `token0` and `token1` (i.e the pair spread is 0) `autoswap` is required to perform the deposit on that tick. This is to due to an edge case in pool share calculation where users depositing `token1` receive shares withdrawable for `token0` and `token1`. Without paying the autosap fee upfront, users can effectively perform a 'free' swap on that pool. Autoswap will only apply on the specific tick that has both tokens available
-By default the `autoswap` option is enabled, which allows users to deposit their full deposit amount.  Autoswap provides a mechanism for users to deposit the entirety of their specified deposit amounts by paying a small fee. The fee for performing an autoswap is deducted from the total number of shares the the user is issued. When calculating share issuance the same formula as above is used for the balanced portion of the deposit, with the following formula use to calculate the shares issues that would unbalance the pool:
+In rare cases where the target deposit pool has liquidity of both `token0` and `token1`, `autoswap` is required to perform the deposit on that tick. Adding an autoswap fee prevents users from getting "free" swaps.  For example, a user could deposit single-sided liquidity into a 2-sided and then withdraw both `Token0` and `Token1`.
 
-$$additionalShares = left_0 \cdot p(-fee) + left_1 \cdot p(i-fee)$$
+By default the `autoswap` option is enabled, which allows users to deposit their full deposit amount.  Autoswap provides a mechanism for users to deposit the entirety of their specified deposit amounts by paying a fee equal to what it would cost to swap their deposit into a matching ratio. The fee for performing an autoswap is deducted from the total number of shares the the user is issued. To calculate the amount of tokens to charge the autoswap fee against we use the following formula.
 
+$$\frac{existingReserves_0}{existingReserves_1} = \frac{amountDeposited_0 + price \cdot s} {amountDeposited_1 - s}$$
+
+Where `s` is the amount that would need to be swapped to match the exiting pool ratio. If we solve for `s` we get:
+
+$$s = \frac{existingReserves_0 \cdot amountDeposited_1 - r_1\cdot amountDeposited_0}{existingReserves_1 \cdot price + existingReserves_0}$$
+
+Thus if s > 0, the residual swap amount is $$sToken0$$. Otherwise the residual is $$-sToken1$$.
+
+The autoswap fee can then be calculated as follows:
+
+$$autoswapFee = (residual_0 + residual_1 \cdot price1To0) \cdot (1 - p(fee))$$
+
+Finally the shares issued is calculated as follows:
+
+$$newShares = \frac{(valueDeposited-autoswapFee )\cdot totalShares}{valueTotal+autoswapFee}$$
 
 ### Deposit Message
 ```protobuf
@@ -92,7 +106,7 @@ message DepositOptions {
 
 | Field                   | Description                                                             |
 |-------------------------| ----------------------------------------------------------------------- |
-| `disable_autoswap` bool | Toggle to use autoswap (default false)                                  |
+| `disable_autoswap` bool | Toggle to disable autoswap (default false)                                  |
 | `fail_tx_on_bel` bool   | Toggle to fail entire transaction if behind-enemy-lines (default false) |
 
 
@@ -144,7 +158,7 @@ MultihopSwap also allows users to set an `ExitLimitPrice.` For a route to succee
 
 $$ExitLimitPrice <= \frac{AmountOfExitToken}{AmountIn}$$
 
-Multihop swap also allows users to supply multiple different routes. By default, the first route that does not run out of liquidity, hit the `ExitLimitPrice` or return an error will be used. Multihop swap also provides a `PickBestRoute` option. When `PickBestRoute` is true all routes will be run and the route that results in the greatest amount of the resulting TokenOut at final hop will be used. This option to dynamically pick the best route at runtime significantly reduces the risk of front running. Note that a successful MultiHop swap can produce dust on any pool in swaps through. This dust is credited to the caller.
+Multihop swap also allows users to supply multiple different routes. By default, the first route that does not run out of liquidity, hit the `ExitLimitPrice` or return an error will be used. Multihop swap also provides a `PickBestRoute` option. When `PickBestRoute` is true all routes will be run and the route that results in the greatest amount of `TokenOut` at final hop will be used. This option to dynamically pick the best route at runtime significantly reduces the risk of front running. Note that a successful MultiHop swap can produce dust on any pool in swaps through. This dust is credited to the caller.
 
 ### Multihop Swap Message
 
@@ -169,8 +183,6 @@ message MsgMultiHopSwap {
     (gogoproto.nullable) = false,
     (gogoproto.jsontag) = "exit_limit_price"
   ];
-  // If pickBestRoute == true then all routes are run and the route with the
-  // best price is chosen otherwise, the first succesful route is used.
   bool pick_best_route = 6;
 }
 ```
@@ -206,10 +218,10 @@ Taker limit orders will swap through all liquidity at ticks less than or equal t
 
 Maker limit orders provide new liquidity to the dex that can be swapped through by other traders (either via Multihop Swap or a Taker Limit Order.) The liquidity supplied by a maker limit order is stored in a `LimitOrderTranche` at a specific tick. Once the tranche has been fully or partially filled via another order the user can withdraw the proceeds from that tranche. Maker limit orders can also be cancelled at any time. Maker only limit order’s are created with the following order types: `GOOD\_TIL\_CANCELLED`, `JUST\_IN\_TIME` and `GOOD\_TIL\_TIME`. All Maker limit order will first try to fill via existing liquidity on the DEX priced below their `limit_sell_price`, any amount of `TokenIn` that cannot be immediately swapped will be placed into a `LimitOrderTranche`. The proceeds from this initial swap will be deposited directly back to the `Receiver`.
 
-Taker limit orders do not add liquidity to the dex, instead they trade against existing `TickLiquidity`. Taker orders will either fail at the time of transaction or be completed immediately. Successful taker orders will deposit the proceeds directly back into the `Receiver`.
+Taker limit orders do not add liquidity to the dex, instead they trade against existing `TickLiquidity`. Taker orders will either fail at the time of transaction or be completed immediately. Successful taker orders will deposit the proceeds directly back into the `Receiver` account.
 
-Rather than supplying a limit price, limit orders take a `TickIndex` as an argument. For maker limit orders this is the tick that the `LimitOrderTranche` will be placed at. For taker limit order will only trade through liquidity at or above the `TickIndex.` A specific price can be converted to a `TickIndex` using the following formula:
 
+As a final step for all limit orders, we check that the true price for the trade ($$amountOut/amountIn$$) is greater than or equal to the supplied limit price. Due to rounding behavior in the dex, it is possible for the true price to be less than the limitPrice even though all the liquidity traded through is priced above the `LimitSellPrice`. All limit orders also have an optional `MinAverageSellPrice` field, if supplied this field will be used instead of the `LimitSellPrice` for this true price check.
 
 
 ### Order types
@@ -224,7 +236,7 @@ Immediate-or-Cancel limit orders are taker orders that will swap as much as of t
 
 #### GOOD\_TIL\_CANCELLED
 
-Good-til-Cancelled limit orders are hybrid maker and taker limit orders. They will attempt to trade the supplied `AmountIn` at the `TickIndex` or better. However, if the total `AmountIn` cannot be traded at the limit price they remaining amount will be placed as a maker limit order. The proceeds from the taker portion are deposited into the user’s account immediately, however, the proceeds from the maker portion must be explicitly withdrawn via WithdrawLimitOrder.
+Good-til-Cancelled limit orders are hybrid maker and taker limit orders. They will attempt to trade the supplied `AmountIn` at the `LimitSellPrice` or better. However, if the total `AmountIn` cannot be traded at the limit price the remaining amount will be placed as a maker limit order. The proceeds from the taker portion are deposited into the user’s account immediately, however, the proceeds from the maker portion must be explicitly withdrawn via WithdrawLimitOrder.
 
 #### GOOD\_TIL\_TIME;
 
@@ -242,6 +254,8 @@ message MsgPlaceLimitOrder {
   string receiver = 2;
   string token_in = 3;
   string token_out = 4;
+  // DEPRECATED: tick_index_in_to_out will be removed in future release; limit_sell_price should be used instead.
+  int64 tick_index_in_to_out = 5 [deprecated = true];
   string amount_in = 7 [
     (gogoproto.moretags) = "yaml:\"amount_in\"",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
@@ -249,6 +263,7 @@ message MsgPlaceLimitOrder {
     (gogoproto.jsontag) = "amount_in"
   ];
   LimitOrderType order_type = 8;
+  // expirationTime is only valid iff orderType == GOOD_TIL_TIME.
   google.protobuf.Timestamp expiration_time = 9 [
     (gogoproto.stdtime) = true,
     (gogoproto.nullable) = true
@@ -261,9 +276,20 @@ message MsgPlaceLimitOrder {
   ];
   string limit_sell_price = 11 [
     (gogoproto.moretags) = "yaml:\"limit_sell_price\"",
-    (gogoproto.customtype) = "github.com/neutron-org/neutron/v4/utils/math.PrecDec",
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v5/utils/math.PrecDec",
     (gogoproto.nullable) = true,
-    (gogoproto.jsontag) = "limit_sell_price"
+    (gogoproto.jsontag) = "limit_sell_price",
+    (amino.encoding) = "cosmos_dec_bytes"
+  ];
+  // min_average_sell_price is an optional parameter that sets a required minimum average price for the entire trade.
+  // if the min_average_sell_price is not met the trade will fail.
+  // If min_average_sell_price is omitted limit_sell_price will be used instead
+  string min_average_sell_price = 12 [
+    (gogoproto.moretags) = "yaml:\"min_average_sell_price\"",
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v5/utils/math.PrecDec",
+    (gogoproto.nullable) = true,
+    (gogoproto.jsontag) = "min_average_sell_price",
+    (amino.encoding) = "cosmos_dec_bytes"
   ];
 }
 
@@ -289,14 +315,13 @@ enum LimitOrderType {
 | `LimitSellPrice` sdk.Dec                   | Limit sell price                                                                          |
 | `MaxAmountOut` sdk.Int                   | The maximum `TokenOut` a user wants to receive|
 | `ExpirationTime` time.Time          | Expiration time for order. Only valid for GOOD\_TIL\_TIME limit orders                                                                          |
+| `MinAverageSellPrice` sdk.Dec          | Optional Minimum price that must be satisfied by the true output of a limit order                                                                           |
 
 ## Cancel Limit Order Message
 
 ### Overview
 
-Standard Taker limit orders (Good-til-cancelled & Good-til-Time) can be cancelled at any time if they have not been completely filled. Once a limit order is cancelled any remaining “TokenIn” liquidity is returned to the user.
-
-NOTE: Canceling a partially filled limit order does not withdraw the traded portion. A separate call must be made to `WithdrawFilledLimitOrder` to withdraw any proceeds from the limit order
+Standard Maker limit orders (Good-til-cancelled & Good-til-Time) can be cancelled at any time (even if they have been filled). Once a limit order is cancelled any remaining `TokenIn` as well as `TokenOut` profits are returned to the `Creaator`.
 
 ### Cancel Limit Order Message
 
@@ -311,7 +336,7 @@ message MsgCancelLimitOrder {
 
 | Field                             | Description                                                                         |
 |-----------------------------------|-------------------------------------------------------------------------------------|
-| `Creator` string (sdk.AccAddress) | Account which controls the limit order and to which any untraded amount is credited |
+| `Creator` string (sdk.AccAddress) | Account which controls the limit order and to which TookenIn and TokenOut is credited |
 | `TrancheKey` string               | TrancheKey for the target limit order                                               |
 
 

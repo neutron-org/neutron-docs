@@ -15,8 +15,8 @@ There are a number of benefits to using constant priced pools:
 
 **Constant Priced Pools  = Constant Sum Market Makers**
 
-Constant priced pools are also known as _constant sum market makers._ This is in reference to a trading function which is the sum of the two reserves multiplied by a constant price i.e., $$\psi(R_1, R_2) = R_1 + p R_2$$.
+Constant priced pools are also known as _constant sum market makers._ This is in reference to a trading function which is the sum of the two reserves multiplied by a constant price i.e., $$\psi(R_0, R_1) = R_0 + p R_1$$.
 
 Here, ​$$p$$ is a constant price that the pool trades at regardless of the reserves.
 
-For example if $$p=2$$ than we can exchange 2 ​of $$R_2$$for 4 of $$R_1$$as long as there is enough of $$R_1$$left to complete the trade i.e., $$R_2 \geq 4$$. We can see this is a viable trade because ​$$\psi(R_1, R_2) = R_1 + pR_2 = (R_1 - 4) + p(R_1 + 2)$$ and so the pool's "invariant" ​holds.
+For example if $$p=2$$ than we can exchange 2 ​of $$R_1$$for 4 of $$R_0$$as long as there is enough of $$R_0$$left to complete the trade i.e., $$R_1 \geq 4$$. We can see this is a viable trade because ​$$\psi(R_0, R_1) = R_0 + pR_1 = (R_0 - 4) + p(R_0 + 2)$$ and so the pool's "invariant" ​holds.
