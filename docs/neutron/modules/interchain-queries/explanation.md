@@ -64,7 +64,7 @@ There are two options how to find an IBC connection ID for one's needs:
 
 ## Why is there a query creation deposit?
 
-In order to clean up ledger from not used, outdated queries, a special deposit mechanism is used. [RegisterInterchainQuery](/neutron/modules/interchain-queries/api#registerinterchainquery) message contains the `deposit` field which is used to collect escrow payment for query creation. In order to return escrow payment, a [RemoveInterchainQuery](/neutron/modules/interchain-queries/api#removeinterchainquery) message should be issued.
+In order to clean up ledger from not used, outdated queries, a special deposit mechanism is used. When a contract issues a [RegisterInterchainQuery](/neutron/modules/interchain-queries/api#registerinterchainquery) message, the deposit is charged from the contract's balance as escrow payment for query creation. In order to return escrow payment, the query should be removed by issuing a [RemoveInterchainQuery](/neutron/modules/interchain-queries/api#removeinterchainquery) message.
 
 The required amount of coins to deposit is defined by the `query_deposit` [module parameter](/neutron/modules/interchain-queries/api#params).
 
