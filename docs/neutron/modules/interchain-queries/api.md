@@ -57,7 +57,9 @@ curl -X 'GET' \
         "amount": "1000000"
       }
     ],
-    "tx_query_removal_limit": "10000"
+    "tx_query_removal_limit": "10000",
+    "max_kv_query_keys_count": "32",
+    "max_transactions_filters": "32"
   }
 }
 ```
