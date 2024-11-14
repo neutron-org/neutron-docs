@@ -268,7 +268,7 @@ Registers a new Interchain Query in the `interchainqueries` module. This message
 
 Returns an ID assigned to the registered query. Handle this message response via a reply handler in order to make use of the ID.
 
-- [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgRegisterInterchainQueryRequest)
+- [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgRegisterInterchainQuery)
 - [Response model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgRegisterInterchainQueryResponse)
 
 Events emission on success:
@@ -289,7 +289,7 @@ Events emission on success:
 
 Submits a result of an Interchain Query execution to the chain. This message handling may include passing of the result to the query's owner smart contract for processing which might be a pretty gas-consumable operation.
 
-- [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgSubmitQueryResultRequest)
+- [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgSubmitQueryResult)
 - [Response model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgSubmitQueryResultResponse)
 
 **Might be interesting:**
@@ -302,7 +302,7 @@ Submits a result of an Interchain Query execution to the chain. This message han
 
 Removes a given Interchain Query and its results from the module. Can be removed only by the owner of the query during the query's submit timeout, and by anyone after the query has been timed out. The query deposit is returned to the caller on a success call.
 
-- [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgRemoveInterchainQueryRequest)
+- [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgRemoveInterchainQuery)
 - [Response model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgRemoveInterchainQueryResponse)
 
 Events emission on success:
@@ -319,7 +319,7 @@ Events emission on success:
 
 Updates parameters of a registered Interchain Query. Only callable by the owner of the query.
 
-- [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgUpdateInterchainQueryRequest)
+- [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgUpdateInterchainQuery)
 - [Response model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgUpdateInterchainQueryResponse)
 
 Events emission on success:
@@ -332,7 +332,7 @@ Events emission on success:
 
 Updates params of the interchainqueries module. Only callable by the module's authority.
 
-- [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgUpdateParamsRequest)
+- [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgUpdateParams)
 - [Response model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgUpdateParamsResponse)
 
 ## Sudo
