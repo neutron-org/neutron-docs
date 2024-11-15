@@ -202,7 +202,7 @@ pub fn register_balances_query(
     }))
 }
 ```
-[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9977666069741116cd95200ffb6ae05ab0834eae/contracts/docs/interchainqueries/howto/register_kv_icq/src/contract.rs#L47-L87)
+[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/07d0f1e6b4c36b8541e74530986a6baba2710cf1/contracts/docs/interchainqueries/howto/register_kv_icq/src/contract.rs#L47-L87)
 </details>
 
 #### 3. Define Interchain Query registration response handling
@@ -242,7 +242,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> NeutronResult<Response> {
     }
 }
 ```
-[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9977666069741116cd95200ffb6ae05ab0834eae/contracts/docs/interchainqueries/howto/register_kv_icq/src/contract.rs#L100-L125)
+[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/07d0f1e6b4c36b8541e74530986a6baba2710cf1/contracts/docs/interchainqueries/howto/register_kv_icq/src/contract.rs#L104-L129)
 </details>
 
 #### 4. Define Interchain Query results submission handling
@@ -279,7 +279,7 @@ pub fn sudo_kv_query_result(deps: DepsMut, env: Env, query_id: u64) -> NeutronRe
     Ok(Response::default())
 }
 ```
-[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9977666069741116cd95200ffb6ae05ab0834eae/contracts/docs/interchainqueries/howto/register_kv_icq/src/contract.rs#L127-L148)
+[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/07d0f1e6b4c36b8541e74530986a6baba2710cf1/contracts/docs/interchainqueries/howto/register_kv_icq/src/contract.rs#L131-L152)
 </details>
 
 #### 5. Perform Interchain Query registration
@@ -368,7 +368,7 @@ pub fn register_account_query(
     }))
 }
 ```
-[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9977666069741116cd95200ffb6ae05ab0834eae/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/contract.rs#L56-L102)
+[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/07d0f1e6b4c36b8541e74530986a6baba2710cf1/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/contract.rs#L56-L102)
 </details>
 
 #### 3. Define Interchain Query registration response handling
@@ -408,7 +408,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> NeutronResult<Response> {
     }
 }
 ```
-[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9977666069741116cd95200ffb6ae05ab0834eae/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/contract.rs#L115-L140)
+[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/07d0f1e6b4c36b8541e74530986a6baba2710cf1/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/contract.rs#L119-L144)
 </details>
 
 #### 4. Implement reconstruction of the query result
@@ -452,7 +452,7 @@ impl KVReconstruct for BaseAccount {
     }
 }
 ```
-[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9977666069741116cd95200ffb6ae05ab0834eae/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/types.rs#L10-L38)
+[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/07d0f1e6b4c36b8541e74530986a6baba2710cf1/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/types.rs#L10-L38)
 </details>
 
 #### 5. Define Interchain Query results submission handling
@@ -491,7 +491,7 @@ pub fn sudo_kv_query_result(deps: DepsMut, query_id: u64) -> NeutronResult<Respo
     Ok(Response::default())
 }
 ```
-[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9977666069741116cd95200ffb6ae05ab0834eae/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/contract.rs#L142-L164)
+[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/07d0f1e6b4c36b8541e74530986a6baba2710cf1/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/contract.rs#L146-L168)
 </details>
 
 #### 6. Perform Interchain Query registration
@@ -565,7 +565,7 @@ pub fn register_undelegations_query(
     Ok(Response::default().add_message(msg))
 }
 ```
-[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9977666069741116cd95200ffb6ae05ab0834eae/contracts/docs/interchainqueries/howto/register_tx_icq/src/contract.rs#L55-L93)
+[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/07d0f1e6b4c36b8541e74530986a6baba2710cf1/contracts/docs/interchainqueries/howto/register_tx_icq/src/contract.rs#L55-L93)
 </details>
 
 #### 3. Define Interchain Query results submission handling
@@ -653,7 +653,7 @@ pub fn sudo_tx_query_result(
     Ok(Response::default())
 }
 ```
-[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/9977666069741116cd95200ffb6ae05ab0834eae/contracts/docs/interchainqueries/howto/register_tx_icq/src/contract.rs#L115-L184)
+[View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/07d0f1e6b4c36b8541e74530986a6baba2710cf1/contracts/docs/interchainqueries/howto/register_tx_icq/src/contract.rs#L115-L184)
 </details>
 
 #### 4. Perform Interchain Query registration
