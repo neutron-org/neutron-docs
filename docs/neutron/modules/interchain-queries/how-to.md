@@ -134,9 +134,12 @@ txs:
 ```
 </details>
 
+:::note Sure that the query is correct but the result is empty?
+That could happen if the RPC node is not configured properly. Read more about configuration [here](/neutron/modules/interchain-queries/explanation#configuring-your-own-remote-chain-rpc-node-for-tx-icq-usage).
+:::
+
 **Might be interesting:**
 - [How do TX Interchain Queries work?](/neutron/modules/interchain-queries/explanation#how-do-tx-interchain-queries-work)
-- [Configuring your own remote chain RPC node for TX ICQ usage](/neutron/modules/interchain-queries/explanation#configuring-your-own-remote-chain-rpc-node-for-tx-icq-usage)
 
 ## How to register and handle a KV Interchain Query
 
