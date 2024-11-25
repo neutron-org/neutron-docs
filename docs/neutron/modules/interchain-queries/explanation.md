@@ -2,18 +2,27 @@
 
 ## How do KV Interchain Queries work?
 
-The meaning of a KV Interchain Query is to get a secure access to a remote chain's storage from a smart contract. Such a secure access is based on:
-- [IAVL tree](https://github.com/cosmos/iavl) which is used as data storage in Cosmos-SDK based blockchains. Each piece of data (value) is a leaf node in the tree having its unique data path (key);
-- [abci_query](https://docs.cometbft.com/v0.38/spec/rpc/#abciquery) RPC that exposes the storage (`IAVL tree`) read operations by a given path.
+A KV Interchain Query allows a smart contract to securely access the storage of a remote blockchain. This secure access relies on:
 
-A typical flow of KV Interchain Queries usage is as follows:
-1. A smart contract developer realises that their interchain protocol depends on state of a remote chain, and figures out what info exactly they need to read from the chain;
-2. Given the required data set, the developer composes a list of paths in the storage that contain the required data;
-3. The developer writes and deploys a smart contract that contains Interchain Query registration logic and a callback for handling the query results;
-4. The smart contract registers a KV Interchain Query with the set of keys to read. The registered Interchain Query is stored in the `interchainqueries` module's state;
-5. An Interchain Query relayer reads the `interchainqueries` module's state, finds the registered query and its parameters, and does the `abci_query` RPC. The result of the call is a set of key-value pairs with proofs coming from the `IAVL tree`;
-6. The Interchain Query relayer provides the key-value pairs and proofs to the `interchainqueries` module. This is a KV Interchain Query result submission operation. The module does the result verification against the proofs, stores the result on chain, and notifies the owner smart contract about a fresh query result;
-7. The smart contract reads the result from the module's storage and does arbitrary handling of the result;
+- The [IAVL tree](https://github.com/cosmos/iavl), a data storage structure used in Cosmos-SDK-based blockchains. Each piece of data (value) is a leaf node in the tree, uniquely identified by its data path (key).  
+- The [abci_query](https://docs.cometbft.com/v0.38/spec/rpc/#abciquery) RPC, which provides access to the storage (`IAVL tree`) for reading operations using a specific path.
+
+Typical Flow of KV Interchain Queries Usage:
+
+1. A smart contract developer identifies that their interchain protocol requires access to the state of a remote chain and determines the specific data needed.  
+
+2. The developer creates a list of storage paths that contain the required data.  
+
+3. The developer writes and deploys a smart contract that includes logic for registering an Interchain Query and a callback to handle the query results.  
+
+4. The smart contract registers a KV Interchain Query with the necessary set of keys. The registered query is saved in the `interchainqueries` module's state.  
+
+5. An Interchain Query relayer reads the state of the `interchainqueries` module, finds the registered query and its parameters, and performs the `abci_query` RPC. This call returns a set of key-value pairs along with proofs from the `IAVL tree`.  
+
+6. The relayer submits the key-value pairs and proofs to the `interchainqueries` module. This operation is called KV Interchain Query result submission. The module verifies the result using the proofs, stores it on-chain, and notifies the owning smart contract about the new result.  
+
+7. The smart contract retrieves the result from the module's storage and processes it as needed.  
+
 8. Steps 5-7 are repeated periodically until the query is removed.
 
 **Might be interesting:**
@@ -23,18 +32,27 @@ A typical flow of KV Interchain Queries usage is as follows:
 
 ## How do TX Interchain Queries work?
 
-The meaning of a TX Interchain Query is to get a secure subscription on transactions happening on a remote chain from a smart contract. Such a subscription is based on:
-- transaction execution [events](https://docs.cosmos.network/v0.50/learn/advanced/events) emission. In a word, events are structured logs of actions that take place within the blockchain;
-- [tx_search](https://docs.cometbft.com/v0.38/app-dev/indexing-transactions#querying-transactions-events) RPC. This RPC allows to search for transactions based on events they emit.
+A TX Interchain Query allows a smart contract to securely subscribe to and react to transactions occurring on a remote chain. This subscription relies on:
 
-A typical flow of TX Interchain Queries usage is as follows:
-1. A smart contract developer realises that their interchain protocol depends on actions happening on a remote chain, and figures out what actions exactly they need to react on;
-2. Given the requirements, the developer composes a list of filtering conditions that identify the needed transactions by the events they emit;
-3. The developer writes and deploys a smart contract that contains Interchain Query registration logic and a callback for handling the query results;
-4. The smart contract registers a TX Interchain Query with the set of transaction filters to apply. The registered Interchain Query is stored in the `interchainqueries` module's state;
-5. An Interchain Query relayer reads the `interchainqueries` module's state, finds the registered query and its parameters, and does the `tx_search` RPC. The result of the call is a list of transactions successfully processed on the remote chain;
-6. The Interchain Query relayer provides the list of transactions a couple of headers for each transaction needed to verify the result to the `interchainqueries` module. This is a TX Interchain Query result submission operation. The module does the result verification against the headers and passes the result to the smart contract;
-7. The smart contract does arbitrary handling of the result;
+- [Events](https://docs.cosmos.network/v0.50/learn/advanced/events) emitted during transaction execution. Events are structured logs of actions that occur within the blockchain.  
+- The [tx_search](https://docs.cometbft.com/v0.38/app-dev/indexing-transactions#querying-transactions-events) RPC, which enables searching for transactions based on the events they emit.
+
+Typical Flow of TX Interchain Queries Usage:
+
+1. A smart contract developer identifies that their interchain protocol requires responding to specific actions on a remote chain and determines the relevant actions.  
+
+2. Based on these requirements, the developer defines a set of filtering conditions to identify the needed transactions based on their emitted events.  
+
+3. The developer writes and deploys a smart contract that includes logic for registering an Interchain Query and a callback to handle the query results.  
+
+4. The smart contract registers a TX Interchain Query with the specified set of transaction filters. The registered query is saved in the `interchainqueries` module's state.  
+
+5. An Interchain Query relayer reads the state of the `interchainqueries` module, finds the registered query and its parameters, and performs the `tx_search` RPC. This call returns a list of transactions that match the filters and have been successfully processed on the remote chain.  
+
+6. The relayer submits the list of transactions along with a few headers for each transaction (used to verify the result) to the `interchainqueries` module. This operation is called TX Interchain Query result submission. The module verifies the result using the headers and passes the data to the owning smart contract.  
+
+7. The smart contract processes the result as needed.  
+
 8. Steps 5-7 are repeated periodically until the query is removed.
 
 **Might be interesting:**
@@ -46,64 +64,91 @@ A typical flow of TX Interchain Queries usage is as follows:
 
 ## What is an Interchain Query relayer?
 
-An Interchain Query relayer is an off-chain application that serves the needs of `interchainqueries` module users. It is an intermediary between two chains, and in this regard it is similar to an IBC relayer. The responsibilities of an Interchain Query relayer are:
-- Monitoring of the registered Interchain Queries: retrieval of Interchain Queries that are needed to be processed from the `interchainqueries` module's state;
-- Interchain Queries execution: reading of remote chain's state based on the parameters defined in the Interchain Query being executed, fidning proofs for the read data;
-- Query results submission: passing of the retrieved data and proofs to the `interchainqueries` module and, through that, to respective smart contracts.
+An Interchain Query relayer is an off-chain application that facilitates the functionality of the `interchainqueries` module. Acting as an intermediary between two blockchains, it is similar in concept to an IBC relayer. The main responsibilities of an Interchain Query relayer are:
+
+- **Monitoring registered Interchain Queries**: Fetching the Interchain Queries that need processing from the `interchainqueries` module's state.  
+
+- **Executing Interchain Queries**: Accessing the remote chain's state based on the parameters defined in the Interchain Query and obtaining proofs for the retrieved data.  
+
+- **Submitting query results**: Delivering the retrieved data and its corresponding proofs to the `interchainqueries` module, which then forwards it to the relevant smart contracts.  
 
 **Might be interesting:**
 - [Limited gas for sudo calls](/neutron/modules/interchain-queries/explanation#limited-gas-for-sudo-calls)
 
 ## What's the role of IBC connections in Interchain Queries and how to choose one?
 
-IBC [clients](https://ibc.cosmos.network/v8/ibc/overview/#clients) and [connections](https://ibc.cosmos.network/v8/ibc/overview/#connections) play significant role in Interchain Queries authenticity. It is the initialisation of an IBC connection that is responsible for IBC clients creation and verification that their states are correct for their respective counterparties, and it is the states of the IBC clients of an IBC connection that is responsible for Interchain Query results verification. One must choose the connection ID for their Interchain Queries wisely for it will define the trustworthiness of the whole Interchain Queries based application.
+IBC [clients](https://ibc.cosmos.network/v8/ibc/overview/#clients) and [connections](https://ibc.cosmos.network/v8/ibc/overview/#connections) play a crucial role in ensuring the authenticity of Interchain Queries. When an IBC connection is initialized, it creates IBC clients and verifies that their states are accurate for their respective counterparties. These client states are then used to verify the results of Interchain Queries. The chosen connection ID for an Interchain Query directly impacts the trustworthiness of the entire Interchain Queries-based application.
 
-There are two options how to find an IBC connection ID for one's needs:
-- [Choose one of already existing IBC connections](/neutron/modules/interchain-queries/how-to#how-to-choose-the-right-ibc-connection-id-for-an-interchain-query-and-verify-it);
-- Create an IBC connection between the chains yourself. For example, the [Hermes IBC relayer is capable of doing so](https://hermes.informal.systems/documentation/commands/path-setup/connections.html#establish-connection).
+There are two ways to find an appropriate IBC connection ID:
+
+- **[Use an existing IBC connection](/neutron/modules/interchain-queries/how-to#how-to-choose-the-right-ibc-connection-id-for-an-interchain-query-and-verify-it):** Select from connections that are already set up.  
+
+- **Create a new IBC connection:** Establish a connection between the chains yourself. For instance, the [Hermes IBC relayer](https://hermes.informal.systems/documentation/commands/path-setup/connections.html#establish-connection) can be used to create IBC connections.
 
 ## Why is there a query creation deposit?
 
-In order to clean up ledger from not used, outdated queries, a special deposit mechanism is used. When a contract issues a [RegisterInterchainQuery](/neutron/modules/interchain-queries/api#registerinterchainquery) message, the deposit is charged from the contract's balance as escrow payment for query creation. In order to return escrow payment, the query should be removed by issuing a [RemoveInterchainQuery](/neutron/modules/interchain-queries/api#removeinterchainquery) message.
+To ensure the ledger is kept clean of unused or outdated queries, a deposit mechanism is implemented. When a contract sends a [RegisterInterchainQuery](/neutron/modules/interchain-queries/api#registerinterchainquery) message, the required deposit is deducted from the contract's balance as an escrow payment for the query creation. This deposit is refunded when the query is removed by issuing a [RemoveInterchainQuery](/neutron/modules/interchain-queries/api#removeinterchainquery) message.
 
-The required amount of coins to deposit is defined by the `query_deposit` [module parameter](/neutron/modules/interchain-queries/api#params).
+The amount required for the deposit is defined by the `query_deposit` [module parameter](/neutron/modules/interchain-queries/api#params).
 
-In other words, it is expected that the query owner will remove their queries when they are no longer needed. If a query hasn't been used for the `query_submit_timeout` period and the owner hasn't removed it, all network users are granted the opportunity to clean up the chain (to remove the unused query) and earn the deposited assets for doing so.
+In essence, query owners are expected to remove their queries once they are no longer needed. If a query is not used within the `query_submit_timeout` period and the owner does not remove it, any network user is allowed to clean up the chain by removing the unused query. As a reward, the deposited assets are transferred to the user who performs the cleanup.
 
 **Might be interesting:**
 - [What are the rules for creation deposit refund?](/neutron/modules/interchain-queries/explanation#what-are-the-rules-for-creation-deposit-refund)
 
-## What are the rules for creation deposit refund?
+## What are the rules for creation deposit refunds?
 
-The query creation deposit is paid when the Interchain Query is removed. It is done by issuing a [RemoveInterchainQuery](/neutron/modules/interchain-queries/api#removeinterchainquery) message. The issuer may be either the query owner or anyone under specific circumstances. Briefly, if a query was registered recently or has been continuously updated (i.e. is within a so to say `query service period`), the query would seem to be valuable for its owner and only the owner can get rid of it and get the deposit back. If a query was registered a long time ago and hasn't been updated for a long time (i.e. is beyond the `query service period`), the query has most likely been forgotten, is not in use and therefore can be removed from the chain's state by anyone for a reward in the amount of the creation deposit. You can see a more detailed permission evaluation policy below.
+The query creation deposit is refunded when an Interchain Query is removed by issuing a [RemoveInterchainQuery](/neutron/modules/interchain-queries/api#removeinterchainquery) message. This message can be sent either by the query owner or, under certain conditions, by anyone.  
 
-There are three arguments defining the removal permissions for an Interchain Query:
-1. `query_submit_timeout` — a [registered query's property](/neutron/modules/interchain-queries/api#registeredquery) which defines the span in blocks of the query's renewable `query service period`. The period is granted when a query is registered and gets renewed each time a query is updated. A `query_submit_timeout` value is assigned to the query based on the [module's parameters](/neutron/modules/interchain-queries/api#params) at the time of query registration;
-2. `last_submitted_result_local_height` — a [registered query's property](/neutron/modules/interchain-queries/api#registeredquery) representing the home chain's height the query was last time updated at;
-3. `registered_at_height` — a [registered query's property](/neutron/modules/interchain-queries/api#registeredquery) representing the home chain's height the query was registered at.
+If the query is within its active **query service period** (recently registered or continuously updated), it is considered valuable to its owner, and only the owner can remove it and reclaim the deposit. If the query has not been updated or used for a long time (beyond the **query service period**), it is likely abandoned. In this case, anyone can remove it and claim the deposit as a reward for cleaning up the chain's state.  
 
-The permissions to execute [RemoveInterchainQuery](/neutron/modules/interchain-queries/api#removeinterchainquery) are as follows:
+Parameters Defining Removal Permissions:
 
-- Within the `query service period` only the query's owner is permissioned to remove it. A query is within the `query service period` if there **hasn't been** `params.query_submit_timeout` blocks yet since the query registration height **or** the last query update height:
+1. **`query_submit_timeout`**: A [registered query property](/neutron/modules/interchain-queries/api#registeredquery) specifying the number of blocks that define the renewable **query service period**. This period starts when a query is registered and renews with each query update. The `query_submit_timeout` value is set based on the [module parameters](/neutron/modules/interchain-queries/api#params) at the time of query registration.  
 
-    `within_service_period = current_height <= query.last_submitted_result_local_height + params.query_submit_timeout || current_height <= query.registered_at_height + params.query_submit_timeout`
+2. **`last_submitted_result_local_height`**: A [registered query property](/neutron/modules/interchain-queries/api#registeredquery) indicating the block height on the home chain when the query was last updated.  
 
-- Beyond the `query service period` anyone can remove the query and take the deposit as a reward for keeping the network tidy. A query is beyond the `query service period` if there **has been** `params.query_submit_timeout` blocks since the query registration height **and** the last query update height:
+3. **`registered_at_height`**: A [registered query property](/neutron/modules/interchain-queries/api#registeredquery) indicating the block height on the home chain when the query was initially registered.  
 
-    `beyond_service_period = current_height > query.last_submitted_result_local_height + params.query_submit_timeout && current_height > query.registered_at_height + params.query_submit_timeout`
+Removal Permissions:
 
+- **Within the Query Service Period**  
+  Only the query owner can remove the query. A query is considered within the service period if the following condition is true:  
+  ```
+  within_service_period =
+    current_height <= query.last_submitted_result_local_height + params.query_submit_timeout ||
+    current_height <= query.registered_at_height + params.query_submit_timeout
+  ```
+
+- **Beyond the Query Service Period**  
+  Anyone can remove the query and claim the deposit as a reward. A query is beyond the service period if the following condition is true:  
+  ```
+  beyond_service_period =
+    current_height > query.last_submitted_result_local_height + params.query_submit_timeout &&
+    current_height > query.registered_at_height + params.query_submit_timeout
+  ```
 **Might be interesting:**
 - [How Interchain Query results are removed?](/neutron/modules/interchain-queries/explanation#how-interchain-query-results-are-removed)
 
 ## Why is it mandatory to do contract's side verification of submitted TX Interchain Query results?
 
-One important thing to keep in mind regarding Interchain Queries is that result submissions are permissionless. This means that anyone — not just your designated relayer — can submit the results of the Interchain Queries that your contract registered to the `interchainqueries` module.
+A crucial aspect of Interchain Queries is that result submissions are **permissionless**. This means that anyone — not just your designated relayer — can submit the results of TX Interchain Queries registered by your contract to the `interchainqueries` module.
 
-However, since events are not part of the consensus and are not included in the transaction result (and therefore not included in the TX Interchain Queries result submission), the `interchainqueries` module cannot verify whether the submitted transactions actually match the criteria set by the Interchain Query’s transaction filters.
+Since events are not part of the blockchain consensus and are not included in the transaction results (and thus not in TX Interchain Query result submissions), the `interchainqueries` module cannot ensure that the submitted transactions match the filters specified in your query. While the module can confirm that the submitted data comes from a valid transaction, it cannot determine whether the transaction satisfies your specific filtering criteria.
 
-Because of this limitation, it's essential to implement additional checks in your `SudoTXQueryResult` handler to ensure the submitted transactions meet your query's transaction filters criteria. You should at least verify that the messages in the transaction body have the correct message types and values. For example, if considering an Interchain Query that [gets Undelegate transactions issued by a concrete address](/neutron/modules/interchain-queries/how-to#how-to-find-out-what-transaction-filter-to-use), the verification will have to check that the message type is `/cosmos.staking.v1beta1.MsgUndelegate` and that the delegator address is `cosmos17s3uhcvrwrsp2ldjvxp8rseyc3ulpchdry87hp`. The way to go is to have these two kinds of checks for each transaction filter in your query.
+To address this limitation, your contract's `SudoTXQueryResult` handler must include additional checks to verify that the submitted transactions meet the criteria defined in your query's transaction filters. At a minimum, you should confirm that:
 
-Without these checks, a malicious relayer could submit a fully valid Tendermint transaction that doesn't meet your defined transaction filters, potentially compromising your business logic. For the example above, if you don't check the delegator address, anyone's Undelegate transactions will pass.
+1. The messages in the transaction body have the correct message types.  
+2. The message values align with your filter conditions.  
+
+Suppose you register a TX Interchain Query to track [Undelegate transactions issued by a specific address](/neutron/modules/interchain-queries/how-to#how-to-find-out-what-transaction-filter-to-use). Your contract should verify:  
+
+- The message type is `/cosmos.staking.v1beta1.MsgUndelegate`.  
+- The `delegator_address` matches the specific address, e.g., `cosmos17s3uhcvrwrsp2ldjvxp8rseyc3ulpchdry87hp`.
+
+These checks must be implemented for each transaction filter in your query.
+
+If you skip these checks, a malicious relayer could submit valid Tendermint transactions that don't meet your query's filters. This could disrupt your business logic. Using the above example, if you fail to verify the `delegator_address`, any valid Undelegate transaction — regardless of the sender — could pass through, potentially compromising your application's functionality.
 
 **Might be interesting:**
 - [How to find out what transaction filter to use](/neutron/modules/interchain-queries/how-to#how-to-find-out-what-transaction-filter-to-use)
@@ -111,42 +156,65 @@ Without these checks, a malicious relayer could submit a fully valid Tendermint 
 
 ## Why is the Proof field nullified in QueryResult RPC response?
 
-The `interchainqueries` module only needs KV proofs during the submission process to verify the values being submitted against the proofs. If save them afterwards, they'll just increase chain's space without any reasonable further usage. The KV results saved on chain can be trusted as cryptographically proved because they are verified at the very beginning — by the module at the submission step.
+The `interchainqueries` module requires KV proofs only during the submission process to verify that the submitted values match the provided proofs. Storing these proofs afterward would unnecessarily consume blockchain storage without serving any practical purpose. The KV results saved on-chain can be trusted because they are cryptographically verified during the submission step by the module.
 
-The reason the `Proof` field is presented but empty is that the [QueryResult](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#QueryResult) type is used for both query result submission and query result preservation in the module's storage. More designated types are likely to be introduced in the future to mitigate confusion around this.
+The `Proof` field is present but empty because the [QueryResult](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#QueryResult) type is used both for query result submission and for storing query results in the module's state. This dual-purpose usage can cause confusion, but more specific types may be introduced in the future to address this issue.
 
 ## Why doesn't interchainqueries module store TX query results?
 
-If compare to the KV Interchain Queries which have the last result stored on chain and available to be read, the TX Interchain Queries are not about the last result, but about a possible list of results (transactions matched the filter). Storing the whole list of results may be cumbersome for the chain in terms of required space. So, instead of storing results on chain and requiring smart contracts to read them (as for KV queries), the `interchainqueries` module passes the whole tx results directly to smart contracts, ending the life of the results right after a successful [TxQueryResult](/neutron/modules/interchain-queries/api#messagetxqueryresult) `sudo` call. The only things that the module stores on chain regarding TX Interchain Queries are:
-- hashes of transactions that have been successfully processed by the owner smart contract to avoid multiple processing of the same transactions, and
-- [failures appeared during sudo calls](#what-happens-if-a-sudo-callback-to-a-smart-contract-owning-an-interchain-query-fails).
+Unlike KV Interchain Queries, which store the latest result on-chain for retrieval, TX Interchain Queries involve a list of potential results (transactions that match the filter). Storing the entire list of results on-chain would require a significant amount of storage, which is impractical.  
+
+Instead of saving results on-chain, the `interchainqueries` module directly sends the full TX results to the owning smart contracts during the [TxQueryResult](/neutron/modules/interchain-queries/api#messagetxqueryresult) `sudo` call. Once the `sudo` call is successfully completed, the results are discarded, minimizing storage use.
+
+The module stores only two things related to TX Interchain Queries:  
+
+1. **Hashes of processed transactions**: This prevents the same transactions from being processed multiple times.  
+2. **[Failures appeared during sudo calls](#what-happens-if-a-sudo-callback-to-a-smart-contract-owning-an-interchain-query-fails)**.
 
 **Might be interesting:**
 - [How to register and handle a TX Interchain Query](/neutron/modules/interchain-queries/how-to#how-to-register-and-handle-a-tx-interchain-query)
 
 ## What are entry points and sudo calls?
 
-[Entry points](https://docs.cosmwasm.com/core/entrypoints) are where your contract can be called from the outside world. [Sudo](https://docs.cosmwasm.com/core/entrypoints/sudo) calls are messages issued by the chain itself. They are routed to a special `sudo` `entry_point` which can only be accessed by the chain.
+[Entry points](https://docs.cosmwasm.com/core/entrypoints) are functions in your smart contract that can be invoked by external entities. [Sudo](https://docs.cosmwasm.com/core/entrypoints/sudo) calls are special messages issued by the chain itself. These messages are routed to a dedicated `sudo` entry point, which is only accessible to the chain.
 
 ## Limited gas for sudo calls
 
-The `interchainqueries` module uses the [contractmanager](/neutron/modules/contract-manager/overview) module under the hood for `sudo` operations. The `contractmanager` module doesn't allow extensive `sudo` callbacks and [has a justified strict gas limitation for them](/neutron/modules/contract-manager/overview#gas-limitation). The limit is defined by the `sudo_call_gas_limit` `contractmanager` module's parameter.
+The `interchainqueries` module relies on the [contractmanager](/neutron/modules/contract-manager/overview) module to handle `sudo` operations. The `contractmanager` module [enforces strict gas limits](/neutron/modules/contract-manager/overview#gas-limitation) on `sudo` callbacks, defined by its `sudo_call_gas_limit` parameter, to prevent excessive gas usage.  
 
-It is recommended by the `contractmanager` module to separate `sudo` callback and computations to different handlers in case the computations go beyond the allocated gas. For example, one can store `sudo` callback payload in the contract's state, and then read it and handle during an additional outer `execute` call to the contract.
+To manage cases where computations exceed the allocated gas, the `contractmanager` module recommends separating `sudo` callbacks from heavy computations. One approach is to store the `sudo` callback payload in the contract's state during the `sudo` call and then process it later in a separate external `execute` call. This method ensures that the gas limit for `sudo` calls is not exceeded, while still allowing complex logic to be executed when needed.
 
 **Might be interesting:**
 - [What are entry points and sudo calls?](/neutron/modules/interchain-queries/explanation#what-are-entry-points-and-sudo-calls)
 
 ## What happens if a sudo callback to a smart contract owning an Interchain Query fails?
 
-In this case, the `interchainqueries` module will store the failure in the [contractmanager](/neutron/modules/contract-manager/overview) module with all information about the query and a redacted (shortened to codespace and error code) error message. A full error message is emitted as an [event](https://docs.cosmos.network/v0.50/learn/advanced/events) on a failure (see the [message events emission](/neutron/modules/interchain-queries/api#sudo) for details). Note that the `out of gas` errors are stored as failures, too. Failed query result submissions can be read from the `contractmanager` module and resubmitted to the `interchainqueries` module. More info about the read and resubmit operations by the link to the [contractmanager](/neutron/modules/contract-manager/overview) module documentation.
+If a `sudo` callback fails, the `interchainqueries` module records the failure in the [contractmanager](/neutron/modules/contract-manager/overview) module. This record includes all relevant information about the query and a redacted error message (reduced to the codespace and error code). A full error message is emitted as an [event](https://docs.cosmos.network/v0.50/learn/advanced/events) to provide more context about the failure. For details, see the [message events emission](/neutron/modules/interchain-queries/api#sudo) section.  
 
-## How Interchain Query results are removed?
+Failures due to `out of gas` errors are also recorded.  
 
-When someone successfully issues a [RemoveInterchainQuery](/neutron/modules/interchain-queries/api#removeinterchainquery) message, the results of the respective Interchain Query stored on chain are removed depending on the type of the Interchain Query:
-- KV query results are just single records in the store with a known removal gas consumption. So they are removed in the scope of the removal message handling;
-- TX query results are hashes of remote chain transactions. Each of the hashes is a single record in the store, so the gas comsumption for the removal depends on the number of hashes to be removed. This uncertainty is the reason why the TX query results removal is placed at the EndBlock and distributed to small governance-controlled size batches. The removal message handling only marks the TX Interchain Query as a one to be removed, and then in each EndBlock there's a number of its hashes removed. The number is defined by the `tx_query_removal_limit` [module parameter](/neutron/modules/interchain-queries/api#params).
+Failed query result submissions can be retrieved from the `contractmanager` module and resubmitted to the `interchainqueries` module. For more information about reading and resubmitting failed operations, refer to the [contractmanager documentation](/neutron/modules/contract-manager/overview).
+
+## How are Interchain Query results removed?
+
+When a [RemoveInterchainQuery](/neutron/modules/interchain-queries/api#removeinterchainquery) message is successfully executed, the results of the respective Interchain Query are removed from the chain's storage. The removal process depends on the type of the Interchain Query:
+
+- **KV Query Results**:  
+  KV query results are single records in the store with a predictable gas consumption for removal. These records are removed immediately during the handling of the removal message.  
+
+- **TX Query Results**:  
+  TX query results consist of hashes of remote chain transactions, with each hash being a separate record in the store. The gas consumption for removal depends on the number of hashes, which introduces uncertainty.  
+
+  To handle this, TX query results are removed in batches during the `EndBlock` phase. When a removal message is processed, the TX Interchain Query is marked for removal. Subsequently, in each `EndBlock`, a small batch of hashes is removed. The batch size is controlled by the `tx_query_removal_limit` [module parameter](/neutron/modules/interchain-queries/api#params).  
+
+This approach ensures that gas consumption remains manageable while removing large numbers of TX query results.
 
 ## Configuring your own remote chain RPC node for TX ICQ usage
 
-If running your own RPC node for the target chain, make sure to configure its `pruning` parameter in the [app.toml](https://docs.cosmos.network/v0.50/learn/advanced/config) file and `indexer` parameter in the [config.toml](https://docs.cometbft.com/v0.38/core/configuration) file the way it is sufficient for the transactions filter you define for your queries.
+If you are running your own RPC node for the target chain, ensure that its configuration supports the transaction filters defined in your TX Interchain Queries. Specifically, you need to adjust the following parameters:  
+
+- **`pruning` parameter**: Configure this in the [app.toml](https://docs.cosmos.network/v0.50/learn/advanced/config) file to retain the required historical data for your queries.
+
+- **`indexer` parameter**: Set this in the [config.toml](https://docs.cometbft.com/v0.38/core/configuration) file to enable transaction indexing.
+
+Proper configuration of these parameters ensures that the node can provide the necessary data for your TX Interchain Queries.

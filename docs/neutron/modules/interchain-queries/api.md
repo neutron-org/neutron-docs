@@ -1,12 +1,12 @@
 # API
 
-This page contains the `interchainqueries` module's interface description: the endpoints the module exposes and the `sudo` messages the module issues. Each endpoint is explained in a dedicated section with links to request and response models, and an example of interaction with the module via the endpoint. The links to the request and response models also provide more information about request parameters and response values.
+This page describes the interface of the `interchainqueries` module, including the endpoints it provides and the `sudo` messages it issues. Each endpoint is detailed in its own section, with links to the request and response models, as well as examples of how to interact with the module using the endpoint. The request and response model links also offer more details about the request parameters and response values.
 
-Please be aware that the examples do not necessarily reflect the current state on the chain; they are listed here only to visualize the request formation and response payload in a user-friendly way.
+Please note that the examples are for demonstration purposes only and may not reflect the current state of the chain. They are included to help visualize how requests are formed and what the response payloads look like.
 
 **Endpoints**
 
-This section lists piblic RPC API of the `interchainqueries` module.
+This section lists the public RPC API of the `interchainqueries` module.
 
 Queries:
 - [Params](#params);
@@ -24,7 +24,7 @@ Messages:
 
 **Sudo**
 
-This section lists `sudo` messages issued by the `interchainqueries` module to smart contracts owning Interchain Queries.
+This section lists the `sudo` messages that the `interchainqueries` module sends to smart contracts that own Interchain Queries.
 
 - [MessageTxQueryResult](#messagetxqueryresult)
 - [MessageKvQueryResult](#messagekvqueryresult)
@@ -33,7 +33,7 @@ This section lists `sudo` messages issued by the `interchainqueries` module to s
 
 ### Params
 
-Queries the current parameters of the module.
+Fetches the current parameters of the `interchainqueries` module.
 
 - [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#QueryParamsRequest)
 - [Response model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#QueryParamsResponse)
@@ -67,7 +67,7 @@ curl -X 'GET' \
 
 ### RegisteredQueries
 
-Queries all the registered Interchain Queries in the module with filtration by owner and/or connection ID.
+Retrieves all registered Interchain Queries in the module, with optional filtering by owner and/or connection ID.
 
 - [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#QueryRegisteredQueriesRequest)
 - [Response model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#QueryRegisteredQueriesResponse)
@@ -145,7 +145,7 @@ curl -X 'GET' \
 
 ### RegisteredQuery
 
-Queries a registered Interchain Query by ID.
+Fetches details of a registered Interchain Query using its ID.
 
 - [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#QueryRegisteredQueryRequest)
 - [Response model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#QueryRegisteredQueryResponse)
@@ -198,7 +198,7 @@ curl -X 'GET' \
 
 ### QueryResult
 
-Queries the last successfully submitted result of an Interchain Query.
+Retrieves the most recent successfully submitted result of an Interchain Query. This is only applicable for KV Interchain Queries.
 
 - [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#QueryQueryResultRequest)
 - [Response model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#QueryQueryResultResponse)
@@ -238,7 +238,7 @@ curl -X 'GET' \
 
 ### LastRemoteHeight
 
-Queries the last height of a remote chain known to the IBC client behind a given connection ID.
+Retrieves the most recent height of a remote chain as known by the IBC client associated with a given connection ID.
 
 - [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#QueryLastRemoteHeightRequest)
 - [Response model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#QueryLastRemoteHeightResponse)
@@ -266,9 +266,9 @@ curl -X 'GET' \
 
 ### RegisterInterchainQuery
 
-Registers a new Interchain Query in the `interchainqueries` module. This message is supposed to be issues only by a smart contract. The caller contract is charged a query registration deposit automatically in the amount defined as the module's query deposit parameter. The deposit is paid back on the query removal. Make sure to have enough assets on the contract's account at the time of the message execution.
+Registers a new Interchain Query in the `interchainqueries` module. This message should only be issued by a smart contract. The calling contract is automatically charged a query registration deposit, based on the module's query deposit parameter. The deposit is refunded when the query is removed. Ensure the contract's account has sufficient assets at the time of message execution.
 
-Returns an ID assigned to the registered query. Handle this message response via a reply handler in order to make use of the ID.
+The response includes the ID assigned to the registered query. Use a reply handler to process this response and utilize the query ID.
 
 - [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgRegisterInterchainQuery)
 - [Response model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgRegisterInterchainQueryResponse)
@@ -289,7 +289,7 @@ Events emission on success:
 
 ### SubmitQueryResult
 
-Submits a result of an Interchain Query execution to the chain. This message handling may include passing of the result to the query's owner smart contract for processing which might be a pretty gas-consumable operation.
+Submits the result of an Interchain Query execution to the chain. Handling this message may involve forwarding the result to the smart contract that owns the query for processing, which could require significant gas usage.
 
 - [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgSubmitQueryResult)
 - [Response model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgSubmitQueryResultResponse)
@@ -302,7 +302,7 @@ Submits a result of an Interchain Query execution to the chain. This message han
 
 ### RemoveInterchainQuery
 
-Removes a given Interchain Query and its results from the module. Can be removed only by the owner of the query during the query's submit timeout, and by anyone after the query has been timed out. The query deposit is returned to the caller on a success call.
+Removes a specific Interchain Query and its results from the module. The query can only be removed by its owner during the query's submit timeout. After the timeout, anyone can remove it. Upon successful removal, the query deposit is refunded to the caller.
 
 - [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgRemoveInterchainQuery)
 - [Response model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgRemoveInterchainQueryResponse)
@@ -319,7 +319,7 @@ Events emission on success:
 
 ### UpdateInterchainQuery
 
-Updates parameters of a registered Interchain Query. Only callable by the owner of the query.
+Updates the parameters of a registered Interchain Query. This action can only be performed by the query's owner.
 
 - [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgUpdateInterchainQuery)
 - [Response model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgUpdateInterchainQueryResponse)
@@ -332,7 +332,7 @@ Events emission on success:
 
 ### UpdateParams
 
-Updates params of the interchainqueries module. Only callable by the module's authority.
+Updates the parameters of the `interchainqueries` module. This action can only be performed by the module's authority.
 
 - [Request model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgUpdateParams)
 - [Response model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/interchainqueries/types#MsgUpdateParamsResponse)
@@ -341,7 +341,7 @@ Updates params of the interchainqueries module. Only callable by the module's au
 
 ### MessageTxQueryResult
 
-MessageTxQueryResult is the model of the `sudo` message sent to a smart contract on a TX Interchain Query result submission. The owner of a TX Interchain Query must define a `sudo` entry_point for handling `tx_query_result` messages and place the needed logic there. The `tx_query_result` handler is treated by the `interchainqueries` module as a callback that is called each time a TX query result is submitted.
+MessageTxQueryResult is the model of the `sudo` message sent to a smart contract when a TX Interchain Query result is submitted. The owner of a TX Interchain Query must implement a `sudo` entry point to handle `tx_query_result` messages and include the necessary logic in it. The `tx_query_result` handler functions as a callback, triggered by the `interchainqueries` module each time a TX query result is submitted.
 
 - [Message model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/contractmanager/types#MessageTxQueryResult)
 - [Message model in neutron-sdk](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/sudo/msg/enum.SudoMsg.html#variant.TxQueryResult)
@@ -359,9 +359,9 @@ Events emission on failure:
 
 ### MessageKvQueryResult
 
-MessageKVQueryResult is the model of the `sudo` message sent to a smart contract on a KV Interchain Query result submission. If the owner of a KV Interchain Query wants to handle the query updates, it must define a `sudo` entry_point for handling `kv_query_result` messages and place the needed logic there. The `kv_query_result` handler is treated by the `interchainqueries` module as a callback that is called each time a KV query result is submitted.
+MessageKvQueryResult is the model of the `sudo` message sent to a smart contract when a KV Interchain Query result is submitted. If the owner of a KV Interchain Query wants to handle updates, they must implement a `sudo` entry point to process `kv_query_result` messages and include the necessary logic in it. The `kv_query_result` handler acts as a callback, triggered by the `interchainqueries` module whenever a KV query result is submitted.
 
-Note that there is no query result sent, only the query ID. In order to access the actual result, use the Query/QueryResult RPC of the `interchainqueries` module.
+Note that the message does not include the actual query result, only the query ID. To access the result data, use the `Query/QueryResult` RPC of the `interchainqueries` module.
 
 - [Message model](https://pkg.go.dev/github.com/neutron-org/neutron/v4@v4.0.1/x/contractmanager/types#MessageKVQueryResult)
 - [Message model in neutron-sdk](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/sudo/msg/enum.SudoMsg.html#variant.KVQueryResult)
