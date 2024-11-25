@@ -28,8 +28,8 @@ upload, query and execute contracts.
 
 ### Where to download latest snapshots?
 
-If you want to spin up your own archive node, you can use our snapshot service, which allows you to do so without the
-requirement to sync from the very beginning.
+If you're looking to spin up your own archive node, our snapshot service provides a convenient solution, enabling you
+to skip syncing from scratch. We also offer small pruned snapshots for quick server bootstrapping.
 
 - [Snapshot service](https://snapshot.neutron.org)
 
