@@ -14,4 +14,4 @@ Additionally, because of the [nature of IAVL proofs](https://github.com/cosmos/c
 failed to verify proof: could not verify absence of key. Please ensure that the path is correct.
 ```
 
-We are in contact with the ICS23 team to resolve this issue as soon as possible. In the meantime, the only way to avoid this problem is to ensure that your queries do not target keys with `nil` or empty values.
+We are in contact with the team developing ICS32 to resolve this issue as soon as possible. In the meantime, the only way to avoid this problem is to ensure that your queries do not target keys with `nil` or empty values.
