@@ -17,7 +17,7 @@ Typical Flow of KV Interchain Queries Usage:
 
 4. The smart contract registers a KV Interchain Query with the necessary set of keys. The registered query is saved in the `interchainqueries` module's state.  
 
-5. An Interchain Query relayer reads the state of the `interchainqueries` module, finds the registered query and its parameters, and performs the `abci_query` RPC. This call returns a set of key-value pairs along with proofs from the `IAVL tree`.  
+5. An [Interchain Query relayer](/neutron/modules/interchain-queries/explanation#what-is-an-interchain-query-relayer) reads the state of the `interchainqueries` module, finds the registered query and its parameters, and performs the `abci_query` RPC. This call returns a set of key-value pairs along with proofs from the `IAVL tree`.  
 
 6. The relayer submits the key-value pairs and proofs to the `interchainqueries` module. This operation is called KV Interchain Query result submission. The module verifies the result using the proofs, stores it on-chain, and notifies the owning smart contract about the new result.  
 
@@ -28,7 +28,6 @@ Typical Flow of KV Interchain Queries Usage:
 **Might be interesting:**
 - [How to register and handle a KV Interchain Query](/neutron/modules/interchain-queries/how-to#how-to-register-and-handle-a-kv-interchain-query)
 - [How to register and handle a KV Interchain Query with custom keys](/neutron/modules/interchain-queries/how-to#how-to-register-and-handle-a-kv-interchain-query-with-custom-keys)
-- [What is an Interchain Query relayer?](/neutron/modules/interchain-queries/explanation#what-is-an-interchain-query-relayer)
 
 ## How do TX Interchain Queries work?
 
@@ -47,7 +46,7 @@ Typical Flow of TX Interchain Queries Usage:
 
 4. The smart contract registers a TX Interchain Query with the specified set of transaction filters. The registered query is saved in the `interchainqueries` module's state.  
 
-5. An Interchain Query relayer reads the state of the `interchainqueries` module, finds the registered query and its parameters, and performs the `tx_search` RPC. This call returns a list of transactions that match the filters and have been successfully processed on the remote chain.  
+5. An [Interchain Query relayer](/neutron/modules/interchain-queries/explanation#what-is-an-interchain-query-relayer) reads the state of the `interchainqueries` module, finds the registered query and its parameters, and performs the `tx_search` RPC. This call returns a list of transactions that match the filters and have been successfully processed on the remote chain.  
 
 6. The relayer submits the list of transactions along with a few headers for each transaction (used to verify the result) to the `interchainqueries` module. This operation is called TX Interchain Query result submission. The module verifies the result using the headers and passes the data to the owning smart contract.  
 
@@ -60,7 +59,6 @@ Typical Flow of TX Interchain Queries Usage:
 - [How to find out what transaction filter to use](/neutron/modules/interchain-queries/how-to#how-to-find-out-what-transaction-filter-to-use)
 - [Why doesn't interchainqueries module store TX query results?](/neutron/modules/interchain-queries/explanation#why-doesnt-interchainqueries-module-store-tx-query-results)
 - [Why is it mandatory to do contract's side verification of submitted TX Interchain Query results?](/neutron/modules/interchain-queries/explanation#why-is-it-mandatory-to-do-contracts-side-verification-of-submitted-tx-interchain-query-results)
-- [What is an Interchain Query relayer?](/neutron/modules/interchain-queries/explanation#what-is-an-interchain-query-relayer)
 
 ## What is an Interchain Query relayer?
 
