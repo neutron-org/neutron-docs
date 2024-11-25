@@ -71,6 +71,7 @@ An Interchain Query relayer is an off-chain application that facilitates the fun
 - **Submitting query results**: Delivering the retrieved data and its corresponding proofs to the `interchainqueries` module, which then forwards it to the relevant smart contracts.  
 
 **Might be interesting:**
+- [Neutron implementation of an Interchain Query relayer](/relaying/icq-relayer)
 - [Limited gas for sudo calls](/neutron/modules/interchain-queries/explanation#limited-gas-for-sudo-calls)
 
 ## What's the role of IBC connections in Interchain Queries and how to choose one?

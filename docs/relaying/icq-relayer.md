@@ -1,10 +1,14 @@
 # ICQ Relayer
 
+## Source code
+
+- Github: https://github.com/neutron-org/neutron-query-relayer
+
 ## Overview
 
 [Interchain Queries](/neutron/modules/interchain-queries/overview) allow smart contracts to make queries to a remote chain. An ICQ Relayer is a required component for making them possible. It acts as a facilitator between the Neutron chain and a querying chain, gathering queries that are needed to be performed from the Neutron, actually performing them, and eventually making the results available for the Neutron's smart contracts. These three main responsibilities are described in details below.
 
-If you are a smart contracts developer and up to develop your dApp on Neutron, you will most likely need your own ICQ Relayer to manage your Interchain Queries. 
+If you are a smart contracts developer and up to develop your dApp on Neutron, you will most likely need your own ICQ Relayer to manage your Interchain Queries.
 
 ### Queries gathering
 
