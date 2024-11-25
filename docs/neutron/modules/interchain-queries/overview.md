@@ -29,16 +29,16 @@ A smart-contract can register two types of Interchain Query for particular chain
 
 
 
-ICQ Relayer keeps track of registered Interchain Queries by querying all existed ICQs at the start of work and by subscribing on [Update](https://github.com/neutron-org/neutron/blob/v2.0.3/x/interchainqueries/keeper/msg_server.go#L305) and [Delete](https://github.com/neutron-org/neutron/blob/v2.0.3/x/interchainqueries/keeper/msg_server.go#L321) events which are emitted in corresponding Neutron handlers. When the ICQ Relayer sees that it's time to perform an interchain query, it makes a necessary RPC call to a remote chain and makes the results available for the Neutron's smart contracts by submitting the result to the module. Read more about it at the [Relayer's page](/relaying/icq-relayer#overview).
+ICQ Relayer keeps track of registered Interchain Queries by querying all existed ICQs at the start of work and by subscribing on [Update](https://github.com/neutron-org/neutron/blob/v4.2.4/x/interchainqueries/keeper/msg_server.go#L354) and [Delete](https://github.com/neutron-org/neutron/blob/v4.2.4/x/interchainqueries/keeper/msg_server.go#L370) events which are emitted in corresponding Neutron handlers. When the ICQ Relayer sees that it's time to perform an interchain query, it makes a necessary RPC call to a remote chain and makes the results available for the Neutron's smart contracts by submitting the result to the module. Read more about it at the [Relayer's page](/relaying/icq-relayer#overview).
 
 Neutron verifies the data and processes the query result depending on the interchain query type:
 * in case of a KV-query, the ICQ module saves the result into module's storage, and passed the query id to the contract's
-[SudoKVQueryResult](https://github.com/neutron-org/neutron/blob/v2.0.3/x/contractmanager/keeper/sudo.go#L211) [handler](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/contracts/neutron_interchain_queries/src/contract.rs#L385);
+[SudoKVQueryResult](https://github.com/neutron-org/neutron/blob/v4.2.4/x/contractmanager/keeper/sudo.go#L101) [handler](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/contracts/neutron_interchain_queries/src/contract.rs#L385);
 * in case of a TX-query, the ICQ module **does not** save the result to the storage, finds the contract that registered the query,
-and passes the full result to the contract's [SudoTXQueryResult](https://github.com/neutron-org/neutron/blob/v2.0.3/x/contractmanager/keeper/sudo.go#L173) [handler](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/contracts/neutron_interchain_queries/src/contract.rs#L267).
+and passes the full result to the contract's [SudoTXQueryResult](https://github.com/neutron-org/neutron/blob/v4.2.4/x/contractmanager/keeper/sudo.go#L61) [handler](https://github.com/neutron-org/neutron-sdk/blob/v0.5.0/contracts/neutron_interchain_queries/src/contract.rs#L267).
 
 ## Query creation deposit
-In order to clean up ledger from not used, outdated queries special deposit mechanism is used. [RegisteredQuery](https://github.com/neutron-org/neutron/blob/main/proto/interchainqueries/genesis.proto#L39) contains `deposit` field, this field is used to collect escrow payment for query creation. In order to return escrow payment a `RemoveInterchainQuery` message should be issued.
+In order to clean up ledger from not used, outdated queries special deposit mechanism is used. [RegisteredQuery](https://github.com/neutron-org/neutron/blob/v4.2.4/proto/neutron/interchainqueries/genesis.proto#L11) contains `deposit` field, this field is used to collect escrow payment for query creation. In order to return escrow payment a `RemoveInterchainQuery` message should be issued.
 
 Permission to perform `RemoveInterchainQuery` message is based on three parameters:
 1. `query_submit_timeout` — a module parameter which can be thought of as query service period;
@@ -69,7 +69,7 @@ You can see more info, examples and recommendations about proper transactions re
 [{"field": "{eventType}.{attributeKey}", "val": "{attributeValue}", "op": "gte"}, ...]
 ```
 
-Maximum allowed amount of filters is 32. Supplying more filters than allowed will return an error.
+Maximum allowed amount of filters is defined by a module's param `MaxTransactionsFilters`, the default value is 32. Supplying more filters than allowed will return an error.
 
 Supported operators:
 * `eq`
@@ -155,7 +155,7 @@ By understanding the usage of the `transactions_filter` field, developers and us
 2. **Incrementally Refine**: If needed, add additional filters incrementally to refine the results, testing at each stage to ensure relevance.
 3. **Avoid Redundancy**: Ensure that each filter adds value to the query and that there are no redundant or conflicting filters.
 4. **Test Performance**: Consider testing the query with different numbers of filters to gauge performance and result relevance, especially if using many filters.
-5. **Use the Maximum Limit Wisely**: Note that the maximum allowed amount of 32 filters is a technical constraint.
+5. **Use the Maximum Limit Wisely**: Note there is a maximum allowed amount of filters defined by a module's param `MaxTransactionsFilters`.
 
 ##### How Many Filters Do You Need?
 

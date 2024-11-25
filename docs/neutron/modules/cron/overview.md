@@ -4,7 +4,7 @@
 
 This document specifies the Cron module for the Neutron network.
 
-Cron module implement a mechanism to add cron schedules through governance proposals to execute arbitrary cosmwasm messages with given period.
+The Cron module implements a mechanism to add cron schedules through governance proposals to execute arbitrary CosmWasm messages with a given period.
 
 ## Concepts
 
@@ -21,7 +21,7 @@ It also contains permissions:
 - AddSchedule can only be executed as main dao governance proposal
 - RemoveSchedule can only be executed as main dao governance proposal OR security subdao proposal
 
-In EndBlocker module searches for all schedules (with limit by `Params.Limit`) that are ready to be executed, using `last_execute_height`.
+In BeginBlocker and EndBlocker module searches for all schedules (with limit by `Params.Limit`) that are ready to be executed, using `last_execute_height`.
 
 That way after the schedule was added it will be executed every `period` of blocks (or more than `period` if too many schedules ready to execute).
 
@@ -35,6 +35,8 @@ type AddSchedule struct {
 	Period uint64               `json:"period"`
   // Msgs that will be executed every period
 	Msgs   []MsgExecuteContract `json:"msgs"`
+	// Execution stage where the messages will be executed. Can be either `EXECUTION_STAGE_END_BLOCKER` or `EXECUTION_STAGE_BEGIN_BLOCKER`
+    ExecutionStage string               `json:"execution_stage"`
 }
 
 // MsgExecuteContract defined separate from wasmtypes since we can get away with just passing the string into bindings
@@ -88,6 +90,7 @@ Construct a message in a following format:
                   {
                     "contract": "neutron123412341234", // contract address to be called
                     "msg": "{\"send\": {\"to\": "neutron123", \"amount\": 100}}", // message to be executed
+                    "execution_stage": "EXECUTION_STAGE_BEGIN_BLOCKER"
                   },
                 ],
               },

@@ -171,11 +171,11 @@ fn sudo_open_ack(
     counterparty_version: String,
 ) -> StdResult<Response> {
     // The version variable contains a JSON value with multiple fields,
-    // including the generated account address. 
+    // including the generated account address.
     let parsed_version: Result<OpenAckVersion, _> =
         serde_json_wasm::from_str(counterparty_version.as_str());
-   
-    // Update the storage record associated with the interchain account. 
+
+    // Update the storage record associated with the interchain account.
     if let Ok(parsed_version) = parsed_version {
         INTERCHAIN_ACCOUNTS.save(
             deps.storage,
@@ -187,7 +187,7 @@ fn sudo_open_ack(
         )?;
         return Ok(Response::default());
     }
-   
+
     Err(StdError::generic_err("Can't parse counterparty_version"))
 }
 ```
@@ -299,7 +299,7 @@ fn execute_delegate(
         }),
     };
 
-    // Serialize the Delegate message. 
+    // Serialize the Delegate message.
     let mut buf = Vec::new();
     buf.reserve(delegate_msg.encoded_len());
 
@@ -343,7 +343,7 @@ fn execute_delegate(
             port_id: get_port_id(env.contract.address.to_string(), &interchain_account_id),
             // Here you can store some information about the transaction to help you parse
             // the acknowledgement later.
-            message: "interchain_delegate".to_string(),  
+            message: "interchain_delegate".to_string(),
         },
     )?;
 
@@ -495,17 +495,12 @@ fn sudo_response(deps: DepsMut, request: RequestPacket, data: Binary) -> StdResu
     // Get the channel identifier and the sequence identifier to be able to understand
     // which transaction is acknowledged by this packet, and for which Interchain Account.
     //
-    // WARNING: RETURNING THIS ERROR CLOSES THE CHANNEL.
-    // AN ALTERNATIVE IS TO MAINTAIN AN ERRORS QUEUE AND PUT THE FAILED REQUEST THERE
-    // FOR LATER INSPECTION.
     // In this particular case, we return an error because not having the sequence id
     // in the request value implies that a fatal error occurred on Neutron side.
     let seq_id = request
         .sequence
         .ok_or_else(|| StdError::generic_err("sequence not found"))?;
-    // WARNING: RETURNING THIS ERROR CLOSES THE CHANNEL.
-    // AN ALTERNATIVE IS TO MAINTAIN AN ERRORS QUEUE AND PUT THE FAILED REQUEST THERE
-    // FOR LATER INSPECTION.
+
     // In this particular case, we return an error because not having the sequence id
     // in the request value implies that a fatal error occurred on Neutron side.
     let channel_id = request
@@ -514,7 +509,6 @@ fn sudo_response(deps: DepsMut, request: RequestPacket, data: Binary) -> StdResu
 
     // Read the information about the transaction that we previously executed and saved to state.
     //
-    // NOTE: NO ERROR IS RETURNED HERE. THE CHANNEL LIVES ON.
     // In this particular example, this is a matter of developer's choice. Not being able to read
     // the payload here means that there was a problem with the contract while submitting an
     // interchain transaction. You can decide that this is not worth killing the channel,
@@ -533,9 +527,6 @@ fn sudo_response(deps: DepsMut, request: RequestPacket, data: Binary) -> StdResu
 
     // Parse the response to Vec<MsgData>.
     //
-    // WARNING: RETURNING THIS ERROR CLOSES THE CHANNEL.
-    // AN ALTERNATIVE IS TO MAINTAIN AN ERRORS QUEUE AND PUT THE FAILED REQUEST THERE
-    // FOR LATER INSPECTION.
     // In this particular case, we return an error because not being able to parse this data
     // that a fatal error occurred on Neutron side, or that the remote chain sent us unexpected data.
     // Both cases require immediate attention.
@@ -548,9 +539,6 @@ fn sudo_response(deps: DepsMut, request: RequestPacket, data: Binary) -> StdResu
         item_types.push(item_type.to_string());
         match item_type {
             "/cosmos.staking.v1beta1.MsgDelegate" => {
-                // WARNING: RETURNING THIS ERROR CLOSES THE CHANNEL.
-                // AN ALTERNATIVE IS TO MAINTAIN AN ERRORS QUEUE AND PUT THE FAILED REQUEST THERE
-                // FOR LATER INSPECTION.
                 // In this particular case, a mismatch between the string message type and the
                 // serialised data layout looks like a fatal error that has to be investigated.
                 let _out: MsgDelegateResponse = decode_message_response(&item.data)?;
@@ -633,18 +621,12 @@ fn sudo_error(deps: DepsMut, request: RequestPacket, details: String) -> StdResu
     deps.api
         .debug(format!("WASMDEBUG: request packet: {:?}", request).as_str());
 
-    // WARNING: RETURNING THIS ERROR CLOSES THE CHANNEL.
-    // AN ALTERNATIVE IS TO MAINTAIN AN ERRORS QUEUE AND PUT THE FAILED REQUEST THERE
-    // FOR LATER INSPECTION.
     // In this particular case, we return an error because not having the sequence id
     // in the request value implies that a fatal error occurred on Neutron side.
     let seq_id = request
         .sequence
         .ok_or_else(|| StdError::generic_err("sequence not found"))?;
 
-    // WARNING: RETURNING THIS ERROR CLOSES THE CHANNEL.
-    // AN ALTERNATIVE IS TO MAINTAIN AN ERRORS QUEUE AND PUT THE FAILED REQUEST THERE
-    // FOR LATER INSPECTION.
     // In this particular case, we return an error because not having the sequence id
     // in the request value implies that a fatal error occurred on Neutron side.
     let channel_id = request
@@ -685,18 +667,12 @@ fn sudo_timeout(deps: DepsMut, _env: Env, request: RequestPacket) -> StdResult<R
     deps.api
         .debug(format!("WASMDEBUG: sudo timeout request: {:?}", request).as_str());
 
-    // WARNING: RETURNING THIS ERROR CLOSES THE CHANNEL.
-    // AN ALTERNATIVE IS TO MAINTAIN AN ERRORS QUEUE AND PUT THE FAILED REQUEST THERE
-    // FOR LATER INSPECTION.
     // In this particular case, we return an error because not having the sequence id
     // in the request value implies that a fatal error occurred on Neutron side.
     let seq_id = request
         .sequence
         .ok_or_else(|| StdError::generic_err("sequence not found"))?;
 
-    // WARNING: RETURNING THIS ERROR CLOSES THE CHANNEL.
-    // AN ALTERNATIVE IS TO MAINTAIN AN ERRORS QUEUE AND PUT THE FAILED REQUEST THERE
-    // FOR LATER INSPECTION.
     // In this particular case, we return an error because not having the sequence id
     // in the request value implies that a fatal error occurred on Neutron side.
     let channel_id = request
@@ -704,7 +680,7 @@ fn sudo_timeout(deps: DepsMut, _env: Env, request: RequestPacket) -> StdResult<R
         .ok_or_else(|| StdError::generic_err("channel_id not found"))?;
 
     // update but also check that we don't update same seq_id twice
-    // NOTE: NO ERROR IS RETURNED HERE. THE CHANNEL LIVES ON.
+
     // In this particular example, this is a matter of developer's choice. Not being able to read
     // the payload here means that there was a problem with the contract while submitting an
     // interchain transaction. You can decide that this is not worth killing the channel,
@@ -745,5 +721,5 @@ timeout, **you can be sure that the affected channel was closed**.
 > value.
 
 If the timeout occurs anyway, you can just
-execute [RegisterInterchainAccount message]( /neutron/modules/interchain-txs/messages#msgregisterinterchainaccount) again to
+execute [RegisterInterchainAccount message](/neutron/modules/interchain-txs/messages#msgregisterinterchainaccount) again to
 recover access to your interchain account.
