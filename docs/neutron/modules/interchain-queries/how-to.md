@@ -106,6 +106,10 @@ Identify the [Undelegate handler](https://github.com/cosmos/cosmos-sdk/blob/8bfc
 
 Examine the [event emission section](https://github.com/cosmos/cosmos-sdk/blob/8bfcf554275c1efbb42666cc8510d2da139b67fa/x/staking/keeper/msg_server.go#L447-L455) of the Undelegate handler code.
 
+:::note  
+As an alternative for Steps 1-3, you can issue a transaction similar to the ones you want to capture using your transactions filter. After broadcasting the transaction, observe the emitted events list and use the event types and attributes to construct your query.
+:::  
+
 #### 4. Create a transaction filter using the events
 
 Match the event type and attributes emitted. For this scenario, use the filter:  
