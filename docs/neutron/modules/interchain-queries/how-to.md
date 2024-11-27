@@ -90,9 +90,9 @@ Imagine you need your Interchain Query-based smart contract to track undelegatio
 
 #### 1. Find the up-to-date source code of the staking module
 
-1. Locate the current version of the `staking` module used by CosmosHub. Check the [chain registry](https://github.com/cosmos/chain-registry/blob/e346b6dbc0d901eec5e8704e0a7736bfdaa3dca9/cosmoshub/chain.json#L36-L37) to find the repository and version in use, e.g., `v19.2.0`.  
-2. In the `gaia` repository for `v19.2.0`, locate the [cosmos-sdk](https://github.com/cosmos/gaia/blob/v19.2.0/go.mod#L24) import in the `go.mod` file, e.g., `v0.50.9`.  
-3. Access the `staking` module's source code in the [cosmos-sdk with tag v0.50.9](https://github.com/cosmos/cosmos-sdk/tree/v0.50.9/x/staking).
+1. Locate the current version of the `staking` module used by CosmosHub. Check the [chain registry](https://github.com/cosmos/chain-registry/blob/5e684932c8421a59cebe0b4cc5a2fde2d0633b44/cosmoshub/chain.json#L36-L37) to find the repository and version in use, e.g., `v21.0.0`.  
+2. In the `gaia` repository for `v21.0.0`, locate the [cosmos-sdk](https://github.com/cosmos/gaia/blob/v21.0.0/go.mod#L24) import in the `go.mod` file, e.g., `v0.50.9`. In this case, the `cosmos-sdk` version is replaced with a special release [v0.50.9-lsm](https://github.com/cosmos/gaia/blob/v21.0.0/go.mod#L251-L252)
+3. Access the `staking` module's source code in the [cosmos-sdk with tag v0.50.9-lsm](https://github.com/cosmos/cosmos-sdk/tree/v0.50.9-lsm/x/staking).
 
 :::note  
 Currently used versions might be different by the time you read this.  
@@ -100,11 +100,11 @@ Currently used versions might be different by the time you read this.
 
 #### 2. Find the handler managing undelegations
 
-Identify the [Undelegate handler](https://github.com/cosmos/cosmos-sdk/blob/8bfcf554275c1efbb42666cc8510d2da139b67fa/x/staking/keeper/msg_server.go#L391-L392) in the `staking` module's keeper.
+Identify the [Undelegate handler](https://github.com/cosmos/cosmos-sdk/tree/v0.50.9-lsm/x/staking/keeper/msg_server.go#L455-L456) in the `staking` module's keeper.
 
 #### 3. Locate the events emitted during undelegations
 
-Examine the [event emission section](https://github.com/cosmos/cosmos-sdk/blob/8bfcf554275c1efbb42666cc8510d2da139b67fa/x/staking/keeper/msg_server.go#L447-L455) of the Undelegate handler code.
+Examine the [event emission section](https://github.com/cosmos/cosmos-sdk/tree/v0.50.9-lsm/x/staking/keeper/msg_server.go#L542-L550) of the Undelegate handler code.
 
 :::note  
 As an alternative for Steps 1-3, you can issue a transaction similar to the ones you want to capture using your transactions filter. After broadcasting the transaction, observe the emitted events list and use the event types and attributes to construct your query.
