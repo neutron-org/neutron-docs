@@ -208,6 +208,7 @@ const sidebars = {
                 },
                 "neutron/modules/dex/messages",
                 "neutron/modules/dex/client",
+                'neutron/modules/dex/user-interfaces',
               ],
             },
             {

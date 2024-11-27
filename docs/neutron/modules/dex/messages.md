@@ -317,7 +317,7 @@ enum LimitOrderType {
 | `ExpirationTime` time.Time          | Expiration time for order. Only valid for GOOD\_TIL\_TIME limit orders                                                                          |
 | `MinAverageSellPrice` sdk.Dec          | Optional Minimum price that must be satisfied by the true output of a limit order                                                                           |
 
-## Cancel Limit Order Message
+## Cancel Limit Order
 
 ### Overview
 
