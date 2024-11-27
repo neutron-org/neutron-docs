@@ -26,6 +26,7 @@ Typical Flow of KV Interchain Queries Usage:
 8. Steps 5-7 are repeated periodically until the query is removed.
 
 **Might be interesting:**
+- [The dependency of KV Interchain Queries on remote chain storage layout](/neutron/modules/interchain-queries/explanation#the-dependency-of-kv-interchain-queries-on-remote-chain-storage-layout)
 - [How to register and handle a KV Interchain Query](/neutron/modules/interchain-queries/how-to#how-to-register-and-handle-a-kv-interchain-query)
 - [How to register and handle a KV Interchain Query with custom keys](/neutron/modules/interchain-queries/how-to#how-to-register-and-handle-a-kv-interchain-query-with-custom-keys)
 
@@ -73,6 +74,29 @@ An Interchain Query relayer is an off-chain application that facilitates the fun
 **Might be interesting:**
 - [Neutron implementation of an Interchain Query relayer](/relaying/icq-relayer)
 - [Limited gas for sudo calls](/neutron/modules/interchain-queries/explanation#limited-gas-for-sudo-calls)
+
+## The dependency of KV Interchain Queries on remote chain storage layout
+
+KV Interchain Queries rely heavily on the storage layout of the remote chain, including the paths to IAVL leaf nodes and the data models used to represent the stored information. The accuracy and functionality of KV Interchain Queries depend entirely on the correctness of the paths and the consistency of the data models. This tight coupling introduces several considerations and potential challenges for dApp developers. The [neutron-sdk interchain queries related package](https://docs.rs/neutron-sdk/0.11.0/neutron_sdk/interchain_queries/index.html#) includes target chain version separation precisely for this reasoning.
+
+- Each KV Interchain Query requires the exact path to the desired entry in the IAVL tree of the remote chain. These paths are specific to the version and implementation of the modules on the remote chain. If a path is incorrect or becomes outdated, the query will fail.
+- The structure of the data retrieved from the IAVL tree must match the expected model in the dApp. Changes in the data model due to updates or modifications in the remote chain's code can lead to errors in decoding or interpreting the retrieved data.
+
+Recomendations for dApp developers:
+
+1. **Follow and communicate**:
+   - Regularly monitor release notes, upgrade announcements, and repository updates of the target chains.
+   - Participate in the target chain’s community discussions to stay informed about upcoming changes.
+   - Work closely with remote chain developers to understand their module design and planned upgrades.
+   - Advocate for better documentation and tools that simplify storage layout discovery.
+
+2. **Secure with code**:
+   - Continuously run your dApp on the testnet of the target chain to catch breaking changes before they affect the mainnet.
+   - Set up automated integration tests that verify the correctness of KV Interchain Queries against the latest builds.
+   - Set up monitoring for target chain versions to detect changes proactively.
+   - Build fallback mechanisms to detect and handle query failures gracefully.
+
+In the event of an upcoming breaking change, update your codebase and prepare to upgrade your dApp on the mainnet once the remote chain is updated.
 
 ## What's the role of IBC connections in Interchain Queries and how to choose one?
 
