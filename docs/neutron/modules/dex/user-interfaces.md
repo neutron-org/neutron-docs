@@ -2,7 +2,7 @@
 
 You can use Neutron DEX by directly crafting [DEX messages](/neutron/modules/dex/messages) and sending them through transactions in your own scripts, but you can also use various user interfaces to interact with the DEX.
 
-We are working with several partners in the Neutron [ecosystem](https://app.neutron.org/ecosystem) (such as [Astroport](https://app.astroport.fi)) that use Neutron DEX and by using these applications you can benefit from the DEX's features. We also provide a UI as described here in the Neutron app for placing orders on the DEX.
+We are working with several partners in the Neutron [ecosystem](https://app.neutron.org/ecosystem) that use Neutron DEX and by using these applications you can benefit from the DEX's features. We also provide a UI as described here in the Neutron app for placing orders on the DEX.
 
 ## Neutron app
 
