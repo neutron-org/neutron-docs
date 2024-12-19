@@ -56,7 +56,7 @@ Using `SudoLimitWrapper` has two purposes:
 
 ## Failed interchain txs
 
-Not every interchaintx executes succesfully on a remote network. Some of them fail to execute with errors and then you get ibc acknowledgement with `Error` type. The error is passed into the caller contract via sudo call with SudoMsg::Error [variant](../../../tutorials/cosmwasm_ica.md#ibc-events)
+Not every interchaintx executes successfully on a remote network. Some of them fail to execute with errors and then you get ibc acknowledgement with `Error` type. The error is passed into the caller contract via sudo call with SudoMsg::Error [variant](../../../tutorials/cosmwasm_ica.md#ibc-events)
 
 Unfortunately, to avoid the nondeterminism associated with error text generation, the error text is severely truncated by [redact down](https://github.com/cosmos/ibc-go/blob/v7.3.1/modules/apps/27-interchain-accounts/host/ibc_module.go#L115) to the error code without any additional details, before converting into AcknowledgementError.
 
