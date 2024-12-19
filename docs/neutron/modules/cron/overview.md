@@ -105,7 +105,7 @@ Construct a message in a following format:
 
 Submit the proposal to the Main DAO using prePropose contract address.
 
-If it will be accepted, schedule will be added with the given params.
+If it is accepted, schedule will be added with the given params.
 
 ### Removing schedule
 
@@ -137,6 +137,6 @@ Construct a message in a following format:
 
 Submit the proposal to the Main DAO using prePropose contract address.
 
-If it will be accepted, schedule will be added with the given params.
+If it is accepted, schedule will be added with the given params.
 
 TODO: how to propose RemoveSchedule message using Security DAO?
