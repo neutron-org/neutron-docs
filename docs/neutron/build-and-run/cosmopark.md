@@ -106,7 +106,7 @@ The Neutron node usage guidelines (exposed ports, CLI, prepared accounts) for Co
 
 #### Hermes
 
-For more information about Hermes, refer to the [dedicated section](/relaying/ibc-relayer) and its [configuration folder](https://github.com/neutron-org/neutron-integration-tests/tree/main/setup/hermes) in the neutron-integraton-tests repo.
+For more information about Hermes, refer to the [dedicated section](/relaying/ibc-relayer) and its [configuration folder](https://github.com/neutron-org/neutron-integration-tests/tree/main/setup/hermes) in the neutron-integration-tests repo.
 
 #### ICQ Relayer
 

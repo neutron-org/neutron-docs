@@ -42,7 +42,7 @@ By default the `autoswap` option is enabled, which allows users to deposit their
 
 $$\frac{existingReserves_0}{existingReserves_1} = \frac{amountDeposited_0 + price \cdot s} {amountDeposited_1 - s}$$
 
-Where `s` is the amount that would need to be swapped to match the exiting pool ratio. If we solve for `s` we get:
+Where `s` is the amount that would need to be swapped to match the existing pool ratio. If we solve for `s` we get:
 
 $$s = \frac{existingReserves_0 \cdot amountDeposited_1 - r_1\cdot amountDeposited_0}{existingReserves_1 \cdot price + existingReserves_0}$$
 
@@ -195,7 +195,7 @@ message MsgMultiHopSwap {
 | `Receiver` string (sdk.AccAddress) | Account to which TokenOut is credited                                |
 | `Routes` \[]MultiHopRoute          | Array of possible routes                                             |
 | `AmountIn` sdk.Int                 | Amount of TokenIn to swap                                            |
-| `ExitLimitPrice` sdk.Dec           | Minimum price that that must be satisfied for a route to succeed     |
+| `ExitLimitPrice` sdk.Dec           | Minimum price that must be satisfied for a route to succeed     |
 | `PickBestRoute` bool               | If true all routes are run and the route with the best price is used (default false) |
 
 **Multihop Route**

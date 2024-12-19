@@ -38,7 +38,7 @@ The table can alternatively show only buy or sell orders using controls to the t
 
 The recent trades table is near the center of the page under a tab "**Recent Trades**".
 
-The recent trades table displays recent trades on the token pair as they are made and become availble to read on the chain. You can see more information about each trade by visiting the external link for that trade.
+The recent trades table displays recent trades on the token pair as they are made and become available to read on the chain. You can see more information about each trade by visiting the external link for that trade.
 
 #### Token pair order form
 
