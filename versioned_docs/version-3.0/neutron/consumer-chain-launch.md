@@ -244,7 +244,7 @@ The Cosmos community is here to assist you and support you as the ATOM economic 
 [5]:	https://discord.com/channels/669268347736686612/798937713474142229
 [6]:	https://forum.cosmos.network/t/validator-consumer-chain-support/10570
 [7]:	https://discord.com/channels/669268347736686612/1087756740562522284
-[8]:	https://github.com/cosmos/testnets/blob/master/replicated-security/baryon-1/baryon-1-genesis.json#L229
+[8]:	https://github.com/cosmos/testnets/blob/master/interchain-security/stopped/baryon-1/baryon-1-genesis.json#L229
 [9]:	https://eu.jotform.com/form/230744359787369
 [10]:	https://github.com/cosmos/interchain-security/blob/main/docs/docs/features/key-assignment.md
 [11]:	https://forum.cosmos.network/t/validator-consumer-chain-support/10570
