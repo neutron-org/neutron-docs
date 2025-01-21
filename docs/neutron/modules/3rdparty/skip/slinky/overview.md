@@ -8,7 +8,7 @@
 
 ### I'm a validator, how should i run Slinky's Sidecar?
 
-Please use [the official](https://github.com/skip-mev/docs/blob/main/docs/slinky/integrations/1-neutron.md) Slinky's documentation how to get the Sidecar up and running.
+Please use [the official](https://docs.skip.build/connect/validators/quickstart) Slinky's documentation how to get the Sidecar up and running.
 
 ### How can i access prices from the Slinky?
 Slinky prices are stored within the [`x/oracle`](https://github.com/skip-mev/slinky/tree/main/x/oracle) module by default.
