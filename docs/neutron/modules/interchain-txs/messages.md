@@ -136,7 +136,7 @@ message MsgSubmitTxResponse {
 ```
 
 * `sequence_id` is a channel's sequence_id for outgoing ibc packet. Unique per a channel;
-* `channel` is the src channel name on neutron's side trasaction was submitted from;
+* `channel` is the src channel name on neutron's side transaction was submitted from;
 
 ### IBC Events
 
