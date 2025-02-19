@@ -4,6 +4,11 @@
 
 This section provides a comprehensive overview of the significant changes and updates in Neutron, focusing on the upgrades to Cosmos SDK, Wasmd, and Neutron's internal modules.
 
+## [v5.1.0](https://github.com/neutron-org/neutron/releases/tag/v5.0.0)
+
+* Slinky is bumped to v1.2.0
+* PFM is bumped to v8.1.0
+
 ## [v5.0.0](https://github.com/neutron-org/neutron/releases/tag/v5.0.0)
 
 ### IBC Rate Limits integration

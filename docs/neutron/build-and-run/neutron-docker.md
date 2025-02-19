@@ -5,7 +5,7 @@ This page contains information about building and running a Neutron node in a st
 ## Prerequisites
 
 - Docker engine;
-- Golang v1.22 ([go releases and instructions](https://go.dev/dl/)).
+- Golang v1.23 ([go releases and instructions](https://go.dev/dl/)).
 
 ## Build and run
 
