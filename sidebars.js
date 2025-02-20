@@ -284,6 +284,13 @@ const sidebars = {
                       items: [
                         "neutron/modules/3rdparty/skip/slinky/overview",
                       ],
+                    },
+                    {
+                      label: "Feemarket",
+                      type: "category",
+                      items: [
+                        "neutron/modules/3rdparty/skip/feemarket/overview",
+                      ],
                     }
                   ],
                 },
