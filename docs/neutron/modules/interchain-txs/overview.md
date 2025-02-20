@@ -105,7 +105,7 @@ Output example (filtered events):
 On earlier versions of ibc-go it's barely possible to get full text error due to [patch](https://github.com/cosmos/ibc-go/commit/fdbb508c1ca68811206d7175fb9e202c1611a43e).
 
 In the IBC error acknowledgement you get ABCI error and a code, e.g. `codespace: wasm, code: 5`
-where codespace usually is `ModuleName`, and `code` is uniq code for the module. `codespace` and `code` pair uniq for the whole app. You can find the error description in source code. Usualy all the error of the module are [placed](https://github.com/CosmWasm/wasmd/blob/5f444cd9d393513e534cbfa9a0e938295c4e84e1/x/wasm/types/errors.go#L25) in `x/<module>/types/errors.go` where `module` is the module where the error was thrown
+where codespace usually is `ModuleName`, and `code` is uniq code for the module. `codespace` and `code` pair uniq for the whole app. You can find the error description in source code. Usually all the error of the module are [placed](https://github.com/CosmWasm/wasmd/blob/5f444cd9d393513e534cbfa9a0e938295c4e84e1/x/wasm/types/errors.go#L25) in `x/<module>/types/errors.go` where `module` is the module where the error was thrown
 
 ## Relaying
 
