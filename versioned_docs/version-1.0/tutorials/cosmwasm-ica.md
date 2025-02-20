@@ -45,7 +45,7 @@ cosmwasm-std = "1.2.5"
 # various helper functions.
 neutron-sdk = "0.5.0"
 
-# Required to marshal skd.Msg values; the marshalled messsages will be attached to the IBC packets
+# Required to marshal skd.Msg values; the marshalled messages will be attached to the IBC packets
 # and executed as a transaction on the host chain.
 cosmos-sdk-proto = { version = "0.14.0", default-features = false }
 protobuf = { version = "3.2.0", features = ["with-bytes"] }
