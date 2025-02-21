@@ -15,7 +15,7 @@ We are going to learn how to:
 > contracts. You can check out CosmWasm [docs](https://docs.cosmwasm.com/docs)
 > and [blog posts](https://medium.com/cosmwasm/writing-a-cosmwasm-contract-8fb946c3a516) for entry-level tutorials.
 
-> **Note:** before running any query creation transaction you need to top up your contract address. See [Interchain Queries Overview](../neutron/modules/interchain-queries/overview.md), "Query creation deposit" section.
+> **Note:** before running any query creation transaction you need to top up your contract address. See [Interchain Queries Overview](/1.0/neutron/modules/interchain-queries/overview), "Query creation deposit" section.
 
 ## The complete example
 
@@ -159,7 +159,7 @@ pub fn register_transfers_query(
 }
 ```
 
-> **Note:** the ICQ module's `RegisterInterchainQueryMsg` message [returns](/neutron/modules/interchain-queries/messages#register-interchain-query)
+> **Note:** the ICQ module's `RegisterInterchainQueryMsg` message [returns](/1.0/neutron/modules/interchain-queries/messages#register-interchain-query)
 > an identifier of newly registered Interchain Query in response. So in a real world scenario you should implement a `reply` handler in your contract
 > to catch the identifier after the registration, so you'll be able to work with the registered query later.
 
@@ -504,5 +504,5 @@ pub fn remove_interchain_query(query_id: u64) -> NeutronResult<Response<NeutronM
 ```
 
 In the snippet above we add `UpdateInterchainQuery` and `RemoveInterchainQuery` to our `ExecuteMsg` enum and define corresponding
-handlers `update_interchain_query` and `remove_interchain_query` which, in short, just issue proper [Neutron msgs](/neutron/modules/interchain-queries/messages) to update and remove interchain query.
+handlers `update_interchain_query` and `remove_interchain_query` which, in short, just issue proper [Neutron msgs](/1.0/neutron/modules/interchain-queries/messages) to update and remove interchain query.
 In a real world scenario such handlers must have ownership checks.

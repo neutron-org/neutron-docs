@@ -1,18 +1,22 @@
 # ICQ Relayer
 
+## Source code
+
+- Github: https://github.com/neutron-org/neutron-query-relayer
+
 ## Overview
 
 [Interchain Queries](/neutron/modules/interchain-queries/overview) allow smart contracts to make queries to a remote chain. An ICQ Relayer is a required component for making them possible. It acts as a facilitator between the Neutron chain and a querying chain, gathering queries that are needed to be performed from the Neutron, actually performing them, and eventually making the results available for the Neutron's smart contracts. These three main responsibilities are described in details below.
 
-If you are a smart contracts developer and up to develop your dApp on Neutron, you will most likely need your own ICQ Relayer to manage your Interchain Queries. 
+If you are a smart contracts developer and up to develop your dApp on Neutron, you will most likely need your own ICQ Relayer to manage your Interchain Queries.
 
 ### Queries gathering
 
-All registered Interchain Queries and their parameters are stored in the eponymous module and available by its [query interface](/neutron/modules/interchain-queries/client#queries). The Relayer utilises the module's interface in order to initialise the performing list of queries. This is how the Relayer maintains the list of queries to be executed:
+All registered Interchain Queries and their parameters are stored in the eponymous module and available by its [query interface](/neutron/modules/interchain-queries/api#registeredqueries). The Relayer utilises the module's interface in order to initialise the performing list of queries. This is how the Relayer maintains the list of queries to be executed:
 
 - on initialisation, the ICQ module `RegisteredQueries` query is executed with the `RELAYER_REGISTRY_ADDRESSES` parameter used for the `Owners` field;
 - then the parameter `RELAYER_REGISTRY_QUERY_IDS` will be used to filter out queries if it is not empty;
-- during the rest of the run, the Relayer listens to the ICQ module's `query_update` and `query_removed` [events](/neutron/modules/interchain-queries/events) and modifies the queries list and parameters correspondingly.
+- during the rest of the run, the Relayer listens to the ICQ module's events emitted on [RegisterInterchainQuery](/neutron/modules/interchain-queries/api#registerinterchainquery), [UpdateInterchainQuery](/neutron/modules/interchain-queries/api#updateinterchainquery), and [RemoveInterchainQuery](/neutron/modules/interchain-queries/api#removeinterchainquery), and modifies the queries list and parameters correspondingly.
 
 The Relayer also listens to the Neutron's `NewBlockHeader` events that are used as a trigger for queries execution. Since each query has its own `update_period`, the Relayer tracks queries execution height and executes only the queries which update time has come.
 
@@ -23,7 +27,7 @@ When the update time comes for a query, the Relayer runs the specified query on 
 necessary KV-keys from the remote chain's storage with [Merkle Proofs](https://github.com/cosmos/cosmos-sdk/blob/ae77f0080a724b159233bd9b289b2e91c0de21b5/docs/interfaces/lite/specification.md). Neutron will need these proofs to [verify](https://github.com/neutron-org/neutron/blob/v4.2.4/x/interchainqueries/keeper/msg_server.go#L251) validity of KV-results on results submission;
 * in case of a TX-query, the Relayer makes a query to the target chain's [Tendermint RPC](https://docs.tendermint.com/v0.33/app-dev/indexing-transactions.html#querying-transactions) 
 to search transactions by message types, events and attributes which were emitted during transactions execution and were 
-[indexed](https://docs.tendermint.com/v0.33/app-dev/indexing-transactions.html) by Tendermint. More about Tx query parameters syntax [in the dedicated section](/neutron/modules/interchain-queries/messages#register-interchain-query). When Relayer submits transactions search results to Neutron chain, it **DOES NOT** include events into result (even if events were used for the query), because [events are not deterministic](https://github.com/tendermint/tendermint/blob/bff63aec83a4cfbb3bba253cfa04737fb21dacb4/types/results.go#L47), therefore they can break blockchain consensus. One more important thing about TX queries is that the Relayer is made the way it only searches for and submits transactions within the trusting period of the Tendermint Light Client. Trusting period is usually calculated as `2/3 * unbonding_period`. Read more about Tendermint Light Client and trusted periods [at this post](https://blog.cosmos.network/light-clients-in-tendermint-consensus-1237cfbda104).
+[indexed](https://docs.tendermint.com/v0.33/app-dev/indexing-transactions.html) by Tendermint. More about Tx query parameters syntax [in the dedicated section](/neutron/modules/interchain-queries/explanation#how-do-tx-interchain-queries-work). When Relayer submits transactions search results to Neutron chain, it **DOES NOT** include events into result (even if events were used for the query), because [events are not deterministic](https://github.com/tendermint/tendermint/blob/bff63aec83a4cfbb3bba253cfa04737fb21dacb4/types/results.go#L47), therefore they can break blockchain consensus. One more important thing about TX queries is that the Relayer is made the way it only searches for and submits transactions within the trusting period of the Tendermint Light Client. Trusting period is usually calculated as `2/3 * unbonding_period`. Read more about Tendermint Light Client and trusted periods [at this post](https://blog.cosmos.network/light-clients-in-tendermint-consensus-1237cfbda104).
 
 ### Results submission
 
