@@ -26,7 +26,7 @@ You'll have to clone several repositories into a single parent folder. Choose a 
 ```sh
 git clone -b main https://github.com/neutron-org/neutron.git
 git clone https://github.com/neutron-org/neutron-integration-tests.git
-git clone -b v0.2.0 https://github.com/neutron-org/neutron-query-relayer.git
+git clone https://github.com/neutron-org/neutron-query-relayer.git
 ```
 
 #### Clone and prepare Gaia
