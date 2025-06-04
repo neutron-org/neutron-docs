@@ -1,0 +1,180 @@
+---
+title: "Events"
+---
+
+The Fee Burner module emits several events that can be observed during operations. These events are useful for monitoring fee burning and treasury transfers.
+
+## Module Events
+
+### `fee_burn`
+
+Emitted when NTRN tokens are burned by the module.
+
+| Attribute Key | Description |
+| --- | --- |
+| `module` | Name of the module ("feeburner") |
+| `amount` | Amount and denomination of NTRN tokens burned |
+| `total_burned` | Total amount of NTRN tokens burned since genesis after this operation |
+
+```json
+{
+  "type": "fee_burn",
+  "attributes": [
+    {
+      "key": "module",
+      "value": "feeburner"
+    },
+    {
+      "key": "amount",
+      "value": "5000untrn"
+    },
+    {
+      "key": "total_burned",
+      "value": "1532692456789untrn"
+    }
+  ]
+}
+```
+
+### `treasury_transfer`
+
+Emitted when non-NTRN tokens are transferred to the Treasury.
+
+| Attribute Key | Description |
+| --- | --- |
+| `module` | Name of the module ("feeburner") |
+| `amount` | Amount and denomination of tokens transferred |
+| `treasury_address` | Address of the Treasury receiving the funds |
+
+```json
+{
+  "type": "treasury_transfer",
+  "attributes": [
+    {
+      "key": "module",
+      "value": "feeburner"
+    },
+    {
+      "key": "amount",
+      "value": "100000uatom,50000uosmo"
+    },
+    {
+      "key": "treasury_address",
+      "value": "neutron1..."
+    }
+  ]
+}
+```
+
+### `param_change`
+
+Emitted when the module parameters are updated.
+
+| Attribute Key | Description |
+| --- | --- |
+| `module` | Name of the module ("feeburner") |
+| `neutron_denom` | New value for the Neutron token denomination |
+| `treasury_address` | New value for the Treasury address |
+
+```json
+{
+  "type": "param_change",
+  "attributes": [
+    {
+      "key": "module",
+      "value": "feeburner"
+    },
+    {
+      "key": "neutron_denom",
+      "value": "untrn"
+    },
+    {
+      "key": "treasury_address",
+      "value": "neutron1..."
+    }
+  ]
+}
+```
+
+## Bank Module Events
+
+In addition to its own events, the Fee Burner module triggers standard Bank module events during its operations:
+
+### `burn`
+
+Emitted by the Bank module when coins are burned.
+
+| Attribute Key | Description |
+| --- | --- |
+| `burner` | Address of the module burning the tokens ("cons_redistribute") |
+| `amount` | Amount and denomination of tokens burned |
+
+```json
+{
+  "type": "burn",
+  "attributes": [
+    {
+      "key": "burner",
+      "value": "neutron1..." // cons_redistribute module address
+    },
+    {
+      "key": "amount",
+      "value": "5000untrn"
+    }
+  ]
+}
+```
+
+### `transfer`
+
+Emitted by the Bank module when tokens are transferred to the Treasury.
+
+| Attribute Key | Description |
+| --- | --- |
+| `sender` | Address of the module sending the tokens ("cons_redistribute") |
+| `recipient` | Address of the Treasury |
+| `amount` | Amount and denomination of tokens transferred |
+
+```json
+{
+  "type": "transfer",
+  "attributes": [
+    {
+      "key": "sender",
+      "value": "neutron1..." // cons_redistribute module address
+    },
+    {
+      "key": "recipient",
+      "value": "neutron1..." // Treasury address
+    },
+    {
+      "key": "amount",
+      "value": "100000uatom,50000uosmo"
+    }
+  ]
+}
+```
+
+## Filtering Events
+
+To filter for Fee Burner module events using Tendermint's event query syntax:
+
+```
+tm.event='Tx' AND fee_burn.module='feeburner'
+```
+
+Or to capture all events related to the Fee Burner module:
+
+```
+tm.event='Tx' AND message.module='feeburner'
+```
+
+## Events in Block Results
+
+Fee Burner events are also included in block results, which can be queried from the Tendermint RPC endpoint:
+
+```bash
+curl http://localhost:26657/block_results?height=<height>
+```
+
+This is useful for monitoring applications that track burning rates or Treasury transfers. 

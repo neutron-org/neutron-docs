@@ -1,0 +1,29 @@
+---
+title: "Contract Manager Overview"
+---
+
+The Contract Manager module provides a safety mechanism for handling IBC acknowledgment failures in smart contracts. It ensures that malicious or buggy contracts cannot disrupt IBC channels or burden relayers by implementing error handling strategies for sudo calls.
+
+## Key Features
+
+- **Error Containment**: Prevents contract errors from disrupting IBC channels by capturing and storing errors rather than failing the channel
+  
+- **Gas Limitation**: Protects against infinite recursion attacks or excessive gas consumption during sudo calls
+
+- **Failure Recording**: Stores details of contract failures for later retrieval and handling
+
+- **Failure Resubmission**: Allows contracts to resubmit failed operations outside of the relayer context
+
+The module is essential for maintaining the reliability of IBC communications while allowing smart contracts to interact with IBC channels safely.
+
+## Module Functionality
+
+When a contract uses IBC functionality and receives an acknowledgment, the message from the counterparty chain is delivered via a sudo call. The Contract Manager module:
+
+1. Wraps all sudo calls to enforce gas limits and error handling
+2. Executes the sudo call in a temporary context to protect state consistency
+3. Captures and stores errors if the sudo call fails
+4. Allows the contract owner to query failure information
+5. Provides mechanisms for failure resubmission
+
+This approach prevents malformed or malicious contracts from causing issues with the IBC infrastructure while still ensuring contract owners are informed of failures. 

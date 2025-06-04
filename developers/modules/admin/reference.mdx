@@ -1,0 +1,624 @@
+---
+title: "Reference"
+description: "Comprehensive technical reference for the admin module"
+---
+
+This document provides a complete technical reference for the admin module, including protobuf definitions, constants, and implementation details.
+
+## Protobuf Definitions
+
+### Messages
+
+#### MsgSubmitProposal
+
+Modern message-based proposal submission.
+
+```protobuf
+// MsgSubmitProposal defines a message to submit a proposal
+message MsgSubmitProposal {
+  // messages contains the proposal messages to be executed
+  repeated google.protobuf.Any messages = 1 [(cosmos_proto.accepts_interface) = "sdk.Msg"];
+  
+  // proposer is the account address of the proposer
+  string proposer = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// MsgSubmitProposalResponse defines the response for MsgSubmitProposal
+message MsgSubmitProposalResponse {
+  // proposal_id is the assigned unique identifier for the proposal
+  uint64 proposal_id = 1;
+}
+```
+
+#### MsgSubmitProposalLegacy
+
+Legacy format proposal submission for backward compatibility.
+
+```protobuf
+// MsgSubmitProposalLegacy defines a message to submit a legacy proposal
+message MsgSubmitProposalLegacy {
+  // content contains the proposal content in legacy format
+  google.protobuf.Any content = 1 [(cosmos_proto.accepts_interface) = "Content"];
+  
+  // proposer is the account address of the proposer
+  string proposer = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// MsgSubmitProposalLegacyResponse defines the response for MsgSubmitProposalLegacy
+message MsgSubmitProposalLegacyResponse {
+  // proposal_id is the assigned unique identifier for the proposal
+  uint64 proposal_id = 1;
+}
+```
+
+#### MsgAddAdmin
+
+Admin management message for adding administrators.
+
+```protobuf
+// MsgAddAdmin defines a message to add a new admin
+message MsgAddAdmin {
+  // creator is the account address adding the admin
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  
+  // admin is the account address to be added as admin
+  string admin = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// MsgAddAdminResponse defines the response for MsgAddAdmin
+message MsgAddAdminResponse {}
+```
+
+#### MsgDeleteAdmin
+
+Admin management message for removing administrators.
+
+```protobuf
+// MsgDeleteAdmin defines a message to remove an admin
+message MsgDeleteAdmin {
+  // creator is the account address removing the admin
+  string creator = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  
+  // admin is the account address to be removed from admins
+  string admin = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// MsgDeleteAdminResponse defines the response for MsgDeleteAdmin
+message MsgDeleteAdminResponse {}
+```
+
+### Query Messages
+
+#### QueryAdminsRequest
+
+Query request for retrieving the list of administrators.
+
+```protobuf
+// QueryAdminsRequest defines the request for Admins query
+message QueryAdminsRequest {}
+
+// QueryAdminsResponse defines the response for Admins query
+message QueryAdminsResponse {
+  // admins contains the list of admin addresses
+  repeated string admins = 1;
+}
+```
+
+#### QueryParamsRequest
+
+Query request for retrieving module parameters.
+
+```protobuf
+// QueryParamsRequest defines the request for Params query
+message QueryParamsRequest {}
+
+// QueryParamsResponse defines the response for Params query
+message QueryParamsResponse {
+  // params contains the module parameters
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+```
+
+#### QueryWhitelistRequest
+
+Query request for retrieving the message whitelist.
+
+```protobuf
+// QueryWhitelistRequest defines the request for Whitelist query
+message QueryWhitelistRequest {}
+
+// QueryWhitelistResponse defines the response for Whitelist query
+message QueryWhitelistResponse {
+  // whitelisted_messages contains the list of whitelisted message types
+  repeated string whitelisted_messages = 1;
+}
+```
+
+#### QueryProposalRequest
+
+Query request for retrieving a specific proposal.
+
+```protobuf
+// QueryProposalRequest defines the request for Proposal query
+message QueryProposalRequest {
+  // proposal_id is the unique identifier of the proposal to query
+  uint64 proposal_id = 1;
+}
+
+// QueryProposalResponse defines the response for Proposal query
+message QueryProposalResponse {
+  // proposal contains the proposal details
+  Proposal proposal = 1;
+}
+```
+
+#### QueryProposalsRequest
+
+Query request for retrieving all proposals with pagination.
+
+```protobuf
+// QueryProposalsRequest defines the request for Proposals query
+message QueryProposalsRequest {
+  // pagination defines an optional pagination for the request
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryProposalsResponse defines the response for Proposals query
+message QueryProposalsResponse {
+  // proposals contains the list of proposals
+  repeated Proposal proposals = 1;
+  
+  // pagination defines the pagination response
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+```
+
+### Data Types
+
+#### Params
+
+Module parameters configuration.
+
+```protobuf
+// Params defines the parameters for the admin module
+message Params {
+  // admin_authority is the address authorized to manage admins
+  string admin_authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  
+  // whitelist_enabled indicates whether message whitelisting is active
+  bool whitelist_enabled = 2;
+  
+  // max_proposal_size limits the maximum number of messages in a single proposal
+  uint64 max_proposal_size = 3;
+  
+  // proposal_authority is the address authorized to submit proposals
+  string proposal_authority = 4 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+```
+
+#### Proposal
+
+Proposal data structure for tracking governance proposals.
+
+```protobuf
+// Proposal defines a governance proposal
+message Proposal {
+  // id is the unique proposal identifier
+  uint64 id = 1;
+  
+  // messages contains the proposal messages to be executed
+  repeated google.protobuf.Any messages = 2;
+  
+  // proposer is the account address of the proposer
+  string proposer = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  
+  // submitted_at is the timestamp when the proposal was submitted
+  int64 submitted_at = 4;
+  
+  // status indicates the current proposal status
+  ProposalStatus status = 5;
+  
+  // executed_at is the timestamp when the proposal was executed (if applicable)
+  int64 executed_at = 6;
+  
+  // error contains the error message if proposal execution failed
+  string error = 7;
+}
+```
+
+#### ProposalStatus
+
+Enumeration of possible proposal statuses.
+
+```protobuf
+// ProposalStatus enumerates the valid statuses of a proposal
+enum ProposalStatus {
+  option (gogoproto.goproto_enum_prefix) = false;
+  
+  // PROPOSAL_STATUS_UNSPECIFIED defines the default proposal status
+  PROPOSAL_STATUS_UNSPECIFIED = 0 [(gogoproto.enumvalue_customname) = "StatusUnspecified"];
+  
+  // PROPOSAL_STATUS_SUBMITTED defines a proposal that has been submitted
+  PROPOSAL_STATUS_SUBMITTED = 1 [(gogoproto.enumvalue_customname) = "StatusSubmitted"];
+  
+  // PROPOSAL_STATUS_EXECUTED defines a proposal that has been executed successfully
+  PROPOSAL_STATUS_EXECUTED = 2 [(gogoproto.enumvalue_customname) = "StatusExecuted"];
+  
+  // PROPOSAL_STATUS_FAILED defines a proposal that failed during execution
+  PROPOSAL_STATUS_FAILED = 3 [(gogoproto.enumvalue_customname) = "StatusFailed"];
+}
+```
+
+#### AdminInfo
+
+Data structure for storing administrator information.
+
+```protobuf
+// AdminInfo contains information about an administrator
+message AdminInfo {
+  // address is the admin's account address
+  string address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  
+  // added_at is the timestamp when the admin was added
+  int64 added_at = 2;
+  
+  // added_by is the address that added this admin
+  string added_by = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+```
+
+#### WhitelistEntry
+
+Data structure for whitelist configuration.
+
+```protobuf
+// WhitelistEntry defines a whitelisted message type
+message WhitelistEntry {
+  // message_type is the fully qualified message type URL
+  string message_type = 1;
+  
+  // enabled indicates whether the message type is currently enabled
+  bool enabled = 2;
+  
+  // added_at is the timestamp when the message type was whitelisted
+  int64 added_at = 3;
+  
+  // added_by is the address that added this message type to the whitelist
+  string added_by = 4 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+```
+
+### Genesis State
+
+#### GenesisState
+
+Initial state configuration for the admin module.
+
+```protobuf
+// GenesisState defines the admin module's genesis state
+message GenesisState {
+  // params defines the module parameters
+  Params params = 1 [(gogoproto.nullable) = false];
+  
+  // admins contains the list of initial administrators
+  repeated AdminInfo admins = 2;
+  
+  // whitelisted_messages contains the initial whitelist configuration
+  repeated WhitelistEntry whitelisted_messages = 3;
+  
+  // next_proposal_id is the next proposal ID to be assigned
+  uint64 next_proposal_id = 4;
+}
+```
+
+## Service Definitions
+
+### Msg Service
+
+gRPC service for transaction messages.
+
+```protobuf
+// Msg defines the admin module's transaction service
+service Msg {
+  // SubmitProposal submits a proposal using the modern message-based approach
+  rpc SubmitProposal(MsgSubmitProposal) returns (MsgSubmitProposalResponse);
+  
+  // SubmitProposalLegacy submits a proposal using the legacy format
+  rpc SubmitProposalLegacy(MsgSubmitProposalLegacy) returns (MsgSubmitProposalLegacyResponse);
+  
+  // AddAdmin adds a new administrator to the network
+  rpc AddAdmin(MsgAddAdmin) returns (MsgAddAdminResponse);
+  
+  // DeleteAdmin removes an administrator from the network
+  rpc DeleteAdmin(MsgDeleteAdmin) returns (MsgDeleteAdminResponse);
+}
+```
+
+### Query Service
+
+gRPC service for query operations.
+
+```protobuf
+// Query defines the admin module's query service
+service Query {
+  // Admins queries the list of administrators
+  rpc Admins(QueryAdminsRequest) returns (QueryAdminsResponse) {
+    option (google.api.http).get = "/cosmos/adminmodule/adminmodule/admins";
+  }
+  
+  // Params queries the module parameters
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/cosmos/adminmodule/adminmodule/params";
+  }
+  
+  // Whitelist queries the message whitelist
+  rpc Whitelist(QueryWhitelistRequest) returns (QueryWhitelistResponse) {
+    option (google.api.http).get = "/cosmos/adminmodule/adminmodule/whitelist";
+  }
+  
+  // Proposal queries a specific proposal by ID
+  rpc Proposal(QueryProposalRequest) returns (QueryProposalResponse) {
+    option (google.api.http).get = "/cosmos/adminmodule/adminmodule/proposal/{proposal_id}";
+  }
+  
+  // Proposals queries all proposals with pagination
+  rpc Proposals(QueryProposalsRequest) returns (QueryProposalsResponse) {
+    option (google.api.http).get = "/cosmos/adminmodule/adminmodule/proposals";
+  }
+}
+```
+
+## Constants and Configuration
+
+### Module Constants
+
+```go
+const (
+    // ModuleName defines the module name
+    ModuleName = "adminmodule"
+    
+    // StoreKey defines the primary module store key
+    StoreKey = ModuleName
+    
+    // RouterKey defines the module's message routing key
+    RouterKey = ModuleName
+    
+    // QuerierRoute defines the module's query routing key
+    QuerierRoute = ModuleName
+    
+    // MemStoreKey defines the in-memory store key
+    MemStoreKey = "mem_adminmodule"
+)
+```
+
+### Store Keys
+
+```go
+var (
+    // ParamsKey defines the key for storing module parameters
+    ParamsKey = []byte("params")
+    
+    // AdminKeyPrefix defines the prefix for admin storage
+    AdminKeyPrefix = []byte("admin/")
+    
+    // WhitelistKeyPrefix defines the prefix for whitelist storage
+    WhitelistKeyPrefix = []byte("whitelist/")
+    
+    // ProposalKeyPrefix defines the prefix for proposal storage
+    ProposalKeyPrefix = []byte("proposal/")
+    
+    // NextProposalIDKey defines the key for tracking next proposal ID
+    NextProposalIDKey = []byte("next_proposal_id")
+)
+```
+
+### Error Codes
+
+```go
+var (
+    // ErrUnauthorized indicates insufficient permissions
+    ErrUnauthorized = sdkerrors.Register(ModuleName, 1, "unauthorized")
+    
+    // ErrInvalidMessage indicates invalid message format
+    ErrInvalidMessage = sdkerrors.Register(ModuleName, 2, "invalid message")
+    
+    // ErrNotWhitelisted indicates message type not whitelisted
+    ErrNotWhitelisted = sdkerrors.Register(ModuleName, 3, "message type not whitelisted")
+    
+    // ErrInvalidProposal indicates malformed proposal
+    ErrInvalidProposal = sdkerrors.Register(ModuleName, 4, "invalid proposal")
+    
+    // ErrAdminExists indicates admin already exists
+    ErrAdminExists = sdkerrors.Register(ModuleName, 5, "admin already exists")
+    
+    // ErrAdminNotFound indicates admin not found
+    ErrAdminNotFound = sdkerrors.Register(ModuleName, 6, "admin not found")
+    
+    // ErrWhitelistDisabled indicates whitelist functionality disabled
+    ErrWhitelistDisabled = sdkerrors.Register(ModuleName, 7, "whitelist disabled")
+    
+    // ErrExecutionFailed indicates proposal execution failed
+    ErrExecutionFailed = sdkerrors.Register(ModuleName, 8, "execution failed")
+)
+```
+
+### Event Types and Attributes
+
+```go
+const (
+    // Event types
+    EventTypeProposalSubmitted = "proposal_submitted"
+    EventTypeProposalExecuted  = "proposal_executed"
+    EventTypeProposalFailed    = "proposal_failed"
+    EventTypeAdminAdded        = "admin_added"
+    EventTypeAdminRemoved      = "admin_removed"
+    EventTypeWhitelistUpdated  = "whitelist_updated"
+    
+    // Event attributes
+    AttributeKeyProposalID         = "proposal_id"
+    AttributeKeyProposer           = "proposer"
+    AttributeKeyMessageCount       = "message_count"
+    AttributeKeyProposalType       = "proposal_type"
+    AttributeKeyExecutor           = "executor"
+    AttributeKeyGasUsed            = "gas_used"
+    AttributeKeyExecutionHeight    = "execution_height"
+    AttributeKeyError              = "error"
+    AttributeKeyFailedMessageIndex = "failed_message_index"
+    AttributeKeyAdmin              = "admin"
+    AttributeKeyAddedBy            = "added_by"
+    AttributeKeyRemovedBy          = "removed_by"
+    AttributeKeyBlockHeight        = "block_height"
+    AttributeKeyUpdatedBy          = "updated_by"
+    AttributeKeyAddedMessages      = "added_messages"
+    AttributeKeyRemovedMessages    = "removed_messages"
+    AttributeKeyTotalWhitelisted   = "total_whitelisted"
+)
+```
+
+## Interface Definitions
+
+### Keeper Interface
+
+```go
+// Keeper defines the admin module keeper interface
+type Keeper interface {
+    // Parameter management
+    GetParams(ctx sdk.Context) Params
+    SetParams(ctx sdk.Context, params Params)
+    
+    // Admin management
+    AddAdmin(ctx sdk.Context, creator, admin string) error
+    RemoveAdmin(ctx sdk.Context, creator, admin string) error
+    GetAdmins(ctx sdk.Context) []string
+    IsAdmin(ctx sdk.Context, address string) bool
+    
+    // Whitelist management
+    AddToWhitelist(ctx sdk.Context, msgType string, addedBy string) error
+    RemoveFromWhitelist(ctx sdk.Context, msgType string, removedBy string) error
+    GetWhitelistedMessages(ctx sdk.Context) []string
+    IsWhitelisted(ctx sdk.Context, msgType string) bool
+    
+    // Proposal management
+    SubmitProposal(ctx sdk.Context, msgs []sdk.Msg, proposer string) (uint64, error)
+    ExecuteProposal(ctx sdk.Context, proposalID uint64) error
+    GetProposal(ctx sdk.Context, proposalID uint64) (Proposal, error)
+    GetAllProposals(ctx sdk.Context) []Proposal
+    
+    // Validation
+    ValidateAuthority(ctx sdk.Context, address string, operation string) error
+    ValidateMessages(ctx sdk.Context, msgs []sdk.Msg) error
+}
+```
+
+### Message Server Interface
+
+```go
+// MsgServer defines the admin module message server interface
+type MsgServer interface {
+    SubmitProposal(goCtx context.Context, req *MsgSubmitProposal) (*MsgSubmitProposalResponse, error)
+    SubmitProposalLegacy(goCtx context.Context, req *MsgSubmitProposalLegacy) (*MsgSubmitProposalLegacyResponse, error)
+    AddAdmin(goCtx context.Context, req *MsgAddAdmin) (*MsgAddAdminResponse, error)
+    DeleteAdmin(goCtx context.Context, req *MsgDeleteAdmin) (*MsgDeleteAdminResponse, error)
+}
+```
+
+### Query Server Interface
+
+```go
+// QueryServer defines the admin module query server interface
+type QueryServer interface {
+    Admins(goCtx context.Context, req *QueryAdminsRequest) (*QueryAdminsResponse, error)
+    Params(goCtx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error)
+    Whitelist(goCtx context.Context, req *QueryWhitelistRequest) (*QueryWhitelistResponse, error)
+    Proposal(goCtx context.Context, req *QueryProposalRequest) (*QueryProposalResponse, error)
+    Proposals(goCtx context.Context, req *QueryProposalsRequest) (*QueryProposalsResponse, error)
+}
+```
+
+## Default Values
+
+### Default Parameters
+
+```go
+// DefaultParams returns default admin module parameters
+func DefaultParams() Params {
+    return Params{
+        AdminAuthority:    "",
+        WhitelistEnabled:  true,
+        MaxProposalSize:   100,
+        ProposalAuthority: "",
+    }
+}
+```
+
+### Default Genesis State
+
+```go
+// DefaultGenesisState returns default genesis state
+func DefaultGenesisState() *GenesisState {
+    return &GenesisState{
+        Params:              DefaultParams(),
+        Admins:              []AdminInfo{},
+        WhitelistedMessages: []WhitelistEntry{},
+        NextProposalId:      1,
+    }
+}
+```
+
+## Validation Rules
+
+### Parameter Validation
+
+```go
+// Validate validates admin module parameters
+func (p Params) Validate() error {
+    if p.AdminAuthority != "" {
+        if _, err := sdk.AccAddressFromBech32(p.AdminAuthority); err != nil {
+            return fmt.Errorf("invalid admin authority address: %w", err)
+        }
+    }
+    
+    if p.ProposalAuthority != "" {
+        if _, err := sdk.AccAddressFromBech32(p.ProposalAuthority); err != nil {
+            return fmt.Errorf("invalid proposal authority address: %w", err)
+        }
+    }
+    
+    if p.MaxProposalSize == 0 {
+        return fmt.Errorf("max proposal size must be greater than zero")
+    }
+    
+    return nil
+}
+```
+
+### Message Validation
+
+```go
+// ValidateBasic validates MsgSubmitProposal
+func (msg *MsgSubmitProposal) ValidateBasic() error {
+    if _, err := sdk.AccAddressFromBech32(msg.Proposer); err != nil {
+        return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid proposer address: %s", err)
+    }
+    
+    if len(msg.Messages) == 0 {
+        return sdkerrors.Wrap(ErrInvalidProposal, "proposal must contain at least one message")
+    }
+    
+    for i, anyMsg := range msg.Messages {
+        var msg sdk.Msg
+        err := anyMsg.GetCachedValue().(sdk.Msg)
+        if err != nil {
+            return sdkerrors.Wrapf(ErrInvalidMessage, "invalid message at index %d", i)
+        }
+        
+        if err := msg.ValidateBasic(); err != nil {
+            return sdkerrors.Wrapf(err, "invalid message at index %d", i)
+        }
+    }
+    
+    return nil
+}
+```
+
+This comprehensive reference documentation provides all the technical specifications needed to understand and integrate with the admin module. 

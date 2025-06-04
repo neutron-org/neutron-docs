@@ -1,0 +1,63 @@
+---
+title: "Chain Parameters"
+description: "Neutron chain parameters and configurations"
+icon: "gears"
+---
+
+## Mainnet (neutron-1)
+
+Below are the current parameters for the `neutron-1` mainnet chain:
+
+| Name | Value |
+|------|-------|
+| chain-id | `neutron-1` |
+| denom | `untrn` |
+| minimum-gas-prices | `0.01untrn` |
+| timeout_commit | `1s` |
+| genesis_time | `2023-05-10T15:00:00.000000Z` |
+
+## Binary Information
+
+The release binary information is provided below:
+
+| Item | Description |
+|------|-------------|
+| GitHub repo | [neutron-org/neutron](https://github.com/neutron-org/neutron) |
+| Latest release | [v6.0.1](https://github.com/neutron-org/neutron/releases/tag/v6.0.1) |
+| Reference binary | `neutrond-linux-amd64` |
+| Checksum (sha256) | `ca72a3833662485e5edb395911657c1bd4618750ed8ca5fbb14e4d9a9c4d1f8e` |
+
+## Genesis File
+
+The genesis file information is provided below:
+
+| Item | Description |
+|------|-------------|
+| Genesis | [genesis.json](https://raw.githubusercontent.com/neutron-org/mainnet-assets/main/neutron-1-genesis.json) |
+
+## Testnet (pion-1)
+
+Below are the current parameters for the `pion-1` testnet chain:
+
+| Name | Value |
+|------|-------|
+| chain-id | `pion-1` |
+
+The testnet is running the latest release candidate and is used for testing prior to mainnet upgrades.
+
+## Migrations and Governance
+
+Chain upgrades are implemented via governance proposals. For migration guides and upgrade information, refer to:
+
+- [v6.0.1 Upgrade](/resources/upgrades/v6.0.1)
+- [v7.0.0-rc0 Upgrade](/resources/upgrades/v7.0.0-rc0) (Testnet)
+
+## System Requirements
+
+Recommended specifications for running a Neutron node:
+
+- 4+ CPU cores
+- 16+ GB RAM (64GB recommended for validators)
+- 500+ GB SSD storage
+- Ubuntu 20.04 or later
+- Go 1.23.x for building from source 

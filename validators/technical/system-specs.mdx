@@ -1,0 +1,144 @@
+---
+title: "System Specifications"
+description: "Hardware and software requirements for running a Neutron validator node"
+---
+
+This document outlines the recommended system specifications for running a Neutron validator node in production.
+
+## Hardware Requirements
+
+### Minimum Specifications
+
+These are the minimum requirements to participate in the Neutron network. Nodes with these specifications may struggle during high network load.
+
+| Component | Requirement |
+|-----------|-------------|
+| CPU | 4 cores / 8 threads |
+| RAM | 16 GB DDR4 |
+| Storage | 500 GB SSD |
+| Network | 100 Mbps |
+
+### Recommended Specifications
+
+For optimal performance and future-proofing, we recommend the following:
+
+| Component | Requirement |
+|-----------|-------------|
+| CPU | 8+ cores / 16+ threads (AMD Ryzen or Intel Xeon) |
+| RAM | 32 GB+ DDR4 |
+| Storage | 2 TB+ NVMe SSD |
+| Network | 500+ Mbps with 5 TB+ monthly bandwidth |
+
+### Storage Considerations
+
+Fast storage is critical for validator performance. We recommend:
+
+- NVMe SSDs for the best performance
+- Enterprise-grade SSDs with high durability (DWPD)
+- Separate drives for the operating system and blockchain data
+- RAID configurations for improved reliability
+
+## Software Requirements
+
+### Operating System
+
+| OS | Version | Notes |
+|----|---------|-------|
+| Ubuntu | 22.04 LTS or higher | Recommended for most validators |
+| Debian | 11 or higher | Alternative option |
+| CentOS | 9 or higher | For those familiar with RHEL-based systems |
+
+We recommend using a minimal server installation with only necessary packages to reduce the attack surface.
+
+### Software Dependencies
+
+The following software packages should be installed:
+
+- Go 1.21 or higher
+- gcc and build tools
+- jq (for JSON parsing)
+- Supervisor or systemd (for service management)
+- Prometheus and Node Exporter (for monitoring)
+
+## Network Configuration
+
+### Firewall Rules
+
+| Port | Protocol | Purpose | Allow From |
+|------|----------|---------|-----------|
+| 22 | TCP | SSH | Restricted IPs only |
+| 26656 | TCP | P2P | Public |
+| 26657 | TCP | RPC | Localhost or restricted IPs |
+| 1317 | TCP | API | Localhost or restricted IPs |
+| 9090 | TCP | gRPC | Localhost or restricted IPs |
+| 9091 | TCP | gRPC-web | Localhost or restricted IPs |
+
+### Sentry Node Architecture
+
+For production validators, we recommend a sentry node architecture:
+
+```
+Internet <-> Sentry Nodes <-> Private Network <-> Validator
+```
+
+This setup protects your validator node from direct exposure to the public internet.
+
+## Cloud vs. Self-Hosted
+
+Both cloud and self-hosted deployments have advantages:
+
+### Cloud Providers
+
+Suitable options include:
+- AWS (m6i.2xlarge or higher)
+- Google Cloud (n2-standard-8 or higher)
+- Digital Ocean (Premium CPU-Optimized droplets)
+- Hetzner (Dedicated servers or cloud instances)
+
+**Pros:**
+- Easier management
+- Built-in redundancy
+- DDoS protection
+
+**Cons:**
+- Higher long-term cost
+- Less control
+- Potential centralization concerns
+
+### Self-Hosted
+
+**Pros:**
+- Lower long-term cost
+- Full control over hardware
+- Better for network decentralization
+
+**Cons:**
+- Requires physical access and maintenance
+- Needs reliable power and internet
+- More complex backup solutions
+
+## Monitoring and Alerts
+
+Essential monitoring components:
+
+- Prometheus for metrics collection
+- Grafana for visualization
+- Node Exporter for system metrics
+- Alertmanager for notifications
+
+Key metrics to monitor:
+- Validator missed blocks
+- Disk usage
+- CPU and memory usage
+- Network connections
+- Validator status
+
+## High Availability Setup
+
+For critical validators, consider:
+
+- Automated failover to backup nodes
+- Geographically distributed infrastructure
+- Redundant internet connections
+- Uninterruptible power supplies
+- Hot standby nodes 

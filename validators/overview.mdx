@@ -1,0 +1,128 @@
+---
+title: "Validators Overview"
+description: "Guide for Neutron validators"
+icon: "server"
+---
+
+Neutron validators secure the network by operating nodes that participate in consensus, validate transactions, and provide critical oracle data. Following the Mercury upgrade in April 2025, Neutron transitioned to a fully sovereign network with a unique validator model.
+
+<CardGroup cols={2}>
+  <Card title="High Performance" icon="bolt" iconType="duotone">
+    The Mercury upgrade significantly improved network performance, reducing latency to ~100ms and increasing throughput by 11x.
+  </Card>
+  <Card title="DAO-Driven Rewards" icon="money-bill-trend-up" iconType="duotone">
+    Unlike traditional networks, Neutron rewards validators directly from the DAO treasury rather than through inflation.
+  </Card>
+  <Card title="DAO-Curated Validator Set" icon="users-gear" iconType="duotone">
+    The Neutron DAO maintains a curated set of 20 validators, selected based on performance metrics and technical capabilities.
+  </Card>
+  <Card title="Performance-Based Compensation" icon="chart-line" iconType="duotone">
+    Validators receive stable monthly compensation based on their performance in block signing and oracle services.
+  </Card>
+</CardGroup>
+
+## Neutron's Validator Model
+
+Neutron's validator model differs fundamentally from traditional Proof of Stake networks:
+
+<CardGroup cols={4}>
+  <Card title="Fixed Supply" icon="coins">
+    No inflation-based block rewards, preserving NTRN's fixed supply economics
+  </Card>
+  <Card title="DAO Treasury" icon="building-columns">
+    All rewards paid directly from the DAO treasury instead of inflation
+  </Card>
+  <Card title="No Slashing" icon="shield-check">
+    Uses jailing and rotation instead of traditional slashing mechanisms
+  </Card>
+  <Card title="Base Compensation" icon="money-bill">
+    $3,000/month for validators meeting performance requirements
+  </Card>
+</CardGroup>
+
+## Performance Requirements
+
+Validators operate under strict performance criteria, with rewards tied directly to maintaining high-quality service:
+
+| Performance Criterion | Minimum Threshold | Full Reward Threshold |
+|-----------------------|-------------------|----------------------|
+| Block Signing         | 95%               | 99\.5%                |
+| Oracle Price Updates  | 95%               | 98%                  |
+
+Validators who fail to meet minimum thresholds for two consecutive months or three months in a six-month period may be rotated out of the active set by the Neutron DAO.
+
+## Node Hardware Requirements
+
+### Prioritize High Single-Thread CPU Performance
+
+- **Key takeaway:** CometBFT and the Cosmos-SDK rely heavily on sequential/single-threaded processing (consensus → block processing → validation). A CPU's *single-core* performance is more critical than overall core count.
+- **Recommended CPUs:**
+    - **AMD Ryzen 9 7950X3D** (16c/32t, 4.2–5.7 GHz)
+    - **AMD EPYC 4584PX** (16c/32t, 4.2–5.7 GHz)
+- **Alternatives:** Other CPUs with **high base and boost clocks** (≥3.5–4.0 GHz base) and at least **16 cores**. However, the above models have proven track record for fast blocks.
+
+### Memory Requirements
+
+- **Minimum:** 64 GB RAM
+- **Recommended:** 128 GB RAM for optimal performance
+- **Type:** DDR4-3200 or DDR5-4800+ for maximum throughput
+
+### Storage Specifications
+
+- **Primary Storage:** 2 TB NVMe SSD (minimum)
+- **Recommended:** 4 TB NVMe SSD for future growth
+- **Performance:** ≥10,000 IOPS, ≥500 MB/s sustained read/write
+- **Backup:** Additional storage for state snapshots and backups
+
+### Network Requirements
+
+- **Bandwidth:** Minimum 1 Gbps dedicated connection
+- **Latency:** &lt;50ms to major network peers
+- **Redundancy:** Multiple network providers recommended
+- **DDoS Protection:** Enterprise-grade protection required
+
+## Key Selection Criteria
+
+<CardGroup cols={3}>
+  <Card title="Dual Network Operation" icon="network-wired">
+    Validators must run both mainnet and testnet nodes
+  </Card>
+  <Card title="Technical Infrastructure" icon="server">
+    High-quality hardware with redundancy and monitoring
+  </Card>
+  <Card title="Security Practices" icon="lock">
+    Robust security measures including sentry nodes
+  </Card>
+</CardGroup>
+
+## Mercury Upgrade
+
+The Mercury upgrade in April 2025 marked a pivotal transition for Neutron, moving from Interchain Security (ICS) to a fully sovereign network. This enabled:
+
+- Native NTRN staking with fixed supply tokenomics
+- Performance improvements with reduced latency (~100ms) and increased throughput
+- Better stability for the High Frequency Oracle and other infrastructure
+- Faster upgrades and incident response capabilities
+
+## Documentation Sections
+
+<CardGroup cols={3}>
+  <Card title="Running a Node" icon="server" href="/validators/running-a-node">
+    Complete setup instructions for running a Neutron validator node
+  </Card>
+  <Card title="Oracle Setup" icon="chart-line" href="/validators/oracle-setup">
+    Configure the Slinky price oracle service for your validator
+  </Card>
+  <Card title="Becoming a Validator" icon="user-plus" href="/validators/becoming-a-validator">
+    Steps to join the Neutron validator set with performance requirements
+  </Card>
+  <Card title="Technical Requirements" icon="sliders" href="/validators/technical/combined">
+    Detailed hardware specifications and performance criteria
+  </Card>
+  <Card title="Validator Economics" icon="coins" href="/validators/economics/validator-incentives">
+    Learn about the unique economic model and incentives
+  </Card>
+  <Card title="Network Resources" icon="network-wired" href="/resources/peers">
+    Access peers, endpoints and other network resources
+  </Card>
+</CardGroup> 

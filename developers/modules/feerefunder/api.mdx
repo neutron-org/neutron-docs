@@ -1,0 +1,342 @@
+---
+title: "API"
+---
+
+This document details the API endpoints provided by the Fee Refunder module.
+
+## REST Endpoints
+
+The Fee Refunder module exposes several REST endpoints for querying module parameters and fee information.
+
+### GET: Query Module Parameters
+
+```
+GET /neutron/feerefunder/params
+```
+
+Returns the current parameters of the Fee Refunder module.
+
+#### Response Structure
+
+```json
+{
+  "params": {
+    "min_fee": {
+      "recv_fee": [],
+      "ack_fee": [
+        {
+          "denom": "untrn",
+          "amount": "1000"
+        }
+      ],
+      "timeout_fee": [
+        {
+          "denom": "untrn",
+          "amount": "1000"
+        }
+      ]
+    }
+  }
+}
+```
+
+### GET: Query Minimum Fee
+
+```
+GET /neutron/feerefunder/min_fee
+```
+
+Returns the minimum required fees for IBC operations.
+
+#### Response Structure
+
+```json
+{
+  "min_fee": {
+    "recv_fee": [],
+    "ack_fee": [
+      {
+        "denom": "untrn",
+        "amount": "1000"
+      }
+    ],
+    "timeout_fee": [
+      {
+        "denom": "untrn",
+        "amount": "1000"
+      }
+    ]
+  }
+}
+```
+
+### GET: Query Fee Information for a Packet
+
+```
+GET /neutron/feerefunder/fee_info/{port_id}/{channel_id}/{sequence}
+```
+
+Returns the fee information for a specific IBC packet.
+
+#### Parameters
+
+- `port_id`: The port ID of the IBC packet
+- `channel_id`: The channel ID of the IBC packet
+- `sequence`: The sequence number of the IBC packet
+
+#### Response Structure
+
+```json
+{
+  "fee_info": {
+    "payer": "neutron1...",
+    "fee": {
+      "recv_fee": [],
+      "ack_fee": [
+        {
+          "denom": "untrn",
+          "amount": "1500"
+        }
+      ],
+      "timeout_fee": [
+        {
+          "denom": "untrn",
+          "amount": "1200"
+        }
+      ]
+    },
+    "packet_id": {
+      "port_id": "transfer",
+      "channel_id": "channel-0",
+      "sequence": "123"
+    }
+  }
+}
+```
+
+### GET: Query All Fee Information
+
+```
+GET /neutron/feerefunder/all_fee_info
+```
+
+Returns all fee information entries stored in the module.
+
+#### Response Structure
+
+```json
+{
+  "fee_infos": [
+    {
+      "payer": "neutron1...",
+      "fee": {
+        "recv_fee": [],
+        "ack_fee": [
+          {
+            "denom": "untrn",
+            "amount": "1500"
+          }
+        ],
+        "timeout_fee": [
+          {
+            "denom": "untrn",
+            "amount": "1200"
+          }
+        ]
+      },
+      "packet_id": {
+        "port_id": "transfer",
+        "channel_id": "channel-0",
+        "sequence": "123"
+      }
+    },
+    {
+      "payer": "neutron1...",
+      "fee": {
+        "recv_fee": [],
+        "ack_fee": [
+          {
+            "denom": "untrn",
+            "amount": "2000"
+          }
+        ],
+        "timeout_fee": [
+          {
+            "denom": "untrn",
+            "amount": "1800"
+          }
+        ]
+      },
+      "packet_id": {
+        "port_id": "transfer",
+        "channel_id": "channel-1",
+        "sequence": "456"
+      }
+    }
+  ]
+}
+```
+
+## gRPC Endpoints
+
+The Fee Refunder module exposes gRPC query endpoints.
+
+### Query Service
+
+```protobuf
+service Query {
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/neutron/feerefunder/params";
+  }
+
+  // MinFee queries the minimum required fees.
+  rpc MinFee(QueryMinFeeRequest) returns (QueryMinFeeResponse) {
+    option (google.api.http).get = "/neutron/feerefunder/min_fee";
+  }
+
+  // FeeInfo queries fee information for a specific packet.
+  rpc FeeInfo(QueryFeeInfoRequest) returns (QueryFeeInfoResponse) {
+    option (google.api.http).get = "/neutron/feerefunder/fee_info/{port_id}/{channel_id}/{sequence}";
+  }
+
+  // AllFeeInfo queries all fee information entries.
+  rpc AllFeeInfo(QueryAllFeeInfoRequest) returns (QueryAllFeeInfoResponse) {
+    option (google.api.http).get = "/neutron/feerefunder/all_fee_info";
+  }
+}
+```
+
+#### Params
+
+`Params` queries the module parameters.
+
+Request:
+```protobuf
+message QueryParamsRequest {}
+```
+
+Response:
+```protobuf
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+```
+
+#### MinFee
+
+`MinFee` queries the minimum required fees.
+
+Request:
+```protobuf
+message QueryMinFeeRequest {}
+```
+
+Response:
+```protobuf
+message QueryMinFeeResponse {
+  Fee min_fee = 1 [(gogoproto.nullable) = false];
+}
+```
+
+#### FeeInfo
+
+`FeeInfo` queries fee information for a specific packet.
+
+Request:
+```protobuf
+message QueryFeeInfoRequest {
+  string port_id = 1;
+  string channel_id = 2;
+  uint64 sequence = 3;
+}
+```
+
+Response:
+```protobuf
+message QueryFeeInfoResponse {
+  FeeInfo fee_info = 1 [(gogoproto.nullable) = false];
+}
+```
+
+#### AllFeeInfo
+
+`AllFeeInfo` queries all fee information entries.
+
+Request:
+```protobuf
+message QueryAllFeeInfoRequest {}
+```
+
+Response:
+```protobuf
+message QueryAllFeeInfoResponse {
+  repeated FeeInfo fee_infos = 1 [(gogoproto.nullable) = false];
+}
+```
+
+## API Usage Examples
+
+### Querying Parameters Using curl
+
+```bash
+curl -X GET "http://localhost:1317/neutron/feerefunder/params"
+```
+
+### Querying Minimum Fees Using curl
+
+```bash
+curl -X GET "http://localhost:1317/neutron/feerefunder/min_fee"
+```
+
+### Querying Fee Information for a Packet Using curl
+
+```bash
+curl -X GET "http://localhost:1317/neutron/feerefunder/fee_info/transfer/channel-0/123"
+```
+
+### Querying All Fee Information Using curl
+
+```bash
+curl -X GET "http://localhost:1317/neutron/feerefunder/all_fee_info"
+```
+
+### Querying Parameters Using grpcurl
+
+```bash
+grpcurl -plaintext \
+  -d '{}' \
+  localhost:9090 \
+  neutron.feerefunder.Query/Params
+```
+
+### Querying Minimum Fees Using grpcurl
+
+```bash
+grpcurl -plaintext \
+  -d '{}' \
+  localhost:9090 \
+  neutron.feerefunder.Query/MinFee
+```
+
+### Querying Fee Information for a Packet Using grpcurl
+
+```bash
+grpcurl -plaintext \
+  -d '{
+    "port_id": "transfer",
+    "channel_id": "channel-0",
+    "sequence": "123"
+  }' \
+  localhost:9090 \
+  neutron.feerefunder.Query/FeeInfo
+```
+
+### Querying All Fee Information Using grpcurl
+
+```bash
+grpcurl -plaintext \
+  -d '{}' \
+  localhost:9090 \
+  neutron.feerefunder.Query/AllFeeInfo
+``` 

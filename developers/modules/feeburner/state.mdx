@@ -1,0 +1,122 @@
+---
+title: "State"
+---
+
+The Fee Burner module maintains state information to track the total amount of NTRN tokens burned and module parameters.
+
+## State Objects
+
+### TotalBurnedNeutronsAmount
+
+The primary state object is the `TotalBurnedNeutronsAmount` record, which stores information about the total burned NTRN tokens:
+
+```protobuf
+message TotalBurnedNeutronsAmount {
+  cosmos.base.v1beta1.Coin coin = 1 [(gogoproto.nullable) = false];
+}
+```
+
+This record contains:
+- `coin`: A Cosmos SDK Coin object representing the total amount and denomination of burned NTRN tokens
+
+### Module Parameters
+
+The module parameters are stored as a `Params` object:
+
+```protobuf
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+  // Defines Neutron denom, which will be burned during fee processing, any
+  // other denom will be sent to Treasury
+  string neutron_denom = 1;
+  // Deprecated in v0.4.4. Is not used anymore
+  string reserve_address = 2;
+  // Defines treasury address
+  string treasury_address = 3;
+}
+```
+
+This contains:
+- `neutron_denom`: The denomination of the Neutron token to be burned
+- `treasury_address`: The address to which non-Neutron fees will be sent
+- `reserve_address`: Deprecated parameter (no longer used)
+
+## State Structure
+
+The Fee Burner module uses a simple key-value store system to manage its state:
+
+```
+KeyBurnedFees → TotalBurnedNeutronsAmount
+ParamsKey → Params
+```
+
+### Key Definitions
+
+The module uses the following keys in the KVStore:
+
+| Key | Purpose |
+| --- | --- |
+| `KeyBurnedFees` | Stores the total amount of NTRN tokens burned |
+| `ParamsKey` | Stores the module parameters |
+
+## State Transitions
+
+The Fee Burner module primarily modifies state during two operations:
+
+### Recording Burned Fees
+
+When NTRN tokens are burned, the module updates the `TotalBurnedNeutronsAmount` record:
+
+1. Retrieves the current total from the store
+2. Adds the newly burned amount to the total
+3. Stores the updated total back in the store
+
+```go
+func (k Keeper) RecordBurnedFees(ctx sdk.Context, amount sdk.Coin) {
+    store := ctx.KVStore(k.storeKey)
+
+    totalBurnedNeutronsAmount := k.GetTotalBurnedNeutronsAmount(ctx)
+    totalBurnedNeutronsAmount.Coin = totalBurnedNeutronsAmount.Coin.Add(amount)
+
+    store.Set(KeyBurnedFees, k.cdc.MustMarshal(&totalBurnedNeutronsAmount))
+}
+```
+
+### Updating Parameters
+
+When module parameters are updated (typically through governance):
+
+1. The module validates the new parameters
+2. Stores them in the KVStore under the `ParamsKey`
+
+## Genesis State
+
+The genesis state of the Fee Burner module consists of:
+
+```protobuf
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+  TotalBurnedNeutronsAmount total_burned_neutrons_amount = 2 [(gogoproto.nullable) = false];
+}
+```
+
+This includes:
+- The module parameters
+- The total amount of NTRN tokens burned (typically zero at genesis)
+
+## State Initialization
+
+During the module's `InitGenesis` function:
+
+1. Parameters are stored in the KVStore
+2. Initial total burned amount is set (usually zero in a new chain)
+
+## State Export
+
+During the module's `ExportGenesis` function:
+
+1. Current parameters are retrieved from the KVStore
+2. Current total burned amount is retrieved
+3. Both are included in the exported genesis state
+
+This allows the state to be properly preserved during chain exports and upgrades. 

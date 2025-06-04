@@ -1,0 +1,349 @@
+
+NEutron DAO
+Overview
+Governance.png
+
+Being an Interchain Secured network, Neutron does not use standard Cosmos SDK governance module. Neutron governance is based on DAO DAO contracts, with some modifications. It consists of two parts:
+
+The Neutron DAO,
+Multiple subDAOs.
+Chain management
+For privileged actions (e.g., changing network parameters and making software update proposals) Neutron uses the admin-module fork managed by the Informal team. This module allows to specify a list of admin addresses that are able to submit proposals that are automatically executed.
+
+The only two addresses that are added to the admin module is the Neutron DAO core contract and the address of the Chain manager contract, which implements the chain management model with two types of permission strategies:
+
+ALLOW_ALL: gives a given address full access to the admin module, allowing to submit all possible types of privileged messages;
+ALLOW_ONLY: allows a given address to submit privileged messages of a specific type, with further restrictions if applicable (see below).
+For the ALLOW_ONLY model, the following types of privileged messages are supported:
+
+Message type	Proposal semantics	Restrictions
+params.ParamChangeProposal	Legacy proposal type for changing parameters of modules that did not abandon the deprecated params module, e.g., the globalfee module.	Subspace: allows to define the modules in which you can change the params. Key: allows to define what specific parameters can be changed within a given module.
+module_name.MsgUpdateParams	New-style parameter changes are executed by sending an MsgUpdateParams message to a specific module. Only the authorised address can execute them (e.g., the governance module).	Specific fields (== parameters) of the MsgUpdateParams message.
+cron.AddSchedule	Adds a new execution schedule to the CRON module.	—
+cron.RemoveSchedule	Removes an execution schedule from the CRON module.	—
+upgrade.SoftwareUpgradeProposal	Adds a software upgrade proposal. Can be used for expedited security upgrades.	—
+upgrade.CancelSoftwareUpgradeProposal	Removes a software upgrade proposal.	—
+The following assignment of permission strategies is implemented:
+
+Entity	Strategy
+Neutron DAO core contract	ALLOW_ALL
+Expedited Software Upgrades Multisig	ALLOW_ONLY [upgrade.SoftwareUpgradeProposal, upgrade.CancelSoftwareUpgradeProposal]
+Tokenfactory Hooks Multisig	ALLOW_ONLY [tokenfactory.UpdateParams(whitelisted_hooks)]
+By empowering privileged subDAOs to make specific parameter changes, the network can swiftly adapt to urgent situations, such as submitting software upgrade proposals in case of a vulnerability that was discovered on-chain. The main DAO retains ultimate control by granting and revoking permissions, ensuring that the broader governance framework remains intact and secure.
+
+Neither the Neutron DAO, nor the privileged SubDAOs are forced to pass their messages through the Chain manager. If any SubDAO needs to perform a privileged action, they need to wrap the messages they need to execute in a message to the Chain manager.
+
+Neutron DAO
+The Neutron DAO supports single-choice and multiple-choice proposals by registering the corresponding proposal contracts in the core contract, along with a special type of overrule proposals (see below). In the future, additional types of proposals might be introduced (e.g., gauges).
+
+Each type of proposal can only be submitted through a dedicated pre-propose contract (separate pre-propose contracts for single-, multi-choice and overrule proposals exist), which manages deposits and makes sure that only DAO members can submit proposals.
+
+Voting Power Registry
+Instead of a single voting power module, Neutron DAO core contract interacts with the Voting Power Registry contract that keeps track of multiple Voting Vaults (see below).
+
+Voting vaults
+A voting vault is a smart contract that implements the DAO DAO voting module interface, namely, it is capable of:
+
+Providing the total voting power at a given height,
+Providing the voting power of an address at a given height.
+The overall voting power of a given address is a sum of the voting powers that the address has in all of the registered voting vaults.
+
+There are two types of Voting Vaults:
+
+Real vaults,
+Virtual vaults.
+An example of a real vault is the Neutron Vault, which allows its users to directly bond and unbond NTRN tokens. ( This is done without locking them, i.e., you can bond and unbond tokens with this vault with no unbonding period.)
+
+In most cases, however, a Voting Vault does not directly store user funds; in this sense, such voting vaults can be called "virtual" vaults.**. For example, the Lockdrop vault does not allow users to directly bond or unbond LP tokens; instead it implements a relatively complicated query to multiple contracts to determine the amount of NTRN tokens that correspond to a certain amount of LP tokens at a given height.
+
+Note: The voting power is based exclusively on the amount of NTRN tokens, regardless of the type of the vault.
+
+Below is the list of Voting Vaults that will be available at launch:
+
+Neutron Vault;
+Credits Vault (virtual) — keeps track of the NTRN tokens that are vested in the Credits contract. You can not add tokens or remove tokens from this vault directly;
+Lockdrop Vault (virtual) — keeps track of the NTRN tokens that are locked in the Lockdrop contract. You can not add tokens or remove tokens from this vault directly;
+LP Vesting Vault (virtual) — keeps track of the NTRN tokens that are vested in the LP Vesting contract. You can not add tokens or remove tokens from this vault directly;
+Investors Vault (virtual) — keeps track of the NTRN tokens that are vested in the early backers vesting contract. You can not add tokens or remove tokens from this vault directly.
+Overrule proposals
+N.B.: you need to read the subDAOs design below to understand this section.
+
+The Overrule proposal type has a low threshold (0.01 of the total voting power). It only allows to call the overrule_proposal() method of a subDAO proposal contract.
+
+Re-voting should be disabled for such proposals (execute immediately after the threshold is reached).
+
+subDAOs
+The Neutron DAO creates subDAOs by executing Neutron DAO proposals that contain Instantiate messages for the subDAO contracts. At the launch time, only the Multisig-type subDAO will be available, which is similar to the Neutron DAO, but uses the cw4 voting module implementation for voting power (that’s where the multisig logic is implemented).
+
+One important feature of the subDAOs is that their proposals can be overruled by the Neutron DAO within a specified timelock period.
+
+Timelocks & Overrules
+For more info on Overrules, check Overrules page.
+
+Proposals approved by a subDAO are timelocked. During the timelock period, the Neutron DAO can overrule any proposal by creating a new Overrule proposal; this proposal has a lower threshold than the regular proposals, and is executed immediately after reaching the threshold.
+
+The timelock mechanism is implemented as follows. When creating a proposal, the user sends a regular proposal message to the subDAO pre-propose contract. This contract wraps the messages to be executed in a TimelockProposal message that is defined by the Timelock contract. When the proposal passes, the subDAO core contract does not execute the original messages; instead, it sends them wrapped in a TimelockProposal message to the Timelock contract.
+
+The Timelock contract has 3 handlers:
+
+execute_timelock_proposal(proposal_id, msgs): timelocks the given proposal messages, (permissioned, only by subDAO core contract);
+execute_execute_proposal(proposal_id): executes the proposal if the timelock period has passed (permissionless);
+execute_overrule_proposal(proposal_id): overrules the proposal (permissioned, only by the Neutron DAO).
+When a TimelockProposal message is processed by the Timelock contract, the submission time is recorded in the state. The Timelock contract has a parameter timelock_period that defines how much time needs to pass before the proposal can be executed.
+
+Important notes
+The wasmd-level admin of the Timelock contract is the Neutron DAO core contract;
+The owner of the Timelock contract is the Neutron DAO core contract;
+The Timelock contract is instantiated by the pre-propose contract;
+The subDAO address is queried from the pre-propose module during instantiation.
+Security subDAO
+There is a special Security subDAO that can only execute pause() methods on the following contracts:
+
+All other subDAOs;
+Reserve contract;
+Distribution contract;
+The Security subDAO implements a modified version of the single-choice proposal that only allows to send pause() messages to smart contracts.
+
+
+Overrules
+Overview
+Being inspired by the Lido's EasyTracks, Overrules allows to reduce governance load on the main Neutron DAO. Instead of creating the special motions that allow making actions on behalf of the main DAO, Overrules allow for a subDAOs to manage things by themselves still being limited by the main DAO.
+
+It works in the following way:
+
+Special-purpose subDAO is created (e.g. Security subDAO, Grants subDAO, Liquidity Mining subDAO, etc.)
+This subDAO gets allocated budget from the main DAO and also gets any permissions needed
+This subDAO can now manage its budget and permissions without the need to ask the main DAO for every action
+Still, every subDAO proposal can be overruled by the main DAO within a specified timelock period
+To prevent subDAOs from experiencing operational delays, the timelock period should be reasonably brief (e.g. 3 days). At the same time, overruling should be easy enough, so the threshold should be low enough (e.g. 10 times lower than regular proposal threshold).
+
+Technical details
+This section describes the technical details of the Overrules implementation. It can be interesting for developers who want to understand how it works for using Overrules in their DAO or making the integrations with Neutron DAO.
+
+Smart contracts design
+To implement the Overrules, we add several smart contracts to the DAO:
+
+Overrule pre-propose module for main DAO
+subDAO pre-propose module for subDAOs
+Timelock contract
+This design allows to implement the Overrules in a way that doesn't require any significant changes in the main DAO smart contracts. (The only change made to the main DAO is the addition of the query to check if subDAO is in the DAO's subDAOs list, also there is ExecuteTimelockedMsgs message added for SubDao Core).
+
+How it works:
+
+subDAO member submits a proposal to subDAO pre-propose module, which takes the proposal message and wraps it in a TimelockProposal message.
+subDAO members vote for the proposal and...
+it gets executed, which means that timelock contract
+locks the subDAO proposal,
+creates a new overrule proposal in the overrule pre-propose module of main DAO.
+Main DAO members vote for the overrule proposal.
+Overrule proposal is executed and subDAO proposal is rejected.
+Simplified schema:
+
+                                                  subDAO members
+                                                        │
+                                                      2 │Vote
+            1       ┌──────────────┐     1       ┌──────▼─────┐      3      ┌─────────────┐    3        ┌─────────┐
+subDAO ────────────►│  sudDAO      ├────────────►│  proposal  ├─────────────┤ subDAO core ├────────────►│ timelock│
+member  Propose(    │  pre-propose │ Propose(    │            │ Execute(    │             │ Timelock(   │         │
+        Execute(    └──────────────┘ Timelock(   └────────────┘ Timelock(   └─────────────┘ Timelock(   └─┬────▲──┘
+        ProposeMsg))                 Execute(                   Execute(                    Execute(      │    │
+                                     ProposeMsg)))              ProposeMsg)))               ProposeMsg))) │    │
+                                                       3                                                  │    │
+  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────┘    │
+  │                              ProposeOverrule(timelock, proposal_id)                                        │
+  │                                                                                                            │
+  │                                                                                                            │
+  │        ┌──────────────┐      3        ┌────────────┐         5       ┌────────────────┐        5           │
+  └───────►│  overrule    ├──────────────►│  proposal  ├────────────────►│ Main DAO core  ├────────────────────┘
+           │  pre-propose │ Propose(      │            │    Execute(     │                │    Overrule(
+           └──────────────┘ Overrule(     └──────▲─────┘    Overrule(    └────────────────┘    proposal_id)
+                            timelock,            │          timelock,
+                            proposal_id))      4 │Vote      proposal_id))
+                                                 │
+                                             DAO members
+
+
+...or
+
+(same as above)
+(same as above)
+(same as above)
+DAO members ignore the overrule proposal.
+Timelocked proposal can be executed once voting period of overrule proposal is over.
+Simplified schema:
+
+                                                  subDAO members                         5         ProposeMsg
+                                                        │                           ┌─────────────────────────────►
+                                                      2 │Vote                       │
+            1       ┌──────────────┐     1       ┌──────▼─────┐      3      ┌───────┴─────┐    3        ┌─────────┐
+subDAO ────────────►│  sudDAO      ├────────────►│  proposal  ├─────────────┤ subDAO core ├────────────►│timelock │
+member  Propose(    │  pre-propose │ Propose(    │            │ Execute(    │             │ Timelock(   │         │
+        Execute(    └──────────────┘ Timelock(   └────────────┘ Timelock(   └───────▲─────┘ Timelock(   └──┬────┬─┘
+        ProposeMsg))                 Execute(                   Execute(            │       Execute(       │    │
+                                     ProposeMsg)))              ProposeMsg)))       │       ProposeMsg)))  │    │
+                                                                                    │                      │    │
+                                                                                    │  5                   │    │
+                                                                                    └──────────────────────┘    │
+                                                                                       Execute(ProposeMsg)      │
+                                                       3                                                        │
+  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+  │                              ProposeOverrule(timelock, proposal_id)
+  │
+  │
+  │        ┌──────────────┐      3        ┌────────────┐                 ┌────────────────┐
+  └───────►│  overrule    ├──────────────►│  proposal  │                 │ Main DAO core  │
+           │  pre-propose │ Propose(      │            │                 │                │
+           └──────────────┘ Overrule(     └────────────┘                 └────────────────┘
+                            timelock,
+                            proposal_id))         4
+
+                                             DAO members
+
+
+If the subDAO proposal is rejected by subDAO members, everything works the same way as without any timelocks/overrules since they're not triggered.
+
+Overrule pre-propose module allows only overrule messages to be created, thus, it takes only timelock contract address and subDAO proposal id as parameters. Title and description are generated automatically.
+
+The proposal module for overrule proposals is just a properly configured regular SingleChoiceProposal module.
+
+When an overrule proposal is going to be created, the overrule pre-propose module does some checks:
+
+does the timelock contract correspond to the subDAO
+is the subDAO in the DAO's subDAOs list
+is the proposal timelocked
+is an overrule proposal for this subDAO proposal already created
+Those checks are needed to avoid spam and duplications. It's pretty crucial since the spam proposals and duplications can mislead DAO members and make the proposal that supposed to be overruled passed by washing out voting power to wrong overrule proposals. Lack of check also could allow to create overrule proposals for the unregistered subDAOs/contracts which is not great either.
+
+For check #4 pre-propose module stores the map from pair <timelock_contract_address, subDAO_proposal_id> to overrule proposal id. It also allows one to get the corresponding overrule proposal id for given subDAO proposal via special query. Reverse query (get subDAO proposal id for given overrule proposal id) is also possible, one just needs to query the overrule proposal content from proposal module and get the subDAO proposal id from the proposal message.
+
+In general, overrule proposal creation is permissionless. Still, since it's created in the very same transaction as the proposal is getting timelocked and duplications aren't allowed, there's no moment in time when one can create overrule proposal themself.
+
+Caveats
+Current implementation has several caveats:
+
+The model might be a bit confusing in terms of proposal statuses. subDAO proposal now have two phases:
+subDAO-decision phase: the proposal is created, voted and executed by the subDAO. On this phase, the proposal has regular statuses (e.g. Passed, Rejected, etc.). Still, Executed doesn't mean that the proposal is executed, it means that subDAO sent the proposal to the timelock contract.
+Timelock phase: the proposal is locked at the Timelock contract. On this phase, the proposal has statuses Timelocked, Overruled, Executed, ExecutionFailed. Here Executed means actual proposal execution.
+The overrule proposal module should be configured in a very special way:
+Obviously, it should have lower threshold and lower voting period than regular single choice proposal module.
+Revoting should be disabled so that once threshold is reached, the overrule message can be executed.
+Quorum should be set to the absolute percentage type so that even if significant voting power is against overruling, it would happen anyway.
+It should have no deposit since rejection of the overrule proposal is the only way to execute the subDAO proposal and should be considered normal thing, no one should be punished for creation such proposal.
+Overrules modules require both from main DAO and a subDAO to be configured in a special way:
+Main DAO should have the overrule-compatible pre-propose module.
+subDAO should have the subDAO pre-propose module with timelocking feature.
+Actually, 1st requirement can be avoided by changing the overrule proposal module in a way so that it won't create Proposal message based on input parameters but will validate one. It'll make it fully compatible with regular pre-propose modules and allow to use it already existing pre-propose modules for overrules. However, it's a bit tricky because of title and description.
+
+Deployment
+Overrule pre-propose module is deployed pretty much the same way as any other pre-propose module and doesn't have any additional init message.
+
+subDAO pre-propose module is also deployed the same way as regular pre-propose modules. Still, it instantiates timelock module and should have the message to instantiate it (the only thing required is the overrule pre proposal module address of main DAO: it's required so that timelock module could create overrule proposals and check their statuses).
+
+UX
+While Overrules are technically just another-proposal-type for main DAO, to avoid confusion, we should have a separate UX for them. Given that, the Overrule proposal can be voted on the subDAO proposal page.
+
+Differences from DAO-DAO
+Note: We forked DAO-DAO contracts from commit 9e496379a1c1e89e00133865c9a1041dfdb20612
+
+DAO Core Contract
+Admin functionality is removed (ExecuteMsg::ExecuteAdminMsgs, ExecuteMsg::NominateAdmin, ExecuteMsg::AcceptAdminNomination, ExecuteMsg::WithdrawAdminNomination messages are removed with all the corresponding handlers);
+Some config fields are removed (image_url, automatically_add_cw20s, automatically_add_cw721s);
+We use Voting Registry Contract instead of Voting Module Contract;
+Vanilla Response is replaced with Response<NeutronMsg>;
+CW20 and CW721 handlers are removed (ExecuteMsg::Receive, ExecuteMsg::ReceiveNft, ExecuteMsg::UpdateCw20List, ExecuteMsg::UpdateCw721List messages are removed).
+Pre-Propose Contracts (Single and Multiple)
+CosmosMsg<Empty> is replaced with CosmosMsg<NeutronMsg>;
+ExecuteMsg::Extension is removed;
+Couple of changes in dependency versions (upgrades, replaces with Neutron packages instead of DA0-DA0).
+Note: Pre-Propose Single Overrule Contract is a completely new contract!
+
+Proposal Single Contract
+Couple of changes in dependency versions;
+CosmosMsg<Empty> is replaced with CosmosMsg<NeutronMsg>;
+only_members_execute field is removed from Config with all the corresponding logic;
+IsActive query to a voting module is removed;
+Migration logic from V1 is removed;
+Proposal Multiple Contract
+Couple of changes in dependency versions (upgrades, replaces with Neutron packages instead of DA0-DA0).
+Voting contracts
+cwd-voting-cw20-staked, cwd-voting-cw4, cwd-voting-cw721-staked, cwd-voting-native-staked, cwd-voting-staking-denom-staked source codes are completely removed from our DAO repo, but we use vanilla CW4 Group and CW4 Voting precompiled contract binaries in our DAO system.
+We've developed two completely new contracts: Voting Registry Contract and Bonding Vault Contract.
+SubDao contracts
+Generally speaking, all SubDao contracts are the same as DAO Core contracts (meaning they have the same functionality and differences with DAO-DAO), except some changes:
+
+Pausing logic - SubDAO contract can be paused by Core DAO contract or by special Security SubDAO contract. But SubDAO Core can be unpaused only by main Core DAO contract;
+Completely new Timelock contract is introduced;
+Pre-Propose Single Contract is patched to use Timelock module - Propose messages are wrapped now into TimelockExecuteMsg::TimelockProposal message.
+Previous
+Overrules
+
+
+DAO configuration parameters [mainnet]
+This document describes the configuration parameters for the Neutron DAO on the mainnet (testnet parameters differ for easier testing/administration).
+
+This page is of interest to those who are interested in the Neutron DAO internals.
+
+Neutron DAO has 3 proposal modules:
+
+Single choice
+Multiple choice
+Overrule
+The first two are used for regular proposals, while the last one is used for overruling the decisions of the subDAOs. Furthermore, the users create single and multiple-choice proposals, while overrule proposals are created automatically by subDAOs. Thus, single and multiple-choice proposals are primarily consistent regarding parameters, and the overrule proposal module is significantly different.
+
+Single and multiple proposals
+Deposit
+The deposit amount is 1000 NTRN. The user (or smart contract) must deposit 1000 NTRN to submit a proposal. The deposit is refunded according to the deposit refund policy. The deposit refund policy, only_passed means the deposit is refunded if the proposal passes and is executed. If a proposal is rejected explicitly or hasn't got a quorum, the deposit stays on the pre-propose module's balance, and the DAO can withdraw it eventually.
+
+Proposal submission restrictions
+Open proposal submission is set to true. It means that anyone can submit a proposal. The reasoning behind this is that the voting power in Neutron DAO is based on NTRN tokens; becoming a DAO member requires holding NTRN tokens, with even 1 NTRN being sufficient. So, a proposal submission restricted to DAO members wouldn't make sense.
+
+Voting period
+The voting period is set to 2 weeks. This timing is typical for many DAOs and, according to the governance practice, is good enough to avoid proposal rejections because of not getting the quorum while still being long enough to review the proposal carefully.
+
+Quorum and threshold
+The quorum is set to 5%. Any proposal can only pass if at least 5% of the voting power voted for it. This value might look low because it reaches 10%-40 % for many Cosmos chains. However, the big difference between Neutron and most other Cosmos chains is that Neutron DAO is based on smart contracts and DAO DAO. Cosmos chains based on the gov module have native delegation mechanics based on stake delegation to validators. A bigger quorum makes sense since 100% of the stake is delegated to validators who actively participate in governance. Delegations are absent in Neutron DAO (yet), so it's critical to have a quorum of reasonable size so that DAO will stay operable.
+
+Here, single and multiple-choice proposals are different in behavior. A single-choice proposal has a quorum of 5%, and at the same time, it has a threshold of 50%. It means that a single-choice proposal passes if at least 50% of the votes are "for" the proposal. For example, if 6% of the total voting power participated in voting, 4% voted "for," and 2% voted "against," the proposal would pass.
+
+The multiple-choice proposal module has only a quorum and no threshold. If the quorum is reached, the option with the most votes wins. For example, if there are 5 options, the turnout is 6%, and votes are distributed 2%/1%/1%/1%/1%, the first option wins.
+
+Revoting
+Revoting is enabled both for single-choice proposals and for multi-choice proposals. There are a couple of reasons for this:
+
+It allows DAO members to change their minds and vote for a different option during the voting period.
+It doesn't allow the DAO to execute a proposal immediately after the quorum is reached.
+For proposals, it means that they can only be executed once the voting period is over, even if a quorum/threshold is reached earlier (since it's implied that someone can change their mind).
+
+Proposal execution parameters
+The only_members_execute parameter is set to false. It means that anyone can execute a proposal after it passed. The reasoning for this is that the DAO is a decentralized organization, and it's not reasonable to restrict the execution of proposals to DAO members since one can become a DAO member pretty easily by buying 1untrn and depositing it to the NTRN vault. Moreover, it simplifies possible automation.
+
+The close_proposal_on_execution_failure option is set to true. It means that if a proposal fails to execute, it becomes closed, and there's no way to make another try to execute it. It's done for security reasons. It's implied that proposals should be carefully tested before getting submitted to the DAO. Execution failure might be evidence of unexpected changes in the environment or a bug in external contracts. If that's the case, DAO probably doesn't want this proposal to stick until the environment changes.
+
+For example, there is a malformed external smart contract call in proposal A, and it's discovered during this proposal execution failure. Proposal B was created to adapt it to the proper external smart contract interface and was successfully executed. However, proposal A isn't closed and can be re-executed. The admin of the external smart contract can adapt the interface to proposal A and re-execute it, while the DAO does not plan it. While this case is hypothetical, it's more secure to keep the close_proposal_on_execution_failure option as true.
+
+Overrule proposals
+Deposit
+Deposit is turned off for overrule proposals because they are created automatically by subDAOs. Also, they're meant to be rejected in normal conditions by not reaching the quorum, so a deposit makes no sense.
+
+Proposal submission restrictions
+Technically, proposal creation is open. However, overrule proposals are created automatically by subDAOs, so it's not a matter of concern. Overrule proposal creation is carefully restricted on the source code level to prevent the creation of duplicates and spam. Since overrule proposals are created automatically by subDAOs and duplications are prohibited, there's essentially no chance for a user to create an overrule proposal while technically it's possible.
+
+Voting period
+The voting period is 3 days. Overrule proposals voting period should be a trade-off between two considerations:
+
+It should be long enough to allow DAO members to express their concerns about the underlying subDAO proposal.
+It should be short enough to make subDAOs operable.
+Given that, 3 days is a reasonable trade-off since it's a minimal timeframe that covers weekends and leaves enough time for DAO members to review the proposal.
+
+Quorum and threshold
+The threshold is set to 0.5% of the total voting power. Only 0.5% of total voting power is required to overrule any subDAO proposal. This threshold should be low by its nature: in controversial cases, the DAO should be able to prevent the subDAO from doing anything that might be harmful to the DAO. Of course, it also creates a potential surface for sabotage. A whale big enough or a coordinated telegram group can effectively block any subDAO proposal. However, this situation isn't expected in the first place. Secondly, if it happens, it allows DAO to identify the issue of the DAO members' subset being non-aligned (or even malicious) and take the necessary measures to fix it. Since DAO has ultimate power over subDAOs, it's possible. Considering the subDAO mechanics as a tool to make DAO more efficient by alleviating governance pressure, a low threshold is a reasonable trade-off. In the worst case, the DAO rolls back to the default situation, where the DAO itself makes all the decisions.
+
+Unlike single and multi proposals, overrule proposals have an absolute_percentage type of threshold. It means that for a proposal to pass, it's only required to get the threshold of yes votes. Even if the no votes are more than the yes votes, the proposal still passes if the yes votes are more than the threshold. This is done to make overrule proposals pass (and reject the underlying subDAO proposal) even when the subDAO proposal is slightly controversial.
+
+Revoting
+Revoting is set to false. It's done to be able to execute proposals as soon as the quorum is reached. It's critical to overrule proposals as soon as possible since they have a limited execution time. The overrule proposal execution after the end of the voting period makes no sense since a subDAO proposal has already been executed by that time.
+
+Proposal execution parameters
+Proposal execution isn't restricted for the same reasons as single and multiple-choice proposals (there's no sense in restricting it + more automation opportunities). The close_proposal_on_execution_failure option is set to true. Because overrule proposals are of a very special format and (in general) are created automatically, the chance of overrule proposals to fail is very low. Moreover, the failure during overrule proposal execution indicates some problems with DAO internals. In this case, the better strategy is restricting possible permissionless actions, so re-execution is disabled.
+
+

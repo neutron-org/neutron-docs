@@ -1,0 +1,258 @@
+---
+title: "Becoming a Validator"
+description: "Steps to register as a Neutron validator"
+icon: "user-plus"
+---
+
+This guide will help you join Neutron's validator set after you have [set up your node](/validators/running-a-node) and [configured your oracle service](/validators/oracle-setup).
+
+<Note>
+  The Neutron DAO maintains a curated set of 20 validators selected based on performance metrics and technical capabilities. New validators are added when slots become available through the DAO's rotation policy.
+</Note>
+
+## Prerequisites
+
+Before proceeding, ensure you have:
+
+<CheckboxGroup>
+  <Checkbox title="Full Node Setup">
+    A fully synced Neutron node running the latest version
+  </Checkbox>
+  <Checkbox title="Oracle Configuration">
+    Properly configured Slinky oracle service
+  </Checkbox>
+  <Checkbox title="NTRN Tokens">
+    Sufficient NTRN tokens for self-delegation (minimum 1 NTRN)
+  </Checkbox>
+  <Checkbox title="Monitoring">
+    Monitoring and alerting systems to maintain high performance
+  </Checkbox>
+</CheckboxGroup>
+
+## Validator Selection Process
+
+The Neutron DAO implements a transparent selection process for validators, based on:
+
+1. **Technical Performance**: Validators must consistently meet or exceed performance thresholds
+2. **Dual Network Requirement**: Operators must run nodes on both mainnet and testnet
+3. **Prioritization**: Eligible operators are prioritized by reverse order of mainnet voting power
+
+<div className="my-6 p-4 border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20">
+  <h3 className="text-lg font-medium mb-2">Validator Rotation Policy</h3>
+  <p>The Validator Set Rotation Framework ensures the network maintains a high-performing validator set. After the initial one-month grace period following the Mercury upgrade, validators are evaluated based on objective performance metrics by the Neutron DAO.</p>
+</div>
+
+### Rotation Criteria
+
+Validators may be rotated out of the active set under the following conditions determined by the Neutron DAO:
+
+<AccordionGroup>
+  <Accordion title="Performance-Based Offboarding">
+    A validator is considered for offboarding if:
+    
+    - **Consecutive Performance Failure**: No rewards from x/revenue for two months in a row
+      - Notified after first month
+      - Flagged for rotation after second consecutive month
+    - **Intermittent Performance Issues**: No rewards from x/revenue for three months in a 6-month period
+      - Notified after second month within a 6-month period
+      - Flagged for rotation after third missed month
+    - **Tombstoning**: Validator was tombstoned
+  </Accordion>
+  <Accordion title="Downtime-Based Offboarding">
+    A validator is considered for offboarding if:
+    
+    - **Resumption Latency**: Failed to resume signing within 60 minutes of the first finalized block after a successful upgrade
+    - **Precommit Latency**: Failed to begin precommitting within 2 hours of the distribution of correct upgrade instructions
+    
+    In both cases, validators are notified on the first occurrence and marked for rotation on the second.
+  </Accordion>
+</AccordionGroup>
+
+### Onboarding Process
+
+When a slot becomes available, the Neutron DAO selects new validators according to the following process:
+
+1. Must run both mainnet and testnet nodes
+2. Eligible operators are prioritized by reverse order of mainnet voting power 
+3. Selected operators initially receive a small delegation from the DAO
+4. After demonstrating adequate performance for three months, they will receive a full delegation
+5. If they fail to perform adequately, the DAO will redelegate to the next operator in line
+
+## Creating Your Validator
+
+### Step 1: Create a Wallet
+
+First, create a wallet for your validator:
+
+```bash
+neutrond keys add <wallet-name>
+```
+
+Save the mnemonic phrase in a secure location. This wallet will be used for managing your validator.
+
+### Step 2: Obtain NTRN Tokens
+
+You'll need NTRN tokens to stake. These can be obtained from:
+
+- Exchanges that list NTRN
+- Purchasing ATOM and using IBC transfer to Neutron
+- The community (Discord/Telegram) for testnet tokens
+
+### Step 3: Submit the Create Validator Transaction
+
+Once your node is synced and you have NTRN tokens, register your validator:
+
+```bash
+neutrond tx staking create-validator \
+  --amount=1000000untrn \
+  --pubkey=$(neutrond tendermint show-validator) \
+  --moniker="<your-validator-name>" \
+  --website="<your-website>" \
+  --details="<description>" \
+  --security-contact="<email>" \
+  --chain-id=neutron-1 \
+  --commission-rate="0.10" \
+  --commission-max-rate="0.20" \
+  --commission-max-change-rate="0.01" \
+  --min-self-delegation="1" \
+  --gas="auto" \
+  --gas-adjustment="1.5" \
+  --gas-prices="0.025untrn" \
+  --from=<wallet-name>
+```
+
+### Command Parameters Explained
+
+<div className="overflow-x-auto">
+  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+    <thead>
+      <tr className="bg-gray-50 dark:bg-gray-800">
+        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Parameter</th>
+        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Description</th>
+      </tr>
+    </thead>
+    <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+      <tr>
+        <td className="px-4 py-2 text-sm">amount</td>
+        <td className="px-4 py-2 text-sm">The amount to self-delegate (in untrn)</td>
+      </tr>
+      <tr>
+        <td className="px-4 py-2 text-sm">pubkey</td>
+        <td className="px-4 py-2 text-sm">Your validator's public key</td>
+      </tr>
+      <tr>
+        <td className="px-4 py-2 text-sm">moniker</td>
+        <td className="px-4 py-2 text-sm">A name for your validator</td>
+      </tr>
+      <tr>
+        <td className="px-4 py-2 text-sm">commission-rate</td>
+        <td className="px-4 py-2 text-sm">Initial commission rate (e.g., 10%)</td>
+      </tr>
+      <tr>
+        <td className="px-4 py-2 text-sm">commission-max-rate</td>
+        <td className="px-4 py-2 text-sm">Maximum commission rate (e.g., 20%)</td>
+      </tr>
+      <tr>
+        <td className="px-4 py-2 text-sm">min-self-delegation</td>
+        <td className="px-4 py-2 text-sm">Minimum self-delegation amount</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+## Verify Your Validator
+
+After submitting the transaction, verify that your validator was created:
+
+```bash
+neutrond query staking validators --limit 1000 -o json | jq '.validators[] | select(.description.moniker=="<your-validator-name>")'
+```
+
+You can also check your validator status on Neutron block explorers:
+
+- [Mintscan](https://www.mintscan.io/neutron)
+- [Ping.pub](https://ping.pub/neutron)
+
+## Security and Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Dedicated Machine" icon="server" iconType="duotone">
+    Run your validator on a dedicated machine separate from other services
+  </Card>
+  <Card title="Firewall Configuration" icon="shield-check" iconType="duotone">
+    Allow only necessary ports (26656, 26657, etc.) and use SSH key authentication
+  </Card>
+  <Card title="Sentry Architecture" icon="network-wired" iconType="duotone">
+    Deploy sentry nodes to protect your validator from DDoS attacks
+  </Card>
+  <Card title="Key Management" icon="key" iconType="duotone">
+    Consider using a hardware security module (HSM) for key management
+  </Card>
+</CardGroup>
+
+## Monitoring Performance
+
+Set up comprehensive monitoring to ensure your validator meets performance requirements:
+
+- Block signing rate (minimum 95%, target 99.5%)
+- Oracle price updates (minimum 95%, target 98%)
+- System resource utilization
+- Network connectivity
+
+Popular monitoring solutions include:
+
+- Prometheus + Grafana
+- Cosmos Validator Monitoring
+- TenderDuty
+
+## Maintaining Eligibility
+
+To maintain your position in the validator set and remain eligible for DAO delegations:
+
+1. **Stay Updated**: Keep your node software updated to the latest version
+2. **Active Upgrades**: Participate promptly in network upgrades
+3. **Community Participation**: Join validator discussions and governance
+4. **Performance Monitoring**: Ensure you consistently meet or exceed performance thresholds
+5. **Run a Testnet Node**: Maintain an active testnet validator alongside your mainnet node
+
+<div className="p-4 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900 dark:from-opacity-30 dark:to-blue-900 dark:to-opacity-30 rounded-lg my-6">
+  <h3 className="text-lg font-medium mb-2">Join the Validator Community</h3>
+  <p>Connect with other Neutron validators through these channels:</p>
+  <div className="flex flex-wrap gap-3 mt-3">
+    <a href="https://discord.com/invite/bzPBzbDvWC" className="flex items-center gap-2 px-3 py-1 bg-white dark:bg-opacity-10 dark:bg-white rounded-full text-sm hover:bg-opacity-90">
+      <svg viewBox="0 0 24 24" height="16" width="16" fill="currentColor"><path d="M19.54 0c1.356 0 2.46 1.104 2.46 2.472v21.528l-2.58-2.28-1.452-1.344-1.536-1.428.636 2.22h-13.608c-1.356 0-2.46-1.104-2.46-2.472v-16.224c0-1.368 1.104-2.472 2.46-2.472h16.08zm-4.632 15.672c2.652-.084 3.672-1.824 3.672-1.824 0-3.864-1.728-6.996-1.728-6.996-1.728-1.296-3.372-1.26-3.372-1.26l-.168.192c2.04.624 2.988 1.524 2.988 1.524-1.248-.684-2.472-1.02-3.612-1.152-.864-.096-1.692-.072-2.424.024l-.204.024c-.42.036-1.44.192-2.724.756-.444.204-.708.348-.708.348s.996-.948 3.156-1.572l-.12-.144s-1.644-.036-3.372 1.26c0 0-1.728 3.132-1.728 6.996 0 0 1.008 1.74 3.66 1.824 0 0 .444-.54.804-.996-1.524-.456-2.1-1.416-2.1-1.416l.336.204.048.036.047.027.014.006.047.027c.3.168.6.3.876.408.492.192 1.08.384 1.764.516.9.168 1.956.228 3.108.012.564-.096 1.14-.264 1.74-.516.42-.156.888-.384 1.38-.708 0 0-.6.984-2.172 1.428.36.456.792.972.792.972zm-5.58-5.604c-.684 0-1.224.6-1.224 1.332 0 .732.552 1.332 1.224 1.332.684 0 1.224-.6 1.224-1.332.012-.732-.54-1.332-1.224-1.332zm4.38 0c-.684 0-1.224.6-1.224 1.332 0 .732.552 1.332 1.224 1.332.684 0 1.224-.6 1.224-1.332 0-.732-.54-1.332-1.224-1.332z"></path></svg>
+      Discord
+    </a>
+    <a href="https://t.me/neutron_community" className="flex items-center gap-2 px-3 py-1 bg-white dark:bg-opacity-10 dark:bg-white rounded-full text-sm hover:bg-opacity-90">
+      <svg viewBox="0 0 24 24" height="16" width="16" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"></path></svg>
+      Telegram
+    </a>
+    <a href="https://forum.neutron.org" className="flex items-center gap-2 px-3 py-1 bg-white dark:bg-opacity-10 dark:bg-white rounded-full text-sm hover:bg-opacity-90">
+      <svg viewBox="0 0 24 24" height="16" width="16" fill="currentColor"><path d="M12 1C5.925 1 1 5.925 1 12s4.925 11 11 11 11-4.925 11-11S18.075 1 12 1zm4.819 7.025a.656.656 0 0 1 .644.485.656.656 0 0 1-.4.763c-.644.312-.656 1.312-.668 1.387-.012.1-.069.188-.163.25a.39.39 0 0 1-.281.063c-.594-.1-3.544-.531-4.956 1.887a.4.4 0 0 1-.344.194h-.056a.419.419 0 0 1-.35-.256c-.625-1.5-2.2-3.525-3.544-3.719a.457.457 0 0 1-.312-.206.35.35 0 0 1-.037-.356c.169-.387.387-1.213-.044-1.544a.656.656 0 0 1-.106-.856.694.694 0 0 1 .781-.25c.65.206 3.719 1.175 3.938 1.219.531.094 1.35-.775 1.512-.912.169-.156.369-.563 0-.844-.656-.512-2.594-1.1-3.319-1.35-.75-.256-1.331.506-1.419.625a.694.694 0 0 1-.937.063.663.663 0 0 1-.05-.938c.581-.706 1.594-1.225 2.844-.931 1.294.312 3.506.869 4.512 1.362.519.25.894.519.725 1.094-.144.481-.556.831-.85.987-.194.106-.275.344-.181.531.075.156.225.25.4.25.163 0 2.031-.031 2.819 1.35.05.094.131.156.231.194.087.031.194.031.275-.006a.413.413 0 0 0 .225-.431c-.119-.856-.031-2.619 1.694-3.256a.672.672 0 0 1 .275-.5zm-9.35 1.475c-.344-.063-.688.231-.694.587-.044 2.294-.519 8.113 5.906 8.756a.514.514 0 0 0 .494-.225.493.493 0 0 0 .075-.525c-.069-.175-.144-.35-.213-.525a.932.932 0 0 0-.55-.55c-3.656-.825-3.669-5.1-3.612-6.944a.637.637 0 0 0-.162-.437.662.662 0 0 0-.244-.137zm7.775 6.919c.113.45.225.894.338 1.344.05.212.194.387.388.475.225.094 2.819.587 3.294 2.269a.35.35 0 0 0 .313.25h.037a.343.343 0 0 0 .313-.369c-.188-2.4-2.485-3.506-3.781-3.931-.325-.106-.669.119-.756.45a.637.637 0 0 0-.146.512z"></path></svg>
+      Forum
+    </a>
+  </div>
+</div>
+
+## Next Steps
+
+<div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+  <a href="/validators/technical/system-specs" className="px-6 py-3 bg-primary bg-opacity-10 hover:bg-opacity-20 rounded-lg flex items-center justify-between">
+    <div>
+      <h3 className="font-medium">System Specifications</h3>
+      <p className="text-sm">Detailed hardware requirements</p>
+    </div>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  </a>
+  <a href="/validators/economics/validator-incentives" className="px-6 py-3 bg-primary bg-opacity-10 hover:bg-opacity-20 rounded-lg flex items-center justify-between">
+    <div>
+      <h3 className="font-medium">Validator Economics</h3>
+      <p className="text-sm">Learn about rewards and incentives</p>
+    </div>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  </a>
+</div> 

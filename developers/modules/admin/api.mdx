@@ -1,0 +1,499 @@
+---
+title: "API Reference"
+description: "Complete API documentation for the admin module including queries, transactions, and events"
+---
+
+This document provides comprehensive API reference for the admin module, including query endpoints, transaction messages, and emitted events.
+
+## gRPC Queries
+
+The admin module provides several query endpoints for retrieving governance and administrative information.
+
+### Admins
+
+Query the current list of admin addresses.
+
+**Endpoint:** `/cosmos.adminmodule.adminmodule.Query/Admins`
+
+**Request:**
+```protobuf
+message QueryAdminsRequest {}
+```
+
+**Response:**
+```protobuf
+message QueryAdminsResponse {
+  repeated string admins = 1;
+}
+```
+
+**CLI Usage:**
+```bash
+neutrond query adminmodule admins
+```
+
+**Example Response:**
+```json
+{
+  "admins": [
+    "neutron1qzxcseq9e0jhcpj2ht7j9lqkhp0q5vrzhctlud",
+    "neutron1h5lmx8gndrh0x0qlqhp2hxhf0v5u9hfpexkq5q"
+  ]
+}
+```
+
+### Params
+
+Query the current module parameters.
+
+**Endpoint:** `/cosmos.adminmodule.adminmodule.Query/Params`
+
+**Request:**
+```protobuf
+message QueryParamsRequest {}
+```
+
+**Response:**
+```protobuf
+message QueryParamsResponse {
+  Params params = 1;
+}
+```
+
+**CLI Usage:**
+```bash
+neutrond query adminmodule params
+```
+
+### Whitelist
+
+Query the current message whitelist configuration.
+
+**Endpoint:** `/cosmos.adminmodule.adminmodule.Query/Whitelist`
+
+**Request:**
+```protobuf
+message QueryWhitelistRequest {}
+```
+
+**Response:**
+```protobuf
+message QueryWhitelistResponse {
+  repeated string whitelisted_messages = 1;
+}
+```
+
+**CLI Usage:**
+```bash
+neutrond query adminmodule whitelist
+```
+
+**Example Response:**
+```json
+{
+  "whitelisted_messages": [
+    "/cosmos.bank.v1beta1.MsgSend",
+    "/cosmos.distribution.v1beta1.MsgCommunityPoolSpend",
+    "/cosmwasm.wasm.v1.MsgInstantiateContract",
+    "/neutron.cron.MsgUpdateParams"
+  ]
+}
+```
+
+### Proposal
+
+Query details of a specific proposal by ID.
+
+**Endpoint:** `/cosmos.adminmodule.adminmodule.Query/Proposal`
+
+**Request:**
+```protobuf
+message QueryProposalRequest {
+  uint64 proposal_id = 1;
+}
+```
+
+**Response:**
+```protobuf
+message QueryProposalResponse {
+  Proposal proposal = 1;
+}
+```
+
+**CLI Usage:**
+```bash
+neutrond query adminmodule proposal <proposal-id>
+```
+
+### Proposals
+
+Query all proposals with optional pagination.
+
+**Endpoint:** `/cosmos.adminmodule.adminmodule.Query/Proposals`
+
+**Request:**
+```protobuf
+message QueryProposalsRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+```
+
+**Response:**
+```protobuf
+message QueryProposalsResponse {
+  repeated Proposal proposals = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+```
+
+**CLI Usage:**
+```bash
+neutrond query adminmodule proposals
+```
+
+## REST Endpoints
+
+The admin module provides REST endpoints for HTTP-based access.
+
+### GET /cosmos/adminmodule/adminmodule/admins
+
+Retrieve the list of current admins.
+
+**Response:**
+```json
+{
+  "admins": ["neutron1...", "neutron1..."]
+}
+```
+
+### GET /cosmos/adminmodule/adminmodule/params
+
+Retrieve module parameters.
+
+**Response:**
+```json
+{
+  "params": {
+    "admin_authority": "neutron1...",
+    "whitelist_enabled": true
+  }
+}
+```
+
+### GET /cosmos/adminmodule/adminmodule/whitelist
+
+Retrieve the message whitelist.
+
+**Response:**
+```json
+{
+  "whitelisted_messages": [
+    "/cosmos.bank.v1beta1.MsgSend",
+    "/neutron.cron.MsgUpdateParams"
+  ]
+}
+```
+
+### GET /cosmos/adminmodule/adminmodule/proposal/{proposal_id}
+
+Retrieve details of a specific proposal.
+
+**Parameters:**
+- `proposal_id`: The unique proposal identifier
+
+**Response:**
+```json
+{
+  "proposal": {
+    "id": "1",
+    "messages": [...],
+    "proposer": "neutron1...",
+    "status": "executed",
+    "created_at": "2023-06-01T12:00:00Z"
+  }
+}
+```
+
+### GET /cosmos/adminmodule/adminmodule/proposals
+
+Retrieve all proposals with optional pagination.
+
+**Query Parameters:**
+- `pagination.limit`: Maximum number of results
+- `pagination.offset`: Number of results to skip
+- `pagination.key`: Pagination key for next page
+
+**Response:**
+```json
+{
+  "proposals": [
+    {
+      "id": "1",
+      "messages": [...],
+      "proposer": "neutron1...",
+      "status": "executed"
+    }
+  ],
+  "pagination": {
+    "next_key": null,
+    "total": "1"
+  }
+}
+```
+
+## Transaction Messages
+
+### submit-proposal
+
+Submit a new proposal using the modern message-based format.
+
+**Command:**
+```bash
+neutrond tx adminmodule submit-proposal \
+  --messages='[{...}]' \
+  --from=<key> \
+  --chain-id=neutron-1
+```
+
+**Parameters:**
+- `messages`: JSON array of messages to execute
+- `from`: Account submitting the proposal
+
+### submit-proposal-legacy
+
+Submit a legacy format proposal for backward compatibility.
+
+**Command:**
+```bash
+neutrond tx adminmodule submit-proposal-legacy \
+  --content='<proposal-content>' \
+  --from=<key>
+```
+
+### add-admin
+
+Add a new admin to the network.
+
+**Command:**
+```bash
+neutrond tx adminmodule add-admin <admin-address> \
+  --from=<key>
+```
+
+### delete-admin
+
+Remove an existing admin from the network.
+
+**Command:**
+```bash
+neutrond tx adminmodule delete-admin <admin-address> \
+  --from=<key>
+```
+
+## Events
+
+The admin module emits various events during operation for monitoring and audit purposes.
+
+### ProposalSubmitted
+
+Emitted when a new proposal is submitted.
+
+**Type:** `adminmodule.proposal_submitted`
+
+**Attributes:**
+- `proposal_id`: Unique identifier for the proposal
+- `proposer`: Address of the proposal submitter
+- `message_count`: Number of messages in the proposal
+
+**Example:**
+```json
+{
+  "type": "adminmodule.proposal_submitted",
+  "attributes": [
+    {"key": "proposal_id", "value": "1"},
+    {"key": "proposer", "value": "neutron1..."},
+    {"key": "message_count", "value": "2"}
+  ]
+}
+```
+
+### ProposalExecuted
+
+Emitted when a proposal is successfully executed.
+
+**Type:** `adminmodule.proposal_executed`
+
+**Attributes:**
+- `proposal_id`: The executed proposal identifier
+- `executor`: Address that executed the proposal
+- `execution_time`: Timestamp of execution
+- `gas_used`: Gas consumed during execution
+
+**Example:**
+```json
+{
+  "type": "adminmodule.proposal_executed",
+  "attributes": [
+    {"key": "proposal_id", "value": "1"},
+    {"key": "executor", "value": "neutron1..."},
+    {"key": "execution_time", "value": "2023-06-01T12:00:00Z"},
+    {"key": "gas_used", "value": "150000"}
+  ]
+}
+```
+
+### ProposalFailed
+
+Emitted when a proposal execution fails.
+
+**Type:** `adminmodule.proposal_failed`
+
+**Attributes:**
+- `proposal_id`: The failed proposal identifier
+- `error`: Error message describing the failure
+- `failed_message_index`: Index of the message that caused failure
+
+**Example:**
+```json
+{
+  "type": "adminmodule.proposal_failed",
+  "attributes": [
+    {"key": "proposal_id", "value": "1"},
+    {"key": "error", "value": "insufficient funds"},
+    {"key": "failed_message_index", "value": "1"}
+  ]
+}
+```
+
+### AdminAdded
+
+Emitted when a new admin is added.
+
+**Type:** `adminmodule.admin_added`
+
+**Attributes:**
+- `admin`: Address of the newly added admin
+- `added_by`: Address that added the admin
+
+**Example:**
+```json
+{
+  "type": "adminmodule.admin_added",
+  "attributes": [
+    {"key": "admin", "value": "neutron1..."},
+    {"key": "added_by", "value": "neutron1..."}
+  ]
+}
+```
+
+### AdminRemoved
+
+Emitted when an admin is removed.
+
+**Type:** `adminmodule.admin_removed`
+
+**Attributes:**
+- `admin`: Address of the removed admin
+- `removed_by`: Address that removed the admin
+
+**Example:**
+```json
+{
+  "type": "adminmodule.admin_removed",
+  "attributes": [
+    {"key": "admin", "value": "neutron1..."},
+    {"key": "removed_by", "value": "neutron1..."}
+  ]
+}
+```
+
+### WhitelistUpdated
+
+Emitted when the message whitelist is updated.
+
+**Type:** `adminmodule.whitelist_updated`
+
+**Attributes:**
+- `updated_by`: Address that updated the whitelist
+- `added_messages`: Messages added to whitelist
+- `removed_messages`: Messages removed from whitelist
+
+**Example:**
+```json
+{
+  "type": "adminmodule.whitelist_updated",
+  "attributes": [
+    {"key": "updated_by", "value": "neutron1..."},
+    {"key": "added_messages", "value": "/cosmos.bank.v1beta1.MsgSend"},
+    {"key": "removed_messages", "value": ""}
+  ]
+}
+```
+
+## Error Codes
+
+The admin module uses specific error codes for different failure scenarios:
+
+| Code | Name | Description |
+|------|------|-------------|
+| 1 | `ErrUnauthorized` | Insufficient permissions for operation |
+| 2 | `ErrInvalidMessage` | Invalid message format or content |
+| 3 | `ErrNotWhitelisted` | Message type not in whitelist |
+| 4 | `ErrInvalidProposal` | Malformed proposal structure |
+| 5 | `ErrAdminExists` | Admin already exists |
+| 6 | `ErrAdminNotFound` | Admin not found |
+| 7 | `ErrWhitelistDisabled` | Whitelist functionality disabled |
+| 8 | `ErrExecutionFailed` | Proposal execution failed |
+
+## Rate Limiting
+
+The admin module implements rate limiting to prevent spam and abuse:
+
+### Proposal Submission Limits
+
+- Maximum 10 proposals per block per proposer
+- Minimum 1-block delay between proposals from same address
+- Gas-based throttling for complex proposals
+
+### Query Rate Limits
+
+- No specific limits on read-only queries
+- Standard network rate limiting applies
+- Pagination recommended for large result sets
+
+## Authentication
+
+All write operations require proper authentication:
+
+### Required Authorities
+
+- **Proposal Submission**: DAO governance authority
+- **Admin Management**: Admin management authority  
+- **Whitelist Updates**: Governance authority
+
+### Signature Requirements
+
+- Valid cryptographic signatures
+- Matching authority addresses
+- Current sequence numbers
+- Proper fee payment
+
+## Monitoring and Observability
+
+### Metrics
+
+The admin module exposes metrics for monitoring:
+
+- `adminmodule_proposals_total`: Total number of proposals
+- `adminmodule_proposals_executed`: Number of executed proposals
+- `adminmodule_proposals_failed`: Number of failed proposals
+- `adminmodule_admins_count`: Current number of admins
+
+### Health Checks
+
+- Module initialization status
+- Whitelist configuration validity
+- Authority address verification
+- State consistency checks
+
+This comprehensive API reference provides all necessary information for integrating with and monitoring the admin module. 

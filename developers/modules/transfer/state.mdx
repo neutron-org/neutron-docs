@@ -1,0 +1,103 @@
+---
+title: State
+sidebar_position: 9
+---
+
+# State
+
+The Transfer module stores denomination trace information as well as escrow addresses for locked tokens.
+
+## State Objects
+
+### DenomTrace
+
+DenomTrace defines the base denomination for IBC fungible tokens and the source tracing information path.
+
+```proto
+// DenomTrace contains the base denomination for IBC fungible tokens and the
+// source tracing information path.
+message DenomTrace {
+  // path defines the chain of port/channel identifiers used for tracing the
+  // source of the fungible token.
+  string path = 1;
+  // base denomination of the relayed fungible token.
+  string base_denom = 2;
+}
+```
+
+The `path` is a `/`-delimited string of the form: `portID/channelID/portID/channelID...` that represents the port and channel IDs that a token transfer passes through.
+
+For example, if an IBC token starts on chain A with the denom `mytoken`, and passes through channels across chains B and C, the final denomination on chain C would be represented by a DenomTrace with:
+- `path` = `transfer/channelAB/transfer/channelBC`
+- `base_denom` = `mytoken`
+
+This would result in an IBC denom that looks like: `ibc/{hash}` where `{hash}` is a hash of the path and base denom.
+
+### FungibleTokenPacketData
+
+FungibleTokenPacketData defines a struct for the fungible token packet data.
+
+```proto
+// FungibleTokenPacketData defines a struct for the packet payload
+message FungibleTokenPacketData {
+  // the token denomination to be transferred
+  string denom = 1;
+  // the token amount to be transferred
+  string amount = 2;
+  // the sender address
+  string sender = 3;
+  // the recipient address on the destination chain
+  string receiver = 4;
+  // optional memo information
+  string memo = 5;
+}
+```
+
+## State Transitions
+
+The IBC transfer module primarily modifies state through the following operations:
+
+1. **Sending Tokens**: When tokens are sent to another chain, they are escrowed (locked) in a module account on the sending chain.
+2. **Receiving Tokens**: When tokens are received from another chain, they are either:
+   - Released from escrow (if they originated from this chain)
+   - Minted as new IBC voucher tokens (if they originated from a different chain)
+
+## KVStore
+
+The Transfer module uses the following prefixes for KVStore keys:
+
+| Prefix | Key Format | Value | Notes |
+| ------ | ---------- | ----- | ----- |
+| `0x00` | `0x00 \| []byte(trace hash)` | `DenomTrace` | Store denom trace for a given hash |
+| `0x01` | `0x01` | `[]DenomTrace` | Store all denom traces for iteration |
+| `0x02` | `0x02 \| []byte(port + channel)` | `bool` | Store IBC send disable status for a given channel |
+| `0x03` | `0x03 \| []byte(port + channel)` | `bool` | Store IBC receive disable status for a given channel |
+
+The Transfer module's KVStore is accessed with the storeKey `ibc-transfer`.
+
+## Genesis State
+
+The Genesis state of the Transfer module contains:
+
+```proto
+// GenesisState defines the ibc-transfer genesis state
+message GenesisState {
+  string port_id = 1;
+  // the sequence for the next generated channel identifier
+  repeated DenomTrace denom_traces = 2;
+  Params params = 3;
+}
+
+// Params defines the set of IBC transfer parameters
+message Params {
+  // send_enabled enables or disables all cross-chain token transfers from this chain
+  bool send_enabled = 1;
+  // receive_enabled enables or disables all cross-chain token transfers to this chain
+  bool receive_enabled = 2;
+}
+```
+
+The main parameters stored in the genesis state are:
+- `port_id`: The IBC port identifier used by the transfer module (typically "transfer")
+- `denom_traces`: A list of all denomination traces known by the module
+- `params`: Module parameters that control enabling/disabling of IBC transfers 

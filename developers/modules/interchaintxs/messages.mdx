@@ -1,0 +1,251 @@
+---
+title: "Messages"
+---
+
+The Interchain Transactions module exposes several messages for registering interchain accounts, executing transactions on remote chains, and managing module parameters.
+
+## MsgRegisterInterchainAccount
+
+`MsgRegisterInterchainAccount` is used to register an account on a remote zone through an IBC connection.
+
+```protobuf
+message MsgRegisterInterchainAccount {
+  string from_address = 1;
+  string connection_id = 2;
+  string interchain_account_id = 3;
+  repeated cosmos.base.v1beta1.Coin register_fee = 4;
+  ibc.core.channel.v1.Order ordering = 5;
+}
+```
+
+### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `from_address` | string | The address of the account initiating the registration (typically a contract address) |
+| `connection_id` | string | The ID of the IBC connection to use for the interchain account |
+| `interchain_account_id` | string | A unique identifier for the interchain account (used in the port ID) |
+| `register_fee` | []Coin | Fee paid for registration (charged to the sender) |
+| `ordering` | Order | The channel ordering to use (typically ORDERED for interchain accounts) |
+
+### Example
+
+```javascript
+{
+  "from_address": "neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq",
+  "connection_id": "connection-0",
+  "interchain_account_id": "myaccount",
+  "register_fee": [
+    {
+      "denom": "untrn",
+      "amount": "1000"
+    }
+  ],
+  "ordering": 1  // ORDERED
+}
+```
+
+### Response
+
+```protobuf
+message MsgRegisterInterchainAccountResponse {
+  string channel_id = 1;
+  string port_id = 2;
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `channel_id` | string | The ID of the newly created IBC channel |
+| `port_id` | string | The port ID associated with the interchain account |
+
+### Processing
+
+When `MsgRegisterInterchainAccount` is processed:
+
+1. The module validates that the connection ID exists
+2. It creates a unique port ID in the format `icacontroller-{from_address}.{interchain_account_id}`
+3. It claims the port capability and initiates a channel opening handshake with the remote chain
+4. The register fee is charged to the sender account
+5. The channel and port information are returned immediately, but the actual interchain account is created when the channel is established
+6. Once the channel is established, a callback is sent to the initiating contract with the channel information
+
+## MsgSubmitTx
+
+`MsgSubmitTx` submits a transaction for execution on a remote chain through an interchain account.
+
+```protobuf
+message MsgSubmitTx {
+  string from_address = 1;
+  string interchain_account_id = 2;
+  string connection_id = 3;
+  repeated google.protobuf.Any msgs = 4;
+  string memo = 5;
+  uint64 timeout = 6;
+  neutron.feerefunder.Fee fee = 7;
+}
+```
+
+### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `from_address` | string | The address of the account submitting the transaction (typically a contract address) |
+| `interchain_account_id` | string | The identifier of the interchain account to use |
+| `connection_id` | string | The ID of the IBC connection to use |
+| `msgs` | []Any | The messages to execute on the remote chain |
+| `memo` | string | An optional memo to include with the transaction |
+| `timeout` | uint64 | The timeout in seconds after which the packet times out |
+| `fee` | Fee | The fees to pay for packet relaying |
+
+### Example
+
+```javascript
+{
+  "from_address": "neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq",
+  "interchain_account_id": "myaccount",
+  "connection_id": "connection-0",
+  "msgs": [
+    {
+      "@type": "/cosmos.bank.v1beta1.MsgSend",
+      "from_address": "cosmos1...",
+      "to_address": "cosmos1...",
+      "amount": [
+        {
+          "denom": "uatom",
+          "amount": "1000"
+        }
+      ]
+    }
+  ],
+  "memo": "Send from Neutron",
+  "timeout": 600,
+  "fee": {
+    "recv_fee": [
+      {
+        "denom": "untrn",
+        "amount": "2000"
+      }
+    ],
+    "ack_fee": [
+      {
+        "denom": "untrn",
+        "amount": "1000"
+      }
+    ],
+    "timeout_fee": [
+      {
+        "denom": "untrn",
+        "amount": "1000"
+      }
+    ]
+  }
+}
+```
+
+### Response
+
+```protobuf
+message MsgSubmitTxResponse {
+  uint64 sequence_id = 1;
+  string channel = 2;
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `sequence_id` | uint64 | The sequence ID of the outgoing IBC packet |
+| `channel` | string | The source channel ID on the Neutron side |
+
+### Processing
+
+When `MsgSubmitTx` is processed:
+
+1. The module validates that the interchain account exists and has an active channel
+2. It validates that the fee is sufficient for packet relaying
+3. It prepares an IBC packet containing the messages to execute
+4. It registers the fee with the Fee Refunder module
+5. It sends the packet through the appropriate IBC channel
+6. It returns the sequence ID and channel immediately
+7. The actual execution on the remote chain happens asynchronously
+8. When the acknowledgement or timeout is received, a callback is sent to the initiating contract
+
+## MsgUpdateParams
+
+`MsgUpdateParams` updates the module parameters. This message can only be executed by the governance account.
+
+```protobuf
+message MsgUpdateParams {
+  string authority = 1;
+  Params params = 2;
+}
+```
+
+### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `authority` | string | The address of the governance account |
+| `params` | Params | The new parameters to set |
+
+### Example
+
+```javascript
+{
+  "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6z2zm3",
+  "params": {
+    "host_enabled": true,
+    "allow_messages": [
+      "/cosmos.bank.v1beta1.MsgSend",
+      "/cosmos.staking.v1beta1.MsgDelegate",
+      "/cosmos.staking.v1beta1.MsgUndelegate",
+      "/cosmos.staking.v1beta1.MsgBeginRedelegate",
+      "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+      "/cosmos.gov.v1beta1.MsgVote"
+    ]
+  }
+}
+```
+
+### Response
+
+```protobuf
+message MsgUpdateParamsResponse {}
+```
+
+### Processing
+
+When `MsgUpdateParams` is processed:
+
+1. The module validates that the sender is the authorized governance account
+2. It updates the module parameters in the params subspace
+3. It returns an empty response
+
+## IBC Callbacks
+
+In addition to the state-changing messages above, the Interchain Transactions module also processes the following IBC callbacks internally:
+
+### OnChanOpenAck
+
+Called when a channel open handshake is completed. The module:
+
+1. Extracts the interchain account address from the version string
+2. Stores the interchain account address in state
+3. Calls back to the initiating contract via Sudo
+
+### OnAcknowledgementPacket
+
+Called when an acknowledgement is received for a packet. The module:
+
+1. Identifies the initiating contract from the port ID
+2. Extracts success or error data from the acknowledgement
+3. Calls back to the initiating contract via Sudo
+4. Processes fee refunds for the acknowledgement
+
+### OnTimeoutPacket
+
+Called when a packet times out. The module:
+
+1. Identifies the initiating contract from the port ID
+2. Calls back to the initiating contract via Sudo
+3. Processes fee refunds for the timeout 

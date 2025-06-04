@@ -1,0 +1,274 @@
+---
+title: "Running a Node"
+description: "Set up and configure a Neutron validator node"
+icon: "server"
+---
+
+This guide will walk you through the process of setting up and running a Neutron validator node. Following the Mercury upgrade, Neutron operates as a sovereign network with specific requirements for validators.
+
+<Note>
+  Before proceeding, ensure your system meets the hardware requirements. Neutron validators need robust hardware to maintain high performance and provide reliable oracle data.
+</Note>
+
+## System Requirements
+
+<CardGroup cols={2}>
+  <Card title="CPU" icon="microchip" iconType="duotone">
+    <strong>Minimum:</strong> 4+ cores<br />
+    <strong>Recommended:</strong> 8+ cores
+  </Card>
+  <Card title="RAM" icon="memory" iconType="duotone">
+    <strong>Minimum:</strong> 16GB<br />
+    <strong>Recommended:</strong> 32GB+
+  </Card>
+  <Card title="Storage" icon="hard-drive" iconType="duotone">
+    <strong>Minimum:</strong> 500GB SSD<br />
+    <strong>Recommended:</strong> 1TB+ NVMe SSD
+  </Card>
+  <Card title="Network" icon="network-wired" iconType="duotone">
+    <strong>Minimum:</strong> 100Mbps<br />
+    <strong>Recommended:</strong> 1Gbps+ with low latency
+  </Card>
+</CardGroup>
+
+## Installation Process
+
+<Steps>
+  <Step title="Install Dependencies">
+    ```bash
+    # Update and install required packages
+    sudo apt update && sudo apt upgrade -y
+    sudo apt install build-essential jq wget git curl -y
+    ```
+  </Step>
+  <Step title="Install Go">
+    ```bash
+    # Install Go 1.21 or higher
+    wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
+    sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.21.0.linux-amd64.tar.gz
+    rm go1.21.0.linux-amd64.tar.gz
+    ```
+
+    Add Go to your PATH:
+
+    ```bash
+    echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> ~/.profile
+    source ~/.profile
+    ```
+  </Step>
+  <Step title="Build or Download Neutron">
+    <Tabs>
+      <Tab title="Build from Source">
+        ```bash
+        git clone https://github.com/neutron-org/neutron.git
+        cd neutron
+        git checkout v6.0.1 # replace with the current version
+        make install
+        ```
+      </Tab>
+      <Tab title="Download Binary">
+        ```bash
+        wget https://github.com/neutron-org/neutron/releases/download/v6.0.1/neutrond-linux-amd64
+        chmod +x neutrond-linux-amd64
+        sudo mv neutrond-linux-amd64 /usr/local/bin/neutrond
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+  <Step title="Initialize the Node">
+    ```bash
+    neutrond init <your-moniker> --chain-id neutron-1
+    ```
+  </Step>
+</Steps>
+
+## Configuration
+
+### Download Genesis and Address Book
+
+```bash
+# Download genesis file
+wget -O $HOME/.neutrond/config/genesis.json https://snapshots.kjnodes.com/neutron/genesis.json
+
+# Download address book
+wget -O $HOME/.neutrond/config/addrbook.json https://snapshots.kjnodes.com/neutron/addrbook.json
+```
+
+### Configure Your Node
+
+Edit app.toml to set minimum gas prices:
+
+```bash
+sed -i 's/minimum-gas-prices = ""/minimum-gas-prices = "0.025untrn"/' $HOME/.neutrond/config/app.toml
+```
+
+Add seeds and peers to config.toml:
+
+```bash
+# Set up seeds
+SEEDS="24f609fb5946ca3a979f40b7f54132c00104433e@p2p-erheim.neutron-1.neutron.org:26656,20e1000e88125698264454a884812746c2eb4807@seeds.lavenderfive.com:19156"
+sed -i 's/seeds = ""/seeds = "'"$SEEDS"'"/' $HOME/.neutrond/config/config.toml
+
+# Set up persistent peers
+PEERS="e5d2743d9a3de514e4f7b9461bf3f0c1500c58d9@neutron.peer.stakewith.us:39956,982f968cd6ac567fdddf2170f7da9725ba21693d@51.210.209.49:15600"
+sed -i 's/persistent_peers = ""/persistent_peers = "'"$PEERS"'"/' $HOME/.neutrond/config/config.toml
+```
+
+<Tip>
+  For a complete list of available seeds and peers, check the [Peers](/resources/peers) page.
+</Tip>
+
+## State Sync or Snapshot (Optional)
+
+To speed up the initial sync process, you can use state sync or a snapshot.
+
+<Tabs>
+  <Tab title="State Sync">
+    ```bash
+    # Get latest block height and hash
+    LATEST_HEIGHT=$(curl -s https://rpc.neutron.nodestake.top/status | jq -r .result.sync_info.latest_block_height)
+    BLOCK_HEIGHT=$((LATEST_HEIGHT - 2000))
+    TRUST_HASH=$(curl -s "https://rpc.neutron.nodestake.top/block?height=$BLOCK_HEIGHT" | jq -r .result.block_id.hash)
+
+    # Configure state sync in config.toml
+    sed -i \
+    -e "s|^enable *=.*|enable = true|" \
+    -e "s|^rpc_servers *=.*|rpc_servers = \"https://rpc.neutron.nodestake.top:443,https://rpc-kralum.neutron-1.neutron.org:26657\"|" \
+    -e "s|^trust_height *=.*|trust_height = $BLOCK_HEIGHT|" \
+    -e "s|^trust_hash *=.*|trust_hash = \"$TRUST_HASH\"|" \
+    $HOME/.neutrond/config/config.toml
+    ```
+  </Tab>
+  <Tab title="Snapshot">
+    ```bash
+    # Stop the service if it's running
+    sudo systemctl stop neutrond
+
+    # Remove existing data
+    neutrond tendermint unsafe-reset-all --home $HOME/.neutrond --keep-addr-book
+
+    # Download a snapshot
+    wget -O neutron_snapshot.tar.lz4 https://snapshots.kjnodes.com/neutron/snapshot_latest.tar.lz4
+
+    # Extract the snapshot
+    lz4 -dc neutron_snapshot.tar.lz4 | tar -xf - -C $HOME/.neutrond
+    ```
+  </Tab>
+</Tabs>
+
+## Set Up SystemD Service
+
+Create a systemd service file for Neutron:
+
+```bash
+sudo tee /etc/systemd/system/neutrond.service > /dev/null << EOF
+[Unit]
+Description=Neutron Node
+After=network-online.target
+
+[Service]
+User=$USER
+ExecStart=$(which neutrond) start
+Restart=always
+RestartSec=3
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
+EOF
+```
+
+Start the service:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable neutrond
+sudo systemctl start neutrond
+```
+
+## Monitor Node Status
+
+<Tabs>
+  <Tab title="Check Logs">
+    ```bash
+    sudo journalctl -u neutrond -f
+    ```
+  </Tab>
+  <Tab title="Check Sync Status">
+    ```bash
+    neutrond status 2>&1 | jq .SyncInfo
+    ```
+    
+    Your node is synced when `catching_up` is `false`.
+  </Tab>
+  <Tab title="Check Peers">
+    ```bash
+    neutrond status 2>&1 | jq .NodeInfo.n_peers
+    ```
+  </Tab>
+</Tabs>
+
+## Security Recommendations
+
+<AccordionGroup>
+  <Accordion title="Firewall Configuration">
+    Configure your firewall to only allow necessary ports:
+    
+    ```bash
+    # Install ufw
+    sudo apt install ufw -y
+    
+    # Configure ufw
+    sudo ufw default deny incoming
+    sudo ufw default allow outgoing
+    sudo ufw allow ssh
+    sudo ufw allow 26656/tcp # P2P
+    sudo ufw allow 26657/tcp # RPC (restrict to specific IPs if needed)
+    sudo ufw allow 1317/tcp  # API (restrict to specific IPs if needed)
+    sudo ufw allow 9090/tcp  # gRPC (restrict to specific IPs if needed)
+    
+    # Enable ufw
+    sudo ufw enable
+    ```
+  </Accordion>
+  <Accordion title="SSH Hardening">
+    Improve SSH security with these steps:
+    
+    ```bash
+    # Edit SSH config
+    sudo nano /etc/ssh/sshd_config
+    ```
+    
+    Make these changes:
+    ```
+    PermitRootLogin no
+    PasswordAuthentication no
+    PubkeyAuthentication yes
+    ```
+    
+    Restart SSH:
+    ```bash
+    sudo systemctl restart sshd
+    ```
+  </Accordion>
+  <Accordion title="Sentry Node Architecture">
+    For production validators, consider implementing a sentry node architecture:
+    
+    1. Set up separate sentry nodes that connect to the public network
+    2. Configure your validator to only connect to your sentry nodes
+    3. This protects your validator from DDoS attacks
+    
+    For more information, see the [Sentry Node Architecture Guide](/validators/technical/sentry-nodes).
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Once your node is fully synced, the next steps are:
+
+1. Set up the [Slinky Oracle Service](/validators/oracle-setup) for price feed data
+2. [Register as a validator](/validators/becoming-a-validator)
+
+<div className="mt-8">
+  <a className="button-primary px-4 py-2 rounded text-white bg-primary hover:bg-opacity-90" href="/validators/oracle-setup">Continue to Oracle Setup →</a>
+</div> 

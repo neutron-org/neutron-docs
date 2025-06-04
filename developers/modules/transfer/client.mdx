@@ -1,0 +1,233 @@
+---
+title: Client
+sidebar_position: 10
+---
+
+# Client
+
+This document describes the CLI commands and gRPC queries for the Transfer module.
+
+## CLI Commands
+
+The `neutrond` command-line interface allows users to query the Transfer module state and send IBC transfer transactions.
+
+### Query
+
+The `query` commands allow users to query Transfer module state.
+
+#### Denom Trace
+
+The `denom-trace` command allows users to query the denomination trace info of a given trace hash.
+
+```bash
+neutrond query ibc-transfer denom-trace [hash] [flags]
+```
+
+Example:
+
+```bash
+neutrond query ibc-transfer denom-trace 27A6394C3F9FF9C9DCF5DFFADF9BB5FE9A37C7E92B006199894CF1824DF9AC7C
+```
+
+Example Output:
+
+```json
+{
+  "path": "transfer/channel-5",
+  "base_denom": "uatom"
+}
+```
+
+#### Denom Traces
+
+The `denom-traces` command allows users to query all denomination traces.
+
+```bash
+neutrond query ibc-transfer denom-traces [flags]
+```
+
+Example:
+
+```bash
+neutrond query ibc-transfer denom-traces
+```
+
+Example Output:
+
+```json
+{
+  "denom_traces": [
+    {
+      "path": "transfer/channel-0",
+      "base_denom": "untrn"
+    },
+    {
+      "path": "transfer/channel-5",
+      "base_denom": "uatom"
+    }
+  ],
+  "pagination": {
+    "total": "2"
+  }
+}
+```
+
+#### Params
+
+The `params` command allows users to query the current Transfer module parameters.
+
+```bash
+neutrond query ibc-transfer params [flags]
+```
+
+Example:
+
+```bash
+neutrond query ibc-transfer params
+```
+
+Example Output:
+
+```json
+{
+  "send_enabled": true,
+  "receive_enabled": true
+}
+```
+
+#### Escrow Address
+
+The `escrow-address` command allows users to get the escrow address for a channel.
+
+```bash
+neutrond query ibc-transfer escrow-address [port] [channel-id] [flags]
+```
+
+Example:
+
+```bash
+neutrond query ibc-transfer escrow-address transfer channel-0
+```
+
+Example Output:
+
+```
+neutron1fl48vsnmsdzcv85q5d2q4z5ajdha8yu3sf32nj
+```
+
+### Transactions
+
+The `tx` commands allow users to interact with the Transfer module.
+
+#### Transfer
+
+The `transfer` command allows users to transfer fungible tokens via IBC.
+
+```bash
+neutrond tx ibc-transfer transfer [src-port] [src-channel] [receiver] [amount] [flags]
+```
+
+Parameters:
+- `src-port`: Source port ID (usually "transfer")
+- `src-channel`: Source channel ID
+- `receiver`: Receiver address on the destination chain
+- `amount`: Amount to transfer with denomination
+
+Example:
+
+```bash
+neutrond tx ibc-transfer transfer \
+  transfer channel-0 \
+  cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk \
+  1000untrn \
+  --from=mykey \
+  --chain-id=neutron-1 \
+  --fees=500untrn
+```
+
+If you want to include a memo with your transfer, you can use the `--memo` flag:
+
+```bash
+neutrond tx ibc-transfer transfer \
+  transfer channel-0 \
+  cosmos1skjwj5whet0lpe65qaq4rpq03hjxlwd9nf39lk \
+  1000untrn \
+  --memo='{"payment_for":"services"}' \
+  --from=mykey \
+  --chain-id=neutron-1 \
+  --fees=500untrn
+```
+
+## gRPC Queries
+
+The Transfer module exposes several gRPC queries that can be used by external applications.
+
+### DenomTrace
+
+The `DenomTrace` query returns the denomination trace information for a given hash.
+
+```go
+rpc DenomTrace(QueryDenomTraceRequest) returns (QueryDenomTraceResponse);
+```
+
+Example (using grpcurl):
+
+```bash
+grpcurl -plaintext -d '{"hash":"27A6394C3F9FF9C9DCF5DFFADF9BB5FE9A37C7E92B006199894CF1824DF9AC7C"}' localhost:9090 ibc.applications.transfer.v1.Query/DenomTrace
+```
+
+### DenomTraces
+
+The `DenomTraces` query returns all denomination traces.
+
+```go
+rpc DenomTraces(QueryDenomTracesRequest) returns (QueryDenomTracesResponse);
+```
+
+Example (using grpcurl):
+
+```bash
+grpcurl -plaintext localhost:9090 ibc.applications.transfer.v1.Query/DenomTraces
+```
+
+### Params
+
+The `Params` query returns the current Transfer module parameters.
+
+```go
+rpc Params(QueryParamsRequest) returns (QueryParamsResponse);
+```
+
+Example (using grpcurl):
+
+```bash
+grpcurl -plaintext localhost:9090 ibc.applications.transfer.v1.Query/Params
+```
+
+## REST API
+
+The Transfer module exposes REST endpoints via gRPC-Gateway.
+
+### Denom Trace
+
+Get a denomination trace by its hash.
+
+```
+GET /ibc/applications/transfer/v1/denom_traces/{hash}
+```
+
+### Denom Traces
+
+Get all denomination traces.
+
+```
+GET /ibc/applications/transfer/v1/denom_traces
+```
+
+### Params
+
+Get the current Transfer module parameters.
+
+```
+GET /ibc/applications/transfer/v1/params
+``` 

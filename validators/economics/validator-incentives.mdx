@@ -1,0 +1,198 @@
+---
+title: "Validator Economics"
+description: "Economic model, incentives, and rewards for Neutron validators"
+icon: "coins"
+---
+
+Following the Mercury upgrade, Neutron implemented a unique validator economic model that fundamentally differs from traditional Proof of Stake networks. This page explains how validator compensation, delegator rewards, and the overall economic incentives work.
+
+## Neutron's Distinct Economic Model
+
+<div className="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900 dark:from-opacity-30 dark:to-indigo-900 dark:to-opacity-30 rounded-lg mb-6">
+  <h3 className="text-xl font-semibold mb-2">Key Differences from Traditional Networks</h3>
+  <ul className="space-y-2">
+    <li className="flex items-start">
+      <span className="mr-2 text-primary">•</span>
+      <span><strong>Fixed Supply:</strong> NTRN remains a fixed-supply asset with no inflation-based block rewards</span>
+    </li>
+    <li className="flex items-start">
+      <span className="mr-2 text-primary">•</span>
+      <span><strong>DAO Treasury:</strong> All rewards are paid by the Neutron DAO Treasury rather than through inflation</span>
+    </li>
+    <li className="flex items-start">
+      <span className="mr-2 text-primary">•</span>
+      <span><strong>Base Compensation:</strong> Validators receive stable monthly compensation for meeting performance requirements</span>
+    </li>
+    <li className="flex items-start">
+      <span className="mr-2 text-primary">•</span>
+      <span><strong>No Commissions:</strong> Validator commissions are replaced with a separate delegator reward system</span>
+    </li>
+    <li className="flex items-start">
+      <span className="mr-2 text-primary">•</span>
+      <span><strong>No Slashing:</strong> Instead of slashing, Neutron uses jailing, tombstoning, and validator rotation</span>
+    </li>
+  </ul>
+</div>
+
+## Validator Compensation
+
+Neutron's validator compensation mechanism is designed to provide predictable income to validators while ensuring the network doesn't overpay for security during bull markets or underpay during bear markets.
+
+### Base Compensation
+
+The `x/revenue` module, a specialized component in Neutron's blockchain, handles validator compensation:
+
+- **Target Amount:** $3,000 USD per month per validator
+- **Payment Schedule:** Monthly distribution
+- **Token Calculation:** The module uses the network's oracle to convert the USD target amount to the appropriate number of NTRN tokens
+- **Source:** All payments come directly from the Neutron DAO Treasury
+
+<Note>
+  The base compensation amount is a parameter that can be adjusted by DAO governance to reflect changes in market conditions or validator requirements.
+</Note>
+
+### Performance-Based Adjustments
+
+Compensation is directly tied to validator performance across two key metrics:
+
+<div className="overflow-x-auto">
+  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+    <thead className="bg-gray-50 dark:bg-gray-800">
+      <tr>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Performance Range</th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Block Signing</th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Price Updates</th>
+        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Reward Level</th>
+      </tr>
+    </thead>
+    <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+      <tr>
+        <td className="px-6 py-4 whitespace-nowrap">Above threshold</td>
+        <td className="px-6 py-4 whitespace-nowrap">≥ 99.5%</td>
+        <td className="px-6 py-4 whitespace-nowrap">≥ 98%</td>
+        <td className="px-6 py-4 whitespace-nowrap">Full rewards</td>
+      </tr>
+      <tr>
+        <td className="px-6 py-4 whitespace-nowrap">Medium range</td>
+        <td className="px-6 py-4 whitespace-nowrap">95% - 99.5%</td>
+        <td className="px-6 py-4 whitespace-nowrap">95% - 98%</td>
+        <td className="px-6 py-4 whitespace-nowrap">Partial rewards</td>
+      </tr>
+      <tr>
+        <td className="px-6 py-4 whitespace-nowrap">Below minimum</td>
+        <td className="px-6 py-4 whitespace-nowrap">< 95%</td>
+        <td className="px-6 py-4 whitespace-nowrap">< 95%</td>
+        <td className="px-6 py-4 whitespace-nowrap">No rewards</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<Tip>
+  Both criteria must be met to receive the corresponding reward level. If a validator fails to meet the minimum threshold for any criteria, they receive no reward for the period, regardless of their performance in the other criterion.
+</Tip>
+
+## Delegator Rewards
+
+Delegator staking rewards follow a completely separate mechanism from validator compensation:
+
+- **Target APR:** Approximately 3% annually
+- **Payment Source:** Neutron DAO Treasury
+- **Distribution:** Direct to delegators based on their staked amount
+- **Mechanism:** Independent system that doesn't rely on validator commission splits
+
+This system ensures delegators receive consistent returns regardless of individual validator performance (as long as the validator remains in the active set).
+
+## The Role of the DAO Treasury
+
+The Neutron DAO Treasury plays a central role in the economic model:
+
+### Treasury Responsibilities
+
+<CardGroup cols={2}>
+  <Card title="Validator Payments" icon="money-bill-transfer" iconType="duotone">
+    Distributes monthly compensation to validators based on performance metrics
+  </Card>
+  <Card title="Delegator Rewards" icon="hand-holding-dollar" iconType="duotone">
+    Funds the delegator reward system targeting 3% APR
+  </Card>
+  <Card title="Protocol Self-Stake" icon="key" iconType="duotone">
+    Maintains significant delegation to help secure the network
+  </Card>
+  <Card title="Ecosystem Development" icon="seedling" iconType="duotone">
+    Supports projects building on Neutron and overall ecosystem growth
+  </Card>
+</CardGroup>
+
+### Treasury Management
+
+The DAO maintains approximately 22.5% of the NTRN token supply delegated through the Drop Protocol. This serves several purposes:
+
+1. Protecting the network from economic attacks
+2. Facilitating ongoing delegation management 
+3. Supporting liquid staking through dNTRN
+4. Creating deep liquidity for NTRN and dNTRN tokens
+
+## No Slashing Model
+
+Unlike traditional Proof of Stake networks, Neutron does not implement slashing:
+
+<div className="p-4 border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 my-4">
+  <p><strong>Why No Slashing?</strong> Traditional slashing disproportionately impacts delegators rather than the misbehaving operators. It also disincentivizes validators from being reactive during network upgrades when slashing risk is highest.</p>
+</div>
+
+Instead, Neutron uses three alternative mechanisms:
+
+1. **Jailing:** Temporarily removing validators from the active set for minor infractions
+2. **Tombstoning:** Permanently removing validators for serious violations like double-signing
+3. **Rotation:** Replacing underperforming validators through the structured rotation framework
+
+This approach protects delegators while still maintaining strong incentives for validator performance.
+
+## Liquid Staking Integration
+
+The network actively encourages the development and adoption of liquid staking:
+
+- The DAO delegates a large portion of its treasury through Drop Protocol
+- This creates a significant supply of dNTRN (the liquid staked derivative token)
+- The DAO helps bootstrap dNTRN liquidity in DeFi protocols
+- Users can utilize dNTRN across the ecosystem while still earning staking rewards
+
+<div className="flex flex-col md:flex-row gap-4 my-6">
+  <div className="flex-1 p-4 border rounded-lg">
+    <h3 className="text-lg font-medium mb-2">Benefits for Validators</h3>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Predictable income regardless of market conditions</li>
+      <li>Clear performance requirements</li>
+      <li>Focused responsibility on infrastructure quality</li>
+      <li>No competition for delegations through commission rates</li>
+    </ul>
+  </div>
+  <div className="flex-1 p-4 border rounded-lg">
+    <h3 className="text-lg font-medium mb-2">Benefits for Delegators</h3>
+    <ul className="list-disc pl-5 space-y-1">
+      <li>Consistent 3% APR return</li>
+      <li>No risk of slashing</li>
+      <li>Liquid staking options available</li>
+      <li>Ability to use staked assets in DeFi</li>
+    </ul>
+  </div>
+</div>
+
+## Becoming a Validator
+
+If you're interested in becoming a Neutron validator:
+
+1. Ensure you understand the [technical requirements](/validators/technical/combined)
+2. Follow the guide to [run a Neutron node](/validators/running-a-node)
+3. Set up the [oracle service](/validators/oracle-setup)
+4. Complete the steps to [become a validator](/validators/becoming-a-validator)
+
+<div className="mt-8">
+  <a href="/validators/becoming-a-validator" className="px-4 py-2 bg-primary text-white rounded hover:bg-opacity-90 inline-flex items-center">
+    Become a Validator
+    <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+    </svg>
+  </a>
+</div> 

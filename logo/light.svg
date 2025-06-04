@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="180" viewBox="0 0 900 180" role="img" aria-label="Neutron Docs logo">
+  <!-- white backdrop -->
+  <rect width="100%" height="100%" fill="#fff"/>
+
+  <!-- Neutron Logo -->
+  <g transform="translate(20, 50) scale(10)">
+    <path d="M10.1021 11.6941L7.4082 8.1817C6.94946 8.53294 6.36384 8.74175 5.73917 8.74175C4.22629 8.74175 2.99648 7.51714 2.99648 5.99827C2.99648 5.37173 3.21121 4.79271 3.56259 4.32755L0 1.59357V11.6941H10.1021Z" fill="black"/>
+    <path d="M11.43 0.264256H1.32788L4.06082 3.82412C4.51956 3.46339 5.10518 3.25457 5.72985 3.25457C7.24273 3.25457 8.47256 4.47912 8.47256 5.998C8.47256 6.62453 8.25783 7.20361 7.90645 7.66877L11.4202 10.3648V0.264256H11.43Z" fill="black"/>
+  </g>
+
+  <!-- NEUTRON text -->
+  <text x="190" y="118"
+        font-family="ChakraPetch-Bold, 'Chakra Petch', sans-serif" font-size="110"
+        font-weight="700" fill="#000" letter-spacing="2">NEUTRON</text>
+
+  <!-- DOCS text in green -->
+  <text x="190" y="175"
+        font-family="ChakraPetch-Bold, 'Chakra Petch', sans-serif" font-size="65"
+        font-weight="700" fill="#31D99C" letter-spacing="1.5">DOCS</text>
+</svg>

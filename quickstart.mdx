@@ -1,0 +1,115 @@
+---
+title: "Quickstart"
+description: "Get started with Neutron in under 5 minutes"
+---
+
+## For Users
+
+<Steps>
+  <Step title="Access the Neutron App">
+    Visit [app.neutron.org](https://app.neutron.org/) to access the Neutron DeFi ecosystem.
+  </Step>
+  <Step title="Connect Your Wallet">
+    Connect a compatible wallet to the Neutron app by clicking "Connect Wallet" and selecting your preferred wallet provider.
+    <Note>
+      We recommend checking out wallets like [Keplr](https://www.keplr.app/get) and [Leap](https://www.leapwallet.io/download) for the best experience.
+    </Note>
+  </Step>
+  <Step title="Explore Neutron's DeFi Ecosystem">
+    Neutron offers a comprehensive DeFi ecosystem with multiple ways to participate:
+    
+    - **Supervaults**: Automatically compound your yields across multiple strategies
+    - **Liquid Staking**: Stake NTRN and receive liquid staking tokens you can use throughout the ecosystem
+    - **Lending & Borrowing**: Access capital markets for a variety of assets
+    - **Trading**: Swap assets easily with minimal slippage 
+    - **Governance**: Participate in shaping Neutron's future
+    
+    For more information on Neutron's DeFi features, check out our [DeFi Guide](/defi/overview).
+  </Step>
+</Steps>
+
+## For Developers
+
+<Note>
+For a comprehensive developer setup guide, visit the [Developer Quickstart](/developers/quickstart) which covers environment setup, smart contract development, and deployment in detail.
+</Note>
+
+<Steps>
+  <Step title="Quick Setup">
+    Install Rust and the WebAssembly target:
+    
+    ```bash
+    # Install Rust
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    rustup default stable
+    rustup target add wasm32-unknown-unknown
+    ```
+  </Step>
+  
+  <Step title="Create Your First Contract">
+    ```bash
+    # Generate a CosmWasm project
+    cargo generate --git https://github.com/CosmWasm/cw-template.git --name my-contract
+    cd my-contract
+    cargo wasm
+    ```
+  </Step>
+  
+  <Step title="Follow the Onboarding Tutorials">
+    Get started with our comprehensive tutorial series:
+    
+    <CardGroup cols={3}>
+      <Card title="Part 1: Minimal Contract" icon="file-code" href="/developers/tutorials/onboarding/part-1-minimal-application">
+        Create and deploy your first smart contract
+      </Card>
+      <Card title="Part 2: Modules & Contracts" icon="cubes" href="/developers/tutorials/onboarding/part-2-modules-contracts">
+        Interact with Neutron's unique modules
+      </Card>
+      <Card title="Part 3: Web App" icon="globe" href="/developers/tutorials/onboarding/part-3-web-app">
+        Build a frontend for your contracts
+      </Card>
+    </CardGroup>
+  </Step>
+</Steps>
+
+## For Validators
+
+<Steps>
+  <Step title="System Requirements">
+    Ensure your system meets these requirements:
+    
+    - **CPU**: 16+ cores, ≥3.5 GHz base clock
+    - **RAM**: 64GB minimum, 128GB recommended
+    - **Storage**: 500GB+ NVMe SSD
+    - **Network**: 100+ Mbps, stable connection
+
+    <Note>
+      Bare metal servers are recommended over cloud VMs for optimal performance.
+    </Note>
+  </Step>
+  <Step title="Set Up Your Node">
+    Follow our [Running a Node](/validators/running-a-node) guide to set up your Neutron full node.
+  </Step>
+  <Step title="Become a Validator">
+    Once synced, see [Becoming a Validator](/validators/becoming-a-validator) to join the active set.
+  </Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="Developer Quickstart" icon="code" href="/developers/quickstart">
+    Detailed development environment setup and tutorials
+  </Card>
+  <Card title="Core Concepts" icon="book" href="/concepts/integrated-architecture">
+    Learn about Neutron's key architectural features
+  </Card>
+  <Card title="DeFi Features" icon="chart-line" href="/defi/overview">
+    Explore DeFi capabilities on Neutron
+  </Card>
+</CardGroup>
+
+<div className="p-4 border-l-4 border-primary bg-primary/5 rounded my-6">
+  <strong>Need help?</strong> Join our <a href="https://discord.com/invite/bzPBzbDvWC" className="text-primary hover:underline">Discord</a> community for support and discussions.
+</div>
+

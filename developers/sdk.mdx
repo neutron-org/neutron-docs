@@ -1,0 +1,194 @@
+---
+title: "SDK & Developer Tools"
+description: "Libraries, templates, and tools for building on Neutron"
+icon: "toolbox"
+---
+
+Neutron provides a comprehensive suite of SDKs and developer tools to make building on the platform as seamless as possible. This page outlines the core libraries and resources available to developers.
+
+## Official SDK Libraries
+
+<CardGroup cols={3}>
+  <Card title="Neutron SDK" icon="rust" iconType="duotone" href="https://github.com/neutron-org/neutron-sdk" target="_blank">
+    <p className="mt-2">The official Rust/CosmWasm SDK for interacting with Neutron blockchain features.</p>
+    <p className="text-xs mt-2 text-gray-500">Language: Rust</p>
+  </Card>
+  
+  <Card title="Neutron Standard Library" icon="book-sparkles" iconType="duotone" href="https://github.com/neutron-org/neutron-std" target="_blank">
+    <p className="mt-2">Standard library of Rust types and functions for Neutron chain development.</p>
+    <p className="text-xs mt-2 text-gray-500">Language: Rust</p>
+  </Card>
+  
+  <Card title="NeutronJS" icon="js" iconType="duotone" href="https://github.com/neutron-org/neutronjs" target="_blank">
+    <p className="mt-2">JavaScript library for interacting with Neutron chain, built on CosmJS.</p>
+    <p className="text-xs mt-2 text-gray-500">Language: TypeScript</p>
+  </Card>
+</CardGroup>
+
+## Neutron SDK (Rust)
+
+The [Neutron SDK](https://github.com/neutron-org/neutron-sdk) provides Rust libraries for building smart contracts that interface with Neutron's specialized modules.
+
+### Example Contracts
+
+The SDK repository includes several example contracts demonstrating Neutron's features:
+
+<CardGroup cols={3}>
+  <Card title="Interchain Queries" icon="database" iconType="duotone" href="https://github.com/neutron-org/neutron-sdk/tree/main/contracts/neutron_interchain_queries" target="_blank">
+    Learn how to properly work with the Interchain Queries Module using the SDK
+  </Card>
+  
+  <Card title="Interchain Transactions" icon="arrow-right-arrow-left" iconType="duotone" href="https://github.com/neutron-org/neutron-sdk/tree/main/contracts/neutron_interchain_txs" target="_blank">
+    Demonstrates how to use the Interchain Transactions Module from your contracts
+  </Card>
+  
+  <Card title="IBC Transfer" icon="bridge" iconType="duotone" href="https://github.com/neutron-org/neutron-sdk/tree/main/contracts/ibc_transfer" target="_blank">
+    Shows how to handle Sudo callbacks from IBC transfers properly
+  </Card>
+</CardGroup>
+
+### Getting Started
+
+```bash
+# Clone the repository
+git clone https://github.com/neutron-org/neutron-sdk.git
+cd neutron-sdk
+
+# Run tests
+make test
+
+# Generate schema
+make schema
+
+# Build for production
+make build
+```
+
+## NeutronJS (TypeScript/JavaScript)
+
+[NeutronJS](https://github.com/neutron-org/neutronjs) provides TypeScript/JavaScript types and utilities for interacting with the Neutron chain from web applications.
+
+### Installation
+
+```bash
+npm install @neutron-org/neutronjs
+```
+
+### Features
+
+- TypeScript types for all Neutron modules
+- Query functions for accessing chain data
+- Transaction builders for Neutron-specific messages
+- Integration with CosmJS for wallet connections
+
+### Example Usage
+
+```typescript
+import { NeutronClient } from '@neutron-org/neutronjs';
+
+// Create a client
+const client = await NeutronClient.connect('https://rpc-neutron.keplr.app');
+
+// Query tokens
+const balances = await client.getAllBalances('neutron1...');
+
+// Create and broadcast transactions
+const msg = {
+  typeUrl: '/cosmos.bank.v1beta1.MsgSend',
+  value: {
+    fromAddress: 'neutron1...',
+    toAddress: 'neutron1...',
+    amount: [{ denom: 'untrn', amount: '1000000' }]
+  }
+};
+
+const result = await client.signAndBroadcast([msg], fee, memo);
+```
+
+## Community Developer Tools
+
+<CardGroup cols={3}>
+  <Card title="NeutronTemplate" icon="code" iconType="duotone" href="https://github.com/Deploydon/NeutronTemplate" target="_blank">
+    <p className="mt-2">A template repository for building NextJS applications that interact with Neutron.</p>
+    <p className="text-xs mt-2 text-gray-500">Deploydon / NextJS + CosmosKit</p>
+  </Card>
+  
+  <Card title="BullBearLib" icon="chart-simple" iconType="duotone" href="https://github.com/Deploydon/BullBearLib" target="_blank">
+    <p className="mt-2">Helper scripts for interacting with BullBear.zone, useful for building trading bots.</p>
+    <p className="text-xs mt-2 text-gray-500">Deploydon / JavaScript</p>
+  </Card>
+  
+  <Card title="LocalTesting" icon="vial" iconType="duotone" href="https://github.com/Deploydon/LocalTesting" target="_blank">
+    <p className="mt-2">A Node.js setup for testing contract features in a local environment.</p>
+    <p className="text-xs mt-2 text-gray-500">Deploydon / JavaScript</p>
+  </Card>
+</CardGroup>
+
+### NeutronTemplate
+
+[NeutronTemplate](https://github.com/Deploydon/NeutronTemplate) provides a complete starting point for building Neutron dApps using NextJS, including:
+
+- NextJS 15 with Tailwind CSS
+- CosmosKit for wallet connections (Keplr/Leap)
+- Tanstack Query for easy data fetching and caching
+- A sample CosmWasm contract with common functions
+- Frontend components for interacting with the contract
+
+View it live at [NeutronTemplate.Deploydon.com](https://NeutronTemplate.Deploydon.com)
+
+### LocalTesting
+
+[LocalTesting](https://github.com/Deploydon/LocalTesting) is a Node.js toolkit for rapidly testing CosmWasm contract functionality, featuring:
+
+- Script templates for deploying, migrating, executing, and querying contracts
+- Environment setup for Cosmopark or testnet
+- Preconfigured for typical testing workflows
+
+## Testing Tools
+
+<div className="p-4 border-l-4 border-primary bg-primary/5 rounded my-6">
+  <h3 className="font-bold">test-tube</h3>
+  <p className="mt-2">
+    <a href="https://github.com/osmosis-labs/test-tube" target="_blank" className="text-primary hover:underline">test-tube</a> is a powerful library for building testing environments for CosmWasm smart contracts. It allows you to test your contracts against the actual Cosmos SDK chain's logic, written in Go, using Rust.
+  </p>
+  <p className="mt-2">
+    Unlike cw-multi-test which simulates only basic modules, test-tube enables testing against the complete chain implementation, making it ideal for contracts that interact with custom Neutron modules.
+  </p>
+</div>
+
+### Why Use test-tube?
+
+If your contract interacts with Neutron's custom modules like Interchain Queries, Interchain Transactions, or the DEX module, test-tube provides more realistic testing than cw-multi-test.
+
+### Installation & Usage
+
+See the [test-tube documentation](https://github.com/osmosis-labs/test-tube#readme) for setup instructions and examples.
+
+## Installing Development Dependencies
+
+To develop for Neutron, you'll need the following tools:
+
+```bash
+# Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustup default stable
+rustup target add wasm32-unknown-unknown
+
+# Install Go (required for test-tube and some tooling)
+# Download from https://golang.org/dl/
+
+# Install Node.js (for JavaScript/TypeScript development)
+# Download from https://nodejs.org/
+```
+
+## Additional Resources
+
+<CardGroup cols={2}>
+  <Card title="Module Documentation" icon="puzzle-piece" iconType="duotone" href="/developers/modules/overview">
+    Detailed documentation for all Neutron modules and their capabilities
+  </Card>
+  
+  <Card title="Tutorials" icon="graduation-cap" iconType="duotone" href="/developers/tutorials/overview">
+    Step-by-step guides for building different types of applications on Neutron
+  </Card>
+</CardGroup> 

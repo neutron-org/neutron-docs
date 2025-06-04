@@ -1,0 +1,195 @@
+---
+title: "Tokenomics"
+description: "Economic model, token utility, and validator incentives for the NTRN token"
+icon: "coins"
+---
+
+The Neutron token (NTRN) powers the network's economic model with a fixed supply of 1,000,000,000 tokens and zero inflation, ensuring long-term value preservation without dilution through continuous issuance.
+
+## Token Distribution
+
+NTRN tokens were initially distributed across various stakeholders:
+
+| Allocation | Percentage | Amount (NTRN) |
+|------------|------------|---------------|
+| Treasury | 27.00% | 270,000,000 |
+| Reserve | 24.00% | 240,000,000 |
+| Team | 23.00% | 230,000,000 |
+| Investors | 11.00% | 110,000,000 |
+| Airdrops | 7.00% | 70,000,000 |
+| Liquidity Bootstrap | 5.00% | 50,000,000 |
+| Binance Launchpool | 2.00% | 20,000,000 |
+| Advisors | 1.00% | 10,000,000 |
+
+![NTRN Token Supply](/images/ntrn_tokensupply.png)
+
+## Token Generation Event
+
+The initial distribution of NTRN tokens was facilitated through a multi-component Token Generation Event (TGE) designed to distribute tokens fairly while building initial liquidity:
+
+<CardGroup cols={3}>
+  <Card title="Airdrop" icon="parachute-box">
+    <p className="mt-2">7% of NTRN supply was airdropped to ATOM stakers and other qualifying Cosmos ecosystem participants to bootstrap the initial community.</p>
+  </Card>
+  
+  <Card title="Lockdrop" icon="lock">
+    <p className="mt-2">Users locked LP tokens from axlrUSDC/NTRN and ATOM/NTRN pools for various durations to receive NTRN tokens proportional to their contribution.</p>
+  </Card>
+  
+  <Card title="Liquidity Bootstrap Auction" icon="chart-line">
+    <p className="mt-2">5% of NTRN was allocated to bootstrap initial liquidity pools, with participants receiving both LP tokens and additional NTRN incentives.</p>
+  </Card>
+</CardGroup>
+
+The TGE utilized several smart contracts working together:
+- **Credits Contract**: Managed token vesting and distribution
+- **Airdrop Contract**: Distributed tokens to eligible addresses using Merkle proofs
+- **Auction Contract**: Facilitated NTRN-NATIVE pool initialization
+- **Lockdrop Contract**: Enabled users to lock LP tokens to receive NTRN
+- **Vesting LP Contract**: Managed the vesting of LP positions over a 90-day period
+
+### Token Unlock Schedule
+
+NTRN follows a gradual unlock schedule to ensure long-term network stability and align incentives of different stakeholders.
+
+![NTRN Unlock Schedule](/images/ntrn_unlock.png)
+
+### Binance Launchpool
+
+A portion of NTRN tokens (2.00% of the total supply) was distributed through Binance Launchpool:
+
+- **Total Launchpool Rewards**: 20,000,000 NTRN
+- **Duration**: 20 days (started October 11, 2023)
+- **Staking Options**: BNB, TUSD, and FDUSD pools
+- **Initial Circulating Supply**: 217,112,292 NTRN (21.71% of total)
+
+## Fee Model and Distribution
+
+Neutron features an innovative multi-denomination fee system:
+
+- **Multi-Denom Fees**: Transactions can pay gas in any liquid token on the network
+- **NTRN/ATOM Discount**: 30% discount when using NTRN or ATOM for gas fees
+- **Gas Limit**: 330M gas per block (11× increase post-Mercury)
+- **Fee Distribution**: 100% of fees stay within Neutron's economy
+
+### Pre-Mercury Fee Distribution
+
+Before the Mercury upgrade, Neutron operated under the Interchain Security model (ICS) with the following fee distribution:
+- 25% of transaction fees were sent to the Cosmos Hub as payment for security services
+- The remaining 75% were either burnt (if paid in NTRN) or sent to the Reserve (if paid in ATOM or other tokens)
+
+> **Note:** Following the Mercury upgrade, this fee-sharing arrangement with the Cosmos Hub was discontinued as Neutron became a sovereign chain with its own security model.
+
+## Treasury System
+
+Neutron operates a sophisticated treasury system that manages the protocol's funds and token distribution:
+
+### DAO Treasury
+
+The Neutron DAO Treasury is the primary fund manager post-Mercury, holding a significant portion of NTRN tokens to serve multiple purposes:
+
+- Fund validator operations (base compensation)
+- Pay staking rewards to delegators
+- Bootstrap liquidity across the DeFi ecosystem
+- Support ecosystem growth through incentives and grants
+- Fund ongoing development of the network
+
+### Reserve Contract
+
+The Reserve contract, instantiated at genesis, was designed to hold vested NTRN tokens. Key features include:
+
+- **Vesting Mechanism**: Reserve tokens are vested based on on-chain activity—the more NTRN tokens burned through transaction fees, the more tokens get unlocked from the reserve
+- **Distribution Control**: The contract is controlled by the Neutron DAO
+- **Vesting Formula**: Uses a mathematical formula based on burned tokens to calculate release rates, ensuring a gradual distribution of tokens
+
+### Distribution Contract
+
+The Distribution contract handles the second stage of token distribution:
+
+- Distributes tokens between a configurable set of "shareholders" (addresses with assigned weights)
+- Allows shareholders to withdraw collected tokens based on their proportional shares
+- Can only be configured by the Neutron DAO
+
+## Key Treasury Allocations
+
+Following Mercury, the DAO deployed Treasury funds to establish a robust DeFi landscape:
+
+- **Staking**: ~225M NTRN staked with Drop Protocol for network security
+- **Liquidity**: ~25M NTRN allocated to dNTRN-NTRN liquidity
+- **Lending Capacity**: 5M NTRN allocated to lending protocols
+- **Staking Rewards**: 6M NTRN pre-loaded for delegator rewards
+- **Validator Compensation**: 700k NTRN allocated for validator payments
+
+## Staking Economics
+
+Following the Mercury upgrade, Neutron transitioned to a sovereign security model with unique staking parameters:
+
+### For Delegators
+
+- **Target Staking APR**: 3% annually
+- **Source of Rewards**: Neutron DAO Treasury (not block rewards)
+- **Slashing**: Initially disabled (to be reassessed as the network matures)
+- **Unbonding Period**: Standard 21-day unbonding
+- **Delegation Method**: Native staking or liquid staking via partners
+
+### For Validators
+
+- **Base Compensation**: $3,000 USD equivalent per month, paid in NTRN
+- **Payment Source**: Neutron DAO Treasury
+- **Commission**: No commission on delegator rewards (rewards are paid directly from Treasury)
+- **Number of Validators**: Initially 20 validators post-Mercury, with plans to expand
+- **Validator Selection**: Curated set based on performance and reliability metrics
+
+### Performance Requirements
+
+Validators must maintain high-quality service to receive full rewards:
+
+| Performance Metric | Minimum Threshold | Target Threshold | Result if Below Minimum |
+|--------------------|-------------------|------------------|-------------------------|
+| Block Signing | 95% | 99.5% | Partial or no rewards |
+| Oracle Price Updates | 95% | 98% | Partial or no rewards |
+
+This performance-based model ensures validators are incentivized to maintain reliable infrastructure without traditional slashing penalties.
+
+## Token Utility
+
+NTRN serves multiple functions within the ecosystem:
+
+- **Security**: Stake NTRN to secure the network
+- **Governance**: Use NTRN in governance vaults to participate in decentralized decision-making
+- **Transaction Fees**: Pay reduced gas fees when using NTRN
+- **DeFi**: Use NTRN and its derivatives (like dNTRN) across Neutron's integrated DeFi protocols
+- **Collateral**: Use NTRN as collateral in lending markets
+- **Deflationary Mechanism**: When paid as transaction fees in NTRN, a portion may be burned to create deflationary pressure
+
+## Governance Rights
+
+Governance power in Neutron comes from NTRN in voting vaults:
+
+- **Voting Mechanism**: Deposit NTRN to dedicated voting vaults to gain governance power
+- **Staked Voting**: Native stakers receive 1 point of governance power per NTRN delegated
+- **Proposal System**: Standard Cosmos SDK governance with deposit, voting, and execution phases
+- **Voter Rewards**: Potential incentives for governance participation
+
+## Liquid Staking
+
+Neutron actively encourages the development of liquid staking derivatives:
+
+- **dNTRN**: The primary liquid staking token for NTRN, enabling users to maintain liquidity while staking
+- **Composability**: Use dNTRN throughout the DeFi ecosystem while earning staking rewards
+- **Deep Liquidity**: Protocol-owned liquidity ensures smooth trading between NTRN and dNTRN
+
+## Comparison to Traditional PoS Models
+
+Neutron's economic model differs from traditional proof-of-stake in several key ways:
+
+| Feature | Traditional PoS | Neutron's Model |
+|---------|----------------|-----------------|
+| Supply | Inflationary | Fixed Supply |
+| Block Rewards | From inflation | From Treasury |
+| Validator Role | Governance representatives | Infrastructure providers |
+| Slashing | Required for security | Replaced by jailing and performance incentives |
+| Commissions | Set by validators | Not applicable (direct Treasury payments) |
+| Fee Distribution | To validators/delegators | To Treasury and ecosystem |
+
+This opinionated approach creates a more stable, predictable economic environment while maintaining the security guarantees of proof-of-stake. 

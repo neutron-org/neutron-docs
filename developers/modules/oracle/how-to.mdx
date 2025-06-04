@@ -1,0 +1,391 @@
+---
+title: "How-to Guide"
+description: "Practical guides for integrating the Oracle module into your smart contracts"
+---
+
+## How to query spot prices
+
+This guide demonstrates how to query the current spot price for an asset pair from your smart contract.
+
+#### 1. Add the required dependencies
+
+First, ensure your contract includes the necessary dependencies in `Cargo.toml`:
+
+```toml
+[dependencies]
+cosmwasm-std = "1.1.0"
+schemars = "0.8.10"
+serde = { version = "1.0.145", default-features = false, features = ["derive"] }
+neutron-sdk = "0.5.0"
+```
+
+#### 2. Define the Oracle query message structure
+
+Create the message structures needed to query the Oracle module:
+
+<details>
+<summary>Show code</summary>
+
+```rust
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use cosmwasm_std::{Decimal, Addr};
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum OracleQueryMsg {
+    SpotPrice {
+        base_denom: String,
+        quote_denom: String,
+    },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct PriceResponse {
+    pub price: Decimal,
+    pub last_updated: u64,
+}
+```
+</details>
+
+#### 3. Implement the price query function
+
+Create a helper function to perform the Oracle price query:
+
+<details>
+<summary>Show code</summary>
+
+```rust
+use cosmwasm_std::{Deps, StdResult, QueryRequest, WasmQuery, to_binary, Addr, Decimal};
+
+pub fn query_spot_price(
+    deps: Deps,
+    oracle_addr: Addr,
+    base_denom: String,
+    quote_denom: String,
+) -> StdResult<PriceResponse> {
+    // Create the query message for the Oracle contract
+    let query_msg = OracleQueryMsg::SpotPrice {
+        base_denom,
+        quote_denom,
+    };
+    
+    // Create a WasmQuery to execute the query
+    let query = QueryRequest::Wasm(WasmQuery::Smart {
+        contract_addr: oracle_addr.to_string(),
+        msg: to_binary(&query_msg)?,
+    });
+    
+    // Execute the query and return the response
+    deps.querier.query(&query)
+}
+```
+</details>
+
+#### 4. Using the price in your contract
+
+Implement the logic in your contract that uses the price data:
+
+<details>
+<summary>Show code</summary>
+
+```rust
+use cosmwasm_std::{Entry, execute, Env, MessageInfo, Response, StdError};
+
+// A simple function that uses price data in business logic
+pub fn calculate_asset_value(
+    deps: Deps,
+    oracle_addr: Addr,
+    base_denom: String,
+    quote_denom: String,
+    asset_amount: Uint128,
+) -> StdResult<Uint128> {
+    // Query the current price of the asset
+    let price_resp = query_spot_price(deps, oracle_addr, base_denom, quote_denom)?;
+    
+    // Verify the price is fresh enough
+    let block_time = deps.env.block.time.seconds();
+    if block_time - price_resp.last_updated > 300 { // 5 minutes staleness check
+        return Err(StdError::generic_err("Price data is too old"));
+    }
+    
+    // Calculate the asset value in the quote currency
+    let value = asset_amount * price_resp.price;
+    
+    Ok(value)
+}
+```
+</details>
+
+## How to query Time-Weighted Average Prices (TWAPs)
+
+This guide demonstrates how to query Time-Weighted Average Prices for an asset pair over a specified time window.
+
+#### 1. Define the TWAP query message
+
+Add the TWAP query message to your Oracle query enum:
+
+<details>
+<summary>Show code</summary>
+
+```rust
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum OracleQueryMsg {
+    // ... other queries
+    Twap {
+        base_denom: String,
+        quote_denom: String,
+        window_size: u64,  // Time window in seconds
+    },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct TwapResponse {
+    pub price: Decimal,
+    pub last_updated: u64,
+}
+```
+</details>
+
+#### 2. Implement the TWAP query function
+
+Create a helper function to query TWAPs:
+
+<details>
+<summary>Show code</summary>
+
+```rust
+pub fn query_twap(
+    deps: Deps,
+    oracle_addr: Addr,
+    base_denom: String,
+    quote_denom: String,
+    window_size: u64,
+) -> StdResult<TwapResponse> {
+    // Create the query message for the Oracle contract
+    let query_msg = OracleQueryMsg::Twap {
+        base_denom,
+        quote_denom,
+        window_size,
+    };
+    
+    // Create a WasmQuery to execute the query
+    let query = QueryRequest::Wasm(WasmQuery::Smart {
+        contract_addr: oracle_addr.to_string(),
+        msg: to_binary(&query_msg)?,
+    });
+    
+    // Execute the query and return the response
+    deps.querier.query(&query)
+}
+```
+</details>
+
+#### 3. Using TWAPs for liquidation thresholds
+
+An example of using TWAPs for a lending protocol's liquidation threshold calculation:
+
+<details>
+<summary>Show code</summary>
+
+```rust
+pub fn check_liquidation_threshold(
+    deps: Deps,
+    oracle_addr: Addr,
+    collateral_denom: String,
+    loan_denom: String,
+    collateral_amount: Uint128,
+    loan_amount: Uint128,
+    threshold_ratio: Decimal,
+) -> StdResult<bool> {
+    // Query TWAP with a 1-hour window for stability
+    let twap_resp = query_twap(
+        deps,
+        oracle_addr,
+        collateral_denom,
+        loan_denom,
+        3600, // 1 hour in seconds
+    )?;
+    
+    // Calculate the current collateral value
+    let collateral_value = collateral_amount * twap_resp.price;
+    
+    // Calculate the minimum required collateral
+    let min_required_collateral = loan_amount * threshold_ratio;
+    
+    // Return whether liquidation is needed
+    Ok(collateral_value < min_required_collateral)
+}
+```
+</details>
+
+## How to query all available prices
+
+This guide demonstrates how to retrieve all available price data from the Oracle module.
+
+#### 1. Define the AllPrices query message
+
+Add the AllPrices query to your Oracle query enum:
+
+<details>
+<summary>Show code</summary>
+
+```rust
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum OracleQueryMsg {
+    // ... other queries
+    AllPrices {},
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct PriceData {
+    pub base_denom: String,
+    pub quote_denom: String,
+    pub price: Decimal,
+    pub last_updated: u64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct AllPricesResponse {
+    pub prices: Vec<PriceData>,
+}
+```
+</details>
+
+#### 2. Implement the query function
+
+Create a helper function to query all prices:
+
+<details>
+<summary>Show code</summary>
+
+```rust
+pub fn query_all_prices(
+    deps: Deps,
+    oracle_addr: Addr,
+) -> StdResult<AllPricesResponse> {
+    // Create the query message for the Oracle contract
+    let query_msg = OracleQueryMsg::AllPrices {};
+    
+    // Create a WasmQuery to execute the query
+    let query = QueryRequest::Wasm(WasmQuery::Smart {
+        contract_addr: oracle_addr.to_string(),
+        msg: to_binary(&query_msg)?,
+    });
+    
+    // Execute the query and return the response
+    deps.querier.query(&query)
+}
+```
+</details>
+
+#### 3. Using all prices to calculate a portfolio value
+
+Example of using all prices to calculate the total value of a portfolio in USD:
+
+<details>
+<summary>Show code</summary>
+
+```rust
+pub fn calculate_portfolio_value(
+    deps: Deps,
+    oracle_addr: Addr,
+    portfolio: Vec<Coin>,
+) -> StdResult<Decimal> {
+    // Query all available prices
+    let all_prices_resp = query_all_prices(deps, oracle_addr)?;
+    
+    // Create a map for quick price lookups
+    let mut price_map: HashMap<String, Decimal> = HashMap::new();
+    for price_data in all_prices_resp.prices {
+        if price_data.quote_denom == "uusd" {
+            price_map.insert(price_data.base_denom, price_data.price);
+        }
+    }
+    
+    // Calculate total portfolio value
+    let mut total_value = Decimal::zero();
+    for asset in portfolio {
+        if let Some(price) = price_map.get(&asset.denom) {
+            total_value += Decimal::from_ratio(asset.amount, 1u128) * *price;
+        } else {
+            // Handle assets with no price data
+            return Err(StdError::generic_err(format!(
+                "No price data available for {}",
+                asset.denom
+            )));
+        }
+    }
+    
+    Ok(total_value)
+}
+```
+</details>
+
+## Best Practices
+
+### Check price freshness
+
+Always verify that the price data is recent enough for your use case:
+
+```rust
+// Example of checking price freshness
+let max_age = 300; // 5 minutes in seconds
+let current_time = env.block.time.seconds();
+
+if price_response.last_updated < current_time - max_age {
+    return Err(StdError::generic_err("Price data is too stale"));
+}
+```
+
+### Use appropriate price types
+
+Choose the right price type for your use case:
+
+- Use **spot prices** for:
+  - Displaying current market values
+  - Short-term trades and operations
+  - Non-critical calculations
+
+- Use **TWAPs** for:
+  - Liquidation decisions
+  - Collateral valuation
+  - Interest rate determination
+  - Any critical financial calculation
+
+### Implement fallback mechanisms
+
+Always have a fallback strategy if price data is unavailable:
+
+```rust
+// Example of a fallback strategy
+fn get_asset_price(
+    deps: Deps,
+    oracle_addr: Addr,
+    base_denom: String,
+    quote_denom: String,
+) -> StdResult<Decimal> {
+    // Try primary source
+    match query_spot_price(deps, oracle_addr, base_denom.clone(), quote_denom.clone()) {
+        Ok(price_resp) => {
+            // Check freshness
+            let current_time = deps.env.block.time.seconds();
+            if current_time - price_resp.last_updated <= MAX_PRICE_AGE {
+                return Ok(price_resp.price);
+            }
+        },
+        Err(_) => {}
+    }
+    
+    // Try alternate calculation method
+    calculate_derived_price(deps, base_denom, quote_denom)
+}
+```
+
+### Avoid price manipulation vulnerabilities
+
+Protect your contract from price manipulation:
+
+- Use TWAPs for critical financial decisions
+- Consider multiple price points before making decisions
+- Implement price deviation checks
+- Set reasonable bounds for acceptable prices 

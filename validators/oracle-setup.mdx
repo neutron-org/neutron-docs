@@ -1,0 +1,279 @@
+---
+title: "Oracle Setup"
+description: "Configure the Slinky price oracle service for your Neutron validator"
+icon: "chart-line"
+---
+
+Neutron's High Frequency Oracle is a critical component of the network that provides accurate price data for various assets. As a validator, you must run the Slinky price oracle service alongside your node to meet performance requirements.
+
+## Overview
+
+Slinky is a price oracle service that fetches market prices from various providers and makes them available to the Neutron blockchain. Running Slinky properly ensures that your validator contributes accurate price data to the network, which is essential for:
+
+- Meeting validator performance thresholds
+- Enabling DeFi applications that require accurate price feeds
+- Supporting financial operations on the network
+
+<Note>
+  Oracle price update reliability is one of the key performance metrics for Neutron validators. You must maintain at least 95% success rate for oracle price updates to receive rewards.
+</Note>
+
+## Installation Options
+
+<Tabs>
+  <Tab title="Pre-built Binary">
+    Download the latest stable version of Slinky:
+    
+    ```bash
+    # Download Slinky v1.2.0 (or latest version)
+    wget https://github.com/skip-mev/slinky/releases/download/v1.2.0/slinky-linux-amd64
+    sudo mv slinky-linux-amd64 /usr/local/bin/slinky
+    sudo chmod +x /usr/local/bin/slinky
+    ```
+  </Tab>
+  <Tab title="Build from Source">
+    Clone and build Slinky from source:
+    
+    ```bash
+    git clone https://github.com/skip-mev/slinky.git
+    cd slinky
+    git checkout v1.2.0  # Use the latest version
+    make install
+    ```
+  </Tab>
+</Tabs>
+
+## Configuration
+
+You can configure Slinky using one of the following methods:
+
+<Tabs>
+  <Tab title="Method 1: SystemD Service">
+    Create a systemd service file to manage the Slinky service:
+
+    ```bash
+    sudo mkdir -p /var/log/slinky
+    sudo touch /var/log/slinky/sidecar.log
+    sudo chown -R $USER:$USER /var/log/slinky
+    sudo nano /etc/systemd/system/slinky.service
+    ```
+
+    Add the following content:
+
+    ```
+    [Unit]
+    Description=Slinky Price Oracle Service
+    After=network-online.target
+
+    [Service]
+    User=$USER
+    ExecStart=/usr/local/bin/slinky --host=0.0.0.0 --port=8080 --market-map-endpoint="127.0.0.1:9090" --log-file="/var/log/slinky/sidecar.log"
+    Restart=always
+    RestartSec=3
+    LimitNOFILE=65535
+
+    [Install]
+    WantedBy=multi-user.target
+    ```
+
+    <Warning>
+      Replace `$USER` with your actual username and adjust the path to the Slinky binary as needed. The `--market-map-endpoint` should point to your node's gRPC port.
+    </Warning>
+  </Tab>
+  <Tab title="Method 2: Configuration File">
+    Create a configuration file for Slinky:
+
+    ```bash
+    mkdir -p /usr/local/slinky
+    nano /usr/local/slinky/oracle.json
+    ```
+
+    Add the following content:
+
+    ```json
+    {
+      "port": "8080",
+      "metrics": {
+        "prometheusServerAddress": "0.0.0.0:8001"
+      },
+      "providers": {
+        "marketmap_api": {
+          "api": {
+            "endpoints": [
+              {
+                "url": "localhost:9090"
+              }
+            ]
+          }
+        }
+      }
+    }
+    ```
+
+    Then create a systemd service file to use this configuration:
+
+    ```bash
+    sudo nano /etc/systemd/system/slinky.service
+    ```
+
+    Add the following content:
+
+    ```
+    [Unit]
+    After=network-online.target
+    Description=slinky service
+
+    [Service]
+    ExecStart=/usr/local/bin/slinky --oracle-config /usr/local/slinky/oracle.json
+    EnvironmentFile=-/etc/default/slinky
+    Type=simple
+    RestartSec=1
+    Restart=always
+
+    [Install]
+    WantedBy=multi-user.target
+    ```
+  </Tab>
+</Tabs>
+
+## Configure Neutron Node
+
+Edit the Neutron node's `app.toml` file to enable the oracle:
+
+```bash
+nano $HOME/.neutrond/config/app.toml
+```
+
+Find the `[oracle]` section and update it:
+
+```toml
+[oracle]
+enabled = "true"
+oracle_address = "0.0.0.0:8080"
+client_timeout = "2s"
+metrics_enabled = "true"
+price_ttl = "10s"
+interval = "1500ms"
+prometheus_server_address = "0.0.0.0:8001"
+```
+
+<Warning>
+  Make sure to use lowercase `true` for boolean values, not capitalized `True`. Also ensure gRPC is enabled in your `app.toml`.
+</Warning>
+
+## Starting the Service
+
+Enable and start the Slinky service:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable slinky
+sudo systemctl start slinky
+```
+
+Check the status:
+
+```bash
+sudo systemctl status slinky
+```
+
+## Verification
+
+Verify that your Slinky oracle is working correctly:
+
+<Steps>
+  <Step title="Check Slinky Logs">
+    ```bash
+    sudo journalctl -u slinky -f
+    ```
+    
+    Look for successful connection messages and price updates.
+  </Step>
+  <Step title="Check Oracle Metrics">
+    ```bash
+    curl -s http://localhost:26660 | grep 'app_oracle_responses'
+    ```
+    
+    You should see output similar to:
+    
+    ```
+    # HELP app_oracle_responses The number of oracle responses
+    # TYPE app_oracle_responses gauge
+    app_oracle_responses{chain_id="neutron-1",status="Failure"} 128
+    app_oracle_responses{chain_id="neutron-1",status="Success"} 841042
+    ```
+    
+    If you see `Success` values increasing, your setup is working correctly.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Missing Prices">
+    If you see log entries like:
+    
+    ```
+    {"level":"info","ts":"2025-04-22T06:42:51.970Z","caller":"oracle/aggregator.go:134","msg":"failed to calculate prices for price feeds","pid":2469887,"process":"index_price_aggregator","missing_prices":["RNDR/USD","AGIX/USD","SAGA/USD","MATIC/USD"]}
+    ```
+    
+    This is normal and can be ignored. It indicates that some price feeds are temporarily unavailable from providers.
+  </Accordion>
+  <Accordion title="WebSocket Errors">
+    If you see errors like:
+    
+    ```
+    {"level":"error","ts":"2025-04-22T06:43:03.168Z","caller":"base/fetch.go:130","msg":"websocket query handler returned error","pid":2469887,"process":"oracle","provider":"binance_ws","error":"failed to start connection: websocket connection handler failed to write message\nwrite tcp 88.211.218.89:22360->35.79.60.252:443: write: broken pipe"}
+    ```
+    
+    These are typically transient connection issues with price providers and can be ignored as long as your oracle responses show successful metrics.
+  </Accordion>
+  <Accordion title="Configuration Issues">
+    Common configuration issues include:
+    
+    1. Make sure the `market-map-endpoint` in your configuration points to the correct gRPC port of your Neutron node.
+    2. Ensure all boolean values in `app.toml` use lowercase `true` not capitalized `True`.
+    3. Verify that your Neutron node's gRPC service is enabled and running.
+  </Accordion>
+</AccordionGroup>
+
+## Monitoring
+
+Set up monitoring for your oracle service to ensure it maintains the required performance thresholds:
+
+```bash
+# Create a simple monitoring script
+cat > /usr/local/bin/check-oracle.sh << 'EOF'
+#!/bin/bash
+
+TOTAL=$(curl -s http://localhost:26660 | grep 'app_oracle_responses{chain_id="neutron-1",status="Success"}' | awk '{print $2}')
+FAILURES=$(curl -s http://localhost:26660 | grep 'app_oracle_responses{chain_id="neutron-1",status="Failure"}' | awk '{print $2}')
+
+SUCCESS_RATE=$(awk "BEGIN {print ($TOTAL / ($TOTAL + $FAILURES)) * 100}")
+
+echo "Oracle success rate: $SUCCESS_RATE%"
+
+if (( $(echo "$SUCCESS_RATE < 95" | bc -l) )); then
+  echo "WARNING: Oracle success rate below 95%"
+fi
+EOF
+
+chmod +x /usr/local/bin/check-oracle.sh
+```
+
+<Note>
+  This simple script checks the success rate of your oracle responses. You can expand it to send alerts via Telegram, Discord, or email when the success rate falls below the threshold.
+</Note>
+
+## Best Practices
+
+- **Regular Updates**: Keep your Slinky binary updated to the latest version
+- **Network Configuration**: Ensure proper firewall rules to allow Slinky to access external price providers
+- **Log Rotation**: Configure log rotation for Slinky logs to prevent disk space issues
+- **Monitoring**: Set up comprehensive monitoring for oracle performance with alerting
+
+---
+
+<div className="mt-8">
+  <a className="button-primary px-4 py-2 rounded text-white bg-primary hover:bg-opacity-90" href="/validators/becoming-a-validator">Continue to Becoming a Validator →</a>
+</div> 

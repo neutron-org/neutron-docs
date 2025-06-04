@@ -1,0 +1,194 @@
+---
+title: "Validator Performance Metrics"
+description: "Understanding and monitoring validator performance on Neutron"
+---
+
+This document outlines key performance metrics, how they're measured, and their importance for validators and delegators in the Neutron network.
+
+## Core Performance Metrics
+
+### Uptime
+
+Uptime measures a validator's availability to participate in consensus.
+
+- **Measurement**: Percentage of blocks where the validator was available to sign
+- **Target**: 99.9%+ uptime
+- **Importance**: Critical - directly impacts network security and validator rewards
+- **Monitoring Command**:
+  ```bash
+  neutrond query slashing signing-info $(neutrond tendermint show-validator)
+  ```
+
+### Block Signature Rate
+
+The percentage of blocks signed by a validator when scheduled.
+
+- **Measurement**: `signed_blocks / expected_blocks`
+- **Target**: 100% of assigned blocks
+- **Calculation Period**: Typically measured over 10,000 blocks (~17 hours)
+- **Monitoring Tools**: Block explorers (Mintscan, Ping.pub) and validator dashboards
+
+### Missed Blocks
+
+The count of blocks a validator was scheduled to sign but failed to.
+
+- **Measurement**: Direct count of missed blocks
+- **Threshold**: No more than 5 missed blocks in 10,000 blocks
+- **Consequence**: Exceeding thresholds can result in jailing
+- **Monitoring Command**:
+  ```bash
+  neutrond query slashing signing-info $(neutrond tendermint show-validator) | grep missed_blocks_counter
+  ```
+
+### Response Time
+
+How quickly a validator responds to consensus messages.
+
+- **Measurement**: Average time to respond to consensus messages
+- **Target**: < 100ms
+- **Importance**: Affects chain performance, especially during high load
+- **Monitoring**: Requires specialized Tendermint monitoring
+
+## Governance Participation
+
+### Voting Rate
+
+Percentage of governance proposals the validator votes on.
+
+- **Measurement**: `votes_cast / total_proposals`
+- **Target**: 100% voting participation
+- **Importance**: Demonstrates active participation in network governance
+- **Monitoring**: Governance dashboards and explorers
+
+### Vote Timing
+
+How quickly a validator votes on proposals.
+
+- **Measurement**: Time between proposal submission and validator vote
+- **Target**: Vote within 3 days of proposal submission
+- **Importance**: Early votes provide guidance to delegators
+
+## Technical Performance
+
+### Peer Count
+
+Number of peers connected to the validator node.
+
+- **Measurement**: Direct count of connected peers
+- **Target**: At least 10 peers, ideally 20-30
+- **Importance**: Network resilience and propagation speed
+- **Monitoring Command**:
+  ```bash
+  curl -s localhost:26657/net_info | jq '.result.n_peers'
+  ```
+
+### Block Propagation Time
+
+How quickly the validator propagates blocks to peers.
+
+- **Measurement**: Time between block creation and full peer propagation
+- **Target**: < 200ms
+- **Importance**: Affects chain performance and risk of forks
+- **Monitoring**: Requires specialized monitoring tools
+
+### Hardware Utilization
+
+Resource usage on validator hardware.
+
+- **CPU Usage**: Should generally remain below 70% sustained
+- **Memory Usage**: Should remain below 80% of available RAM
+- **Disk I/O**: Should not be a bottleneck
+- **Network Bandwidth**: Should have headroom for peak activities
+- **Monitoring Tools**: Prometheus, Grafana, node_exporter
+
+## Monitoring and Tooling
+
+### Essential Monitoring Stack
+
+We recommend the following monitoring setup:
+
+1. **Prometheus**: For metrics collection
+2. **Grafana**: For visualization and dashboards
+3. **Node Exporter**: For system metrics
+4. **Cosmos Exporter**: For Neutron-specific metrics
+5. **Alertmanager**: For alerting
+
+### Recommended Dashboard Panels
+
+A comprehensive validator dashboard should include:
+
+- Signing performance (uptime, missed blocks)
+- Node statistics (peers, sync status)
+- System resources (CPU, RAM, disk, network)
+- Chain metrics (block time, transaction volume)
+- Governance activity (proposals, votes)
+
+### Alert Configuration
+
+Configure alerts for:
+
+- **Critical**: 
+  - Validator jailed
+  - Node not signing blocks
+  - Node out of sync (>10 blocks behind)
+  
+- **Warning**:
+  - Peer count below threshold
+  - CPU/Memory/Disk approaching capacity
+  - New governance proposals
+
+### Public Monitoring Resources
+
+Validators can be monitored through:
+
+- [Mintscan](https://www.mintscan.io/neutron): Block explorer with validator metrics
+- [Ping.pub](https://ping.pub/neutron): Alternative explorer with different metrics
+- [Chain Monitoring](https://neutron.explorers.guru/): Additional validator metrics
+- Neutron's own validator dashboard (if available)
+
+## Performance Comparison
+
+Metrics are most useful when compared against peers:
+
+### Relative Ranking
+
+- **Top Quartile**: Excellent performance, exceeding requirements
+- **Second Quartile**: Good performance, meeting all requirements
+- **Third Quartile**: Adequate performance, may need improvements
+- **Bottom Quartile**: Underperforming, improvements needed urgently
+
+### Historical Trends
+
+Monitor your own validator's performance trends:
+
+- Week-over-week changes
+- Response to network upgrades
+- Performance during high load events
+- Seasonal patterns
+
+## Performance Improvement
+
+If metrics indicate issues:
+
+1. **Hardware Upgrades**: Increase resources if utilization is high
+2. **Network Optimization**: Improve connectivity, consider dedicated lines
+3. **Configuration Tuning**: Adjust Tendermint and system parameters
+4. **Monitoring Improvement**: Enhance visibility into problem areas
+5. **Operational Procedures**: Review and improve operational practices
+
+## Delegator Perspective
+
+For delegators evaluating validators:
+
+- **Primary Metrics**: Uptime, missed blocks, and commission rate
+- **Secondary Metrics**: Governance participation and node performance
+- **Red Flags**: Recent jailing events, consistent missed blocks, or poor governance participation
+
+## Reporting and Transparency
+
+As a best practice, validators should:
+
+- Publicly share performance metrics
+- Report significant incidents
+- Provide regular status updates
+- Disclose planned maintenance in advance 

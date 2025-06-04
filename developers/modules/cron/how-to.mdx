@@ -1,0 +1,358 @@
+---
+title: "How-to Guide"
+description: "Step-by-step instructions for using the Cron module in your contracts"
+---
+
+This guide provides practical examples and instructions for integrating the Cron module into your smart contracts.
+
+## Prerequisites
+
+- Basic understanding of CosmWasm contract development
+- Familiarity with Neutron's smart contract environment
+- A contract that needs to schedule periodic operations
+
+## Setting Up Your Contract
+
+First, add the required dependencies to your `Cargo.toml`:
+
+```toml
+[dependencies]
+neutron-sdk = "0.5.0"
+# Other dependencies...
+```
+
+## Task Scheduling Patterns
+
+### Schedule by Block Height
+
+To schedule a task to execute after a specific number of blocks:
+
+```rust
+use neutron_sdk::bindings::{msg::NeutronMsg, types::ScheduleMsg};
+
+pub fn schedule_block_height_task(
+    deps: DepsMut,
+    env: Env,
+    interval: u64,
+    gas_limit: u64,
+) -> Result<Response, ContractError> {
+    // Create the message that will be executed
+    let execute_msg = to_json_binary(&ExecuteMsg::PerformTask { /* params */ })?;
+    
+    // Create the schedule message
+    let schedule_msg = NeutronMsg::CreateSchedule {
+        name: "my-periodic-task".to_string(),
+        period: interval,  // Execute every `interval` blocks
+        msgs: vec![ScheduleMsg {
+            msg: execute_msg,
+            gas_limit: Some(gas_limit),
+        }],
+        boundary: None,    // No specific starting point
+    };
+    
+    // Return the response with the schedule message
+    Ok(Response::new()
+        .add_message(schedule_msg)
+        .add_attribute("action", "schedule_task")
+        .add_attribute("interval", interval.to_string()))
+}
+```
+
+### Schedule by Timestamp
+
+To schedule a task based on time:
+
+```rust
+pub fn schedule_timestamp_task(
+    deps: DepsMut,
+    env: Env,
+    execute_at: u64,
+    gas_limit: u64,
+) -> Result<Response, ContractError> {
+    let execute_msg = to_json_binary(&ExecuteMsg::PerformTask { /* params */ })?;
+    
+    // Create the schedule message with a specific boundary
+    let schedule_msg = NeutronMsg::CreateSchedule {
+        name: "my-one-time-task".to_string(),
+        period: 0,         // Execute only once
+        msgs: vec![ScheduleMsg {
+            msg: execute_msg,
+            gas_limit: Some(gas_limit),
+        }],
+        boundary: Some(execute_at),  // Timestamp to execute
+    };
+    
+    Ok(Response::new()
+        .add_message(schedule_msg)
+        .add_attribute("action", "schedule_timestamp_task")
+        .add_attribute("execute_at", execute_at.to_string()))
+}
+```
+
+## Managing Schedules
+
+### Removing a Schedule
+
+To remove a previously created schedule:
+
+```rust
+pub fn remove_schedule(
+    deps: DepsMut,
+    env: Env,
+    schedule_name: String,
+) -> Result<Response, ContractError> {
+    let remove_msg = NeutronMsg::RemoveSchedule {
+        name: schedule_name.clone(),
+    };
+    
+    Ok(Response::new()
+        .add_message(remove_msg)
+        .add_attribute("action", "remove_schedule")
+        .add_attribute("schedule_name", schedule_name))
+}
+```
+
+### Updating an Existing Schedule
+
+To update the parameters of an existing schedule:
+
+```rust
+pub fn update_schedule(
+    deps: DepsMut,
+    env: Env,
+    schedule_name: String,
+    new_interval: u64,
+    gas_limit: u64,
+) -> Result<Response, ContractError> {
+    let execute_msg = to_json_binary(&ExecuteMsg::PerformTask { /* updated params */ })?;
+    
+    let update_msg = NeutronMsg::UpdateSchedule {
+        name: schedule_name.clone(),
+        period: new_interval,
+        msgs: vec![ScheduleMsg {
+            msg: execute_msg,
+            gas_limit: Some(gas_limit),
+        }],
+        boundary: None,
+    };
+    
+    Ok(Response::new()
+        .add_message(update_msg)
+        .add_attribute("action", "update_schedule")
+        .add_attribute("schedule_name", schedule_name)
+        .add_attribute("new_interval", new_interval.to_string()))
+}
+```
+
+## Handling Scheduled Execution
+
+Your contract needs to handle the execution when the scheduled time arrives:
+
+```rust
+#[entry_point]
+pub fn execute(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: ExecuteMsg,
+) -> Result<Response, ContractError> {
+    match msg {
+        ExecuteMsg::PerformTask { /* params */ } => {
+            // This function is called by the Cron module at the scheduled time
+            perform_scheduled_task(deps, env, info)
+        },
+        // Other message handlers...
+    }
+}
+
+fn perform_scheduled_task(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    // Verify that this is called by the Cron module
+    if info.sender != deps.api.addr_validate("neutron_cron_module_address")? {
+        return Err(ContractError::Unauthorized {});
+    }
+    
+    // Perform the scheduled task
+    // ...
+    
+    Ok(Response::new().add_attribute("action", "task_executed"))
+}
+```
+
+## Advanced Patterns
+
+### Chaining Multiple Operations
+
+To schedule a sequence of operations:
+
+```rust
+pub fn schedule_multi_step_task(
+    deps: DepsMut,
+    env: Env,
+    gas_limit: u64,
+) -> Result<Response, ContractError> {
+    let step1_msg = to_json_binary(&ExecuteMsg::StepOne { /* params */ })?;
+    let step2_msg = to_json_binary(&ExecuteMsg::StepTwo { /* params */ })?;
+    
+    let schedule_msg = NeutronMsg::CreateSchedule {
+        name: "multi-step-task".to_string(),
+        period: 100,  // Execute every 100 blocks
+        msgs: vec![
+            ScheduleMsg {
+                msg: step1_msg,
+                gas_limit: Some(gas_limit / 2),
+            },
+            ScheduleMsg {
+                msg: step2_msg,
+                gas_limit: Some(gas_limit / 2),
+            },
+        ],
+        boundary: None,
+    };
+    
+    Ok(Response::new()
+        .add_message(schedule_msg)
+        .add_attribute("action", "schedule_multi_step"))
+}
+```
+
+### Conditional Scheduling
+
+To create schedules based on conditions:
+
+```rust
+pub fn conditional_schedule(
+    deps: DepsMut,
+    env: Env,
+    condition: bool,
+    gas_limit: u64,
+) -> Result<Response, ContractError> {
+    if !condition {
+        return Ok(Response::new().add_attribute("action", "no_schedule_needed"));
+    }
+    
+    let execute_msg = to_json_binary(&ExecuteMsg::PerformTask { /* params */ })?;
+    
+    let schedule_msg = NeutronMsg::CreateSchedule {
+        name: "conditional-task".to_string(),
+        period: 100,
+        msgs: vec![ScheduleMsg {
+            msg: execute_msg,
+            gas_limit: Some(gas_limit),
+        }],
+        boundary: None,
+    };
+    
+    Ok(Response::new()
+        .add_message(schedule_msg)
+        .add_attribute("action", "conditional_schedule"))
+}
+```
+
+## Best Practices
+
+### Gas Management
+
+Always provide sufficient gas for your scheduled tasks:
+
+```rust
+// Calculate gas based on the operation complexity
+let gas_limit = if is_complex_operation {
+    150_000  // Complex operations need more gas
+} else {
+    50_000   // Simple operations need less gas
+};
+```
+
+### Error Handling
+
+Design your scheduled tasks to be resilient to failures:
+
+```rust
+fn perform_scheduled_task(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
+    // Implement retry logic or fallback mechanisms
+    match do_primary_task() {
+        Ok(_) => Ok(Response::new().add_attribute("result", "success")),
+        Err(_) => {
+            // Fallback to an alternative approach
+            do_fallback_task()?;
+            Ok(Response::new().add_attribute("result", "fallback_executed"))
+        }
+    }
+}
+```
+
+### Naming Conventions
+
+Use consistent naming for your schedules:
+
+```rust
+// Format: [contract_name]_[purpose]_[optional_identifier]
+let schedule_name = format!("mytoken_distribution_{}", distribution_id);
+```
+
+## Common Use Cases
+
+### Liquidity Pool Rebalancing
+
+```rust
+pub fn schedule_pool_rebalance(
+    deps: DepsMut,
+    env: Env,
+) -> Result<Response, ContractError> {
+    let rebalance_msg = to_json_binary(&ExecuteMsg::Rebalance {})?;
+    
+    let schedule_msg = NeutronMsg::CreateSchedule {
+        name: "pool_daily_rebalance".to_string(),
+        period: 7200,  // Approximately daily (assuming 12s block time)
+        msgs: vec![ScheduleMsg {
+            msg: rebalance_msg,
+            gas_limit: Some(200_000),
+        }],
+        boundary: None,
+    };
+    
+    Ok(Response::new().add_message(schedule_msg))
+}
+```
+
+### Reward Distribution
+
+```rust
+pub fn schedule_reward_distribution(
+    deps: DepsMut,
+    env: Env,
+) -> Result<Response, ContractError> {
+    let distribute_msg = to_json_binary(&ExecuteMsg::DistributeRewards {})?;
+    
+    let schedule_msg = NeutronMsg::CreateSchedule {
+        name: "weekly_rewards".to_string(),
+        period: 50400,  // Weekly (assuming 12s block time)
+        msgs: vec![ScheduleMsg {
+            msg: distribute_msg,
+            gas_limit: Some(300_000),
+        }],
+        boundary: None,
+    };
+    
+    Ok(Response::new().add_message(schedule_msg))
+}
+```
+
+## Troubleshooting
+
+If your scheduled tasks aren't executing as expected:
+
+1. **Verify Gas Limits**: Ensure you've provided sufficient gas
+2. **Check Schedule Parameters**: Confirm period and boundary settings are correct
+3. **Review Module Logs**: Check blockchain logs for execution attempts
+4. **Test Task Execution**: Try executing the task manually to verify its functionality
+
+For more details, refer to the [Cron module reference documentation](/developers/modules/cron/reference). 

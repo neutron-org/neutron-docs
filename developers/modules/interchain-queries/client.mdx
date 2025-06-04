@@ -1,0 +1,240 @@
+# Client
+
+This document details the CLI commands and gRPC/REST endpoints for interacting with the Interchain Queries module.
+
+## CLI Commands
+
+The Neutron CLI provides commands for interacting with the Interchain Queries module. These commands allow you to register and manage queries, as well as view stored data.
+
+### Transactions
+
+#### Register Interchain Query
+
+Register a new interchain query on the destination chain.
+
+```bash
+neutrond tx interchainqueries register-query [query-type] [connection-id] [update-period] [keys-string-or-file] --from [key-name] --fees [fees]
+```
+
+Parameters:
+- `query-type`: Type of query (`kv` or `tx`)
+- `connection-id`: ID of the IBC connection to the target chain
+- `update-period`: Minimum number of blocks between query updates
+- `keys-string-or-file`: JSON string or path to a file containing the query keys or filter
+
+For KV queries, the keys format is:
+```json
+[
+  {
+    "path": "store/bank/key",
+    "key": "balances/neutron1..."
+  }
+]
+```
+
+For TX queries, the filter format is:
+```json
+{
+  "transfer.recipient": "cosmos1...",
+  "message.sender": "cosmos1..."
+}
+```
+
+Example:
+```bash
+neutrond tx interchainqueries register-query kv connection-0 100 '[{"path":"store/bank/key","key":"balances/cosmos1..."}]' --from mykey --fees 500untrn
+```
+
+#### Submit Query Result
+
+Submit the result of an interchain query that was previously registered.
+
+```bash
+neutrond tx interchainqueries submit-query-result [query-id] [height] [revision-number] [proof-path-file] [value-path-file] --from [key-name]
+```
+
+Parameters:
+- `query-id`: ID of the registered query
+- `height`: Block height of the proof
+- `revision-number`: IBC revision number
+- `proof-path-file`: Path to the file containing the Merkle proof
+- `value-path-file`: Path to the file containing the query result values
+
+Example:
+```bash
+neutrond tx interchainqueries submit-query-result 1 1000 1 ./proof.json ./values.json --from mykey --fees 500untrn
+```
+
+#### Remove Interchain Query
+
+Remove an interchain query that was previously registered.
+
+```bash
+neutrond tx interchainqueries remove-query [query-id] --from [key-name]
+```
+
+Parameters:
+- `query-id`: ID of the registered query
+
+Example:
+```bash
+neutrond tx interchainqueries remove-query 1 --from mykey --fees 500untrn
+```
+
+#### Update Interchain Query
+
+Update the parameters of an existing interchain query.
+
+```bash
+neutrond tx interchainqueries update-query [query-id] --update-period [new-period] --keys-string-or-file [keys] --from [key-name]
+```
+
+Parameters:
+- `query-id`: ID of the registered query
+- `--update-period`: New minimum number of blocks between query updates
+- `--keys-string-or-file`: New JSON string or path to a file containing query keys or filter
+
+Example:
+```bash
+neutrond tx interchainqueries update-query 1 --update-period 200 --keys-string-or-file '[{"path":"store/bank/key","key":"balances/cosmos1..."}]' --from mykey --fees 500untrn
+```
+
+### Queries
+
+#### Query Registered Interchain Queries
+
+List all registered interchain queries.
+
+```bash
+neutrond query interchainqueries registered-queries
+```
+
+#### Query Registered Interchain Query by ID
+
+Get details of a specific interchain query by its ID.
+
+```bash
+neutrond query interchainqueries registered-query [query-id]
+```
+
+Parameters:
+- `query-id`: ID of the registered query
+
+Example:
+```bash
+neutrond query interchainqueries registered-query 1
+```
+
+#### Query Interchain Queries by Owner
+
+List all interchain queries registered by a specific owner.
+
+```bash
+neutrond query interchainqueries owner-queries [owner-address]
+```
+
+Parameters:
+- `owner-address`: Address of the query owner
+
+Example:
+```bash
+neutrond query interchainqueries owner-queries neutron1...
+```
+
+#### Query Latest Query Result
+
+Get the latest result for a specific query ID.
+
+```bash
+neutrond query interchainqueries latest-query-result [query-id]
+```
+
+Parameters:
+- `query-id`: ID of the registered query
+
+Example:
+```bash
+neutrond query interchainqueries latest-query-result 1
+```
+
+#### Query Module Parameters
+
+Get the current parameters of the Interchain Queries module.
+
+```bash
+neutrond query interchainqueries params
+```
+
+## gRPC Endpoints
+
+The Interchain Queries module exposes the following gRPC endpoints:
+
+### Queries
+
+| Method Name | Request Type | Response Type | Description |
+|-------------|--------------|---------------|-------------|
+| `Params` | `QueryParamsRequest` | `QueryParamsResponse` | Get module parameters |
+| `RegisteredQueries` | `QueryRegisteredQueriesRequest` | `QueryRegisteredQueriesResponse` | List all registered queries |
+| `RegisteredQuery` | `QueryRegisteredQueryRequest` | `QueryRegisteredQueryResponse` | Get a specific query by ID |
+| `OwnerQueries` | `QueryOwnerQueriesRequest` | `QueryOwnerQueriesResponse` | List queries by owner |
+| `LatestQueryResult` | `QueryLatestQueryResultRequest` | `QueryLatestQueryResultResponse` | Get latest query result |
+
+### Messages
+
+| Method Name | Request Type | Response Type | Description |
+|-------------|--------------|---------------|-------------|
+| `RegisterInterchainQuery` | `MsgRegisterInterchainQuery` | `MsgRegisterInterchainQueryResponse` | Register a new query |
+| `SubmitQueryResult` | `MsgSubmitQueryResult` | `MsgSubmitQueryResultResponse` | Submit query result |
+| `RemoveInterchainQuery` | `MsgRemoveInterchainQuery` | `MsgRemoveInterchainQueryResponse` | Remove a query |
+| `UpdateInterchainQuery` | `MsgUpdateInterchainQuery` | `MsgUpdateInterchainQueryResponse` | Update query parameters |
+
+## REST Endpoints
+
+The Interchain Queries module exposes REST endpoints via gRPC-gateway. These endpoints mirror the gRPC service.
+
+### GET Endpoints
+
+- `/neutron/interchainqueries/v1/params` - Get module parameters
+- `/neutron/interchainqueries/v1/registered_queries` - List all registered queries
+- `/neutron/interchainqueries/v1/registered_queries/{query_id}` - Get a specific query by ID
+- `/neutron/interchainqueries/v1/registered_queries/owner/{owner_address}` - List queries by owner
+- `/neutron/interchainqueries/v1/query_results/{query_id}` - Get latest query result
+
+### POST Endpoints
+
+- `/neutron/interchainqueries/v1/tx/register_query` - Register a new query
+- `/neutron/interchainqueries/v1/tx/submit_result` - Submit query result 
+- `/neutron/interchainqueries/v1/tx/remove_query` - Remove a query
+- `/neutron/interchainqueries/v1/tx/update_query` - Update query parameters
+
+## Examples with curl
+
+### Query Module Parameters
+
+```bash
+curl -X GET "http://localhost:1317/neutron/interchainqueries/v1/params"
+```
+
+### List All Registered Queries
+
+```bash
+curl -X GET "http://localhost:1317/neutron/interchainqueries/v1/registered_queries"
+```
+
+### Get a Specific Query
+
+```bash
+curl -X GET "http://localhost:1317/neutron/interchainqueries/v1/registered_queries/1"
+```
+
+### List Queries by Owner
+
+```bash
+curl -X GET "http://localhost:1317/neutron/interchainqueries/v1/registered_queries/owner/neutron1..."
+```
+
+### Get Latest Query Result
+
+```bash
+curl -X GET "http://localhost:1317/neutron/interchainqueries/v1/query_results/1"
+``` 

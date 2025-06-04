@@ -1,0 +1,150 @@
+---
+title: "Messages"
+---
+
+The Fee Refunder module uses several message types for interactions through the IBC Transfer and Interchain Transactions modules. This page documents the message structures and how they relate to the Fee Refunder functionality.
+
+## Core Message Extensions
+
+While the Fee Refunder module itself doesn't expose direct message endpoints that users can call, it extends the functionality of other modules' messages by adding fee fields to them.
+
+### IBC Transfer with Fees
+
+When sending an IBC transfer, the Fee Refunder module enables the inclusion of fees with the standard `MsgTransfer` message from the IBC Transfer module:
+
+```protobuf
+message MsgTransfer {
+  // standard IBC transfer fields
+  string source_port = 1;
+  string source_channel = 2;
+  cosmos.base.v1beta1.Coin token = 3 [(gogoproto.nullable) = false];
+  string sender = 4;
+  string receiver = 5;
+  ibc.core.client.v1.Height timeout_height = 6 [(gogoproto.nullable) = true];
+  uint64 timeout_timestamp = 7;
+  
+  // fee field for relayer compensation
+  neutron.feerefunder.Fee fee = 8 [(gogoproto.nullable) = true];
+  
+  // optional memo field
+  string memo = 9;
+}
+```
+
+The `fee` field contains:
+
+```protobuf
+message Fee {
+  repeated cosmos.base.v1beta1.Coin recv_fee = 1 [
+    (gogoproto.moretags) = "yaml:\"recv_fee\"",
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  repeated cosmos.base.v1beta1.Coin ack_fee = 2 [
+    (gogoproto.moretags) = "yaml:\"ack_fee\"",
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  repeated cosmos.base.v1beta1.Coin timeout_fee = 3 [
+    (gogoproto.moretags) = "yaml:\"timeout_fee\"",
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+```
+
+### Interchain Transactions with Fees
+
+Similarly, when sending an interchain transaction through the `MsgSubmitTx` message from the Interchain Transactions module, the Fee Refunder module allows the inclusion of fees:
+
+```protobuf
+message MsgSubmitTx {
+  // standard interchain transaction fields
+  repeated cosmos.base.v1beta1.Msg msgs = 1;
+  string connection_id = 2;
+  string interchain_account_id = 3;
+  
+  // fee field for relayer compensation
+  neutron.feerefunder.Fee fee = 4 [(gogoproto.nullable) = true];
+  
+  // optional memo field
+  string memo = 5;
+  
+  // optional timeout timestamp
+  uint64 timeout_timestamp = 6;
+}
+```
+
+## Fee Structure
+
+The `Fee` structure is used consistently across all interactions:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `recv_fee` | `[]Coin` | Yes | Must be empty/zero for Neutron's implementation |
+| `ack_fee` | `[]Coin` | Yes | Coins paid to the relayer who delivers the acknowledgement |
+| `timeout_fee` | `[]Coin` | Yes | Coins paid to the relayer who delivers the timeout |
+
+### Important Fee Requirements
+
+1. **Minimum Fee**: The provided fees must meet or exceed the minimum fee requirements set in the module parameters
+2. **Acceptable Denominations**: Only the denominations specified in the minimum fee parameters can be used
+3. **Receive Fee**: The `recv_fee` must be empty/zero (as Neutron's implementation doesn't support paying relayers for deliver packets)
+
+## Fee Internal Messages
+
+While not directly exposed to users, the following internal message handlers are used by the module:
+
+### LockFees
+
+Called when an IBC packet is sent with fees. This function validates fees, stores fee information, and locks the fees in the module account.
+
+### DistributeAcknowledgementFee
+
+Called when an acknowledgement is received. This function distributes the acknowledgement fee to the relayer and returns the timeout fee to the original payer.
+
+### DistributeTimeoutFee
+
+Called when a timeout is received. This function distributes the timeout fee to the relayer and returns the acknowledgement fee to the original payer.
+
+## Usage in CosmWasm
+
+In CosmWasm smart contracts, fees are included using the Neutron SDK:
+
+```rust
+use neutron_sdk::bindings::msg::NeutronMsg;
+use neutron_sdk::bindings::types::{Fee as IbcFee, Coin};
+
+// Create fee structure
+let fee = IbcFee {
+    recv_fee: vec![],  // Must be empty
+    ack_fee: vec![Coin {
+        denom: "untrn".to_string(),
+        amount: "1000".to_string(),
+    }],
+    timeout_fee: vec![Coin {
+        denom: "untrn".to_string(),
+        amount: "1000".to_string(),
+    }],
+};
+
+// Include fee in IBC transfer message
+let msg = NeutronMsg::IbcTransfer {
+    // Standard IBC transfer fields
+    source_port: "transfer".to_string(),
+    source_channel: "channel-3".to_string(),
+    token: Coin {
+        denom: "untrn".to_string(), 
+        amount: "1000000".to_string(),
+    },
+    receiver: "cosmos1...".to_string(),
+    timeout_height: None,
+    timeout_timestamp: Some(timeout_timestamp),
+    
+    // Fee field
+    fee: Some(fee),
+    
+    // Optional memo
+    memo: None,
+};
+``` 

@@ -1,0 +1,227 @@
+---
+title: "v7.0.0-rc0 Upgrade (Testnet)"
+description: "Instructions for upgrading the Pion testnet to Neutron v7.0.0-rc0"
+icon: "arrow-up-right-dots"
+---
+
+This document describes the steps for validators and full node operators to upgrade to Neutron v7.0.0-rc0 on the Pion testnet.
+
+## Upgrade Information
+
+- **Chain upgrade point**: April 30th 2025, 15:00 UTC (approximately) at height `28545000`
+- **Go version**: v1.23
+- **Release**: [v7.0.0-rc0](https://github.com/neutron-org/neutron/releases/tag/v7.0.0-rc0)
+
+## Chain ID
+
+The chain-id of the network will remain the same, `pion-1`. This is because an in-place migration of state will take place, i.e., this upgrade does not export any state.
+
+## System Requirements
+
+- **RAM**: 64GB RAM is recommended to ensure a smooth upgrade
+- **Disk Space**: Ensure you have enough disk space for the upgrade, as the state can grow twice during the upgrade process
+
+If you have less than 64GB RAM, you might try creating a swapfile:
+
+```shell
+sudo fallocate -l 64G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+```
+
+## Backups
+
+Prior to the upgrade, validators are encouraged to take a full data snapshot. Snapshotting depends heavily on infrastructure, but generally this can be done by backing up the `.neutrond` directory.
+
+It is critically important for validator operators to back-up the `.neutrond/data/priv_validator_state.json` file after stopping the neutrond process. This file is updated every block as your validator participates in consensus rounds. It is a critical file needed to prevent double-signing, in case the upgrade fails and the previous chain needs to be restarted.
+
+## Current Runtime
+
+The Neutron testnet network, `pion-1`, is currently running [Neutron v6.0.0-rc0](https://github.com/neutron-org/neutron/releases/tag/v6.0.0-rc0). Operators who are running on v6.0.0-rc0 will be able to upgrade successfully.
+
+## Target Runtime
+
+The Neutron testnet network, `pion-1`, will run [Neutron v7.0.0-rc0](https://github.com/neutron-org/neutron/releases/tag/v7.0.0-rc0). Operators **MUST** use this version post-upgrade to remain connected to the network.
+
+## Build v7.0.0-rc0
+
+### Option 1: Clone and build from source
+
+```shell
+# Go to neutron directory if present else clone the repository
+git clone https://github.com/neutron-org/neutron.git
+cd neutron
+git fetch --tags
+git checkout v7.0.0-rc0
+make install
+```
+
+### Option 2: Download the binary
+
+Download the pre-built binary from the [release page](https://github.com/neutron-org/neutron/releases/tag/v7.0.0-rc0).
+
+### Verify binary
+
+Check the version and commit hash:
+
+```shell
+neutrond version --long
+```
+
+Expected output:
+```
+build_tags: netgo,ledger
+commit: 3a20f9cd1144e0713eb8637242884624f9aaa1bf
+cosmos_sdk_version: v0.50.13-neutron
+go: go version go1.23.7 darwin/arm64
+name: neutron
+server_name: neutrond
+version: 7.0.0-rc0
+```
+
+Or check checksum of the downloaded binary:
+
+```shell
+shasum -a 256 neutrond-linux-amd64
+e6dd03cd39d2098baa1abb0900aa79a27515942bd31295d3ca9b5d73427e56a1  neutrond-linux-amd64
+```
+
+## LibWasm Version
+
+Make sure you are using the proper version of libwasm. You can check the version with:
+
+```
+neutrond q wasm libwasmvm-version
+2.2.3
+```
+
+The proper version is `2.2.3`. This is a change from the previous version `2.1.5` used in v6.0.x.
+
+**If the version on your machine is different you MUST change it immediately!**
+
+### Ways to change libwasmvm
+
+- Use a statically built neutrond binary from the official release
+- If you built the binary yourself, download the proper libwasmvm version:
+
+```
+wget https://github.com/CosmWasm/wasmvm/releases/download/v2.2.3/libwasmvm.x86_64.so
+```
+
+Then tell the linker where to find it:
+```
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/lib/
+```
+
+## Upgrade Methods
+
+### Method I: Manual Upgrade
+
+1. Run Neutron v6.0.0-rc0 till upgrade height. The node will panic with:
+```
+ERR UPGRADE "v7.0.0-rc0" NEEDED at height: 28545000: upgrade to v7.0.0-rc0 and applying upgrade "v7.0.0-rc0" at height: 28545000
+```
+
+2. Stop the node
+3. Switch the binary to Neutron v7.0.0-rc0
+4. Restart with `neutrond start`
+
+### Method II: Upgrade using Cosmovisor
+
+#### Preparation
+
+Install Cosmovisor v1.5.0:
+
+```shell
+go install cosmossdk.io/tools/cosmovisor/cmd/cosmovisor@v1.5.0
+```
+
+Verify installation:
+```shell
+cosmovisor version
+cosmovisor version: v1.5.0
+```
+
+Create the Cosmovisor directory structure:
+
+```shell
+mkdir -p $NEUTRON_HOME/cosmovisor/genesis/bin
+cp $(which neutrond) $NEUTRON_HOME/cosmovisor/genesis/bin
+
+mkdir -p $NEUTRON_HOME/cosmovisor/upgrades/v7.0.0/bin
+cp $(which neutrond) $NEUTRON_HOME/cosmovisor/upgrades/v7.0.0/bin
+```
+
+You should get this structure:
+```
+.
+├── current -> genesis or upgrades/<name>
+├── genesis
+│   └── bin
+│       └── neutrond  #v6.0.0-rc0
+└── upgrades
+    └── v7.0.0
+        └── bin
+            └── neutrond  #v7.0.0-rc0
+```
+
+Export environment variables:
+
+```shell
+export DAEMON_NAME=neutrond
+# please change to your own neutron home dir
+# please note `DAEMON_HOME` has to be absolute path
+export DAEMON_HOME=$NEUTRON_HOME
+export DAEMON_RESTART_AFTER_UPGRADE=true
+```
+
+Start the node with Cosmovisor:
+
+```shell
+cosmovisor run start --x-crisis-skip-assert-invariants --home $DAEMON_HOME
+```
+
+Skipping invariant checks is strongly encouraged as it decreases the upgrade time significantly.
+
+## Upgrade Duration
+
+The upgrade process is expected to take a couple of minutes.
+
+## Rollback Plan
+
+In the event of unexpected challenges, the core team, after conferring with operators and attaining social consensus, may choose to declare that the upgrade will be skipped.
+
+Steps to skip this upgrade proposal:
+
+```
+neutrond start --unsafe-skip-upgrade 28545000
+```
+
+Note: There is no particular need to restore a state snapshot prior to the upgrade height, unless specifically directed by core Neutron team.
+
+Important: A social consensus decision to skip the upgrade will be based solely on technical merits, thereby respecting and maintaining the decentralized governance process of the upgrade proposal's successful YES vote.
+
+## Risks
+
+As a validator performing the upgrade procedure on your consensus nodes carries a heightened risk of double-signing and being slashed. The most important piece of this procedure is verifying your software version and genesis file hash before starting your validator and signing.
+
+The riskiest thing a validator can do is discover that they made a mistake and repeat the upgrade procedure again during the network startup. If you discover a mistake in the process, the best thing to do is wait for the network to start before correcting it.
+
+## Notable Changes in v7.0.0-rc0
+
+This release includes:
+
+1. Upgrade to libwasmvm v2.2.3
+2. Several core module improvements
+3. Enhanced performance for high-throughput transactions
+
+Testnet validators should use this upgrade as a rehearsal for the upcoming mainnet upgrade.
+
+## FAQ
+
+**Q: My node restarted in the middle of upgrade process (OOM killed, hardware issues, etc), is it safe to just proceed with the upgrade?**
+
+A: No. Most likely the upgrade will be completed successfully. But you get AppHash error after the network gets up. It's a lot safer to restart full process from scratch (recover the node from a backup).
+
+To perform an upgrade you need to keep your `./data/priv_validator_state.json` file when you are applying a snapshot from the backup. This will help you avoid the risk of slashing due to double signing.

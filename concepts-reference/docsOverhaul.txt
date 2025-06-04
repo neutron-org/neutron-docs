@@ -1,0 +1,487 @@
+[WIP] Documentation Overhaul Strategy
+
+Current policy:
+
+[[WIP] Neutron team documentation policy](https://www.notion.so/WIP-Neutron-team-documentation-policy-14485d6b9b10808e92b8e309fdf70d91?pvs=21) 
+
+## Executive Summary
+
+The current documentation system at `docs.neutron.org` is fragmented, outdated, and structurally inconsistent. With Mercury live, v6.0.0-rc.0 released, and strategic products and modules like Supervaults, Oracle, Cron now live or nearing deployment, it's time to comprehensively **reboot Neutron’s documentation stack**.
+
+Time for a **ground-up rewrite of the documentation** using the [Divio documentation system](https://docs.divio.com/documentation-system) and implemented using [Mintlify](https://www.mintlify.com/), taking structural inspiration from docs of exemplary projects like [Initia](https://docs.initia.xyz/home/general/welcome), [Penumbra](https://guide.penumbra.zone/), [Valence](https://docs.valence.zone/).
+
+Best point of reference: 
+
+![image.png](attachment:962d3dc5-8f01-432e-8780-72b70358c708:image.png)
+
+---
+
+## 🔍 Problem Statement
+
+### 🧱 Technical Debt in Docs
+
+- Most existing content (outside the onboarding tutorials) is outdated, casual in tone, and decoupled from real source-of-truth updates (RFCs, Notion, PRs).
+- Tutorials, module pages, and contract docs have not been consistently updated with recent changes to Neutron’s codebase (Cron, Fee, Oracle, ICQ/ICA).
+- Developers + Users don’t know what’s obsolete and what’s current.
+
+### 🧑‍💻 Process Misalignment
+
+- Current expectation is that **core devs update docs alongside PRs**, but this doesn’t cover:
+    - Tutorials
+    - FAQ
+    - Conceptual explanations
+- RFCs (which are well-written) often don’t propagate into public-facing docs.
+- No clear ownership of docs outside core modules.
+
+### 🎯 Undefined End Users
+
+- Some unclarity exists on **who the documentation is for**:
+    - Smart contract developers (CosmWasm)
+    - Chain integrators/infra teams
+    - Users depositing/interacting with vaults
+    - Validators/relayers
+- Lack of structure means none of these are fully served.
+
+---
+
+## 🧩 Proposed Solution
+
+## 🧑‍🔬 Contribution Workflow
+
+### **High-Level Workflow Steps To Be**
+
+1. RFC is written in Notion → reviewed by Andrei/Mikhail.
+2. If approved and merged to core repo, *dev or DevRel* writes:
+    - `Explanation` page (why it exists, how it works)
+    - `Reference` (from proto and implementation)
+    - Optional: `How-To` if usage isn’t self-evident.
+3. Markdown synced to Mintlify via GitHub.
+4. Final approval by DevRel or doc editor.
+
+add a note: **"Versioning disabled by default (v6.0.0+ only); archive old versions if necessary."**
+
+**Contributor Roles**
+
+- *Core Devs*: responsible for module-level docs (reference + API) as part of PR process.
+- *DevRel*: maintains tutorials, explanation content, and How-Tos.
+- *Reviewers*: ensure docs PRs meet Divio format, include references, and use AI-enhanced copy.
+- *Infra*: maintains Mintlify, Kapa, syncing infra.
+
+### 📚 Enforce  Divio’s 4-Quadrant System
+
+Each piece of documentation must serve **one of four purposes** and be written accordingly:
+
+| Section | Purpose | Form | Analogy |
+| --- | --- | --- | --- |
+| **Tutorials** | Learning | Step-by-step walkthroughs | Teaching a child to cook |
+| **How-To Guides** | Solving specific problems | Recipes | Cookbook recipe |
+| **Reference** | Factual interface details | API definitions, schemas | Encyclopedia |
+| **Explanation** | Deep conceptual understanding | Essays, rationales | History of cuisine |
+
+We model this structure on @Sergei Sotnikov’s  [ICQ module refactor (PR #219)](https://github.com/neutron-org/neutron-docs/pull/219) and extend it across **all modules, contracts, and primitives**.
+
+---
+
+## 👥 Core Audiences
+
+| Persona | Needs |
+| --- | --- |
+| Users | Core concepts, Security model, vault logic, staking flow, tokenomics, governance model,  things that help verify authenticity (asset denominations, deployed contracts), privileged subdaos |
+| Developers | Code examples, integrations, SDKs, ICA/ICQ use cases, architecture rationale, Tutorials, Orderbook integrations,  Vaults, Gas abstraction, potentially Ethereum onboarding docs (which could lead to a future subgroup) |
+| Validators | Validator incentives, slashing removal, machine specs, param recommendations, how to get in the set etc., how the curation policy works |
+
+---
+
+## 🗂 New Documentation IA (Information Architecture)
+
+Page 1: Landing Page
+
+### 🔷 Home (Landing)
+
+- Mission, quickstart, high-level concepts
+- Intro to the sovereignty structure Mercury, NTRN utility
+- “Start Building” CTA
+
+### 🔧 Core Concepts (Explanation)
+
+- O[piniated blockchains](https://eljhfx.substack.com/p/opinionated-blockchains)
+- I[ntegrated architecture](https://blog.neutron.org/what-is-an-integrated-blockchain-a097f9ca4c7c):
+    - Oracle,
+    - Cron,
+    - Token factory,
+    - Cross-chain transactions & Queries,
+    - Rate limits,
+    - Gas abstraction / Feemarket
+    - Block SDK?
+- [Hybrid orderbook](https://docs.neutron.org/neutron/modules/dex/overview/)
+- Proof of Liquid Staking ([Staking & Validator Economics](https://forum.neutron.org/t/mercury-towards-the-integrated-endgame/393) (include reference to [Staking Rewards API](https://www.notion.so/Neutron-Staking-Rewards-API-1c885d6b9b108057bd02dd835fec5f5e?pvs=21)))
+    - Security model
+    - Validator curation
+    - Validator rewards
+    - Delegator rewards
+    - Voting Power
+- M[odular governance](https://blog.neutron.org/modular-governance-78d87eea4046)
+    - Admin module
+    - Chain manager module
+    - Privileges
+    - Privileged subdaos (including maintained list of them? perhaps not in this section)
+
+---
+
+Page 2: Developers
+
+### 🧰  Modules
+
+- ICQ (https://github.com/neutron-org/neutron-docs/blob/feat/refactor-icq-module-documentation/docs/neutron/modules/interchain-queries/how-to.md)
+    - Overview
+    - Explanation
+    - How To
+        - ‣
+    - Module API refs
+    - Bugs
+- DEX
+    - Orderbook integrations
+    - As
+- Admin
+- Token Factory
+- Cron
+- Transfer
+- etc.
+
+### 🛠 Quick Guides (Generic, Short, Specific, unspecific to a single Module)
+
+- How to run Neutron
+- Staking Rewards API
+- Using oracle for price feeds
+- Add a contract to the Cron module
+- Authenticate via Ethereum signature (when ready)
+
+### 🧪 Tutorials (Learning) (@Andrei Zavgorodnii’s tutorials + many to be created)
+
+- Part 1: Minimal CosmWasm Contract (Intro to CosmWasm)
+    - Cosmwasm + Remix IDE
+    - Wasmkit
+    - ICA
+    - ICQ
+    - Onboarding
+        - Part (1-3) minimal application, calling modules and contracts, building simple web apps
+- Part 2: Integration Tests
+- Part 3: Indexers
+- Part 4: Set up a relayer (IBC + ICQ)
+
+### 🧰 Tooling & Indexing
+
+- Neutron SDKs (TS/Go)
+- Integration templates
+- SubQuery, indexers
+- Gas fees & multisig tools
+
+---
+
+Page 3: Validators
+
+### 📚 Validator Reference
+
+- Running a Node
+    - System specs
+    - CLI commands
+- Becoming a validator
+    - System Specs
+    - Selection criteria
+
+---
+
+Page 4: Resources
+
+### 📚 Developer Reference
+
+- Contract APIs (`cw-core`, `vault-factory`,etc.)
+- RPC/CLI commands
+    - List of [known public nodes](https://github.com/cosmos/chain-registry/blob/a0dc10b21c580718bd1ba1977d35ced78201aed2/neutron/chain.json#L142)
+    - [node status page](https://neutron.betteruptime.com/)
+- Chain config + params
+    - check https://nextra.site/  as a means of doing that
+
+---
+
+## 🛠 Tools & Infra
+
+- [Mintlify](https://www.mintlify.com/) for docs hosting and AI-driven authoring
+- [Kapa AI](https://www.kapa.ai/) integration for semantic search & GPT assistant
+- GitHub → Mintlify Git Sync
+- RFCs hosted in Notion, synced via PRs when finalized
+
+---
+
+## ✅ Next Steps
+
+1. **~~Approve Divio-based IA & audience model~~**
+2. **~~Approve plan to discard most of legacy docs (except tutorials)~~**
+    1. We’ll keep some, ICQ will be our best example for now (https://github.com/neutron-org/neutron-docs/blob/feat/refactor-icq-module-documentation/docs/neutron/modules/interchain-queries/how-to.md)
+3. **Begin with:**
+    - Refactor `cron` module using Divio layout
+        - Clyde to use AI and make no-slop docs and share how to
+    - Introduce docs for using the `oracle` module and reference [Skip documentation](https://github.com/neutron-org/slinky-vault/tree/supervault-auditspec) on that point (recently under-documented)
+4. **Create editorial checklist** for every doc PR / Changelog
+    1. To come to agreement on template
+
+---
+
+## 📌 References
+
+[[WIP] Neutron team documentation policy](https://www.notion.so/WIP-Neutron-team-documentation-policy-14485d6b9b10808e92b8e309fdf70d91?pvs=21) 
+
+- [Divio Documentation System](https://docs.divio.com/documentation-system/)
+- [Neutron Docs GitHub](https://github.com/neutron-org/neutron-docs)
+- [ICQ Module Refactor PR #219](https://github.com/neutron-org/neutron-docs/pull/219)
+- [Initia Docs](https://docs.initia.xyz/home/general/welcome)
+- [Mintlify Overview](https://www.mintlify.com/)
+- [Supervaults Explainer](https://www.notion.so/Supervaults-Explainer-16485d6b9b1080a78d9dd60dfefed4d9?pvs=21) (when it’s time)
+
+Core Concepts: 
+[integrated architecture](https://blog.neutron.org/what-is-an-integrated-blockchain-a097f9ca4c7c)
+
+[opiniated blockchains](https://eljhfx.substack.com/p/opinionated-blockchains)
+
+[modular governance](https://blog.neutron.org/modular-governance-78d87eea4046)
+
+our staking model (proof of liquid staking, there’s meaningful differences with the other chains) 
+
+Priveleges, chain managers, 
+
+Sponsoring signs of life: we need ideas and scaffolds
+
+Docs feedback: 
+
+quickstart should be just with cosmopark (https://docs.neutron.org/neutron/build-and-run/cosmopark, should be able to condense all the steps)
+
+deploydon to send me bull v bear scaffolding const (variables), lib (functions), run (open, close, build here)
+
+add deploydons scaffolding to developers tabs, and for bull v bear, 
+
+need to add some kind of neutron-std vs. sdk documentation and understand that better 
+
+Need to add some slinky set-up for node operators
+
+Improper gas documentation:
+
+gas cost is based on memory usage and compute per call, it doesn't really matter the amount of contracts its calling on the gas cost
+
+that's not really documented anywhere, wow
+
+that sucks, the anti-monolithic sdk is against micro-service style for contracts
+
+Decimals incorrect
+
+> Rarma_:
+🖼 why is the decimals wrong by 5 places?
+> 
+
+> Rarma_:
+"NIL/USD":"3768039074"
+> 
+
+> Rarma_:
+Price is 0.37
+> 
+
+> luisqa:
+Each price has a different decimal value. IIRC NIL is 10
+> 
+
+> luisqa:
+Most are 9-10
+> 
+
+> Avi ✨:
+even locked allos bought at pennies were likely sold to other parties for a gain, thats typically how that works
+> 
+
+> Elijah:
+quite possible, i dont know about seed investors but i do know some of their later stage private round investors bought OTC after launch to double down
+> 
+
+> Elijah:
+i generally think Celestia's investors seem pretty long term focused
+> 
+
+> Elijah:
+but i could be massively wrong
+> 
+
+> Rarma_:
+ok, got the decimals from
+> 
+
+which is incorrecty documented. But at least I can get the correct price for any newly listed assets without relying on offchain data or updating my script
+neutrond q maketmap market-map
+
+> Rarma_:
+🖼 $390 profit on the bot today, one trade at a loss (which opened incorrectly because of NIL - previous script didnt automatically get the decimals so my bot thought the price was higher)
+> 
+
+And two active trades.
+
+> Rarma_:
+Photo
+> 
+
+> Rarma_:
+Test #54:
+Query: neutrond q marketmap marketmap
+Return Code: 1
+Status: Incorrect
+Error Message:
+Error: unknown command "marketmap" for "marketmap"
+> 
+
+Did you mean this?
+market-map
+
+Usage:
+neutrond query marketmap [flags]
+neutrond query marketmap [command]
+
+Available Commands:
+last-updated Query the last height the market map was updated at
+market       Query the a market using the given currency pair
+market-map   Query the current market map
+params       Query the current marketmap module parameters
+
+Flags:
+-h, --help   help for marketmap
+
+> Rarma_:
+@Spaydh I have a script you can run to check for incorrect queries in your documentation
+> 
+
+> Rarma_:
+probably needs a little more work, but it found this one
+> 
+
+> Rarma_:
+Test #55:
+Query: neutrond q oracle currency-pairs
+Return Code: 0
+Status: Correct
+Output:
+currency_pairs:
+> 
+- Base: AAVE
+Quote: USD
+- Base: ADA
+Quote: USD
+- Base: AEVO
+Quote: USD
+
+General feedback: 
+
+![telegram-cloud-photo-size-4-6046590667846698589-x.jpg](attachment:ac7d0511-a6e7-4e7c-93fc-ec3bf84b6446:telegram-cloud-photo-size-4-6046590667846698589-x.jpg)
+
+> Spaydh:
+Rarma says this is good to check outdated queries in docs if that's useful to you
+> 
+
+Rarma
+
+```jsx
+#!/usr/bin/env python3
+import requests
+from bs4 import BeautifulSoup
+import re
+import subprocess
+import sys
+from urllib.parse import urljoin, urlparse
+import time
+
+BASE_URL = "https://docs.neutron.org/"
+
+def is_internal_link(link, base):
+    # Return true if the link is within the same domain as base
+    base_netloc = urlparse(base).netloc
+    url_netloc = urlparse(link).netloc
+    return (url_netloc == '' or url_netloc == base_netloc)
+
+def extract_neutrond_queries_from_text(text):
+    """
+    Searches a text block for lines that seem to contain a neutrond query.
+    For instance, looks for lines containing the word "neutrond". Adjust the regex if needed.
+    """
+    queries = []
+    # simple regex to match lines containing "neutrond" optionally preceded by whitespace
+    pattern = re.compile(r'^\s*(neutrond.+)$', re.MULTILINE)
+    matches = pattern.findall(text)
+    for match in matches:
+        # Clean the query string
+        query = match.strip()
+        queries.append(query)
+    return queries
+
+def crawl_and_extract_queries(url, visited, queries):
+    """
+    Crawl the given URL and extract neutrond queries from page content.
+    Then follow internal links recursively.
+    """
+    if url in visited:
+        return
+    print(f"Processing: {url}")
+    visited.add(url)
+    try:
+        response = requests.get(url, timeout=10)
+        if response.status_code != 200:
+            print(f"Warning: Unable to access {url} (status code: {response.status_code})")
+            return
+    except Exception as e:
+        print(f"Error accessing {url}: {e}")
+        return
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    
+    # Search for <pre> and <code> tags that might contain neutrond queries
+    code_blocks = soup.find_all(['pre', 'code'])
+    for block in code_blocks:
+        text = block.get_text()
+        found_queries = extract_neutrond_queries_from_text(text)
+        if found_queries:
+            queries.extend(found_queries)
+    
+    # Find all internal links to continue the crawl
+    for a in soup.find_all("a", href=True):
+        link = urljoin(url, a['href'])
+        # Avoid query strings and anchors causing duplicates:
+        link = link.split('#')[0]
+        if is_internal_link(link, BASE_URL) and link not in visited:
+            # To be respectful, add a short delay between requests
+            time.sleep(0.5)
+            crawl_and_extract_queries(link, visited, queries)
+
+def test_query(query):
+    """
+    Executes the neutrond query using subprocess.
+    Returns a dictionary containing the command, output, error and return code.
+    """
+    print(f"Testing: {query}")
+    # Execute the query in a shell.
+    try:
+        # Note: shell=True can be a security hazard if query content isn't trusted.
+        result = subprocess.run(query, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=30)
+        output = result.stdout.strip()
+        error = result.stderr.strip()
+        return_code = result.returncode
+    except subprocess.TimeoutExpired as e:
+        output = ""
+        error = f"Timeout after {e.timeout} seconds"
+        return_code = -1
+    except Exception as e:
+        output = ""
+        error = str(e)
+        return_code = -1
+
+    test_result = {
+        "query": query,
+        "output": output,
+        "error": error,
+        "return_code": return_code,
+    }
+    return test_result
+```

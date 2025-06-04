@@ -1,0 +1,208 @@
+# Overview
+
+Staking Hooks module (*Harpoon* from now on) allows to subscribe to staking module hooks from CosmWasm smart contracts.
+
+Main purpose of it is to allow calculation of historical voting power from staking module (TODO: link to staking vault contract), but module allows for other contracts to use it as well.
+
+Subscription only allowed through governance.
+
+<aside>
+💡
+
+Q: Why do need this module. Why don’t we just query staking data from contracts directly?
+A: Because in our governance we use historical data, i.e. VP on height of proposal creation. Staking module does not store it.
+
+</aside>
+
+# Initialization
+
+Module and keeper is initialized as usual [in app.go](https://github.com/neutron-org/neutron-private/pull/32/files#diff-0f1d2976054440336a576d47a44a37b80cdf6701dd9113012bce0e3c425819b7L227-L1075).
+
+# Hooks
+
+### How connected and called
+
+Hooks are connected in app.go through [https://github.com/neutron-org/neutron-private/pull/32/files#diff-0f1d2976054440336a576d47a44a37b80cdf6701dd9113012bce0e3c425819b7R727-R728](https://github.com/neutron-org/neutron-private/pull/32/files#diff-0f1d2976054440336a576d47a44a37b80cdf6701dd9113012bce0e3c425819b7R877-R878)
+
+```go
+	multiStakingHooks := stakingtypes.NewMultiStakingHooks(
+		app.SlashingKeeper.Hooks(),
+		**app.HarpoonKeeper.Hooks()**
+	)
+	app.StakingKeeper.SetHooks(multiStakingHooks)
+```
+
+They get called from staking module. Importantly from both transactions (such as Delegate hooks) and begin/endblocker (such as Slashing hooks).
+
+### What hooks are there
+
+All hooks that are available through staking module: https://github.com/cosmos/cosmos-sdk/blob/66a766beae10ca38d1eeb7a527d64bdc954a6dd5/x/staking/types/expected_keepers.go#L95-L109
+
+### Calling mechanism
+
+We [call sudo](https://github.com/neutron-org/neutron-private/pull/32/files#diff-a092759f77a643033814775a88d872d0610134dfe2a7ce83219bc59ce684364eR193-R204) on each subscribed contract from each hook.
+
+There is no cached context on sudo call. We also do not continue execution on errors:
+
+```go
+		for _, contractAddress := range contractAddresses {
+		// As we're using ctx here (no cached context!), any errors will be returned from hooks as it is.
+		// This means it can potentially halt the chain OR abort the transactions depending on where hook was called from.
+		accContractAddress, err := sdk.AccAddressFromBech32(contractAddress)
+		if err != nil {
+			return errors.Wrapf(err, "could not parse acc address from bech32 for harpoon sudo call, contract_address=%s", contractAddress)
+		}
+		_, err = k.wasmKeeper.Sudo(sdkCtx, accContractAddress, msgJsonBz)
+		if err != nil {
+			return errors.Wrapf(err, "could not execute sudo call successfully for hook_type=%s, msg=%s, contract_address=%s", hookType.String(), string(msgJsonBz), contractAddress)
+		}
+	}
+
+	return nil
+}
+```
+
+This has implications:
+
+- hooks called from transactions can abort them if contract errors / runs out of gas
+- hooks called from endblocker can halt the chain if contract errors
+
+Why? Reason is we cannot afford for staking contract state to be inconsistent with staking module state. If we skip methods, state will be inconsistent.
+
+So contract(s) should be written in a way to not error under any circumstances.
+
+But not all staking hook calls return errors, so network won’t be halted anyways. Like BeforeValidatorSlashed:
+
+```rust
+	cosmos-sdk/x/staking/keeper/slash.go
+
+	// call the before-slashed hook
+	if err := k.Hooks().BeforeValidatorSlashed(ctx, operatorAddress, effectiveFraction); err != nil {
+		k.Logger(ctx).Error("failed to call before validator slashed hook", "error", err)
+	}
+```
+
+# Msgs
+
+```protobuf
+
+// Defines the Msg interface of the module.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // Updates hook subscriptions for a specific contract address.
+  // To remove a subscription, pass an empty array to `hook_subscription.hooks`.
+  // Can only be executed by the module's authority.
+  rpc ManageHookSubscription(MsgManageHookSubscription) returns (MsgManageHookSubscriptionResponse);
+}
+
+// Defines the Msg/ManageHookSubscription request type.
+message MsgManageHookSubscription {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "harpoon/MsgManageHookSubscription";
+
+  // Address of the governance account.
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // Hook subscription to be updated.
+  HookSubscription hook_subscription = 2;
+}
+
+// Defines the response structure for executing a MsgManageHookSubscription message.
+message MsgManageHookSubscriptionResponse {}
+
+// Specifies new hook subscriptions for the contract_address.
+message HookSubscription {
+  // Contract address to update subscriptions for.
+  string contract_address = 2;
+
+  // List of hooks to subscribe to. Hooks not listed here will be removed.
+  repeated HookType hooks = 3;
+}
+
+// Hook types that can be subscribed to.
+enum HookType {
+  option (gogoproto.goproto_enum_prefix) = false;
+	// cosmos-sdk requirement; we don't allow to save this value in store
+  HOOK_TYPE_UNSPECIFIED = 0;
+  // Triggered after validator is created
+  HOOK_TYPE_AFTER_VALIDATOR_CREATED = 1;
+  // Triggered before validator is modified
+  HOOK_TYPE_BEFORE_VALIDATOR_MODIFIED = 2;
+  // Triggered after validator is removed
+  HOOK_TYPE_AFTER_VALIDATOR_REMOVED = 3;
+  // Triggered after validator is bonded
+  HOOK_TYPE_AFTER_VALIDATOR_BONDED = 4;
+  // Triggered after validator begins unbonding
+  HOOK_TYPE_AFTER_VALIDATOR_BEGIN_UNBONDING = 5;
+  // Triggered before delegation is created
+  HOOK_TYPE_BEFORE_DELEGATION_CREATED = 6;
+  // Triggered before delegation's shares are modified
+  HOOK_TYPE_BEFORE_DELEGATION_SHARES_MODIFIED = 7;
+  // Triggered before delegation is removed
+  HOOK_TYPE_BEFORE_DELEGATION_REMOVED = 8;
+  // Triggered after delegation is modified
+  HOOK_TYPE_AFTER_DELEGATION_MODIFIED = 9;
+  // Triggered before validator is slashed
+  HOOK_TYPE_BEFORE_VALIDATOR_SLASHED = 10;
+  // Triggered after unbonding is initiated
+  HOOK_TYPE_AFTER_UNBONDING_INITIATED = 11;
+}
+
+```
+
+### `ManageHookSubscription`
+
+Allows to subscribe/unsubscribe `contract_address` to any possible hooks using governance proposals.
+
+Only possible to be called through governance.
+
+If some hooks already existed before the call and weren’t specified in `hook_subscription.hooks`  they’ll be unsubscribed for this contract_address.
+
+Note: that this operation a bit complicated since we use different layout for storage (see **Storage** below)
+
+# Queries
+
+```protobuf
+// Defines the Query interface of the module.
+service Query {
+  // Retrieves contracts subscribed to a specific hook type.
+  rpc SubscribedContracts(QuerySubscribedContractsRequest) returns (QuerySubscribedContractsResponse) {
+    option (google.api.http).get = "/neutron/harpoon/subscribed_contracts";
+  }
+}
+
+// Request type for the Query/SubscribedContracts RPC method.
+message QuerySubscribedContractsRequest {
+  // The response will include only contract addresses for this hook type.
+  HookType hook_type = 1;
+}
+
+// Response type for the Query/SubscribedContracts RPC method.
+message QuerySubscribedContractsResponse {
+  // List of contract addresses subscribed to a specific hook.
+  repeated string contract_addresses = 1;
+}
+```
+
+### `SubscribedContracts`
+
+Returns all contract_addresses that are called for a given `hook_type`
+
+# Storage
+
+As we want the frequent operation of calling hooks from staking to be efficient, storage is done to allow it - retrieve all contract_addresses for a concrete hook.
+
+This leads to storage layout:
+
+KEY: `[]byte("subscriptions")` + `BigEndian(uint32(hookType))`
+
+VALUE: `HookSubscriptions` see structure below - it’s just an array of contract address strings
+
+```protobuf
+// Defines how subscribed contract_addresses are stored in KV store under each hook kind.
+message HookSubscriptions {
+  // Contract addresses that are subscribed to the hook kind.
+  repeated string contract_addresses = 1;
+}
+```

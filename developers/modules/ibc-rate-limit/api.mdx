@@ -1,0 +1,384 @@
+---
+title: "API"
+---
+
+This document details the API endpoints provided by the IBC Rate Limit module for blockchain integration.
+
+## REST Endpoints
+
+All REST routes are defined in the module's `client/rest` package. The base URL is typically `http://localhost:1317`.
+
+### GET: Query Parameters
+
+```
+GET /neutron/ibc-rate-limit/v1beta1/params
+```
+
+Returns the current parameters of the IBC Rate Limit module.
+
+#### Response Structure
+
+```json
+{
+  "params": {
+    "contract_address": "neutron1abcdef..."
+  }
+}
+```
+
+## gRPC Endpoints
+
+The IBC Rate Limit module provides gRPC query and transaction endpoints.
+
+### Query Service
+
+#### Params
+
+Query the current parameters of the module:
+
+```protobuf
+rpc Params(QueryParamsRequest) returns (QueryParamsResponse)
+```
+
+##### Request
+
+```protobuf
+message QueryParamsRequest {}
+```
+
+##### Response
+
+```protobuf
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+```
+
+### Msg Service
+
+#### UpdateParams
+
+Update the module's parameters (admin/governance only):
+
+```protobuf
+rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse)
+```
+
+##### Message
+
+```protobuf
+message MsgUpdateParams {
+  string authority = 1;
+  Params params = 2;
+}
+```
+
+##### Response
+
+```protobuf
+message MsgUpdateParamsResponse {}
+```
+
+## JavaScript/TypeScript Integration
+
+Here's an example of how to interact with the IBC Rate Limit module using JavaScript:
+
+### Querying Parameters
+
+```typescript
+import { QueryClient } from '@cosmjs/stargate';
+import { Tendermint34Client } from '@cosmjs/tendermint-rpc';
+
+async function queryParams() {
+  // Connect to the node
+  const tmClient = await Tendermint34Client.connect("http://localhost:26657");
+  const queryClient = new QueryClient(tmClient);
+  
+  // Craft the query path
+  const path = `/neutron.ibcratelimit.v1beta1.Query/Params`;
+  
+  // Encode the request
+  const request = {};
+  const requestBytes = new TextEncoder().encode(JSON.stringify(request));
+  
+  // Send the query
+  const responseBytes = await queryClient.queryAbci(path, requestBytes);
+  
+  // Decode the response
+  const response = JSON.parse(new TextDecoder().decode(responseBytes));
+  
+  return response.params;
+}
+
+// Usage example
+queryParams()
+  .then(params => console.log("IBC Rate Limit params:", params))
+  .catch(err => console.error("Query failed:", err));
+```
+
+### Interacting with the Rate Limit Contract
+
+Since most of the logic is delegated to a CosmWasm contract, most interactions will be with the contract directly:
+
+```typescript
+import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
+import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
+
+async function queryQuotas(contractAddress, channelId, denom) {
+  // Create a read-only client
+  const client = await SigningCosmWasmClient.connect("http://localhost:26657");
+  
+  // Query the contract
+  const result = await client.queryContractSmart(contractAddress, {
+    get_quotas: {
+      channel_id: channelId,
+      denom: denom
+    }
+  });
+  
+  return result;
+}
+
+async function addRateLimit(
+  mnemonic,
+  contractAddress,
+  channelId,
+  denom,
+  quotas
+) {
+  // Create wallet and client
+  const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
+    prefix: "neutron"
+  });
+  const accounts = await wallet.getAccounts();
+  const fromAddress = accounts[0].address;
+  
+  const client = await SigningCosmWasmClient.connectWithSigner(
+    "http://localhost:26657",
+    wallet
+  );
+  
+  // Execute contract
+  const result = await client.execute(
+    fromAddress,
+    contractAddress,
+    {
+      add_path: {
+        channel_id: channelId,
+        denom: denom,
+        quotas: quotas
+      }
+    },
+    "auto"
+  );
+  
+  return result;
+}
+
+// Example usage
+queryQuotas(
+  "neutron1abcdef...",
+  "channel-0",
+  "untrn"
+)
+  .then(result => console.log("Quotas:", result))
+  .catch(err => console.error("Query failed:", err));
+
+// Add rate limit example
+addRateLimit(
+  "your mnemonic here",
+  "neutron1abcdef...",
+  "channel-0",
+  "untrn",
+  [
+    {
+      name: "daily-outflow",
+      duration_seconds: 86400,
+      percentage: "0.30",
+      flow_direction: "out"
+    }
+  ]
+)
+  .then(result => console.log("Transaction result:", result))
+  .catch(err => console.error("Transaction failed:", err));
+```
+
+## CosmWasm Contract Interaction API
+
+Since the IBC Rate Limit module delegates most of its logic to a CosmWasm contract, it's important to understand how to interact with this contract.
+
+### Query Messages
+
+#### GetQuotas
+
+Retrieve the quotas for a specific channel and denomination:
+
+```json
+{
+  "get_quotas": {
+    "channel_id": "channel-0",
+    "denom": "untrn"
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "quotas": [
+    {
+      "name": "daily-outflow",
+      "duration_seconds": 86400,
+      "percentage": "0.300000000000000000",
+      "channel_value": "1000000000",
+      "max_percentage_reset_time": "2023-07-01T00:00:00Z",
+      "flow": {
+        "amount": "50000000",
+        "period_end": "2023-07-01T00:00:00Z"
+      }
+    }
+  ]
+}
+```
+
+### Execute Messages
+
+#### AddPath
+
+Add rate limits for a specific path:
+
+```json
+{
+  "add_path": {
+    "channel_id": "channel-0",
+    "denom": "untrn",
+    "quotas": [
+      {
+        "name": "daily-outflow",
+        "duration_seconds": 86400,
+        "percentage": "0.30",
+        "flow_direction": "out"
+      }
+    ]
+  }
+}
+```
+
+#### RemovePath
+
+Remove all rate limits for a specific path:
+
+```json
+{
+  "remove_path": {
+    "channel_id": "channel-0",
+    "denom": "untrn"
+  }
+}
+```
+
+#### ResetPathQuota
+
+Reset a specific quota if it has been exceeded:
+
+```json
+{
+  "reset_path_quota": {
+    "channel_id": "channel-0",
+    "denom": "untrn",
+    "quota": "daily-outflow"
+  }
+}
+```
+
+### Sudo Messages
+
+These messages can only be executed by the chain itself.
+
+#### SendPacket
+
+Track and check rate limits for an outgoing packet:
+
+```json
+{
+  "send_packet": {
+    "packet": {
+      "sequence": 1,
+      "source_port": "transfer",
+      "source_channel": "channel-0",
+      "destination_port": "transfer",
+      "destination_channel": "channel-1",
+      "data": {
+        "denom": "untrn",
+        "amount": "1000",
+        "sender": "neutron1sender...",
+        "receiver": "cosmos1receiver..."
+      },
+      "timeout_height": {
+        "revision_number": 1,
+        "revision_height": 100000
+      },
+      "timeout_timestamp": 1630000000000000000
+    }
+  }
+}
+```
+
+#### RecvPacket
+
+Track and check rate limits for an incoming packet:
+
+```json
+{
+  "recv_packet": {
+    "packet": {
+      "sequence": 1,
+      "source_port": "transfer",
+      "source_channel": "channel-1",
+      "destination_port": "transfer",
+      "destination_channel": "channel-0",
+      "data": {
+        "denom": "transfer/channel-1/uatom",
+        "amount": "1000",
+        "sender": "cosmos1sender...",
+        "receiver": "neutron1receiver..."
+      },
+      "timeout_height": {
+        "revision_number": 1,
+        "revision_height": 100000
+      },
+      "timeout_timestamp": 1630000000000000000
+    }
+  }
+}
+```
+
+#### UndoSend
+
+Revert quota accounting for a failed packet:
+
+```json
+{
+  "undo_send": {
+    "packet": {
+      "sequence": 1,
+      "source_port": "transfer",
+      "source_channel": "channel-0",
+      "destination_port": "transfer",
+      "destination_channel": "channel-1",
+      "data": {
+        "denom": "untrn",
+        "amount": "1000",
+        "sender": "neutron1sender...",
+        "receiver": "cosmos1receiver..."
+      },
+      "timeout_height": {
+        "revision_number": 1,
+        "revision_height": 100000
+      },
+      "timeout_timestamp": 1630000000000000000
+    }
+  }
+}
+``` 

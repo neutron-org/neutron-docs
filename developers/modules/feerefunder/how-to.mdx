@@ -1,0 +1,237 @@
+---
+title: "Fee Refunder How-To"
+---
+
+This guide provides practical instructions for interacting with the Fee Refunder module, primarily for smart contract developers who need to include the appropriate fees when sending IBC packets.
+
+## For Smart Contract Developers
+
+### Including Fees in IBC Transfers
+
+When using the `MsgTransfer` message from the IBC Transfer module, you need to include fees for relayers:
+
+```rust
+// Example in CosmWasm
+
+// Import necessary types
+use neutron_sdk::bindings::msg::NeutronMsg;
+use neutron_sdk::bindings::types::{Fee as IbcFee, Coin};
+
+// Create the fee structure
+let fee = IbcFee {
+    // Must be zero for compatibility reasons
+    recv_fee: vec![],
+    
+    // Fee paid to the relayer who delivers acknowledgment
+    ack_fee: vec![Coin {
+        denom: "untrn".to_string(),
+        amount: "1000".to_string(),
+    }],
+    
+    // Fee paid to the relayer who delivers timeout
+    timeout_fee: vec![Coin {
+        denom: "untrn".to_string(),
+        amount: "1000".to_string(),
+    }],
+};
+
+// Create the IBC transfer message with fee
+let msg = NeutronMsg::IbcTransfer {
+    source_port: "transfer".to_string(),
+    source_channel: "channel-3".to_string(),
+    token: Coin {
+        denom: "untrn".to_string(), 
+        amount: "1000000".to_string(),
+    },
+    receiver: "cosmos1...".to_string(),
+    timeout_height: None,
+    timeout_timestamp: Some(timeout_timestamp),
+    fee: Some(fee),
+    memo: None,
+};
+```
+
+### Including Fees in Interchain Transactions
+
+When using the `MsgSubmitTx` message for Interchain Transactions, you also need to include relayer fees:
+
+```rust
+// Example in CosmWasm
+
+// Import necessary types
+use neutron_sdk::bindings::msg::NeutronMsg;
+use neutron_sdk::bindings::types::{Fee as IbcFee, Coin};
+use neutron_sdk::interchain_txs::helpers::create_submit_tx_msg;
+
+// Create the fee structure
+let fee = IbcFee {
+    recv_fee: vec![],
+    ack_fee: vec![Coin {
+        denom: "untrn".to_string(),
+        amount: "2000".to_string(),
+    }],
+    timeout_fee: vec![Coin {
+        denom: "untrn".to_string(),
+        amount: "1000".to_string(),
+    }],
+};
+
+// Create the interchain transaction message with fee
+let cosmos_msgs: Vec<cosmwasm_std::CosmosMsg> = vec![/* Your Cosmos messages here */];
+let connection_id = "connection-0";
+let interchain_account = "cosmos1...";
+
+let msg = create_submit_tx_msg(
+    cosmos_msgs,
+    connection_id.to_string(),
+    interchain_account.to_string(),
+    Some(fee),
+    None, // memo
+    None, // timeout_timestamp
+);
+```
+
+### Ensuring Your Fees Are Sufficient
+
+The chain enforces minimum fees for IBC operations, which can be queried:
+
+```rust
+// Query the minimum required fees
+let min_fee: QueryMinFeeResponse = deps.querier.query(
+    &QueryRequest::Custom(NeutronQuery::FeerefunderMinFee {})
+)?;
+
+// Use these values to ensure your fees are sufficient
+let min_ack_fee = min_fee.min_fee.ack_fee;
+let min_timeout_fee = min_fee.min_fee.timeout_fee;
+```
+
+Remember that:
+1. Fees must be equal to or higher than the minimum required
+2. You can only use denominations allowed in the minimum fee parameters
+3. `recv_fee` must always be empty (set to zero)
+
+## For Relayers
+
+### Claiming Fees
+
+As a relayer, you don't need to take any special actions to claim fees. The Fee Refunder module automatically:
+
+1. Detects when you deliver an acknowledgement or timeout packet
+2. Identifies the appropriate fee from its storage
+3. Transfers the fee to your address
+
+The fees are distributed to the address that submits the acknowledgement or timeout transaction.
+
+## For Governance Participants
+
+### Viewing Current Parameters
+
+To view the current Fee Refunder parameters, including minimum required fees:
+
+```bash
+neutrond query feerefunder params
+```
+
+Example output:
+```json
+{
+  "params": {
+    "min_fee": {
+      "recv_fee": [],
+      "ack_fee": [
+        {
+          "denom": "untrn",
+          "amount": "1000"
+        }
+      ],
+      "timeout_fee": [
+        {
+          "denom": "untrn",
+          "amount": "1000"
+        }
+      ]
+    }
+  }
+}
+```
+
+### Updating Minimum Fees
+
+To propose changing the minimum required fees:
+
+```bash
+neutrond tx gov submit-proposal param-change proposal.json --from=<key> --chain-id=<chain-id>
+```
+
+Where `proposal.json` would contain:
+
+```json
+{
+  "title": "Fee Refunder Parameter Change",
+  "description": "Update the minimum IBC fees required",
+  "changes": [
+    {
+      "subspace": "feerefunder",
+      "key": "MinFee",
+      "value": {
+        "ack_fee": [
+          {
+            "denom": "untrn",
+            "amount": "2000"
+          }
+        ],
+        "timeout_fee": [
+          {
+            "denom": "untrn",
+            "amount": "1500"
+          }
+        ],
+        "recv_fee": []
+      }
+    }
+  ],
+  "deposit": "1000000untrn"
+}
+```
+
+## Querying Fee Information
+
+### Checking Fees for a Specific Packet
+
+To query the fees associated with a specific IBC packet:
+
+```bash
+neutrond query feerefunder fee-info <port-id> <channel-id> <sequence>
+```
+
+Example:
+```bash
+neutrond query feerefunder fee-info transfer channel-0 123
+```
+
+### Listing All Fee Information
+
+To list all currently stored fee information:
+
+```bash
+neutrond query feerefunder all-fee-info
+```
+
+This can be useful for monitoring locked fees and ensuring the system is functioning properly.
+
+## Monitoring Fee Refunder Events
+
+The module emits specific events that can be monitored:
+
+- `lock_fees`: Emitted when fees are locked for a new IBC packet
+- `distribute_acknowledgement_fee`: Emitted when acknowledgement fees are distributed
+- `distribute_timeout_fee`: Emitted when timeout fees are distributed
+
+Example of querying for fee distribution events:
+
+```bash
+neutrond query txs --events 'distribute_acknowledgement_fee.receiver=<relayer-address>'
+```
+
+This allows relayers to monitor their earned fees and developers to track their packet processing. 

@@ -1,0 +1,54 @@
+Adopt a Validator Set and Delegation Management Policy
+
+
+neutron..kx6fytr
+
+–
+
+April 18
+
+Introduction
+
+This proposal seeks to formalize a validator set and delegation management policy to ensure the long-term performance, security, and decentralization of the Neutron network. It introduces transparent criteria for validator rotation based on objective performance metrics and establishes a consistent onboarding process for new operators.
+
+Proposed Framework
+
+This proposal introduces a two-part framework for managing Neutron’s validator set, after a one-month grace period post-Mercury upgrade to ensure the set and network have the time to fully stabilize. The specific threshold values are meant to be more lenient in this initial iteration, and may be adjusted by the DAO going forward, based on validator performance in production.
+
+1. Validator Set Rotation Framework
+
+Performance-Based Offboarding
+
+A validator is considered for offboarding if any of the following is true:
+
+Consecutive Performance: Received no rewards from x/revenue for two months in a row.
+They are notified the first month, and core teams assist in trouble shooting any issues.
+The second consecutive month, they are automatically flagged for rotation.
+Intermittent Performance: Received no rewards from x/revenue for three months in a 6 months period.
+They are notified the second month within a 6 month period (unless there are 4 months in-between the incidents)
+The third missed month in a 6 month period, they are automatically flagged for rotation.
+Tombstoning: Validator was tombstoned.
+Downtime-Based Offboarding
+
+A validator is considered for offboarding if any of the following is true:
+
+Resumption latency: Failed to resume signing within 60 minutes of the first finalized block after a successful upgrade.
+Precommit latency: Failed to begin precommitting within 2 hours of the distribution of correct upgrade instructions.
+In both cases, the validators gets notified on the first occurrence, and marked for rotation on the second.
+
+2. Validator Onboarding Process
+
+To join the set and receive delegations from the DAO when a slot opens, validators must run both mainnet and testnet nodes. Eligible operators are prioritized by reverse order of mainnet voting power (e.g. highest voting power first). To maximize their chances of receiving DAO delegations, validators should seek to attract NTRN delegations to their validators.
+
+Selected operators will receive a small delegation from the DAO. After demonstrating adequate performance for three months, they will receive a full delegation. If they fail to demonstrate adequate performance, the DAO will redelegate to the next operator in line.
+
+Governance Votes
+
+The following items summarize the voting options and what they mean for this proposal:
+
+YES — You support the adoption of the proposed validator set and delegation management policy to improve network reliability, decentralization, and performance alignment.
+
+NO — You oppose the proposed validator rotation and onboarding policy.
+
+ABSTAIN — You wish to contribute to quorum but formally decline to vote either for or against the proposal.
+

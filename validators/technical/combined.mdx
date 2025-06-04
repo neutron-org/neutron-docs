@@ -1,0 +1,181 @@
+---
+title: "Technical Requirements"
+description: "System specifications, performance requirements, and selection criteria for Neutron validators"
+icon: "sliders"
+---
+
+This page provides comprehensive information about the technical aspects of running a Neutron validator, including hardware requirements, performance metrics, and selection criteria.
+
+## System Specifications
+
+Validators must maintain high-performance infrastructure to ensure network reliability and security. Following the Mercury upgrade, network performance demands have significantly increased.
+
+<CardGroup cols={2}>
+  <Card title="CPU" icon="microchip" iconType="duotone">
+    <strong>Minimum:</strong> 4+ cores<br />
+    <strong>Recommended:</strong> 8+ cores, ideally AMD Epyc or Intel Xeon<br /><br />
+    High single-thread performance is important for transaction processing.
+  </Card>
+  <Card title="RAM" icon="memory" iconType="duotone">
+    <strong>Minimum:</strong> 16GB<br />
+    <strong>Recommended:</strong> 64GB<br /><br />
+    Required for block validation, state storage, and mempool management. Important during upgrades when the state can grow twice in size.
+  </Card>
+  <Card title="Storage" icon="hard-drive" iconType="duotone">
+    <strong>Minimum:</strong> 500GB SSD<br />
+    <strong>Recommended:</strong> 1TB+ NVMe SSD<br /><br />
+    High IOPS and throughput are critical for state synchronization and transaction processing.
+  </Card>
+  <Card title="Network" icon="network-wired" iconType="duotone">
+    <strong>Minimum:</strong> 100Mbps<br />
+    <strong>Recommended:</strong> 1Gbps+ with low latency<br /><br />
+    Reliable connectivity with low latency and high bandwidth is essential for P2P communication.
+  </Card>
+</CardGroup>
+
+## Performance Requirements
+
+Neutron validators are evaluated based on two core performance metrics. Meeting these metrics is crucial for receiving rewards from the Neutron DAO treasury.
+
+<div className="overflow-x-auto mb-8">
+  <table className="min-w-full rounded-lg overflow-hidden">
+    <thead className="bg-primary bg-opacity-10">
+      <tr>
+        <th className="px-6 py-3 text-left">Performance Criterion</th>
+        <th className="px-6 py-3 text-left">Minimum Threshold</th>
+        <th className="px-6 py-3 text-left">Full Reward Threshold</th>
+        <th className="px-6 py-3 text-left">Measurement Period</th>
+      </tr>
+    </thead>
+    <tbody className="divide-y">
+      <tr className="bg-white dark:bg-gray-800">
+        <td className="px-6 py-4">Block Signing</td>
+        <td className="px-6 py-4">95%</td>
+        <td className="px-6 py-4">99.5%</td>
+        <td className="px-6 py-4">30 days</td>
+      </tr>
+      <tr className="bg-white dark:bg-gray-800">
+        <td className="px-6 py-4">Oracle Price Updates</td>
+        <td className="px-6 py-4">95%</td>
+        <td className="px-6 py-4">98%</td>
+        <td className="px-6 py-4">30 days</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<Note>
+  Validators who fail to meet the minimum thresholds for any criterion receive no rewards for the period. Those who exceed the minimum but fall below the full reward threshold receive partial rewards.
+</Note>
+
+### Performance Evaluation
+
+Performance is tracked through the `x/revenue` module, which calculates rewards based on validator uptime and service quality:
+
+1. **Block Signing**: Percentage of blocks signed in the last 30 days
+2. **Oracle Updates**: Percentage of oracle price updates successfully submitted
+
+The module issues warnings when performance drops below thresholds, and redistributes rewards from underperforming validators to the DAO treasury.
+
+## Validator Selection Criteria
+
+Following the Mercury upgrade, Neutron implemented a structured validator set management policy. The selection process for adding new validators when slots become available follows these criteria:
+
+<Steps>
+  <Step title="Dual Network Requirement">
+    Validators must run both mainnet and testnet nodes, demonstrating commitment to the network.
+  </Step>
+  <Step title="Prioritization">
+    Eligible operators are prioritized by reverse order of mainnet voting power. This encourages decentralization of stake.
+  </Step>
+  <Step title="Probationary Period">
+    New validators receive a small delegation initially and must demonstrate adequate performance for three months before receiving a full delegation.
+  </Step>
+  <Step title="Technical Evaluation">
+    Infrastructure quality, monitoring setup, and technical capabilities are assessed.
+  </Step>
+</Steps>
+
+## Rotation Framework
+
+The Validator Set Rotation Framework ensures that validators consistently meet performance requirements. After a one-month grace period post-Mercury upgrade, validators are evaluated based on the following criteria:
+
+### Performance-Based Offboarding
+
+A validator may be rotated out if:
+
+- **Consecutive Performance Failure**: No rewards from x/revenue for two months in a row
+  - Validators are notified after the first month
+  - They are flagged for rotation after the second consecutive month
+- **Intermittent Performance Issues**: No rewards from x/revenue for three months in a 6-month period
+  - Validators are notified after the second month within the period
+  - They are flagged for rotation after the third month
+- **Tombstoning**: Validator was tombstoned (double-sign, etc.)
+
+### Downtime-Based Offboarding
+
+A validator may be rotated out if:
+
+- **Resumption Latency**: Failed to resume signing within 60 minutes of the first finalized block after a successful upgrade
+- **Precommit Latency**: Failed to begin precommitting within 2 hours of the distribution of correct upgrade instructions
+
+In both cases, validators are notified on the first occurrence and marked for rotation on the second occurrence within a reasonable timeframe.
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Infrastructure Redundancy" icon="server" iconType="duotone">
+    Implement redundant systems, backup power, and multiple network providers to avoid single points of failure.
+  </Card>
+  <Card title="Sentry Node Architecture" icon="shield-halved" iconType="duotone">
+    Deploy sentry nodes to protect your validator from DDoS attacks and maintain anonymity.
+  </Card>
+  <Card title="Monitoring & Alerts" icon="bell" iconType="duotone">
+    Set up comprehensive monitoring with automated alerts for performance degradation, missed blocks, and resource utilization.
+  </Card>
+  <Card title="Upgrade Readiness" icon="arrow-up-right-dots" iconType="duotone">
+    Maintain testing infrastructure and participate in testnet upgrades to ensure smooth mainnet transitions.
+  </Card>
+</CardGroup>
+
+## Monitoring Setup
+
+Effective monitoring is critical for maintaining high validator performance. We recommend using:
+
+1. **Prometheus & Grafana**: For metrics collection and visualization
+2. **Alertmanager**: For alert routing and notification
+3. **TenderDuty**: For validator-specific monitoring
+4. **Oracle Monitoring**: Custom scripts to track oracle performance
+
+<Tip>
+  When setting up alerts, consider implementing escalation procedures for critical issues such as missed blocks or oracle failures.
+</Tip>
+
+## Hardware Sizing Considerations
+
+As the network grows, hardware requirements may increase. Consider these factors when provisioning your infrastructure:
+
+- **Block Size Growth**: As transaction volume increases, block sizes grow
+- **State Size Growth**: As more smart contracts deploy, state size expands
+- **Oracle Data Volume**: More trading pairs means more oracle data processing
+- **Network Traffic**: Increasing node count means more P2P traffic
+
+<div className="p-4 bg-amber-50 dark:bg-amber-900 dark:bg-opacity-20 rounded-lg my-4">
+  <h3 className="text-lg font-medium mb-2">Future-Proofing Your Infrastructure</h3>
+  <p>Plan for 2-3x current resource requirements over a 12-month horizon to avoid frequent hardware upgrades.</p>
+</div>
+
+## Setup Resources
+
+For detailed setup instructions, refer to these guides:
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+  <a href="/validators/running-a-node" className="p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+    <h3 className="font-medium">Node Setup</h3>
+    <p className="text-sm">Complete guide to setting up your validator node</p>
+  </a>
+  <a href="/validators/oracle-setup" className="p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+    <h3 className="font-medium">Oracle Configuration</h3>
+    <p className="text-sm">Instructions for configuring the Slinky price oracle</p>
+  </a>
+</div> 

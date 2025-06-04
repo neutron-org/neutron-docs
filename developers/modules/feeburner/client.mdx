@@ -1,0 +1,207 @@
+---
+title: "Client"
+---
+
+This document describes the CLI commands and gRPC queries for the Fee Burner module.
+
+## CLI Commands
+
+The `neutrond` command-line interface provides several commands to interact with the Fee Burner module.
+
+### Transactions
+
+#### Update Parameters
+
+The `update-params` command allows the governance account to update the module's parameters.
+
+```bash
+neutrond tx feeburner update-params [flags]
+```
+
+Flags:
+- `--neutron-denom`: The new denom for the Neutron token
+- `--treasury-address`: The new address for the Treasury
+- `--from`: The governance account that signs the transaction
+- `--chain-id`: The chain ID
+
+Example:
+```bash
+neutrond tx feeburner update-params \
+  --neutron-denom=untrn \
+  --treasury-address=neutron1... \
+  --from=validator \
+  --chain-id=neutron-1
+```
+
+### Queries
+
+#### Module Parameters
+
+The `params` command queries the current module parameters.
+
+```bash
+neutrond query feeburner params
+```
+
+Example output:
+```json
+{
+  "params": {
+    "neutron_denom": "untrn",
+    "reserve_address": "",
+    "treasury_address": "neutron1..."
+  }
+}
+```
+
+#### Total Burned NTRN Amount
+
+The `total-burned-neutrons-amount` command queries the total amount of NTRN tokens burned since genesis.
+
+```bash
+neutrond query feeburner total-burned-neutrons-amount
+```
+
+Example output:
+```json
+{
+  "total_burned_neutrons_amount": {
+    "coin": {
+      "denom": "untrn",
+      "amount": "1532687456789"
+    }
+  }
+}
+```
+
+## gRPC Usage
+
+The Fee Burner module exposes gRPC endpoints that can be accessed programmatically:
+
+### Querying Module Parameters
+
+```bash
+grpcurl -plaintext \
+  -d '{}' \
+  localhost:9090 \
+  neutron.feeburner.Query/Params
+```
+
+Example output:
+```json
+{
+  "params": {
+    "neutronDenom": "untrn",
+    "reserveAddress": "",
+    "treasuryAddress": "neutron1..."
+  }
+}
+```
+
+### Querying Total Burned NTRN Amount
+
+```bash
+grpcurl -plaintext \
+  -d '{}' \
+  localhost:9090 \
+  neutron.feeburner.Query/TotalBurnedNeutronsAmount
+```
+
+Example output:
+```json
+{
+  "totalBurnedNeutronsAmount": {
+    "coin": {
+      "denom": "untrn",
+      "amount": "1532687456789"
+    }
+  }
+}
+```
+
+### Updating Parameters
+
+```bash
+grpcurl -plaintext \
+  -d '{
+    "authority": "neutron1...",
+    "params": {
+      "neutronDenom": "untrn",
+      "treasuryAddress": "neutron1..."
+    }
+  }' \
+  localhost:9090 \
+  neutron.feeburner.Msg/UpdateParams
+```
+
+## REST API Usage
+
+The Fee Burner module also exposes REST endpoints:
+
+### Querying Module Parameters
+
+```bash
+curl -X GET "http://localhost:1317/neutron/feeburner/params"
+```
+
+Example output:
+```json
+{
+  "params": {
+    "neutron_denom": "untrn",
+    "reserve_address": "",
+    "treasury_address": "neutron1..."
+  }
+}
+```
+
+### Querying Total Burned NTRN Amount
+
+```bash
+curl -X GET "http://localhost:1317/neutron/feeburner/total_burned_neutrons_amount"
+```
+
+Example output:
+```json
+{
+  "total_burned_neutrons_amount": {
+    "coin": {
+      "denom": "untrn",
+      "amount": "1532687456789"
+    }
+  }
+}
+```
+
+## JavaScript/TypeScript Client Usage
+
+Example of querying the Fee Burner module using CosmJS:
+
+```typescript
+import { QueryClient, createProtobufRpcClient } from "@cosmjs/stargate";
+import { Tendermint34Client } from "@cosmjs/tendermint-rpc";
+import { Query } from "neutron-typegen/neutron/feeburner/query";
+
+// Connect to a Tendermint RPC endpoint
+const tendermintClient = await Tendermint34Client.connect("http://localhost:26657");
+const queryClient = QueryClient.withExtensions(tendermintClient);
+
+// Create a Fee Burner module query client
+const rpcClient = createProtobufRpcClient(queryClient);
+const feeburnerQueryClient = {
+  params: () => {
+    return Query.params({});
+  },
+  totalBurnedNeutronsAmount: () => {
+    return Query.totalBurnedNeutronsAmount({});
+  },
+};
+
+// Query module parameters
+const params = await feeburnerQueryClient.params();
+console.log("Fee Burner Parameters:", params);
+
+// Query total burned NTRN amount
+const burnedAmount = await feeburnerQueryClient.totalBurnedNeutronsAmount();
+console.log("Total Burned NTRN:", burnedAmount.totalBurnedNeutronsAmount.coin);
+``` 

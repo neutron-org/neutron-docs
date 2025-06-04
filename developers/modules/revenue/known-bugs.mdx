@@ -1,0 +1,32 @@
+---
+title: "Known Bugs"
+---
+
+This page documents known bugs and limitations of the Revenue module. These issues are being tracked for future updates.
+
+## Schedule Type Change Delay
+
+**Status:** Known behavior (by design)
+
+When the payment schedule type is updated via governance, the new payment schedule value is not applied immediately. Instead, it is updated in the next PreBlock execution, which means there is a one-block delay between the parameter update and the actual schedule change.
+
+This is an intentional design choice to ensure that all revenue-related state changes happen consistently in the PreBlock hook, but developers should be aware of this temporary inconsistency.
+
+## Performance Rating Calculation Edge Cases
+
+**Status:** Known limitation
+
+The performance rating calculation uses a quadratic formula that creates a non-linear relationship between missed blocks/oracle votes and reward reduction. While this approach generally provides a fair distribution, there can be edge cases where:
+
+1. Validators with similar raw performance metrics may receive significantly different rewards due to the non-linear penalty curve
+2. The aggregation of both block production and oracle feed performance can sometimes mask underperformance in one area
+
+These are not bugs per se, but limitations of the current formula that developers and validators should be aware of.
+
+## Treasury Account Management
+
+**Status:** Known limitation
+
+The module does not provide a way to withdraw funds from the treasury account once they have been deposited using the `MsgFundTreasury` message. This means that any excess funds that are sent to the treasury can only be used for validator compensation.
+
+Future versions may include a governance-controlled mechanism to recover excess treasury funds. 

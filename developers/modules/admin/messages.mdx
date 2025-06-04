@@ -1,0 +1,367 @@
+---
+title: "Messages"
+description: "Message types and transaction structures for the admin module"
+---
+
+This document describes the message types available in the admin module for governance and administrative operations.
+
+## Message Types
+
+The admin module supports several message types for different governance operations, divided into legacy proposals and modern message-based proposals.
+
+### MsgSubmitProposal
+
+Submits a proposal using the modern message-based approach, allowing execution of any valid `sdk.Msg` through governance.
+
+```protobuf
+message MsgSubmitProposal {
+  repeated google.protobuf.Any messages = 1;
+  string proposer = 2;
+}
+```
+
+**Fields:**
+- `messages` - Array of messages to be executed if the proposal is approved
+- `proposer` - Address of the entity submitting the proposal
+
+**Usage:**
+```bash
+neutrond tx adminmodule submit-proposal \
+  --messages='[{
+    "@type": "/cosmos.bank.v1beta1.MsgSend",
+    "from_address": "neutron1...",
+    "to_address": "neutron1...",
+    "amount": [{"denom": "untrn", "amount": "1000000"}]
+  }]' \
+  --from=<proposer-key>
+```
+
+### MsgSubmitProposalResponse
+
+Response message for successful proposal submission.
+
+```protobuf
+message MsgSubmitProposalResponse {
+  uint64 proposal_id = 1;
+}
+```
+
+**Fields:**
+- `proposal_id` - Unique identifier assigned to the submitted proposal
+
+### MsgSubmitProposalLegacy
+
+Submits a proposal using the legacy governance format for backward compatibility.
+
+```protobuf
+message MsgSubmitProposalLegacy {
+  google.protobuf.Any content = 1;
+  string proposer = 2;
+}
+```
+
+**Fields:**
+- `content` - The proposal content following legacy format specifications
+- `proposer` - Address of the entity submitting the proposal
+
+**Supported Legacy Proposal Types:**
+- `ParameterChangeProposal`
+- `CommunityPoolSpendProposal`  
+- `TextProposal`
+- `SoftwareUpgradeProposal`
+- `CancelSoftwareUpgradeProposal`
+- Various module-specific proposals
+
+### MsgSubmitProposalLegacyResponse
+
+Response message for successful legacy proposal submission.
+
+```protobuf
+message MsgSubmitProposalLegacyResponse {
+  uint64 proposal_id = 1;
+}
+```
+
+**Fields:**
+- `proposal_id` - Unique identifier assigned to the submitted proposal
+
+### MsgAddAdmin
+
+Adds a new admin to the network (if admin management is enabled).
+
+```protobuf
+message MsgAddAdmin {
+  string creator = 1;
+  string admin = 2;
+}
+```
+
+**Fields:**
+- `creator` - Address of the entity adding the admin (must have appropriate authority)
+- `admin` - Address of the new admin to be added
+
+**Usage:**
+```bash
+neutrond tx adminmodule add-admin neutron1... --from=<creator-key>
+```
+
+### MsgAddAdminResponse
+
+Response message for successful admin addition.
+
+```protobuf
+message MsgAddAdminResponse {}
+```
+
+### MsgDeleteAdmin
+
+Removes an existing admin from the network.
+
+```protobuf
+message MsgDeleteAdmin {
+  string creator = 1;
+  string admin = 2;
+}
+```
+
+**Fields:**
+- `creator` - Address of the entity removing the admin (must have appropriate authority)
+- `admin` - Address of the admin to be removed
+
+**Usage:**
+```bash
+neutrond tx adminmodule delete-admin neutron1... --from=<creator-key>
+```
+
+### MsgDeleteAdminResponse
+
+Response message for successful admin removal.
+
+```protobuf
+message MsgDeleteAdminResponse {}
+```
+
+## Message Validation
+
+All messages undergo comprehensive validation before execution:
+
+### Proposal Message Validation
+
+For `MsgSubmitProposal`:
+- All messages must be valid `sdk.Msg` types
+- Messages must be whitelisted for execution
+- Proposer must have appropriate authority
+- Message parameters must pass format validation
+
+### Legacy Proposal Validation
+
+For `MsgSubmitProposalLegacy`:
+- Content must match expected legacy proposal format
+- Proposal type must be supported and whitelisted
+- All parameters must pass legacy validation rules
+- Proposer must have governance authority
+
+### Admin Management Validation
+
+For admin management messages:
+- Creator must have admin management authority
+- Target admin address must be valid
+- Operation must not conflict with existing admin state
+
+## Common Message Patterns
+
+### Parameter Update Messages
+
+Updating module parameters through governance:
+
+```json
+{
+  "@type": "/neutron.cron.MsgUpdateParams",
+  "authority": "neutron1...",
+  "params": {
+    "security_address": "neutron1...",
+    "limit": "100"
+  }
+}
+```
+
+### Contract Administration Messages
+
+Managing smart contracts through governance:
+
+```json
+{
+  "@type": "/cosmwasm.wasm.v1.MsgInstantiateContract",
+  "sender": "neutron1...",
+  "admin": "neutron1...",
+  "code_id": "1",
+  "label": "governance-contract",
+  "msg": "{\"owner\":\"neutron1...\"}"
+}
+```
+
+### Treasury Operations
+
+Managing network treasury through governance:
+
+```json
+{
+  "@type": "/cosmos.distribution.v1beta1.MsgCommunityPoolSpend",
+  "authority": "neutron1...",
+  "recipient": "neutron1...",
+  "amount": [{"denom": "untrn", "amount": "1000000"}]
+}
+```
+
+## Batch Operations
+
+Multiple messages can be included in a single proposal for atomic execution:
+
+```json
+{
+  "messages": [
+    {
+      "@type": "/cosmos.bank.v1beta1.MsgSend",
+      "from_address": "neutron1...",
+      "to_address": "neutron1...",
+      "amount": [{"denom": "untrn", "amount": "1000000"}]
+    },
+    {
+      "@type": "/neutron.cron.MsgAddSchedule",
+      "authority": "neutron1...",
+      "name": "weekly_task",
+      "period": "604800",
+      "msgs": [],
+      "execution_stage": "END_BLOCKER"
+    }
+  ]
+}
+```
+
+## Error Handling
+
+### Common Error Types
+
+- **ErrUnauthorized**: Proposer lacks required authority
+- **ErrInvalidMessage**: Message format or content is invalid
+- **ErrNotWhitelisted**: Message type not in whitelist
+- **ErrInvalidProposal**: Proposal structure is malformed
+- **ErrAdminExists**: Admin already exists (for add operations)
+- **ErrAdminNotFound**: Admin doesn't exist (for delete operations)
+
+### Error Response Format
+
+Failed messages return detailed error information:
+
+```json
+{
+  "code": 5,
+  "log": "unauthorized: invalid authority; expected neutron1..., got neutron1...",
+  "info": "",
+  "gas_wanted": "200000",
+  "gas_used": "45123",
+  "events": [],
+  "codespace": "adminmodule"
+}
+```
+
+## Message Signing
+
+All messages must be properly signed by authorized accounts:
+
+### Required Signatures
+
+- **Governance Proposals**: Must be signed by governance authority (typically DAO)
+- **Admin Management**: Must be signed by admin management authority
+- **Legacy Proposals**: Must be signed by legacy proposal authority
+
+### Signature Verification
+
+The module performs comprehensive signature verification:
+1. Cryptographic signature validation
+2. Signer authority verification  
+3. Message content integrity checking
+4. Replay attack prevention
+
+## CLI Usage Examples
+
+### Submit Modern Proposal
+
+```bash
+# Single message proposal
+neutrond tx adminmodule submit-proposal \
+  --messages='[{
+    "@type": "/cosmos.bank.v1beta1.MsgSend",
+    "from_address": "neutron1...",
+    "to_address": "neutron1...",
+    "amount": [{"denom": "untrn", "amount": "1000000"}]
+  }]' \
+  --from=governance-key \
+  --chain-id=neutron-1
+
+# Multi-message proposal
+neutrond tx adminmodule submit-proposal \
+  --messages='[
+    {
+      "@type": "/neutron.oracle.MsgUpdateParams",
+      "authority": "neutron1...",
+      "params": {"vote_period": "10"}
+    },
+    {
+      "@type": "/neutron.feeburner.MsgUpdateParams",
+      "authority": "neutron1...", 
+      "params": {"treasury_address": "neutron1..."}
+    }
+  ]' \
+  --from=governance-key
+```
+
+### Submit Legacy Proposal
+
+```bash
+# Parameter change proposal
+neutrond tx gov submit-proposal param-change proposal.json \
+  --from=governance-key \
+  --chain-id=neutron-1
+
+# Text proposal
+neutrond tx gov submit-proposal text proposal.json \
+  --from=governance-key \
+  --chain-id=neutron-1
+```
+
+### Admin Management
+
+```bash
+# Add admin
+neutrond tx adminmodule add-admin neutron1newadmin... \
+  --from=admin-manager-key \
+  --chain-id=neutron-1
+
+# Remove admin  
+neutrond tx adminmodule delete-admin neutron1oldadmin... \
+  --from=admin-manager-key \
+  --chain-id=neutron-1
+```
+
+## Integration with Smart Contracts
+
+Smart contracts can interact with the admin module through WASM bindings:
+
+```rust
+use neutron_sdk::bindings::msg::NeutronMsg;
+
+// Submit proposal from contract
+let msg = NeutronMsg::SubmitProposal {
+    messages: vec![
+        CosmosMsg::Bank(BankMsg::Send {
+            to_address: recipient.to_string(),
+            amount: coins(1000000, "untrn"),
+        })
+    ],
+};
+
+Response::new().add_message(msg)
+```
+
+This comprehensive message documentation provides the foundation for interacting with the admin module's governance functionality. 

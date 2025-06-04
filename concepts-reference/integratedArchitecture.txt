@@ -1,0 +1,83 @@
+What is an Integrated Blockchain?
+Neutron.org
+Neutron.org
+
+·
+Follow
+
+5 min read
+·
+Feb 6, 2025
+102
+
+
+3
+
+
+
+
+Neutron is building the decentralized economy users were promised.
+
+Unlike generalized L1s that provide generic infrastructure regardless of an application’s needs, Neutron is an integrated blockchain focusing exclusively on DeFi by making highly-performant, application-specific infrastructure available to any DeFi protocol. This tailored approach allows entrepreneurs to build new types of protocols that improve capital efficiency, profitability, and UX — all within a shared execution environment that ensures atomic composability.
+
+Let’s explore this thesis more.
+
+The Global Financial System is Broken
+Today’s traditional financial system is extractive, inequitable, and gatekept.
+
+Billions of people are restricted from accessing financial opportunities, and wealthier individuals and institutions have access to better rates, services, and investment opportunities, exacerbating wealth inequality.
+1.4B — 1.7B people remain unbanked.
+Minimum balance requirements for premium banking services ($10,000+) exclude the majority of people from better rates, better performance, and lower fees.
+High-net-worth loans come with lower interest rates, longer repayment periods, and more personalized service.
+Firms with privileged positions extract monopolistic rents from everyday people and can change them on a whim with little transparency.
+Decentralized Economies Offer a Solution
+Decentralized economies promised solutions to these issues — an open, fair, and efficient financial system without middlemen — but have fallen short.
+
+Most crypto activity still remains concentrated on centralized platforms which charge extractive rents for listings and lower trading fees to larger funds compared to individuals.
+On-chain systems are highly inefficient. For example, liquidity providers frequently lose money due to infrastructure deficiencies.
+Generalized L1s have handicapped DeFi’s ability to compete with centralized alternatives by providing generic infrastructure that is unfit to solve highly specific financial problems.
+
+App-specific chains were proposed as an alternative, but they only increased costs and fragmentation. As a result, liquidity and user experiences suffered, rendering them largely ineffective and impractical for most use cases.
+
+Neutron overcomes these limitations by offering entrepreneurs app-specific infrastructure — tools previously exclusive to appchain builders — while preserving the atomic composability of a single state-machine and the cost-efficiency and speed of smart contracts.
+
+The Neutron Thesis
+Neutron’s thesis is simple:
+
+Financial market participants optimize for execution quality (i.e., the best prices), capital efficiency (i.e., more exposure on less capital), and UX.
+Optimally delivering on these properties requires an integrated approach that combines highly-performant app-specific infrastructure and atomic composability.
+Over time, Neutron’s goal is to bring a significant percentage of the world’s wealth on-chain, enabling open, fair, and efficient finance for everyone.
+
+Integrated Infra at Work
+Neutron addresses the shortcomings of generalized L1s and the fragmentation and overhead of app-specific domains by giving entrepreneurs the integrated infrastructure they need to build category-leading DeFi products and services.
+
+
+One example of Neutron’s integrated, app-specific infrastructure at work is Supervaults.
+
+Supervaults are a new way to provide liquidity (coming soon to Neutron) that goes above and beyond what existing AMMs can do for depositors. Today’s AMMs are subject to massive losses due to arbitrageurs and rebalancing (aka LVR or Impermanent Loss).
+
+Leveraging Neutron’s built-in, high-frequency oracle and native automation features, Supervaults market make at the most recent CEX prices and automatically rebalance every block. This means that instead of getting arbitraged and losing money, Supervaults are doing the arbitrage themselves and democratizing the profits — all while supporting a liquid ecosystem on Neutron.
+
+Supervaults will be a superpower for Neutron: by making liquidity provisioning lucrative, they lower the cost of capital to acquire liquidity on the network and provide optimal prices, enabling greater trading volumes and capacity for leverage.
+
+Another example is Drop, a liquid staking protocol on Neutron backed by Lido and led by ex-Lido and P2P contributors.
+
+Drop is designed to unlock liquidity and drive growth for sovereign blockchain ecosystems by transforming frozen capital into liquid dAssets, which allow users to:
+
+Support the growth of the networks they’re a part of
+Earn auto-compounded staking rewards without locking their assets
+Earn additional yield and benefits from using dAssets in ecosystem apps
+Remain eligible for airdrops
+Exit their position at any time
+Drop utilizes Neutron’s custom Interchain Transactions (ICTX) and Interchain Queries (ICQ) modules to read the state of other blockchains and adjust delegations made by the protocol’s remotely controlled accounts. This architecture allows Drop to deploy once and scale anywhere: new assets from 100+ connected chains can be onboarded in a single transaction, while users enjoy a seamless cross-chain staking experience.
+
+
+The Power of Composability
+On Neutron, DeFi applications can atomically compose with one another (i.e., apps can build on one another like LEGO bricks, allowing multiple actions across different smart contracts to execute together as a single atomic unit — meaning either all of them succeed or none of them happen at all). This provides strong execution guarantees, and capital efficiency (e.g., flash loans, cyclical arbs, risk-free liquidations, etc.).
+
+Unlike other platforms, Neutron harnesses the full potential of atomic composability, tightly integrating DeFi protocols with one another to deliver optimal execution quality, UX, and capital efficiency.
+
+
+Conclusion
+At Neutron, our focus is on enabling open, fair, and efficient finance for everyone. As strong believers in a decentralized future, we believe DeFi will transform the way our global financial system works — there will be new types of financial products and services, and demand will flow to the venues that offer the best execution, capital efficiency, and UX. As the first integrated blockchain, Neutron is positioned to deliver on the original promise of DeFi by combining advanced app-specific infrastructure with atomic composability to create a decentralized economy that is more capital-efficient, profitable, and convenient than anything that exists today.
+

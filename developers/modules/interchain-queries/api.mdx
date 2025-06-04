@@ -1,0 +1,337 @@
+---
+title: "Interchain Queries API Reference"
+description: "Technical reference for the Interchain Queries module API and known limitations"
+---
+
+This document provides a complete technical reference for the Interchain Queries module API, including messages, queries, parameters, and known limitations.
+
+## Messages
+
+### RegisterInterchainQuery
+
+Registers a new interchain query with the specified parameters.
+
+```protobuf
+message MsgRegisterInterchainQuery {
+  string query_type;                      // Either "kv" or "tx"
+  repeated KVKey keys;                    // For KV queries, the list of keys to query
+  string transactions_filter;             // For TX queries, the filter criteria
+  string connection_id;                   // IBC connection ID to the target chain
+  uint64 update_period;                   // Minimum blocks between updates
+  string sender;                          // Address of the query creator
+}
+```
+
+**Response:**
+```protobuf
+message MsgRegisterInterchainQueryResponse {
+  uint64 id;                             // Assigned query ID
+}
+```
+
+### RemoveInterchainQuery
+
+Removes an existing interchain query and returns the deposit.
+
+```protobuf
+message MsgRemoveInterchainQuery {
+  uint64 query_id;                       // ID of the query to remove
+  string sender;                         // Address of the sender
+}
+```
+
+**Response:**
+```protobuf
+message MsgRemoveInterchainQueryResponse {}
+```
+
+### UpdateInterchainQuery
+
+Updates the parameters of an existing interchain query.
+
+```protobuf
+message MsgUpdateInterchainQuery {
+  uint64 query_id;                       // ID of the query to update
+  repeated KVKey new_keys;               // New keys (optional, KV queries only)
+  uint64 new_update_period;              // New update period (optional)
+  string new_transactions_filter;        // New filter (optional, TX queries only)
+  string sender;                         // Address of the sender
+}
+```
+
+**Response:**
+```protobuf
+message MsgUpdateInterchainQueryResponse {}
+```
+
+### SubmitQueryResult
+
+Submits a query result with proof for verification.
+
+```protobuf
+message MsgSubmitQueryResult {
+  uint64 query_id;                       // ID of the query
+  string sender;                         // Address of the sender
+  string client_id;                      // IBC client ID
+  KVResult[] kv_results;                 // For KV queries, the results with proofs
+  TxResult[] tx_results;                 // For TX queries, the transaction results with proofs
+}
+```
+
+**Response:**
+```protobuf
+message MsgSubmitQueryResultResponse {}
+```
+
+## Queries
+
+### GetRegisteredQuery
+
+Returns information about a registered query.
+
+```protobuf
+message QueryRegisteredQueryRequest {
+  uint64 query_id;                       // ID of the query
+}
+```
+
+**Response:**
+```protobuf
+message QueryRegisteredQueryResponse {
+  InterchainQuery query;                 // Query details
+}
+```
+
+### GetRegisteredQueries
+
+Returns all registered queries that match the provided filters.
+
+```protobuf
+message QueryRegisteredQueriesRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination;
+  string owner;                          // Optional owner filter
+  string connection_id;                  // Optional connection ID filter
+}
+```
+
+**Response:**
+```protobuf
+message QueryRegisteredQueriesResponse {
+  InterchainQuery[] queries;             // List of queries
+  cosmos.base.query.v1beta1.PageResponse pagination;
+}
+```
+
+### GetRegisteredQueryResult
+
+Returns the latest result for a registered query.
+
+```protobuf
+message QueryRegisteredQueryResultRequest {
+  uint64 query_id;                       // ID of the query
+}
+```
+
+**Response:**
+```protobuf
+message QueryRegisteredQueryResultResponse {
+  QueryResult[] result;                  // Query results
+}
+```
+
+### GetParams
+
+Returns the module parameters.
+
+```protobuf
+message QueryParamsRequest {}
+```
+
+**Response:**
+```protobuf
+message QueryParamsResponse {
+  Params params;                         // Module parameters
+}
+```
+
+## Module Parameters
+
+| Parameter                | Type      | Description                                       |
+|--------------------------|-----------|---------------------------------------------------|
+| `query_deposit`          | Coin      | Required deposit amount for registering a query   |
+| `tx_query_removal_limit` | uint64    | Maximum number of TX queries that can be removed in a single transaction |
+| `default_timeout`        | uint64    | Default timeout for query processing (in blocks)  |
+| `buffer_size`            | uint64    | Maximum size of the query result buffer           |
+| `max_query_size`         | uint64    | Maximum size of a query in bytes                  |
+| `minimum_update_period`  | uint64    | Minimum allowed blocks between query updates      |
+| `removal_reward_ratio`   | string    | Fraction of deposit given as reward for removing expired queries |
+| `query_active_timeout`   | uint64    | Blocks after which a query can be removed by anyone |
+
+## Events
+
+### EventQueryRegistered
+
+Emitted when a new query is registered.
+
+| Attribute    | Type   | Description                               |
+|--------------|--------|-------------------------------------------|
+| `query_id`   | uint64 | ID of the registered query                |
+| `owner`      | string | Address of the query creator              |
+| `query_type` | string | Type of the query ("kv" or "tx")          |
+
+### EventQueryRemoved
+
+Emitted when a query is removed.
+
+| Attribute    | Type   | Description                               |
+|--------------|--------|-------------------------------------------|
+| `query_id`   | uint64 | ID of the removed query                   |
+| `sender`     | string | Address of the sender who removed the query |
+
+### EventQueryUpdated
+
+Emitted when a query is updated.
+
+| Attribute           | Type   | Description                               |
+|---------------------|--------|-------------------------------------------|
+| `query_id`          | uint64 | ID of the updated query                   |
+| `owner`             | string | Address of the query owner                |
+| `new_update_period` | uint64 | New update period (if changed)            |
+
+### EventQueryResultSubmitted
+
+Emitted when a query result is submitted.
+
+| Attribute    | Type   | Description                               |
+|--------------|--------|-------------------------------------------|
+| `query_id`   | uint64 | ID of the query                           |
+| `sender`     | string | Address of the submitter                  |
+| `result_type`| string | Type of result ("kv" or "tx")             |
+| `height`     | uint64 | Height at which the result was queried    |
+
+## Known Limitations
+
+### Empty Values in KV Queries
+
+**Issue**: Due to a [bug in ICS23](https://github.com/cosmos/ics23/issues/134), the Interchain Queries module cannot verify proofs for empty or `nil` values.
+
+**Impact**: If a KV query targets a key that has an empty value, the query will not return any result, even though the key exists.
+
+**Workaround**: Ensure your application logic can handle missing responses for keys with empty values, or avoid querying keys that might have empty values.
+
+### Transaction Indexing Requirements
+
+**Issue**: TX queries require the target chain to have transaction indexing enabled.
+
+**Impact**: If the target chain does not have indexing enabled or has limited indexing, TX queries might not work as expected.
+
+**Workaround**: Verify that the target chain has transaction indexing properly configured before setting up TX queries.
+
+### Chain Upgrade Compatibility
+
+**Issue**: During chain upgrades, consensus state can change in ways that affect proof verification.
+
+**Impact**: Queries might fail verification immediately before, during, or after chain upgrades.
+
+**Workaround**: Implement error handling in your application to gracefully handle temporary verification failures around upgrade times.
+
+### Large Proof Size Limitations
+
+**Issue**: For very deep IAVL trees, the proof size can become quite large.
+
+**Impact**: Large proofs consume significant gas during verification and might exceed gas limits.
+
+**Workaround**: For complex state structures, consider designing your queries to target shallower parts of the state tree when possible.
+
+### Transaction Filter Limitations
+
+**Issue**: Transaction filters are applied by the relayer, not by the module's verification.
+
+**Impact**: The module verifies that transactions exist, but not that they match your filter criteria. You must validate this in your contract.
+
+**Workaround**: Always implement proper transaction validation in your contract's result handling code.
+
+## Integration with Smart Contracts
+
+### Contract Callback Format
+
+When a query result is available, the module can notify smart contracts through sudo callbacks:
+
+```rust
+// For KV queries
+#[entry_point]
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> StdResult<Response> {
+    match msg {
+        SudoMsg::KVQueryResult { query_id } => {
+            // Handle KV query result
+        }
+        // ...
+    }
+}
+
+// For TX queries
+#[entry_point]
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> StdResult<Response> {
+    match msg {
+        SudoMsg::TxQueryResult { query_id, height, data } => {
+            // Handle TX query result
+        }
+        // ...
+    }
+}
+```
+
+### Result Access from Contracts
+
+To access query results from contracts:
+
+```rust
+// Query the result
+let result: QueryRegisteredQueryResultResponse = deps.querier.query(
+    &QueryRegisteredQueryResultRequest { query_id }.into(),
+)?;
+
+// Process the result
+for kv_result in result.results {
+    // Handle result
+}
+```
+
+## Error Codes
+
+| Code | Name                          | Description                                        |
+|------|-------------------------------|----------------------------------------------------|
+| 1    | ErrInvalidQueryType           | Invalid query type specified                       |
+| 2    | ErrEmptyKeys                  | No keys provided for KV query                      |
+| 3    | ErrEmptyTransactionsFilter    | Empty filter for TX query                          |
+| 4    | ErrInvalidConnectionID        | Invalid or non-existent connection ID              |
+| 5    | ErrInvalidUpdatePeriod        | Update period below minimum allowed value          |
+| 6    | ErrInsufficientDeposit        | Insufficient deposit for query registration        |
+| 7    | ErrQueryNotFound              | Query with specified ID not found                  |
+| 8    | ErrNotQueryOwner              | Sender is not the query owner                      |
+| 9    | ErrEmptyProofOps              | Proof operations missing from submitted result     |
+| 10   | ErrInvalidProof               | Proof verification failed                          |
+| 11   | ErrInvalidQuery               | General query validation error                     |
+| 12   | ErrQueryHasResults            | Cannot remove query with unretrieved results       |
+| 13   | ErrUnexpectedQueryKind        | Query kind does not match provided result          |
+| 14   | ErrUnexpectedQueryConnection  | Connection ID does not match query's connection    |
+| 15   | ErrInvalidHeight              | Invalid height specified in the query result       |
+| 16   | ErrTooEarly                   | Result submitted before update period elapsed      |
+| 17   | ErrKeyVerificationFailed      | Verification of a specific key failed              |
+| 18   | ErrResultVerificationFailed   | Result verification failed                         |
+
+## Resource Usage Guidelines
+
+To optimize resource usage and prevent network congestion:
+
+1. **Query Update Frequency**: Set the update period appropriate to your needs. Shorter periods increase chain load.
+
+2. **Transaction Filters**: Use specific filters to minimize the number of matching transactions.
+
+3. **Query Cleanup**: Remove queries when no longer needed to reclaim deposits and reduce state bloat.
+
+4. **Batch Similar Queries**: Where possible, combine related data needs into a single query.
+
+5. **Contract Gas Management**: Implement gas-efficient result processing in your contracts.
+
+6. **Consider Result Size**: Be mindful of potential result sizes when designing queries and filters. 

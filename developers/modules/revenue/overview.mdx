@@ -1,0 +1,51 @@
+---
+title: "Revenue Module"
+icon: "money-bill-trend-up"
+---
+
+The Revenue module manages validator incentivization through performance-based rewards. By measuring validator performance against configurable criteria, the module distributes compensation to validators who maintain high standards for both block signing and oracle price submissions.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Performance-Based Rewards" icon="chart-line">
+    Validators are compensated based on their participation in block production and oracle price submissions, with configurable thresholds.
+  </Card>
+  <Card title="Configurable Payment Schedules" icon="calendar">
+    Flexible payment periods (monthly or block-based) with automatic rewards distribution at the end of each period.
+  </Card>
+  <Card title="USD-Pegged Compensation" icon="dollar-sign">
+    Rewards are defined in USD value and paid in tokens based on price data from the Oracle module.
+  </Card>
+  <Card title="Treasury Management" icon="vault">
+    Dedicated treasury for managing validator compensation funds with governance oversight.
+  </Card>
+</CardGroup>
+
+## Usage Examples
+
+- **Validator Incentivization**: Rewarding validators for maintaining high performance in both block production and oracle service
+- **Network Reliability**: Encouraging consistent validator participation to ensure network stability
+- **Economic Sustainability**: Creating predictable, performance-based compensation mechanisms for validators
+
+## Module Interactions
+
+The Revenue module extensively interacts with:
+
+- **Oracle Module**: Obtains price data for reward calculations and monitors oracle service performance
+- **Governance**: Parameters managed through governance proposals  
+- **Staking**: Works alongside staking rewards to incentivize validators
+
+## Learn More
+
+<CardGroup cols={2}>
+  <Card title="How the Revenue Module Works" icon="book" href="/developers/modules/revenue/explanation">
+    Understand the concepts and processes behind validator compensation
+  </Card>
+  <Card title="Implementation Guide" icon="code" href="/developers/modules/revenue/how-to">
+    Learn how to interact with the Revenue module
+  </Card>
+  <Card title="API & Messages" icon="file-code" href="/developers/modules/revenue/reference">
+    View technical specifications and message formats
+  </Card>
+</CardGroup> 

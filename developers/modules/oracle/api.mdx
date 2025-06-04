@@ -1,0 +1,369 @@
+---
+title: "Oracle Module API"
+description: "Technical reference for the Oracle module interface, including queries and messages"
+---
+
+# API
+
+This page describes the interface of the Oracle module, including the queries and messages it provides. Each endpoint is detailed with information about request and response models, as well as example usage.
+
+**Endpoints**
+
+This section lists the public API of the Oracle module.
+
+Queries:
+- [SpotPrice](#spotprice)
+- [Twap](#twap)
+- [AllPrices](#allprices)
+- [SupportedAssets](#supportedassets)
+- [Config](#config)
+
+Messages:
+- [SubmitPrice](#submitprice)
+- [UpdateConfig](#updateconfig)
+
+## Queries
+
+### SpotPrice
+
+Fetches the current spot price for a specific asset pair.
+
+<details>
+  <summary>Request and Response Models</summary>
+
+```rust
+// Request
+pub struct SpotPriceRequest {
+    pub base_denom: String,   // The denomination of the base asset (e.g., "untrn")
+    pub quote_denom: String,  // The denomination of the quote asset (e.g., "uusd")
+}
+
+// Response
+pub struct SpotPriceResponse {
+    pub price: Decimal,           // The current price in quote currency per unit of base currency
+    pub last_updated: u64,        // Unix timestamp in seconds when the price was last updated
+}
+```
+</details>
+
+<details>
+  <summary>Example</summary>
+
+```shell
+# Example querying the spot price of NTRN in USD
+curl -X 'GET' \
+  'https://rest.neutron.org/neutron/oracle/spot_price?base_denom=untrn&quote_denom=uusd' \
+  -H 'accept: application/json'
+```
+
+```json
+{
+  "price": "1.27500000000000000",
+  "last_updated": "1683721542"
+}
+```
+</details>
+
+### Twap
+
+Fetches the time-weighted average price (TWAP) for a specific asset pair over a time window.
+
+<details>
+  <summary>Request and Response Models</summary>
+
+```rust
+// Request
+pub struct TwapRequest {
+    pub base_denom: String,     // The denomination of the base asset
+    pub quote_denom: String,    // The denomination of the quote asset
+    pub window_size: u64,       // Time window in seconds for the TWAP calculation
+}
+
+// Response
+pub struct TwapResponse {
+    pub price: Decimal,           // The TWAP in quote currency per unit of base currency
+    pub last_updated: u64,        // Unix timestamp in seconds of the most recent price used in the TWAP
+}
+```
+</details>
+
+<details>
+  <summary>Example</summary>
+
+```shell
+# Example querying the 1-hour TWAP of ATOM in USD
+curl -X 'GET' \
+  'https://rest.neutron.org/neutron/oracle/twap?base_denom=uatom&quote_denom=uusd&window_size=3600' \
+  -H 'accept: application/json'
+```
+
+```json
+{
+  "price": "8.92650000000000000",
+  "last_updated": "1683721540"
+}
+```
+</details>
+
+### AllPrices
+
+Fetches all available price data from the Oracle module.
+
+<details>
+  <summary>Request and Response Models</summary>
+
+```rust
+// Request
+// (No parameters)
+
+// Response
+pub struct AllPricesResponse {
+    pub prices: Vec<PriceData>,  // Array of price data for all available asset pairs
+}
+
+pub struct PriceData {
+    pub base_denom: String,      // The denomination of the base asset
+    pub quote_denom: String,     // The denomination of the quote asset
+    pub price: Decimal,          // The current price
+    pub last_updated: u64,       // Unix timestamp in seconds when the price was last updated
+}
+```
+</details>
+
+<details>
+  <summary>Example</summary>
+
+```shell
+# Example querying all available prices
+curl -X 'GET' \
+  'https://rest.neutron.org/neutron/oracle/all_prices' \
+  -H 'accept: application/json'
+```
+
+```json
+{
+  "prices": [
+    {
+      "base_denom": "untrn",
+      "quote_denom": "uusd",
+      "price": "1.27500000000000000",
+      "last_updated": "1683721542"
+    },
+    {
+      "base_denom": "uatom",
+      "quote_denom": "uusd",
+      "price": "8.92650000000000000",
+      "last_updated": "1683721540"
+    },
+    {
+      "base_denom": "uosmo",
+      "quote_denom": "uusd",
+      "price": "0.76250000000000000",
+      "last_updated": "1683721538"
+    }
+  ]
+}
+```
+</details>
+
+### SupportedAssets
+
+Fetches all supported asset pairs in the Oracle module.
+
+<details>
+  <summary>Request and Response Models</summary>
+
+```rust
+// Request
+// (No parameters)
+
+// Response
+pub struct SupportedAssetsResponse {
+    pub assets: Vec<AssetPair>,  // Array of supported asset pairs
+}
+
+pub struct AssetPair {
+    pub base_denom: String,      // The denomination of the base asset
+    pub quote_denom: String,     // The denomination of the quote asset
+}
+```
+</details>
+
+<details>
+  <summary>Example</summary>
+
+```shell
+# Example querying supported asset pairs
+curl -X 'GET' \
+  'https://rest.neutron.org/neutron/oracle/supported_assets' \
+  -H 'accept: application/json'
+```
+
+```json
+{
+  "assets": [
+    {
+      "base_denom": "untrn",
+      "quote_denom": "uusd"
+    },
+    {
+      "base_denom": "uatom",
+      "quote_denom": "uusd"
+    },
+    {
+      "base_denom": "uosmo",
+      "quote_denom": "uusd"
+    },
+    {
+      "base_denom": "ueth",
+      "quote_denom": "uusd"
+    },
+    {
+      "base_denom": "ubtc",
+      "quote_denom": "uusd"
+    }
+  ]
+}
+```
+</details>
+
+### Config
+
+Fetches the current configuration parameters of the Oracle module.
+
+<details>
+  <summary>Request and Response Models</summary>
+
+```rust
+// Request
+// (No parameters)
+
+// Response
+pub struct ConfigResponse {
+    pub max_price_age: u64,               // Maximum age of price data in seconds before it's considered stale
+    pub update_frequency: u64,            // Target frequency for price updates in seconds
+    pub price_providers: Vec<String>,     // Addresses of authorized price providers
+}
+```
+</details>
+
+<details>
+  <summary>Example</summary>
+
+```shell
+# Example querying the Oracle configuration
+curl -X 'GET' \
+  'https://rest.neutron.org/neutron/oracle/config' \
+  -H 'accept: application/json'
+```
+
+```json
+{
+  "max_price_age": 300,
+  "update_frequency": 60,
+  "price_providers": [
+    "neutron1p3zv2h7xrnum0ydxk0krvj72rzzr9xjeq49jf2",
+    "neutron1lp9l35jws9z3vz7sd5rc6t9tyg47qcz8semr0g"
+  ]
+}
+```
+</details>
+
+## Messages
+
+### SubmitPrice
+
+Submits a new price update to the Oracle module. This message can only be issued by authorized price providers.
+
+<details>
+  <summary>Request and Response Models</summary>
+
+```rust
+// Request
+pub struct MsgSubmitPrice {
+    pub sender: String,        // Address of the price provider submitting the update
+    pub base_denom: String,    // The denomination of the base asset
+    pub quote_denom: String,   // The denomination of the quote asset
+    pub price: Decimal,        // The new price to be submitted
+}
+
+// Response
+// Empty response
+```
+</details>
+
+Events emission on success:
+- `type=price_updated`, attributes:
+    - `base_denom`: The denomination of the base asset
+    - `quote_denom`: The denomination of the quote asset
+    - `price`: The submitted price
+    - `provider`: The address of the price provider
+    - `timestamp`: The timestamp of the update
+
+### UpdateConfig
+
+Updates the configuration parameters of the Oracle module. This message can only be issued by the module's authority (usually governance).
+
+<details>
+  <summary>Request and Response Models</summary>
+
+```rust
+// Request
+pub struct MsgUpdateConfig {
+    pub authority: String,                   // The address authorized to update the config (typically the governance module)
+    pub max_price_age: Option<u64>,          // New maximum age of price data in seconds
+    pub update_frequency: Option<u64>,       // New target frequency for price updates in seconds
+    pub price_providers: Option<Vec<String>>, // New list of authorized price providers
+}
+
+// Response
+// Empty response
+```
+</details>
+
+Events emission on success:
+- `type=config_updated`, attributes:
+    - `max_price_age`: The new maximum price age (if updated)
+    - `update_frequency`: The new update frequency (if updated)
+    - `price_providers`: The new list of price providers (if updated)
+
+## Smart Contract Integration
+
+To integrate the Oracle module into your smart contract, use the CosmWasm query interface. Here's an example:
+
+```rust
+use cosmwasm_std::{Deps, StdResult, QueryRequest, WasmQuery, to_binary, Addr, Decimal};
+
+// Query the spot price
+pub fn query_spot_price(
+    deps: Deps,
+    oracle_addr: Addr,
+    base_denom: String,
+    quote_denom: String,
+) -> StdResult<PriceResponse> {
+    let query_msg = OracleQueryMsg::SpotPrice {
+        base_denom,
+        quote_denom,
+    };
+    
+    let query = QueryRequest::Wasm(WasmQuery::Smart {
+        contract_addr: oracle_addr.to_string(),
+        msg: to_binary(&query_msg)?,
+    });
+    
+    deps.querier.query(&query)
+}
+
+// Always verify price freshness before using it
+fn use_price_safely(
+    deps: Deps,
+    price_response: PriceResponse,
+) -> StdResult<Decimal> {
+    let current_time = deps.env.block.time.seconds();
+    if current_time - price_response.last_updated > 300 { // 5 minutes staleness check
+        return Err(StdError::generic_err("Price data is too old"));
+    }
+    
+    Ok(price_response.price)
+}
+``` 

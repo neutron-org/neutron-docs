@@ -1,0 +1,277 @@
+---
+title: "Technical Reference"
+---
+
+This document provides detailed technical information for developers working with the Dex module.
+
+## Key Concepts
+
+### Pair ID
+
+A pair ID uniquely identifies a token pair and follows the format: `{tokenA}:{tokenB}` where tokens are lexicographically ordered (alphabetically). Example: `untrn:uatom`.
+
+### Tick Index
+
+Tick indexes represent discrete price points where:
+
+- Price = 1.0001^tickIndex
+- Each tick represents a 0.01% (1 basis point) price change
+- Positive tick indexes mean token1 is worth more than token0
+- Negative tick indexes mean token0 is worth more than token1
+
+### Pool ID
+
+Each pool is uniquely identified by:
+- Pair ID (the two tokens)
+- Tick index (the price point)
+- Fee (in basis points)
+
+### Tick Liquidity
+
+The `TickLiquidity` type is a union type that can represent one of:
+- `PoolReserves`: Liquidity in an AMM pool
+- `LimitOrderTranche`: A group of limit orders at the same price
+
+### Tranche Key
+
+A unique identifier for a limit order tranche, typically derived from:
+- Creator address
+- Token pair
+- Tick index
+- Creation timestamp
+
+## Data Structures
+
+### Pool
+
+```protobuf
+message Pool {
+  uint64 id = 1;
+  string pair_id = 2;
+  int64 tick_index = 3;
+  uint64 fee = 4;
+}
+```
+
+### PoolReserves
+
+```protobuf
+message PoolReserves {
+  uint64 pool_id = 1;
+  string pair_id = 2;
+  string token0 = 3; 
+  string token1 = 4;
+  uint64 fee = 5;
+  int64 tick_index = 6;
+  string token0_reserve = 7 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string token1_reserve = 8 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string token0_denom = 9;
+  string token1_denom = 10;
+}
+```
+
+### LimitOrderTranche
+
+```protobuf
+message LimitOrderTranche {
+  string pair_id = 1;
+  string token_in = 2;
+  int64 tick_index = 3;
+  string tranche_key = 4;
+  string reserves_token_in = 5 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string reserves_token_out = 6 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string total_token_in = 7 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string total_token_out = 8 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string token_in_denom = 9;
+  string token_out_denom = 10;
+  enum TrancheStatus {
+    ACTIVE = 0;
+    INACTIVE = 1;
+  }
+  TrancheStatus status = 11;
+  google.protobuf.Timestamp expiration_time = 12 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = true
+  ];
+}
+```
+
+### DepositRecord
+
+```protobuf
+message DepositRecord {
+  string pair_id = 1;
+  string share_denom = 2;
+  string shares_owned = 3 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  int64 tick_index = 4;
+  uint64 fee = 5;
+  string token0 = 6;
+  string token1 = 7;
+  string pool_id = 8;
+  string token0_denom = 9;
+  string token1_denom = 10;
+}
+```
+
+## Constants and Parameters
+
+### Fee Tiers
+
+Common fee tiers (in basis points):
+- 1 = 0.01% (low volatility pairs)
+- 5 = 0.05% (stable pairs)
+- 30 = 0.3% (standard pairs)
+- 100 = 1% (exotic pairs)
+- 300 = 3% (highly volatile pairs)
+
+### Module Parameters
+
+```protobuf
+message Params {
+  // Defines the maximum spread in a pool before deposits are rejected
+  // Value is measured in basis points (1/100 of 1%)
+  // Default: 100 (1%)
+  uint64 max_pool_spread_bps = 1;
+  // The minimum price tick spacing allowed
+  int64 min_tick_spacing = 2;
+}
+```
+
+## Price Calculation
+
+### Tick to Price
+
+To convert a tick index to a price:
+
+```
+price = 1.0001^tickIndex
+```
+
+### Price to Tick
+
+To convert a price to a tick index:
+
+```
+tickIndex = log(price) / log(1.0001)
+```
+
+Rounded to the nearest integer, subject to tick spacing constraints.
+
+## Deposits and Withdrawals
+
+### Share Token Calculation
+
+When depositing to a pool, share tokens are calculated as:
+
+```
+shares = min(
+  amountA * totalShares / reserveA,
+  amountB * totalShares / reserveB
+)
+```
+
+For a new pool:
+```
+shares = sqrt(amountA * amountB)
+```
+
+### Share Token Denomination
+
+Share tokens follow the format:
+```
+neutron/pool/{poolID}
+```
+
+## Swaps and Routing
+
+### Swap Execution
+
+1. For single-hop swaps (A to B):
+   - Find the optimal path through available liquidity
+   - Execute the swap at each tick price
+
+2. For multi-hop swaps (A to B to C):
+   - Break down into multiple single-hop swaps
+   - Execute each hop sequentially
+
+### Price Impact Calculation
+
+The price impact for a swap is calculated as:
+```
+priceImpact = 1 - (outputAmount / (inputAmount * initialPrice))
+```
+
+### Route Selection
+
+When multiple routes are provided with `pick_best_route` enabled:
+1. Simulate execution on all routes
+2. Select the route with the highest output amount
+3. Execute the swap on the selected route
+
+## Fees
+
+### Fee Distribution
+
+Trading fees are distributed as follows:
+1. Fees are collected in the output token
+2. Fees are added to the pool reserves
+3. Liquidity providers receive fees proportional to their share of the pool
+
+### Fee Calculation
+
+For a swap amount `x` with fee tier `f` (in basis points):
+```
+fee = x * (f / 10000)
+amountOut = (x - fee) * price
+```
+
+## Limit Orders
+
+### Order Matching
+
+Limit orders are matched in the following priority:
+1. Price (better prices execute first)
+2. Time (older orders at same price execute first)
+
+### Order Expiration
+
+GTT orders automatically expire based on their expiration time. The module's `BeginBlock` handler purges expired orders.
+
+## Pair List
+
+Common built-in pairs:
+- untrn:uatom
+- untrn:uosmo
+- untrn:usdc
+- usdc:uatom
+- usdc:uosmo
+
+Custom pairs can be formed by anyone depositing tokens into a new pool.
+
+## Module Accounts
+
+The Dex module uses a dedicated module account to hold pool reserves.
+
+Account name: `neutron_dex`
+Address: Derived from the module name 

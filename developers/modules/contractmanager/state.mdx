@@ -1,0 +1,149 @@
+---
+title: "State"
+---
+
+The Contract Manager module maintains state information to track contract failures and module parameters.
+
+## State Objects
+
+### Failure
+
+The primary state object is the `Failure` record, which stores information about failed sudo calls:
+
+```protobuf
+message Failure {
+  // Address of the failed contract
+  string address = 1;
+  // Id of the failure under specific address
+  uint64 id = 2;
+  // Serialized MessageSudoCallback with Packet and Ack(if exists)
+  bytes sudo_payload = 3;
+  // Redacted error response of the sudo call. Full error is emitted as an event
+  string error = 4;
+}
+```
+
+Each Failure record contains:
+- `address`: The contract address that experienced the failure
+- `id`: A sequential identifier specific to the contract address
+- `sudo_payload`: The serialized message data that was passed to the sudo handler
+- `error`: A redacted error message containing the codespace and code
+
+### Module Parameters
+
+The module parameters are stored as a `Params` object:
+
+```protobuf
+message Params {
+  uint64 sudo_call_gas_limit = 1;
+}
+```
+
+This contains:
+- `sudo_call_gas_limit`: Maximum gas that can be used during a sudo call to a contract
+
+## State Structure
+
+The Contract Manager uses a simple key-value store system to manage its state:
+
+```
+ContractFailuresKey (0x01) + address + "/" + id → Failure
+ParamsKey (0x02) → Params
+```
+
+### Prefixes
+
+The module uses the following key prefixes in the KVStore:
+
+| Prefix | Value | Purpose |
+| --- | --- | --- |
+| `ContractFailuresKey` | `0x01` | Prefix for storing contract failures |
+| `ParamsKey` | `0x02` | Prefix for storing module parameters |
+
+### Failures Storage
+
+The failures are stored using a composite key structure:
+
+```
+0x01 + address + "/" + id → Failure
+```
+
+This allows efficient retrieval of:
+- All failures across all contracts
+- All failures for a specific contract address
+- A specific failure by address and ID
+
+When a contract experiences a failure, a new record is created with an incremented ID for that contract address.
+
+### Parameters Storage
+
+The module parameters are stored under a single key:
+
+```
+0x02 → Params
+```
+
+## Genesis State
+
+The genesis state of the Contract Manager module consists of:
+
+```protobuf
+message GenesisState {
+  Params params = 1;
+  repeated Failure failures_list = 2;
+}
+```
+
+This includes:
+- The module parameters
+- A list of failures that existed at genesis or export time
+
+## State Transitions
+
+### Adding a Contract Failure
+
+When a contract's sudo handler fails, the following occurs:
+
+1. The module retrieves the highest failure ID for the contract address
+2. It increments the ID to create a new unique identifier
+3. It creates a new `Failure` record with:
+   - The contract address
+   - The new ID
+   - The serialized sudo payload
+   - A redacted version of the error
+4. It stores the new failure under the appropriate key
+5. It emits events with both the redacted and full error information
+
+### Resubmitting a Failure
+
+When a failure is resubmitted:
+
+1. The module retrieves the failure record
+2. It verifies that the sender is the same contract that experienced the failure
+3. It deserializes the sudo payload
+4. It executes the sudo call again without gas limitations
+5. If successful:
+   - It emits a success event
+   - The failure record remains in state for reference
+6. If unsuccessful:
+   - It emits a failure event with the new error
+   - The failure record remains unchanged
+
+### Updating Parameters
+
+When the module parameters are updated:
+
+1. The module validates that the sender has the appropriate authority (governance)
+2. It updates the params in state
+3. It emits a parameter change event
+
+## State Queries
+
+The module provides several query methods to access its state:
+
+1. `Params`: Retrieves the current module parameters
+2. `AddressFailure`: Retrieves a specific failure by address and ID
+3. `AddressFailures`: Retrieves all failures for a specific contract address
+4. `Failures`: Retrieves all failures across all contracts
+
+These queries support pagination for large result sets. 
