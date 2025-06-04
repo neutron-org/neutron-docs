@@ -507,7 +507,9 @@
               "resources/contracts/neutron-dao",
               "resources/contracts/neutron-tge",
               "resources/contracts/neutron-vesting",
-              "resources/contracts/bridge"
+              "resources/contracts/bridge",
+              "resources/contracts/mainnet",
+              "resources/contracts/testnet"
             ]
           }
         ]
