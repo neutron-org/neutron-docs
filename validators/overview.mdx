@@ -46,54 +46,66 @@ Validators operate under strict performance criteria, with rewards tied directly
 
 | Performance Criterion | Minimum Threshold | Full Reward Threshold |
 |-----------------------|-------------------|----------------------|
-| Block Signing         | 95%               | 99\.5%                |
+| Block Signing         | 95%               | 99.5%                |
 | Oracle Price Updates  | 95%               | 98%                  |
 
 Validators who fail to meet minimum thresholds for two consecutive months or three months in a six-month period may be rotated out of the active set by the Neutron DAO.
 
-## Node Hardware Requirements
+## Technical Requirements
 
-### Prioritize High Single-Thread CPU Performance
+### Hardware Specifications
 
-- **Key takeaway:** CometBFT and the Cosmos-SDK rely heavily on sequential/single-threaded processing (consensus → block processing → validation). A CPU's *single-core* performance is more critical than overall core count.
-- **Recommended CPUs:**
-    - **AMD Ryzen 9 7950X3D** (16c/32t, 4.2–5.7 GHz)
-    - **AMD EPYC 4584PX** (16c/32t, 4.2–5.7 GHz)
-- **Alternatives:** Other CPUs with **high base and boost clocks** (≥3.5–4.0 GHz base) and at least **16 cores**. However, the above models have proven track record for fast blocks.
+<CardGroup cols={2}>
+  <Card title="CPU" icon="microchip" iconType="duotone">
+    <strong>Minimum:</strong> 4+ cores<br />
+    <strong>Recommended:</strong> 8+ cores, AMD Ryzen 9 7950X3D or EPYC 4584PX for optimal single-thread performance
+  </Card>
+  <Card title="RAM" icon="memory" iconType="duotone">
+    <strong>Minimum:</strong> 64 GB<br />
+    <strong>Recommended:</strong> 128 GB+ for optimal performance
+  </Card>
+  <Card title="Storage" icon="hard-drive" iconType="duotone">
+    <strong>Minimum:</strong> 2 TB NVMe SSD<br />
+    <strong>Recommended:</strong> 4 TB+ with ≥10,000 IOPS and ≥500 MB/s sustained read/write
+  </Card>
+  <Card title="Network" icon="network-wired" iconType="duotone">
+    <strong>Minimum:</strong> 1 Gbps dedicated connection<br />
+    <strong>Recommended:</strong> Less than 50ms latency to major peers with DDoS protection
+  </Card>
+</CardGroup>
 
-### Memory Requirements
-
-- **Minimum:** 64 GB RAM
-- **Recommended:** 128 GB RAM for optimal performance
-- **Type:** DDR4-3200 or DDR5-4800+ for maximum throughput
-
-### Storage Specifications
-
-- **Primary Storage:** 2 TB NVMe SSD (minimum)
-- **Recommended:** 4 TB NVMe SSD for future growth
-- **Performance:** ≥10,000 IOPS, ≥500 MB/s sustained read/write
-- **Backup:** Additional storage for state snapshots and backups
-
-### Network Requirements
-
-- **Bandwidth:** Minimum 1 Gbps dedicated connection
-- **Latency:** &lt;50ms to major network peers
-- **Redundancy:** Multiple network providers recommended
-- **DDoS Protection:** Enterprise-grade protection required
-
-## Key Selection Criteria
+### Infrastructure Requirements
 
 <CardGroup cols={3}>
   <Card title="Dual Network Operation" icon="network-wired">
-    Validators must run both mainnet and testnet nodes
+    Must run both mainnet and testnet nodes with proven reliability
   </Card>
-  <Card title="Technical Infrastructure" icon="server">
-    High-quality hardware with redundancy and monitoring
+  <Card title="Security Architecture" icon="shield-halved">
+    Sentry node architecture with HSM key management and comprehensive monitoring
   </Card>
-  <Card title="Security Practices" icon="lock">
-    Robust security measures including sentry nodes
+  <Card title="Operational Excellence" icon="gear">
+    24/7 monitoring, automated alerting, and documented disaster recovery procedures
   </Card>
 </CardGroup>
+
+## Validator Selection & Rotation
+
+### Selection Process
+
+When validator slots become available:
+
+1. **Eligibility**: Must operate both mainnet and testnet nodes
+2. **Prioritization**: Operators prioritized by reverse order of voting power (encouraging decentralization)
+3. **Probation**: 3-month trial period with limited delegation
+4. **Full Status**: Receive full DAO delegation after successful probation
+
+### Rotation Framework
+
+Validators may be rotated out for:
+
+- **Performance Issues**: No rewards for 2 consecutive months or 3 months in 6-month period
+- **Upgrade Delays**: Failure to resume signing within 60 minutes of upgrade or begin precommitting within 2 hours of instructions
+- **Tombstoning**: Double-signing or critical security issues
 
 ## Mercury Upgrade
 
@@ -115,9 +127,6 @@ The Mercury upgrade in April 2025 marked a pivotal transition for Neutron, movin
   </Card>
   <Card title="Becoming a Validator" icon="user-plus" href="/validators/becoming-a-validator">
     Steps to join the Neutron validator set with performance requirements
-  </Card>
-  <Card title="Technical Requirements" icon="sliders" href="/validators/technical/combined">
-    Detailed hardware specifications and performance criteria
   </Card>
   <Card title="Validator Economics" icon="coins" href="/validators/economics/validator-incentives">
     Learn about the unique economic model and incentives

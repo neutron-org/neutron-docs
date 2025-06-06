@@ -68,6 +68,47 @@ For the most current information on the status of our RPCs and any scheduled mai
 
 We are using a patched 0.51.0 version of wasmd.
 
+### I'm getting "out of gas" errors when querying smart contracts. How do I fix this?
+
+If you encounter errors like:
+
+```
+out of gas in location: Wasm engine function execution; gasWanted: 3000000, gasUsed: 3000000: out of gas: unknown request
+```
+
+This indicates that smart contract queries are hitting the gas limit. There are **two different** gas limit configurations that are often confused:
+
+1. **General Cosmos SDK Query Gas Limit** (`query-gas-limit` in root of app.toml):
+   ```toml
+   # The maximum gas a query coming over rest/grpc may consume.
+   # If this is set to zero, the query can consume an unbounded amount of gas.
+   query-gas-limit = "0"
+   ```
+
+2. **CosmWasm Specific Query Gas Limit** (`wasm.query_gas_limit` in [wasm] section):
+   ```toml
+   ###############################################################################
+   ###                                   WASM                                  ###
+   ###############################################################################
+   [wasm]
+   # This is the maximum sdk gas (wasm and storage) that we allow for any x/wasm "smart" queries
+   query_gas_limit = 100000000
+   ```
+
+**Solution**: If you control the node, add or increase the `wasm.query_gas_limit` setting in your `app.toml`:
+
+```toml
+[wasm]
+query_gas_limit = 100000000
+```
+
+**Key differences to remember:**
+- Use underscores (`query_gas_limit`) for wasm configuration, not dashes (`query-gas-limit`)
+- The wasm setting is in the `[wasm]` section, not at the root level
+- This setting can also be configured as a command line flag: `--wasm.query_gas_limit=100000000`
+
+This is particularly important for applications making complex or paginated smart contract queries. If you're using a public RPC endpoint, you'll need to either optimize your queries to use less gas or find an RPC provider with higher gas limits.
+
 ### Where is the testnet faucet?
 
 You can request tokens from the Testnet (pion-1) Faucet through two channels:

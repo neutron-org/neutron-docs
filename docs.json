@@ -103,7 +103,16 @@
             "pages": [
               "developers/overview",
               "developers/quickstart",
-              "developers/sdk",
+              {
+                "group": "SDK & Developer Tools",
+                "icon": "toolbox",
+                "pages": [
+                  "developers/sdk",
+                  "developers/sdk/boilerplates",
+                  "developers/sdk/neutron-template",
+                  "developers/sdk/bullbear-integration"
+                ]
+              },
               "developers/faq"
             ]
           },
@@ -441,7 +450,7 @@
         ]
       },
       {
-        "tab": "Validators",
+        "tab": "Operators",
         "icon": "server",
         "groups": [
           {
@@ -452,13 +461,6 @@
               "validators/running-a-node",
               "validators/oracle-setup",
               "validators/becoming-a-validator"
-            ]
-          },
-          {
-            "group": "Technical Guidelines",
-            "icon": "server",
-            "pages": [
-              "validators/technical/combined"
             ]
           },
           {

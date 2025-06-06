@@ -27,29 +27,17 @@ Neutron takes an opinionated approach to blockchain design, making deliberate ar
 
 ### Protocol-Level Infrastructure
 
-Neutron embeds critical DeFi infrastructure directly into the protocol layer. Rather than forcing every application to build its own infrastructure, the network provides essential services as native modules.
-
-**Oracle price feeds** operate with consensus validation, ensuring reliable market data flows through the system every block. This eliminates the need for applications to source external oracles and provides guaranteed price updates.
-
-**Native trustless cross-chain communication** removes bridge dependencies and their associated risks. Applications can seamlessly interact with other IBC-connected chains without worrying about bridge failures or security compromises.
-
-The **cron module** provides protocol-guaranteed automation for time-sensitive operations. Unlike external automation services that might fail, scheduled executions are enforced at the consensus level.
-
-<div className="my-6 p-4 border-l-4 border-green-500 bg-green-50 dark:bg-green-900 dark:bg-opacity-20">
-  <h3 className="text-lg font-medium mb-2">Infrastructure as a Service</h3>
-  <p>By building infrastructure into the protocol, Neutron creates a shared utility layer that all applications can leverage, reducing development overhead and ensuring consistent behavior across the ecosystem.</p>
-</div>
+Neutron's most defining opinion is its [integrated architecture](/concepts/integrated-architecture), as discussed in the previous section. This foundational design decision ensures that critical DeFi infrastructure is guaranteed by consensus rather than external services, creating unprecedented reliability and composability.
 
 ### Security Model
 
 The protocol implements a carefully designed security architecture that prioritizes user protection and system stability.
-
-| Security Feature | Traditional Approach | Neutron's Approach |
-|---|---|---|
-| **Validator Penalties** | Slashing for misbehavior | No slashing, curated validator set |
-| **Price Feeds** | External oracle networks | Hardware-secured consensus oracles |
-| **Cross-chain Ops** | Third-party bridges | Protocol-native IBC integration |
-| **Rate Limiting** | Application-level controls | Protocol-enforced limits |
+| Security Feature      | Traditional Approach     | Neutron's Approach              |
+|:----------------------|:-------------------------|:-------------------------------|
+| **Validator Penalties** | Slashing for misbehavior   | No slashing, curated validator set |
+| **Price Feeds**       | External oracle networks     | Hardware-secured consensus oracles |
+| **Cross-chain Ops**   | Third-party bridges          | Protocol-native IBC integration    |
+| **Rate Limiting**     | Application-level controls   | Protocol-enforced limits           |
 
 Neutron's **no-slashing model** eliminates the risk of unexpected validator penalties that could affect delegator funds. Instead, validators are selected through a curation process that emphasizes reliability and performance.
 
@@ -66,23 +54,6 @@ The protocol's **simplified staking mechanics** reduce complexity for end users 
 > "Neutron's governance is transparent and programmable, ensuring clear decision-making processes that users can understand and participate in effectively."
 
 **Consistent application behavior** across the entire ecosystem means users develop transferable skills. Learning one Neutron application helps users understand others, reducing the friction of ecosystem exploration.
-
-## Benefits of Opinionation
-
-<CardGroup cols={2}>
-  <Card title="For Developers" icon="code" iconType="duotone">
-    - Reduced infrastructure overhead
-    - Standardized interfaces
-    - Guaranteed security properties
-    - Simplified integration
-  </Card>
-  <Card title="For Users" icon="user" iconType="duotone">
-    - Consistent experience
-    - Predictable costs
-    - Enhanced security
-    - Better composability
-  </Card>
-</CardGroup>
 
 ## Comparison with Other Approaches
 
@@ -106,26 +77,11 @@ The **consistent security model** across all applications provides predictable r
 
 Most importantly, **true atomic composability** enables complex multi-protocol interactions within single transactions, unlocking DeFi strategies that would be impossible on other architectures.
 
-<AccordionGroup>
-  <Accordion title="Block Validity Conditions">
-    By programming block validity conditions, Neutron ensures per-block inclusion guarantees for time-sensitive operations, socializes gas costs for critical infrastructure, and reduces reliance on trusted third parties.
-  </Accordion>
-  <Accordion title="User Benefits">
-    Users benefit from no unexpected slashing events, predictable transaction costs, consistent interfaces across applications, and enhanced security guarantees backed by the protocol itself.
-  </Accordion>
-</AccordionGroup>
-
-## Protocol Examples
-
 <CardGroup cols={2}>
-  <Card title="Supervaults" icon="vault" iconType="duotone" href="/users/defi/supervaults">
-    Leverages native infrastructure for automated yield strategies
+  <Card title="Block Validity Conditions" icon="shield" iconType="duotone">
+    By programming block validity conditions, Neutron ensures per-block inclusion guarantees for time-sensitive operations, socializes gas costs for critical infrastructure, and reduces reliance on trusted third parties.
   </Card>
-  <Card title="Drop Protocol" icon="droplet" iconType="duotone" href="/users/defi/drop">
-    Uses integrated staking and cross-chain communication
+  <Card title="User Benefits" icon="user-check" iconType="duotone">
+    Users benefit from no unexpected slashing events, predictable transaction costs, consistent interfaces across applications, and enhanced security guarantees backed by the protocol itself.
   </Card>
 </CardGroup>
-
-<Note>
-  Neutron's opinionated design choices create a more reliable, secure, and user-friendly DeFi ecosystem while maintaining the flexibility needed for innovation.
-</Note> 

@@ -1,35 +1,48 @@
 ---
 title: "Running a Node"
-description: "Set up and configure a Neutron validator node"
+description: "Set up and configure a Neutron node for RPC access or validator operations"
 icon: "server"
 ---
 
-This guide will walk you through the process of setting up and running a Neutron validator node. Following the Mercury upgrade, Neutron operates as a sovereign network with specific requirements for validators.
+This guide will walk you through the process of setting up and running a Neutron node. You can use this setup to operate a standard RPC node for network access or as the foundation for becoming a validator.
+
+<CardGroup cols={2}>
+  <Card title="RPC Node" icon="cloud" iconType="duotone">
+    Access the Neutron network, run applications, or provide RPC services to others
+  </Card>
+  <Card title="Validator Node" icon="server" iconType="duotone">
+    Participate in consensus, earn rewards, and help secure the Neutron network
+  </Card>
+</CardGroup>
 
 <Note>
-  Before proceeding, ensure your system meets the hardware requirements. Neutron validators need robust hardware to maintain high performance and provide reliable oracle data.
+  This guide covers the basic node setup that serves both purposes. If you want to become a validator, you'll need to complete additional steps covered in our [validator registration guide](/validators/becoming-a-validator).
 </Note>
 
 ## System Requirements
 
 <CardGroup cols={2}>
   <Card title="CPU" icon="microchip" iconType="duotone">
-    <strong>Minimum:</strong> 4+ cores<br />
-    <strong>Recommended:</strong> 8+ cores
+    <strong>Minimum:</strong> 4 or more cores<br />
+    <strong>Recommended:</strong> 8 or more cores
   </Card>
   <Card title="RAM" icon="memory" iconType="duotone">
     <strong>Minimum:</strong> 16GB<br />
-    <strong>Recommended:</strong> 32GB+
+    <strong>Recommended:</strong> 32GB or more
   </Card>
   <Card title="Storage" icon="hard-drive" iconType="duotone">
     <strong>Minimum:</strong> 500GB SSD<br />
-    <strong>Recommended:</strong> 1TB+ NVMe SSD
+    <strong>Recommended:</strong> 1TB or more NVMe SSD
   </Card>
   <Card title="Network" icon="network-wired" iconType="duotone">
     <strong>Minimum:</strong> 100Mbps<br />
-    <strong>Recommended:</strong> 1Gbps+ with low latency
+    <strong>Recommended:</strong> 1Gbps or more with low latency
   </Card>
 </CardGroup>
+
+<Tip>
+  For validator operations, refer to the [enhanced hardware requirements](/validators/overview#technical-requirements) which include higher specifications for optimal performance.
+</Tip>
 
 ## Installation Process
 
@@ -77,7 +90,7 @@ This guide will walk you through the process of setting up and running a Neutron
   </Step>
   <Step title="Initialize the Node">
     ```bash
-    neutrond init <your-moniker> --chain-id neutron-1
+    neutrond init [your-moniker] --chain-id neutron-1
     ```
   </Step>
 </Steps>
@@ -161,7 +174,7 @@ To speed up the initial sync process, you can use state sync or a snapshot.
 Create a systemd service file for Neutron:
 
 ```bash
-sudo tee /etc/systemd/system/neutrond.service > /dev/null << EOF
+sudo tee /etc/systemd/system/neutrond.service > /dev/null <<EOF
 [Unit]
 Description=Neutron Node
 After=network-online.target
@@ -205,6 +218,53 @@ sudo systemctl start neutrond
     ```bash
     neutrond status 2>&1 | jq .NodeInfo.n_peers
     ```
+  </Tab>
+</Tabs>
+
+## Performance Monitoring
+
+Set up comprehensive monitoring to ensure your validator meets performance requirements:
+
+### Essential Monitoring Stack
+
+<CardGroup cols={2}>
+  <Card title="Metrics Collection" icon="chart-line">
+    **Prometheus**: Collect system and validator metrics<br />
+    **Node Exporter**: System resource monitoring<br />
+    **Cosmos Exporter**: Neutron-specific metrics
+  </Card>
+  <Card title="Visualization & Alerts" icon="bell">
+    **Grafana**: Create dashboards for metrics visualization<br />
+    **Alertmanager**: Configure alerts for critical issues<br />
+    **TenderDuty**: Validator-specific monitoring tool
+  </Card>
+</CardGroup>
+
+### Key Metrics to Monitor
+
+Configure alerts for these critical metrics:
+
+- **Block Signing**: Track missed blocks and signing percentage
+- **Oracle Performance**: Monitor oracle price update success rate
+- **System Resources**: CPU, memory, disk usage, and network connectivity
+- **Node Health**: Sync status, peer count, and consensus participation
+
+### Alert Configuration
+
+Set up alerts for:
+
+<Tabs>
+  <Tab title="Critical Alerts">
+    - Validator jailed or tombstoned
+    - Node not signing blocks (greater than 5 missed blocks)
+    - Node falling behind sync (greater than 10 blocks)
+    - Oracle service failures
+  </Tab>
+  <Tab title="Warning Alerts">
+    - System resources approaching limits (greater than 80% usage)
+    - Peer count below threshold (less than 10 peers)
+    - New governance proposals requiring votes
+    - Planned network upgrades
   </Tab>
 </Tabs>
 
@@ -258,17 +318,67 @@ sudo systemctl start neutrond
     2. Configure your validator to only connect to your sentry nodes
     3. This protects your validator from DDoS attacks
     
-    For more information, see the [Sentry Node Architecture Guide](/validators/technical/sentry-nodes).
+    **Architecture**: `Internet <-> Sentry Nodes <-> Private Network <-> Validator`
+  </Accordion>
+  <Accordion title="Key Management">
+    Secure your validator keys:
+    
+    - Store validator keys on hardware security modules (HSM) when possible
+    - Use separate signing keys and never expose private keys
+    - Implement proper backup and recovery procedures
+    - Consider multi-signature setups for additional security
   </Accordion>
 </AccordionGroup>
 
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Infrastructure Redundancy" icon="server" iconType="duotone">
+    Implement redundant systems, backup power, and multiple network providers to avoid single points of failure.
+  </Card>
+  <Card title="Upgrade Preparation" icon="arrow-up-right-dots" iconType="duotone">
+    Maintain testing infrastructure and participate in testnet upgrades to ensure smooth mainnet transitions.
+  </Card>
+  <Card title="Performance Optimization" icon="gauge-high" iconType="duotone">
+    Regularly monitor and optimize system performance to maintain greater than 99.5% uptime and greater than 98% oracle success rates.
+  </Card>
+  <Card title="Documentation" icon="book" iconType="duotone">
+    Maintain detailed operational procedures, incident response plans, and recovery documentation.
+  </Card>
+</CardGroup>
+
 ## Next Steps
 
-Once your node is fully synced, the next steps are:
+Choose your path based on your intended use:
 
-1. Set up the [Slinky Oracle Service](/validators/oracle-setup) for price feed data
-2. [Register as a validator](/validators/becoming-a-validator)
+<CardGroup cols={2}>
+  <Card title="RPC Node Operation" icon="cloud" iconType="duotone">
+    **You're Ready!** Your node can now serve RPC requests, sync with the network, and support applications. Consider configuring:
+    - API endpoints for application access
+    - Monitoring for node health
+    - Backup and recovery procedures
+  </Card>
+  <Card title="Validator Path" icon="server" iconType="duotone">
+    To become a validator, continue with these additional steps:
+    1. Set up the [Slinky Oracle Service](/validators/oracle-setup)
+    2. Review [validator requirements](/validators/overview)
+    3. Complete [validator registration](/validators/becoming-a-validator)
+  </Card>
+</CardGroup>
 
-<div className="mt-8">
-  <a className="button-primary px-4 py-2 rounded text-white bg-primary hover:bg-opacity-90" href="/validators/oracle-setup">Continue to Oracle Setup →</a>
-</div> 
+### Additional Configuration for RPC Nodes
+
+If you're running an RPC node for public or application use, consider these additional configurations:
+
+```bash
+# Enable API and configure CORS (in app.toml)
+sed -i 's/enable = false/enable = true/' $HOME/.neutrond/config/app.toml
+sed -i 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $HOME/.neutrond/config/app.toml
+
+# Configure RPC settings (in config.toml)
+sed -i 's/laddr = "tcp:\/\/127.0.0.1:26657"/laddr = "tcp:\/\/0.0.0.0:26657"/' $HOME/.neutrond/config/config.toml
+```
+
+<Note>
+  Only enable external access if you understand the security implications and have proper firewall rules in place.
+</Note> 
