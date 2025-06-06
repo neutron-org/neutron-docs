@@ -42,7 +42,7 @@ Neutron is a permissionless smart contract platform that leverages Interchain Se
 
 ## 🛠 Development
 
-This documentation is built with [Mintlify](https://mintlify.com), a modern documentation platform.
+This documentation is built with [Mintlify](https://mintlify.com), a modern documentation platform designed for developer-focused content.
 
 ### Local Development
 
@@ -60,6 +60,16 @@ This documentation is built with [Mintlify](https://mintlify.com), a modern docu
    ```bash
    mintlify install
    ```
+
+### Publishing Changes
+
+Documentation is automatically deployed when changes are pushed to the default branch. For more information about Mintlify's deployment process, visit the [Mintlify documentation](https://mintlify.com/docs).
+
+### Troubleshooting
+
+- **Mintlify dev isn't running**: Run `mintlify install` to re-install dependencies
+- **Page loads as a 404**: Make sure you are running in a folder with `docs.json`
+- **Build errors**: Check the [Mintlify troubleshooting guide](https://mintlify.com/docs/troubleshooting)
 
 ### Key Features
 
@@ -89,29 +99,10 @@ This documentation is built with [Mintlify](https://mintlify.com), a modern docu
 - **Active Maintenance**: Regular updates with protocol developments
 - **Community Driven**: Open source with community contributions
 
-## 🤝 Contributing
-
-We welcome contributions to improve Neutron's documentation! Here's how you can help:
-
-1. **Report Issues**: Found a bug or unclear section? [Open an issue](https://github.com/neutron-org/neutron-docs/issues)
-2. **Suggest Improvements**: Have ideas for better explanations or new content?
-3. **Submit Pull Requests**: Fix typos, add examples, or create new guides
-4. **Community Feedback**: Join our Discord to discuss documentation improvements
-
-### Development Guidelines
-
-- Follow MDX formatting standards
-- Include practical code examples
-- Test all commands and procedures
-- Maintain consistency with existing style
-- Update navigation in `docs.json` for new pages
-
 ## 📝 License
 
 This documentation is open source and available under the [MIT License](LICENSE).
 
 ---
-
-**Built with ❤️ by the Neutron community**
 
 *Neutron: Secure, interoperable, and developer-friendly blockchain infrastructure for the next generation of DeFi.*
