@@ -1,0 +1,267 @@
+---
+title: "API"
+---
+
+This document details the API endpoints provided by the Contract Manager module.
+
+## REST Endpoints
+
+The Contract Manager module exposes several REST endpoints for querying module parameters and failures.
+
+### GET: Query Module Parameters
+
+```
+GET /neutron/contractmanager/params
+```
+
+Returns the current parameters of the Contract Manager module.
+
+#### Response Structure
+
+```json
+{
+  "params": {
+    "sudo_call_gas_limit": "1000000"
+  }
+}
+```
+
+### GET: Query Failure by Address and ID
+
+```
+GET /neutron/contractmanager/failures/{address}/{failure_id}
+```
+
+Returns details of a specific failure identified by contract address and failure ID.
+
+#### Parameters
+
+- `address`: The contract address that experienced the failure
+- `failure_id`: The unique identifier of the failure for that contract
+
+#### Response Structure
+
+```json
+{
+  "failure": {
+    "address": "neutron1...",
+    "id": "1",
+    "sudo_payload": "base64-encoded-payload",
+    "error": "codespace: wasm, code: 5"
+  }
+}
+```
+
+### GET: Query Failures by Address
+
+```
+GET /neutron/contractmanager/failures/{address}
+```
+
+Returns all failures for a specific contract address.
+
+#### Parameters
+
+- `address`: The contract address to query failures for
+- `pagination`: Optional pagination parameters
+
+#### Response Structure
+
+```json
+{
+  "failures": [
+    {
+      "address": "neutron1...",
+      "id": "1",
+      "sudo_payload": "base64-encoded-payload",
+      "error": "codespace: wasm, code: 5"
+    },
+    {
+      "address": "neutron1...",
+      "id": "2",
+      "sudo_payload": "base64-encoded-payload",
+      "error": "codespace: contractmanager, code: 1103"
+    }
+  ],
+  "pagination": {
+    "next_key": null,
+    "total": "2"
+  }
+}
+```
+
+### GET: Query All Failures
+
+```
+GET /neutron/contractmanager/failures
+```
+
+Returns all failures across all contracts.
+
+#### Parameters
+
+- `pagination`: Optional pagination parameters
+
+#### Response Structure
+
+Same as the response for failures by address, but includes failures for all contracts.
+
+## gRPC Endpoints
+
+The Contract Manager module exposes gRPC query and transaction endpoints.
+
+### Query Service
+
+```protobuf
+service Query {
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse);
+
+  // Queries a Failure by contract address and failure ID.
+  rpc AddressFailure(QueryFailureRequest) returns (QueryFailureResponse);
+
+  // Queries Failures by contract address.
+  rpc AddressFailures(QueryFailuresRequest) returns (QueryFailuresResponse);
+
+  // Queries a list of Failures occurred on the network.
+  rpc Failures(QueryFailuresRequest) returns (QueryFailuresResponse);
+}
+```
+
+#### Params
+
+`Params` queries the module parameters.
+
+Request:
+```protobuf
+message QueryParamsRequest {}
+```
+
+Response:
+```protobuf
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1;
+}
+```
+
+#### AddressFailure
+
+`AddressFailure` queries a specific failure by address and ID.
+
+Request:
+```protobuf
+message QueryFailureRequest {
+  // address of the contract which Sudo call failed.
+  string address = 1;
+  // ID of the failure for the given contract.
+  uint64 failure_id = 2;
+}
+```
+
+Response:
+```protobuf
+message QueryFailureResponse {
+  Failure failure = 1;
+}
+```
+
+#### AddressFailures
+
+`AddressFailures` queries all failures for a specific contract address.
+
+Request:
+```protobuf
+message QueryFailuresRequest {
+  // address of the contract which Sudo call failed.
+  string address = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 3;
+}
+```
+
+Response:
+```protobuf
+message QueryFailuresResponse {
+  repeated Failure failures = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+```
+
+#### Failures
+
+`Failures` queries all failures across all contracts.
+
+Request:
+```protobuf
+message QueryFailuresRequest {
+  // address of the contract which Sudo call failed.
+  string address = 1; // (optional)
+  cosmos.base.query.v1beta1.PageRequest pagination = 3;
+}
+```
+
+Response:
+```protobuf
+message QueryFailuresResponse {
+  repeated Failure failures = 1;
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+```
+
+### Msg Service
+
+```protobuf
+service Msg {
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+  rpc ResubmitFailure(MsgResubmitFailure) returns (MsgResubmitFailureResponse);
+}
+```
+
+## CosmWasm Integration
+
+The Contract Manager module provides bindings for CosmWasm contracts to query failures and resubmit them.
+
+### Query Bindings
+
+To query failures from within a CosmWasm contract:
+
+```rust
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum NeutronQuery {
+    ContractManagerFailures { 
+        address: String,
+        pagination: Option<PageRequest>,
+    },
+    // other query variants...
+}
+
+// Usage example
+let query = NeutronQuery::ContractManagerFailures { 
+    address: env.contract.address.to_string(),
+    pagination: None,
+};
+let failures: FailuresResponse = deps.querier.query(&QueryRequest::Custom(query))?;
+```
+
+### Message Bindings
+
+To resubmit a failure from within a CosmWasm contract:
+
+```rust
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum NeutronMsg {
+    ResubmitFailure { 
+        failure_id: u64,
+    },
+    // other message variants...
+}
+
+// Usage example
+let msg = NeutronMsg::ResubmitFailure { 
+    failure_id: 1,
+};
+let cosmos_msg = msg.into();
+Ok(Response::new().add_message(cosmos_msg))
+``` 

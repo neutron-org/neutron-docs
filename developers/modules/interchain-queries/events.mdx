@@ -1,0 +1,437 @@
+# Events
+
+This document describes the events emitted by the Interchain Queries module.
+
+The Interchain Queries module emits the following events:
+
+### RegisterInterchainQuery
+
+Emitted when a new interchain query is registered.
+
+| Type | Attribute Key | Attribute Value |
+|------|---------------|----------------|
+| `register_interchain_query` | `id` | ID of the registered query |
+| `register_interchain_query` | `owner` | Address of the query owner |
+| `register_interchain_query` | `query_type` | Type of query (`kv` or `tx`) |
+| `register_interchain_query` | `connection_id` | IBC connection ID used for the query |
+| `register_interchain_query` | `update_period` | Minimum blocks between updates |
+| `register_interchain_query` | `deposit` | Amount deposited for the query |
+| `message` | `action` | `register_interchain_query` |
+| `message` | `sender` | Address that sent the transaction |
+
+Example:
+```json
+[
+  {
+    "type": "register_interchain_query",
+    "attributes": [
+      {
+        "key": "id",
+        "value": "1"
+      },
+      {
+        "key": "owner",
+        "value": "neutron1..."
+      },
+      {
+        "key": "query_type",
+        "value": "kv"
+      },
+      {
+        "key": "connection_id",
+        "value": "connection-0"
+      },
+      {
+        "key": "update_period",
+        "value": "100"
+      },
+      {
+        "key": "deposit",
+        "value": "100000000untrn"
+      }
+    ]
+  },
+  {
+    "type": "message",
+    "attributes": [
+      {
+        "key": "action",
+        "value": "register_interchain_query"
+      },
+      {
+        "key": "sender",
+        "value": "neutron1..."
+      }
+    ]
+  }
+]
+```
+
+### RemoveInterchainQuery
+
+Emitted when an interchain query is removed.
+
+| Type | Attribute Key | Attribute Value |
+|------|---------------|----------------|
+| `remove_interchain_query` | `id` | ID of the removed query |
+| `remove_interchain_query` | `owner` | Address of the query owner |
+| `remove_interchain_query` | `refund_amount` | Amount refunded to the owner |
+| `message` | `action` | `remove_interchain_query` |
+| `message` | `sender` | Address that sent the transaction |
+
+Example:
+```json
+[
+  {
+    "type": "remove_interchain_query",
+    "attributes": [
+      {
+        "key": "id",
+        "value": "1"
+      },
+      {
+        "key": "owner",
+        "value": "neutron1..."
+      },
+      {
+        "key": "refund_amount",
+        "value": "100000000untrn"
+      }
+    ]
+  },
+  {
+    "type": "message",
+    "attributes": [
+      {
+        "key": "action",
+        "value": "remove_interchain_query"
+      },
+      {
+        "key": "sender",
+        "value": "neutron1..."
+      }
+    ]
+  }
+]
+```
+
+### UpdateInterchainQuery
+
+Emitted when an interchain query is updated.
+
+| Type | Attribute Key | Attribute Value |
+|------|---------------|----------------|
+| `update_interchain_query` | `id` | ID of the updated query |
+| `update_interchain_query` | `owner` | Address of the query owner |
+| `update_interchain_query` | `new_keys` | New KV keys (if updated) |
+| `update_interchain_query` | `new_filter` | New transaction filter (if updated) |
+| `update_interchain_query` | `new_update_period` | New update period (if updated) |
+| `update_interchain_query` | `new_submit_timeout` | New submit timeout (if updated) |
+| `message` | `action` | `update_interchain_query` |
+| `message` | `sender` | Address that sent the transaction |
+
+Example:
+```json
+[
+  {
+    "type": "update_interchain_query",
+    "attributes": [
+      {
+        "key": "id",
+        "value": "1"
+      },
+      {
+        "key": "owner",
+        "value": "neutron1..."
+      },
+      {
+        "key": "new_update_period",
+        "value": "200"
+      }
+    ]
+  },
+  {
+    "type": "message",
+    "attributes": [
+      {
+        "key": "action",
+        "value": "update_interchain_query"
+      },
+      {
+        "key": "sender",
+        "value": "neutron1..."
+      }
+    ]
+  }
+]
+```
+
+### SubmitQueryResult
+
+Emitted when a query result is submitted.
+
+| Type | Attribute Key | Attribute Value |
+|------|---------------|----------------|
+| `submit_query_result` | `id` | ID of the query |
+| `submit_query_result` | `owner` | Address of the query owner |
+| `submit_query_result` | `result_type` | Type of result (`kv` or `tx`) |
+| `submit_query_result` | `result_size` | Size of the submitted result in bytes |
+| `submit_query_result` | `height` | Height of the result on the remote chain |
+| `submit_query_result` | `revision_number` | IBC revision number |
+| `message` | `action` | `submit_query_result` |
+| `message` | `sender` | Address that sent the transaction |
+
+Example:
+```json
+[
+  {
+    "type": "submit_query_result",
+    "attributes": [
+      {
+        "key": "id",
+        "value": "1"
+      },
+      {
+        "key": "owner",
+        "value": "neutron1..."
+      },
+      {
+        "key": "result_type",
+        "value": "kv"
+      },
+      {
+        "key": "result_size",
+        "value": "128"
+      },
+      {
+        "key": "height",
+        "value": "12345"
+      },
+      {
+        "key": "revision_number",
+        "value": "1"
+      }
+    ]
+  },
+  {
+    "type": "message",
+    "attributes": [
+      {
+        "key": "action",
+        "value": "submit_query_result"
+      },
+      {
+        "key": "sender",
+        "value": "neutron1..."
+      }
+    ]
+  }
+]
+```
+
+### QueryFailed
+
+Emitted when a query result submission fails validation.
+
+| Type | Attribute Key | Attribute Value |
+|------|---------------|----------------|
+| `query_failed` | `id` | ID of the query |
+| `query_failed` | `owner` | Address of the query owner |
+| `query_failed` | `reason` | Reason for the failure |
+| `message` | `action` | `submit_query_result` |
+| `message` | `sender` | Address that sent the transaction |
+
+Example:
+```json
+[
+  {
+    "type": "query_failed",
+    "attributes": [
+      {
+        "key": "id",
+        "value": "1"
+      },
+      {
+        "key": "owner",
+        "value": "neutron1..."
+      },
+      {
+        "key": "reason",
+        "value": "proof verification failed"
+      }
+    ]
+  },
+  {
+    "type": "message",
+    "attributes": [
+      {
+        "key": "action",
+        "value": "submit_query_result"
+      },
+      {
+        "key": "sender",
+        "value": "neutron1..."
+      }
+    ]
+  }
+]
+```
+
+### QueryExpired
+
+Emitted when a query expires (no result submitted within the timeout period).
+
+| Type | Attribute Key | Attribute Value |
+|------|---------------|----------------|
+| `query_expired` | `id` | ID of the expired query |
+| `query_expired` | `owner` | Address of the query owner |
+| `query_expired` | `registered_at` | Block height at which the query was registered |
+| `query_expired` | `timeout` | The configured timeout in blocks |
+| `query_expired` | `current_height` | Current block height when the query expired |
+| `query_expired` | `deposit_burned` | Amount of deposit that was burned due to timeout |
+
+Example:
+```json
+[
+  {
+    "type": "query_expired",
+    "attributes": [
+      {
+        "key": "id",
+        "value": "1"
+      },
+      {
+        "key": "owner",
+        "value": "neutron1..."
+      },
+      {
+        "key": "registered_at",
+        "value": "5000"
+      },
+      {
+        "key": "timeout",
+        "value": "10000"
+      },
+      {
+        "key": "current_height",
+        "value": "15001"
+      },
+      {
+        "key": "deposit_burned",
+        "value": "100000000untrn"
+      }
+    ]
+  }
+]
+```
+
+### QueryPeriodUpdated
+
+Emitted when a query's update period is increased to match the parameter update.
+
+| Type | Attribute Key | Attribute Value |
+|------|---------------|----------------|
+| `query_period_updated` | `id` | ID of the query |
+| `query_period_updated` | `owner` | Address of the query owner |
+| `query_period_updated` | `old_update_period` | Previous update period value |
+| `query_period_updated` | `new_update_period` | New update period value |
+
+Example:
+```json
+[
+  {
+    "type": "query_period_updated",
+    "attributes": [
+      {
+        "key": "id",
+        "value": "1"
+      },
+      {
+        "key": "owner",
+        "value": "neutron1..."
+      },
+      {
+        "key": "old_update_period",
+        "value": "100"
+      },
+      {
+        "key": "new_update_period",
+        "value": "200"
+      }
+    ]
+  }
+]
+```
+
+### GasUsed
+
+Emitted when gas is consumed for processing a query result.
+
+| Type | Attribute Key | Attribute Value |
+|------|---------------|----------------|
+| `gas_used` | `id` | ID of the query |
+| `gas_used` | `amount` | Amount of gas used |
+| `gas_used` | `result_type` | Type of result (`kv` or `tx`) |
+
+Example:
+```json
+[
+  {
+    "type": "gas_used",
+    "attributes": [
+      {
+        "key": "id",
+        "value": "1"
+      },
+      {
+        "key": "amount",
+        "value": "5000"
+      },
+      {
+        "key": "result_type",
+        "value": "kv"
+      }
+    ]
+  }
+]
+```
+
+## Using Events in Applications
+
+Events can be subscribed to using the Tendermint WebSocket API. Here's an example of subscribing to all events from the Interchain Queries module:
+
+```javascript
+// Subscribe to all events from the Interchain Queries module
+const query = "tm.event='Tx' AND message.module='interchainqueries'";
+const subscription = await tendermintRPC.subscribe(query);
+
+subscription.on('message', (event) => {
+  console.log('New event:', event);
+});
+```
+
+For more specific event filtering, you can use more targeted queries:
+
+```javascript
+// Subscribe only to register_interchain_query events
+const registerQuery = "tm.event='Tx' AND register_interchain_query.id EXISTS";
+
+// Subscribe only to submit_query_result events
+const submitQuery = "tm.event='Tx' AND submit_query_result.id EXISTS";
+
+// Subscribe to events for a specific query ID
+const specificQueryEvents = "tm.event='Tx' AND register_interchain_query.id='1'";
+
+// Subscribe to events for a specific owner
+const ownerEvents = "tm.event='Tx' AND register_interchain_query.owner='neutron1...'";
+```
+
+Subscribing to events allows your application to react to changes in the state of interchain queries, such as:
+
+1. Triggering actions when a new query is registered
+2. Processing query results as soon as they are submitted
+3. Cleaning up resources when queries are removed
+4. Reacting to query failures or expirations
+5. Monitoring gas usage for query result processing
+
+This enables building reactive applications that can seamlessly integrate with interchain queries. 

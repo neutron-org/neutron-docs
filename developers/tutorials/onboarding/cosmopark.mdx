@@ -1,0 +1,198 @@
+---
+title: "Cosmopark Tutorial"
+description: "Set up a local IBC-enabled development environment with Neutron and Gaia"
+---
+
+Cosmopark is an advanced local development environment that sets up multiple interconnected components:
+
+1. Neutron node
+2. Gaia node (Cosmos Hub)
+3. Hermes IBC Relayer
+4. Neutron ICQ Relayer
+
+This environment is ideal for developing and testing applications that use Interchain Accounts (ICA), Interchain Queries (ICQ), or any other IBC-related features of Neutron.
+
+## Prerequisites
+
+Before setting up Cosmopark, ensure you have:
+
+- **Docker Engine**: Used to run containerized services
+- **Golang v1.23+**: Required for building components
+- **NPX**: Used to download Neutron DAO contracts
+
+## Setup Guide
+
+Follow these steps to set up and run Cosmopark:
+
+### 1. Verify Go Version
+
+Ensure you have the required Go version installed:
+
+```bash
+go version
+```
+
+The output should show Go version 1.23 or later.
+
+### 2. Clone Required Repositories
+
+All repositories must be cloned into the same parent directory:
+
+```bash
+# Create and enter a directory for all repositories
+mkdir neutron-dev && cd neutron-dev
+
+# Clone Neutron repositories
+git clone -b main https://github.com/neutron-org/neutron.git
+git clone https://github.com/neutron-org/neutron-integration-tests.git
+git clone https://github.com/neutron-org/neutron-query-relayer.git
+
+# Clone and prepare Gaia
+git clone https://github.com/cosmos/gaia.git
+cd gaia
+git checkout v23.1.1
+cd ..
+```
+
+### 3. Build Docker Images
+
+The neutron-integration-tests repository contains scripts to build all required Docker images:
+
+```bash
+cd neutron-integration-tests/setup
+
+# Build all images at once (first time)
+make build-all
+
+# For later updates, you can build individual components:
+# make build-gaia
+# make build-neutron
+# make build-hermes
+# make build-relayer
+```
+
+### 4. Download Neutron DAO Contracts
+
+Neutron includes DAO contracts in its genesis, so you need to download them:
+
+```bash
+npx @neutron-org/get-artifacts neutron-dao -b main -d contracts
+```
+
+### 5. Start Cosmopark
+
+Launch the entire Cosmopark environment:
+
+```bash
+make start-cosmopark
+```
+
+This command starts the Neutron node, Gaia node, Hermes relayer, and ICQ relayer in Docker containers.
+
+### 6. View Logs and Manage Containers
+
+To view logs from all containers:
+
+```bash
+docker-compose logs -f
+```
+
+To see logs from a specific container:
+
+```bash
+# List running containers
+docker ps
+
+# View logs for a specific container
+docker logs -f <container-id>
+```
+
+To stop Cosmopark:
+
+```bash
+make stop-cosmopark
+```
+
+## Using Cosmopark Components
+
+### Neutron Node
+
+The Neutron node in Cosmopark is configured with:
+
+- Exposed RPC port: 26657
+- Exposed REST API port: 1317
+- Pre-configured test accounts with funds
+
+Access the node using the standard `neutrond` CLI:
+
+```bash
+# Example: Query account balance
+neutrond q bank balances neutron1m9l358xunhhwds0568za49mzhvuxx9ux8xafx2 --node http://localhost:26657
+```
+
+### Gaia Node
+
+The Gaia node represents the Cosmos Hub and is connected to Neutron via IBC:
+
+- Exposed RPC port: 26659
+- Exposed REST API port: 1318
+
+You can interact with Gaia using the `gaiad` CLI:
+
+```bash
+# Example: Query account
+gaiad q auth account cosmos1m9l358xunhhwds0568za49mzhvuxx9uxpdsv0e --node http://localhost:26659
+```
+
+### Hermes IBC Relayer
+
+Hermes maintains the IBC connections between Neutron and Gaia, allowing for IBC transfers and Interchain Accounts:
+
+- Automatically creates connections and channels on startup
+- Continuously relays packets between chains
+
+### ICQ Relayer
+
+The Interchain Query Relayer enables Neutron smart contracts to securely query data from the Gaia chain:
+
+- Monitors registered queries from Neutron contracts
+- Fetches data with proofs from Gaia
+- Submits responses back to Neutron
+
+## Advanced Usage
+
+### Testing Interchain Accounts
+
+You can use Cosmopark to test ICA functionality by:
+
+1. Deploying an ICA-enabled contract on Neutron
+2. Registering a connection to Gaia
+3. Executing transactions on Gaia via your Neutron contract
+
+### Testing Interchain Queries
+
+To test ICQ functionality:
+
+1. Deploy a contract that uses the ICQ module
+2. Register queries for specific Gaia state
+3. Receive and process query responses in your contract
+
+## Troubleshooting
+
+If you encounter issues with Cosmopark:
+
+- Ensure all repositories are in the same parent directory
+- Check that Docker has sufficient resources allocated
+- Verify all ports required by the services are available
+- Review logs for specific error messages
+
+For more specific guidance, refer to the README files in the neutron-integration-tests repository.
+
+## Next Steps
+
+After setting up Cosmopark, you can:
+
+- Deploy test CosmWasm contracts to Neutron
+- Test IBC transfers between Neutron and Gaia
+- Develop and test Interchain Account controllers
+- Create contracts that utilize Interchain Queries 

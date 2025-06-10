@@ -1,0 +1,335 @@
+
+Skip home pagedark logo
+
+Search or ask...
+⌘K
+Skip:Go
+Research
+Jobs
+
+General
+Introduction
+Validators
+Quickstart
+Advanced Setups
+Configuration
+FAQs
+Metrics
+Overview
+Setup
+Oracle
+Application
+Developers
+Integration
+Getting Prices
+CosmWasm Connect SDK
+Providers
+Modules
+Learn
+Architecture
+Security
+General
+Introduction
+​
+What is Connect?
+Connect is an oracle that securely delivers offchain data to onchain applications using a chain’s native validator set and security. This documentation will guide you through using Connect; whether you’re a validator or developer.
+
+Validator Setup
+Learn how to setup and run Connect with your infrastructure.
+
+Using the API
+Learn how to use the Connect API to access data.
+
+​
+Features
+​
+Security 
+Connect leverages the chain’s security, giving the fastest updates possible, and removing the requirements for any 3rd party systems.
+
+​
+Performance 
+Connect can support over 2000 currency pairs and price feeds, allowing the launch of thousands of permissionless on-chain markets. Ultimately, the speed of Connect is determined by the speed of your application.
+
+​
+Support 
+Connect comes with a 1-day SLAs for adding new feeds, and 24/7 on-call support and maintenance by the Skip team.
+
+​
+UX 
+By leveraging new advancements in consensus like vote extensions & ABCI++, Connect guarantees a millisecond-fresh oracle update every block, allowing applications to build without sacrificing UX for safety.
+
+​
+Ready to Connect?
+If you’re interested in using Connect, please check out our website and reach out to us on Discord to get started.
+
+Quickstart
+twitter
+discord
+github
+On this page
+What is Connect?
+Features
+Security 
+Performance 
+Support 
+UX 
+Ready to Connect?
+
+Validators
+Quickstart
+Connect Validator Quickstart
+
+The following instructions assumes you are running a single validator full node with a remote instance of Connect. If you are not running a full node, you do not need to run Connect.
+
+This document will guide you through setting up and running Connect, as well as configuring your node to receive data from Connect.
+
+​
+Installation
+​
+Using Curl
+
+Copy
+curl -sSL https://raw.githubusercontent.com/skip-mev/connect/main/scripts/install.sh | sudo bash
+​
+From GitHub Releases
+Head over to our GitHub Releases page and download the binary that matches your machine’s architecture.
+
+​
+From Source
+To install from source, you’ll need Git and Go.
+
+Enter the commands below to install the binary.
+
+
+Copy
+git clone git@github.com:skip-mev/connect.git
+cd connect
+git checkout $(git describe --tags $(git rev-list --tags --max-count=1))
+make install
+​
+Verify Installation
+Let’s check Connect is properly installed on your machine. You should see the version printed in your terminal after running the following command:
+
+
+Copy
+connect version
+​
+Run Connect Sidecar
+General
+dYdX
+Neutron
+Stargaze
+Warden
+Initia
+This tab provides general instructions for starting the Connect sidecar. If you are running one of the chains listed in the tabs above, please refer to those instructions.
+
+To run Connect, which starts the service on the default port of 8080, enter the following command:
+
+
+Copy
+connect --market-map-endpoint="<YOUR_NODE_GRPC_URL>:<YOUR_NODE_GRPC_PORT>"
+​
+Verify Connect
+To verify Connect is working, run the following command:
+
+
+Copy
+curl 'http://localhost:8080/connect/oracle/v2/prices' | jq .
+The output of the command should look similar to this:
+
+
+Copy
+{
+  "prices": {
+    "ATOM/USD": "920650000",
+    "BITCOIN/USD": "3980283250000",
+    "DYDX/USD": "273682500",
+    "ETHEREUM/BITCOIN": "5842000",
+    "ETHEREUM/USD": "232550500000",
+    "POLKADOT/USD": "638800000",
+    "SOLANA/USD": "8430350000"
+  },
+  "timestamp": "2024-01-23T01:15:09.776890Z"
+}
+
+​
+Run Application Node
+In order for the application to get prices from Connect, we need to add the following lines under the [oracle] heading in the app.toml.
+
+Remember to change the oracle_address value to the address of your Connect sidecar.
+
+app.toml
+
+Copy
+# ... other sections
+
+[oracle]
+enabled = "true" # if you are not running a full node, set this to "false"
+oracle_address = "<YOUR_CONNECT_SIDECAR>:8080"
+client_timeout = "250ms"
+metrics_enabled = "true"
+interval = "1500ms"
+price_ttl = "10s"
+Once your app.toml is configured, you may start your node as normal.
+
+​
+Additional Steps
+Using a remote signer? Have a distributed validator setup? Check out the advanced setups to learn how to properly configure your validator infrastructure.
+
+Introduction
+Advanced Setups
+twitter
+discord
+github
+On this page
+Installation
+Using Curl
+From GitHub Releases
+From Source
+Verify Installation
+Run Connect Sidecar
+Verify Connect
+Run Application Node
+Additional Steps
+
+Skip home pagedark logo
+
+Search or ask...
+⌘K
+Skip:Go
+Research
+Jobs
+
+General
+Introduction
+Validators
+Quickstart
+Advanced Setups
+Configuration
+FAQs
+Metrics
+Overview
+Setup
+Oracle
+Application
+Developers
+Integration
+Getting Prices
+CosmWasm Connect SDK
+Providers
+Modules
+Learn
+Architecture
+Security
+Validators
+Advanced Setups
+Using Connect with Advanced Validator Infrastructure
+
+​
+Using Remote Signers 
+Remote signers can be used with Connect, however only certain versions are compatible.
+
+​
+Horcrux
+Required Version: v3.3.0+ https://github.com/strangelove-ventures/horcrux/releases
+
+​
+With Horcrux-Proxy
+Required Version: v1.0.0+ https://github.com/strangelove-ventures/horcrux-proxy/releases
+
+​
+TMKMS
+Required Version: v0.13.1+ https://github.com/iqlusioninc/tmkms/tags
+
+​
+Using Distributed Validators 
+Connect can be used within a distributed validator setup. To do so, simply apply the same app.toml changes to each validator node. Head over to configuration to see the necessary application-side configurations.
+
+Quickstart
+Configuration
+twitter
+discord
+github
+On this page
+Using Remote Signers
+Horcrux
+With Horcrux-Proxy
+TMKMS
+Using Distributed Validators
+Advanced Setups - Skip
+
+Metrics
+Oracle
+Reference for the available metrics in the Connect oracle
+
+​
+Dashboard Terminology
+Market: The pair of assets that are traded against each other. For example, the BTC/USD market is the market where Bitcoin is traded against the US Dollar.
+Price Feed: A price feed is indexed by a price provider and a market. For example, the Coinbase API provides a price feed for the BTC/USD market.
+Price Provider: Service that provides price data for a given market. For example, the Coinbase API is a price provider for the Coinbase markets.
+Market Map Provider: Service that supplies the markets that the side-car needs to fetch data for.
+​
+Exposed Metrics
+Connect also exposes metrics on the /metrics endpoint on port 8002 by default. These metrics are in the Prometheus format and can be scraped by any monitoring system that supports Prometheus format.
+
+​
+Health Metrics
+The following health metrics are emitted in Connect.
+
+side_car_health_check_system_updates_total: Counter that increments every time the sidecar updates its internal state. This is a good indicator of the sidecar’s overall health.
+side_car_health_check_ticker_updates_total: Counter that increments every time the side-car updates the price of a given market. This is a good indicator of the overall health of a given market.
+side_car_health_check_provider_updates_total: Counter that increments every time the side-car utilizes a given providers market data. This is a good indicator of the health of a given provider. Note that providers may not be responsible for every market. However, the sidecar correctly tracks the number of expected updates for each provider. This metric can be quite noisy, so consider omitting it from dashboards if that becomes an issue in your Grafana instance.
+​
+Price Metrics
+Connect exposes various metrics related to market prices. These metrics are useful for monitoring the health of the price feeds and the aggregation process. The rate of updates for these metrics is likely going to be much greater than the health metrics. This is expected as we poll the providers much more frequently than we update all prices. As such, the metrics below are not expected to be updated at the same rate as the health metrics. However, they are greatly useful to quickly identify issues with the price feeds.
+
+side_car_provider_price: The last recorded price for a given price feed.
+side_car_provider_last_updated_id: The last UNIX timestamp for a given price feed.
+​
+Aggregated Price Metrics
+side_car_aggregated_price: The aggregated price for a given market. This price is the result of a median aggregation of all available price feeds for a given market. This is the price clients will see when querying the side-car.
+​
+HTTP Metrics
+Connect exposes various metrics related to HTTP requests made by the sidecar - including the number of requests, the response time, and the status code. These metrics can be used to monitor the health of the sidecar’s HTTP endpoints.
+
+side_car_api_http_status_code: The status codes of the HTTP response made by the side-car.
+side_car_api_response_latency_bucket: The response latency of the HTTP requests made by the side-car.
+​
+WebSocket Metrics
+Connect exposes various metrics related to WebSocket connections made by the sidecar. These metrics can be used to monitor the health of the sidecar’s WebSocket connections.
+
+side_car_web_socket_connection_status: This includes various metrics related to the WebSocket connections made by the side-car.
+side_car_web_socket_data_handler_status: This includes various metrics related to whether WebSocket messages are being correctly handled by the side-car.
+side_car_web_socket_response_time_bucket: This includes the response time of the WebSocket messages received by the side-car.
+Setup
+Application
+twitter
+discord
+github
+
+Metrics
+Application
+Reference for the available metrics in the Application
+
+​
+Exposed Metrics
+By default, Cosmos SDK application expose metrics on port 26660. These metrics are in the Prometheus format and can be scraped by any monitoring system that supports Prometheus format.
+
+​
+Oracle Client Connection Metrics
+oracle_response_latency: Histogram that measures the time in nanoseconds between request/response of from the Application to Oracle.
+oracle_responses: Counter that measures the number of oracle responses.
+​
+ABCI Metrics
+The following metrics are measured in the following ABCI methods: ExtendVote, PrepareProposal, ProcessProposal, VerifyVoteExtension, FinalizeBlock.
+
+ABCI_method_latency: Histogram that measures the amount of seconds ABCI method calls take.
+ABCI_method_status: Counter that measures the number of ABCI requests.
+​
+VE/Price Metrics
+message_size: Histogram that tracks the size of vote-extensions and extended commits that Connect transmits.
+oracle_prices: Gauge that tracks prices written to application state.
+​
+Network Metrics
+oracle_reports_per_validator: Gauge that tracks the prices each validator has reported for any block per ticker.
+oracle_report_status_per_validator: Counter that tracks the number of reports per validator and their vote status (absent, missing_price, with_price).

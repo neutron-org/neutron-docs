@@ -1,0 +1,210 @@
+---
+title: "Events"
+---
+
+The Contract Manager module emits several events that can be observed during operations. These events are useful for debugging, monitoring, and tracking failures.
+
+## Contract Failure Events
+
+### `contract_failure`
+
+Emitted when a contract's sudo handler fails and the failure is recorded in the Contract Manager.
+
+| Attribute Key | Description |
+| --- | --- |
+| `contract_address` | Address of the contract that experienced the failure |
+| `failure_id` | Sequential ID of the failure for the specific contract |
+| `redacted_error` | Redacted version of the error (codespace and code only) |
+| `full_error` | Full, non-redacted error description |
+
+```json
+{
+  "type": "contract_failure",
+  "attributes": [
+    {
+      "key": "contract_address",
+      "value": "neutron1..."
+    },
+    {
+      "key": "failure_id",
+      "value": "1"
+    },
+    {
+      "key": "redacted_error",
+      "value": "codespace: wasm, code: 5"
+    },
+    {
+      "key": "full_error",
+      "value": "dispatch: submessages: Generic error: failed to process acknowledgment"
+    }
+  ]
+}
+```
+
+### `out_of_gas_failure`
+
+Emitted when a contract's sudo handler exceeds the gas limit.
+
+| Attribute Key | Description |
+| --- | --- |
+| `contract_address` | Address of the contract that experienced the out-of-gas error |
+| `failure_id` | Sequential ID of the failure for the specific contract |
+| `gas_limit` | Gas limit that was exceeded |
+| `gas_used` | Approximate gas used before failure |
+
+```json
+{
+  "type": "out_of_gas_failure",
+  "attributes": [
+    {
+      "key": "contract_address",
+      "value": "neutron1..."
+    },
+    {
+      "key": "failure_id",
+      "value": "2"
+    },
+    {
+      "key": "gas_limit",
+      "value": "1000000"
+    },
+    {
+      "key": "gas_used",
+      "value": "1000001"
+    }
+  ]
+}
+```
+
+## Resubmission Events
+
+### `resubmit_failure`
+
+Emitted when a failure is resubmitted for processing.
+
+| Attribute Key | Description |
+| --- | --- |
+| `contract_address` | Address of the contract resubmitting the failure |
+| `failure_id` | ID of the failure being resubmitted |
+
+```json
+{
+  "type": "resubmit_failure",
+  "attributes": [
+    {
+      "key": "contract_address",
+      "value": "neutron1..."
+    },
+    {
+      "key": "failure_id",
+      "value": "1"
+    }
+  ]
+}
+```
+
+### `resubmit_failure_success`
+
+Emitted when a resubmitted failure is successfully processed.
+
+| Attribute Key | Description |
+| --- | --- |
+| `contract_address` | Address of the contract that resubmitted the failure |
+| `failure_id` | ID of the failure that was successfully resubmitted |
+
+```json
+{
+  "type": "resubmit_failure_success",
+  "attributes": [
+    {
+      "key": "contract_address",
+      "value": "neutron1..."
+    },
+    {
+      "key": "failure_id",
+      "value": "1"
+    }
+  ]
+}
+```
+
+### `resubmit_failure_error`
+
+Emitted when a resubmitted failure fails again.
+
+| Attribute Key | Description |
+| --- | --- |
+| `contract_address` | Address of the contract that resubmitted the failure |
+| `failure_id` | ID of the failure that failed again |
+| `error` | The error that occurred during resubmission |
+
+```json
+{
+  "type": "resubmit_failure_error",
+  "attributes": [
+    {
+      "key": "contract_address",
+      "value": "neutron1..."
+    },
+    {
+      "key": "failure_id",
+      "value": "1"
+    },
+    {
+      "key": "error",
+      "value": "dispatch: submessages: Generic error: failed to process acknowledgment"
+    }
+  ]
+}
+```
+
+## Module Parameter Events
+
+### `param_change`
+
+Emitted when the module parameters are updated.
+
+| Attribute Key | Description |
+| --- | --- |
+| `module` | Name of the module ("contractmanager") |
+| `sudo_call_gas_limit` | New value for the sudo call gas limit |
+
+```json
+{
+  "type": "param_change",
+  "attributes": [
+    {
+      "key": "module",
+      "value": "contractmanager"
+    },
+    {
+      "key": "sudo_call_gas_limit",
+      "value": "1500000"
+    }
+  ]
+}
+```
+
+## Filtering Events
+
+To filter for Contract Manager events using Tendermint's event query syntax:
+
+```
+tm.event='Tx' AND contract_failure.contract_address='neutron1...'
+```
+
+Or to capture all contract failures:
+
+```
+tm.event='Tx' AND message.module='contractmanager'
+```
+
+## Events in Block Results
+
+Contract Manager events are also included in block results, which can be queried from the Tendermint RPC endpoint:
+
+```bash
+curl http://localhost:26657/block_results?height=<height>
+```
+
+This is especially useful for monitoring applications that need to track contract failures. 

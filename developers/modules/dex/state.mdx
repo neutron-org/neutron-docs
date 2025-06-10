@@ -1,0 +1,232 @@
+---
+title: "State"
+---
+
+The Dex module maintains several state objects that store information about pools, limit orders, and user positions. This document details the state storage structure and the relationship between different components.
+
+## State Objects
+
+### Pool
+
+The Pool object defines a liquidity pool for a pair of tokens at a specific price (tick index) and fee tier.
+
+```protobuf
+message Pool {
+  uint64 id = 1;             // Unique identifier for the pool
+  string pair_id = 2;        // Trading pair identifier (e.g., "untrn:uatom")
+  int64 tick_index = 3;      // Price tick index
+  uint64 fee = 4;            // Fee tier in basis points
+}
+```
+
+### PoolReserves
+
+PoolReserves stores the actual token amounts in a pool and is associated with a Pool.
+
+```protobuf
+message PoolReserves {
+  uint64 pool_id = 1;        // Reference to the Pool ID
+  string pair_id = 2;        // Trading pair identifier
+  string token0 = 3;         // First token in the pair (lexicographically smaller)
+  string token1 = 4;         // Second token in the pair
+  uint64 fee = 5;            // Fee tier in basis points
+  int64 tick_index = 6;      // Price tick index
+  string token0_reserve = 7; // Amount of token0 in the pool
+  string token1_reserve = 8; // Amount of token1 in the pool
+  string token0_denom = 9;   // Full denomination of token0
+  string token1_denom = 10;  // Full denomination of token1
+}
+```
+
+### PoolMetadata
+
+PoolMetadata stores additional information about a pool.
+
+```protobuf
+message PoolMetadata {
+  uint64 id = 1;               // References the Pool ID
+  string creator = 2;          // Address of the pool creator
+  string display_name = 3;     // Optional user-friendly name for the pool
+  google.protobuf.Timestamp created_at = 4; // Creation timestamp
+  string fee_recipient = 5;    // Optional address to receive fee share
+}
+```
+
+### LimitOrderTranche
+
+LimitOrderTranche represents a group of limit orders at the same price.
+
+```protobuf
+message LimitOrderTranche {
+  string pair_id = 1;          // Trading pair identifier
+  string token_in = 2;         // Token being sold
+  int64 tick_index = 3;        // Price tick index
+  string tranche_key = 4;      // Unique identifier for the tranche
+  string reserves_token_in = 5; // Remaining amount of token_in to be sold
+  string reserves_token_out = 6; // Accumulated amount of token_out to be claimed
+  string total_token_in = 7;    // Total amount of token_in originally placed
+  string total_token_out = 8;   // Total amount of token_out received thus far
+  string token_in_denom = 9;   // Full denomination of token_in
+  string token_out_denom = 10; // Full denomination of token_out
+  TrancheStatus status = 11;   // Status of the limit order tranche
+  google.protobuf.Timestamp expiration_time = 12; // Expiration timestamp (if applicable)
+  
+  enum TrancheStatus {
+    ACTIVE = 0;
+    INACTIVE = 1;
+  }
+}
+```
+
+### LimitOrderTrancheUser
+
+LimitOrderTrancheUser tracks a user's ownership of a limit order tranche.
+
+```protobuf
+message LimitOrderTrancheUser {
+  string address = 1;         // User's address
+  string tranche_key = 2;     // Reference to the tranche
+  string shares_owned = 3;    // Number of shares owned in the tranche
+  string shares_withdrawn = 4; // Number of shares already withdrawn/claimed
+  string shares_cancelled = 5; // Number of shares cancelled
+}
+```
+
+### DepositRecord
+
+DepositRecord tracks a user's liquidity position in a pool.
+
+```protobuf
+message DepositRecord {
+  string pair_id = 1;         // Trading pair identifier
+  string share_denom = 2;     // Denomination of the share token
+  string shares_owned = 3;    // Number of shares owned
+  int64 tick_index = 4;       // Price tick index
+  uint64 fee = 5;             // Fee tier in basis points
+  string token0 = 6;          // First token in the pair
+  string token1 = 7;          // Second token in the pair
+  string pool_id = 8;         // Reference to the Pool ID
+  string token0_denom = 9;    // Full denomination of token0
+  string token1_denom = 10;   // Full denomination of token1
+}
+```
+
+### TickLiquidity
+
+TickLiquidity is a union type that can represent either a PoolReserves or a LimitOrderTranche at a given tick.
+
+```protobuf
+message TickLiquidity {
+  oneof liquidity {
+    PoolReserves pool_reserves = 1;
+    LimitOrderTranche limit_order_tranche = 2;
+  }
+}
+```
+
+## KVStore
+
+The Dex module uses the following key prefixes in the KVStore:
+
+### Pool Keys
+
+| Prefix | Key Format | Value Type | Description |
+| ------ | ---------- | ---------- | ----------- |
+| `PoolKey` | `0x01 \| []byte(pool_id)` | `Pool` | Store pool by ID |
+| `PoolByParamsKey` | `0x02 \| []byte(pair_id) \| []byte(tick_index) \| []byte(fee)` | `uint64` | Store pool ID by parameters |
+| `PoolMetadataKey` | `0x03 \| []byte(pool_id)` | `PoolMetadata` | Store pool metadata by ID |
+
+### Reserves Keys
+
+| Prefix | Key Format | Value Type | Description |
+| ------ | ---------- | ---------- | ----------- |
+| `PoolReservesKey` | `0x11 \| []byte(pool_id)` | `PoolReserves` | Store pool reserves by pool ID |
+| `PoolReservesByParamsKey` | `0x12 \| []byte(pair_id) \| []byte(token_in) \| []byte(tick_index) \| []byte(fee)` | `PoolReserves` | Store pool reserves by parameters |
+
+### Limit Order Keys
+
+| Prefix | Key Format | Value Type | Description |
+| ------ | ---------- | ---------- | ----------- |
+| `LimitOrderTrancheKey` | `0x21 \| []byte(pair_id) \| []byte(token_in) \| []byte(tick_index) \| []byte(tranche_key)` | `LimitOrderTranche` | Store limit order tranches |
+| `InactiveLimitOrderTrancheKey` | `0x22 \| []byte(pair_id) \| []byte(token_in) \| []byte(tick_index) \| []byte(tranche_key)` | `LimitOrderTranche` | Store inactive limit order tranches |
+| `LimitOrderTrancheUserKey` | `0x23 \| []byte(address) \| []byte(tranche_key)` | `LimitOrderTrancheUser` | Store user positions in limit order tranches |
+| `LimitOrderExpirationKey` | `0x24 \| []byte(expiration_time) \| []byte(tranche_key)` | `bool` | Store limit order expiration info |
+
+### Deposit Keys
+
+| Prefix | Key Format | Value Type | Description |
+| ------ | ---------- | ---------- | ----------- |
+| `DepositKey` | `0x31 \| []byte(address) \| []byte(share_denom)` | `DepositRecord` | Store user deposit records |
+
+### Tick Iteration Keys
+
+| Prefix | Key Format | Value Type | Description |
+| ------ | ---------- | ---------- | ----------- |
+| `TickLiquidityKey` | `0x41 \| []byte(pair_id) \| []byte(token_in) \| []byte(tick_index)` | `TickLiquidity` | Store all liquidity at a tick |
+
+## Genesis State
+
+The genesis state of the Dex module contains all the state information necessary to initialize the module:
+
+```protobuf
+message GenesisState {
+  repeated Pool pools = 1;
+  repeated PoolMetadata pool_metadata = 2;
+  repeated PoolReserves pool_reserves = 3;
+  repeated DepositRecord deposits = 4;
+  repeated LimitOrderTranche limit_order_tranches = 5;
+  repeated LimitOrderTrancheUser limit_order_tranche_users = 6;
+  repeated LimitOrderTranche inactive_limit_order_tranches = 7;
+  Params params = 8;
+}
+```
+
+## State Transitions
+
+### Pool Creation
+
+When liquidity is first deposited into a new pool:
+
+1. A new `Pool` object is created with a unique ID
+2. `PoolReserves` are initialized with the deposited token amounts
+3. A corresponding `PoolMetadata` entry is created
+4. A `share_denom` is generated based on the pool ID
+5. A `DepositRecord` is created for the depositing user
+
+### Limit Order Placement
+
+When a limit order is placed:
+
+1. If a `LimitOrderTranche` doesn't exist at the specified tick and price, a new one is created
+2. A `LimitOrderTrancheUser` entry is created or updated for the user
+3. If the order is of type `GOOD_TIL_TIME`, an expiration entry is added
+4. Immediate fills are processed, updating the tranche reserves
+
+### Limit Order Cancellation/Expiration
+
+When a limit order is cancelled or expires:
+
+1. The `LimitOrderTranche` is marked as inactive if completely cancelled
+2. The `LimitOrderTrancheUser` entry is updated with shares cancelled
+3. If expired via `GOOD_TIL_TIME`, the expiration entry is removed
+
+### Swap Execution
+
+During a swap:
+
+1. TickLiquidity entries (both pools and limit orders) are traversed in price order
+2. Reserves are updated for each entity involved in the swap
+3. For limit orders that get filled, the respective user entries are updated
+
+## Module Parameters
+
+The Dex module has the following parameters that can be modified through governance:
+
+```protobuf
+message Params {
+  // Maximum allowed spread in a pool (in basis points)
+  uint64 max_pool_spread_bps = 1;
+  // Minimum allowed spacing between ticks
+  int64 min_tick_spacing = 2;
+}
+``` 

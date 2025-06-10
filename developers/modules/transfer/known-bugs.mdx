@@ -1,0 +1,33 @@
+---
+title: Known Bugs
+sidebar_position: 5
+---
+
+# Known Bugs
+
+This page documents known bugs and limitations in the Transfer module.
+
+## Current Limitations
+
+### Timeout Height in IBC Transfers
+
+When making an IBC transfer without specifying an explicit timeout height, the system will apply a default timeout height based on the current height plus a configurable offset. Users should be aware that in certain network conditions, transfers might time out before being processed.
+
+### Memo Field Parsing
+
+When using the memo field in IBC transfers, some client applications may not properly escape special characters, which can cause parsing issues. Always ensure proper escaping of special characters when including JSON or other structured data in the memo field.
+
+### Funds Recovery
+
+If an IBC transfer fails after being sent (for example, due to a timeout or a packet not being received), the funds are returned to the sender. However, there might be a delay in this process depending on network conditions.
+
+## Resolved Issues
+
+Previous versions of the Transfer module had the following issues that have been resolved:
+
+- **IBC Denom Truncation**: Some denoms exceeded the maximum length and were truncated, causing potential confusion in asset identification.
+- **Transfer Sequence Tracking**: There were cases where the sequence tracking for transfers could get out of sync in certain error conditions.
+
+## Reporting New Issues
+
+If you encounter a bug or issue with the Transfer module, please report it on our [GitHub repository](https://github.com/neutron-org/neutron/issues) with the label `module:transfer`. 

@@ -1,0 +1,434 @@
+---
+title: "Client"
+---
+
+This document describes the CLI commands and gRPC queries for the Dex module.
+
+## CLI Commands
+
+The `neutrond` command-line interface allows users to interact with the Dex module.
+
+### Transactions
+
+#### Deposit
+
+The `deposit` command allows users to add liquidity to one or more pools.
+
+```bash
+neutrond tx dex deposit [flags]
+```
+
+Flags:
+- `--token-a`: First token in the pair
+- `--token-b`: Second token in the pair
+- `--amounts-a`: Amounts of token A to deposit (comma-separated for multiple positions)
+- `--amounts-b`: Amounts of token B to deposit (comma-separated for multiple positions)
+- `--tick-indexes-a-to-b`: Tick indexes for deposits (comma-separated for multiple positions)
+- `--fees`: Fee tiers in basis points (comma-separated for multiple positions)
+- `--options`: JSON-encoded deposit options (comma-separated for multiple positions)
+- `--receiver`: Address to receive the liquidity position
+
+Example:
+```bash
+neutrond tx dex deposit \
+  --token-a untrn \
+  --token-b ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  --amounts-a 1000000 \
+  --amounts-b 1000000 \
+  --tick-indexes-a-to-b 0 \
+  --fees 3000 \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+Example with multiple positions:
+```bash
+neutrond tx dex deposit \
+  --token-a untrn \
+  --token-b ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  --amounts-a 1000000,1000000,1000000 \
+  --amounts-b 1000000,1000000,1000000 \
+  --tick-indexes-a-to-b -100,0,100 \
+  --fees 3000,3000,3000 \
+  --options '{"disable_autoswap":false}','{"disable_autoswap":false}','{"disable_autoswap":false}' \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+#### Withdrawal
+
+The `withdrawal` command allows users to remove liquidity from one or more pools.
+
+```bash
+neutrond tx dex withdrawal [flags]
+```
+
+Flags:
+- `--token-a`: First token in the pair
+- `--token-b`: Second token in the pair
+- `--shares-to-remove`: Amount of share tokens to burn (comma-separated for multiple positions)
+- `--tick-indexes-a-to-b`: Tick indexes for withdrawals (comma-separated for multiple positions)
+- `--fees`: Fee tiers in basis points (comma-separated for multiple positions)
+- `--receiver`: Address to receive the withdrawn tokens
+
+Example:
+```bash
+neutrond tx dex withdrawal \
+  --token-a untrn \
+  --token-b ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  --shares-to-remove 500000 \
+  --tick-indexes-a-to-b 0 \
+  --fees 3000 \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+#### Place Limit Order
+
+The `place-limit-order` command allows users to place a limit order.
+
+```bash
+neutrond tx dex place-limit-order [flags]
+```
+
+Flags:
+- `--token-in`: Token being sold
+- `--token-out`: Token being bought
+- `--amount-in`: Amount of input token to sell
+- `--limit-sell-price`: Price at which to sell (token_out per token_in)
+- `--order-type`: Type of limit order (GOOD_TIL_CANCELLED, FILL_OR_KILL, etc.)
+- `--expiration-time`: Expiration time for GOOD_TIL_TIME orders (RFC3339 format)
+- `--max-amount-out`: Maximum amount of output token to receive
+- `--min-average-sell-price`: Minimum average price for the entire trade
+- `--receiver`: Address to receive the proceeds
+
+Example:
+```bash
+neutrond tx dex place-limit-order \
+  --token-in untrn \
+  --token-out ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  --amount-in 1000000 \
+  --limit-sell-price 0.1 \
+  --order-type GOOD_TIL_CANCELLED \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+Example with expiration:
+```bash
+neutrond tx dex place-limit-order \
+  --token-in untrn \
+  --token-out ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  --amount-in 1000000 \
+  --limit-sell-price 0.1 \
+  --order-type GOOD_TIL_TIME \
+  --expiration-time 2023-12-31T23:59:59Z \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+#### Withdraw Filled Limit Order
+
+The `withdraw-filled-limit-order` command allows users to withdraw proceeds from a filled limit order.
+
+```bash
+neutrond tx dex withdraw-filled-limit-order [flags]
+```
+
+Flags:
+- `--tranche-key`: Unique identifier for the limit order tranche
+
+Example:
+```bash
+neutrond tx dex withdraw-filled-limit-order \
+  --tranche-key tranche123 \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+#### Cancel Limit Order
+
+The `cancel-limit-order` command allows users to cancel an active limit order.
+
+```bash
+neutrond tx dex cancel-limit-order [flags]
+```
+
+Flags:
+- `--tranche-key`: Unique identifier for the limit order tranche
+
+Example:
+```bash
+neutrond tx dex cancel-limit-order \
+  --tranche-key tranche123 \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+#### Multi-Hop Swap
+
+The `multi-hop-swap` command allows users to execute a market swap through multiple pools.
+
+```bash
+neutrond tx dex multi-hop-swap [flags]
+```
+
+Flags:
+- `--routes`: Comma-separated list of token denominations defining the swap path
+- `--amount-in`: Amount of input token to swap
+- `--exit-limit-price`: Minimum acceptable output price
+- `--pick-best-route`: If true, choose the best route among those provided
+- `--receiver`: Address to receive the swap output
+
+Example with single route:
+```bash
+neutrond tx dex multi-hop-swap \
+  --routes untrn,ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  --amount-in 1000000 \
+  --exit-limit-price 0.095 \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+Example with multiple routes:
+```bash
+neutrond tx dex multi-hop-swap \
+  --routes untrn,ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  --routes untrn,usdc,ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  --amount-in 1000000 \
+  --exit-limit-price 0.095 \
+  --pick-best-route \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+#### Update Parameters
+
+The `update-params` command allows governance to update the module parameters.
+
+```bash
+neutrond tx dex update-params [flags]
+```
+
+Flags:
+- `--max-pool-spread-bps`: Maximum pool spread in basis points
+- `--min-tick-spacing`: Minimum tick spacing
+
+Example:
+```bash
+neutrond tx dex update-params \
+  --max-pool-spread-bps 100 \
+  --min-tick-spacing 1 \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+### Queries
+
+#### Params
+
+The `params` command queries the current Dex module parameters.
+
+```bash
+neutrond query dex params
+```
+
+Example output:
+```json
+{
+  "params": {
+    "max_pool_spread_bps": "100",
+    "min_tick_spacing": "1"
+  }
+}
+```
+
+#### Pool
+
+The `pool` command queries a pool by its parameters.
+
+```bash
+neutrond query dex pool [pair-id] [tick-index] [fee] [flags]
+```
+
+Example:
+```bash
+neutrond query dex pool untrn:uatom 0 3000
+```
+
+#### Pool By ID
+
+The `pool-by-id` command queries a pool by its ID.
+
+```bash
+neutrond query dex pool-by-id [pool-id] [flags]
+```
+
+Example:
+```bash
+neutrond query dex pool-by-id 1
+```
+
+#### Pool Metadata
+
+The `pool-metadata` command queries a pool's metadata.
+
+```bash
+neutrond query dex pool-metadata [id] [flags]
+```
+
+Example:
+```bash
+neutrond query dex pool-metadata 1
+```
+
+#### Pool Metadata All
+
+The `pool-metadata-all` command queries all pool metadata.
+
+```bash
+neutrond query dex pool-metadata-all [flags]
+```
+
+#### Pool Reserves
+
+The `pool-reserves` command queries a pool's reserves.
+
+```bash
+neutrond query dex pool-reserves [pair-id] [token-in] [tick-index] [fee] [flags]
+```
+
+Example:
+```bash
+neutrond query dex pool-reserves untrn:uatom untrn 0 3000
+```
+
+#### Pool Reserves All
+
+The `pool-reserves-all` command queries all pool reserves for a specific pair.
+
+```bash
+neutrond query dex pool-reserves-all [pair-id] [token-in] [flags]
+```
+
+Example:
+```bash
+neutrond query dex pool-reserves-all untrn:uatom untrn
+```
+
+#### Tick Liquidity All
+
+The `tick-liquidity-all` command queries all liquidity (both pools and limit orders) for a specific pair.
+
+```bash
+neutrond query dex tick-liquidity-all [pair-id] [token-in] [flags]
+```
+
+Example:
+```bash
+neutrond query dex tick-liquidity-all untrn:uatom untrn
+```
+
+#### Limit Order Tranche
+
+The `limit-order-tranche` command queries a specific limit order tranche.
+
+```bash
+neutrond query dex limit-order-tranche [pair-id] [token-in] [tick-index] [tranche-key] [flags]
+```
+
+Example:
+```bash
+neutrond query dex limit-order-tranche untrn:uatom untrn 100 tranche123
+```
+
+#### Limit Order Tranche All
+
+The `limit-order-tranche-all` command queries all limit order tranches for a specific pair.
+
+```bash
+neutrond query dex limit-order-tranche-all [pair-id] [token-in] [flags]
+```
+
+Example:
+```bash
+neutrond query dex limit-order-tranche-all untrn:uatom untrn
+```
+
+#### Limit Order Tranche User
+
+The `limit-order-tranche-user` command queries a user's position in a specific limit order tranche.
+
+```bash
+neutrond query dex limit-order-tranche-user [address] [tranche-key] [flags]
+```
+
+Example:
+```bash
+neutrond query dex limit-order-tranche-user neutron1... tranche123
+```
+
+#### Limit Order Tranche User All By Address
+
+The `limit-order-tranche-user-all-by-address` command queries all limit orders for a specific user.
+
+```bash
+neutrond query dex limit-order-tranche-user-all-by-address [address] [flags]
+```
+
+Example:
+```bash
+neutrond query dex limit-order-tranche-user-all-by-address neutron1...
+```
+
+#### User Deposits All
+
+The `user-deposits-all` command queries all deposits for a specific user.
+
+```bash
+neutrond query dex user-deposits-all [address] [flags]
+```
+
+Flags:
+- `--include-pool-data`: If true, include additional pool data in the response
+
+Example:
+```bash
+neutrond query dex user-deposits-all neutron1... --include-pool-data
+```
+
+#### Inactive Limit Order Tranche
+
+The `inactive-limit-order-tranche` command queries an inactive limit order tranche.
+
+```bash
+neutrond query dex inactive-limit-order-tranche [pair-id] [token-in] [tick-index] [tranche-key] [flags]
+```
+
+Example:
+```bash
+neutrond query dex inactive-limit-order-tranche untrn:uatom untrn 100 tranche123
+```
+
+### Simulation Queries
+
+The Dex module provides several simulation queries that allow users to estimate the outcome of operations without executing them:
+
+- `simulate-deposit`: Simulate deposit operation
+- `simulate-withdrawal`: Simulate withdrawal operation
+- `simulate-place-limit-order`: Simulate placing a limit order
+- `simulate-withdraw-filled-limit-order`: Simulate withdrawing from a filled limit order
+- `simulate-cancel-limit-order`: Simulate cancelling a limit order
+- `simulate-multi-hop-swap`: Simulate a multi-hop swap
+
+Example:
+```bash
+neutrond query dex simulate-multi-hop-swap \
+  '{
+    "creator":"neutron1...",
+    "routes":[{"hops":["untrn","ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"]}],
+    "amount_in":"1000000",
+    "exit_limit_price":"0.095",
+    "pick_best_route":true
+  }'
+``` 

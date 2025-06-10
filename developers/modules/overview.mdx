@@ -1,0 +1,104 @@
+---
+title: "Neutron Modules"
+---
+
+Neutron offers several specialized modules that provide unique functionality for developers building on the platform. Each module is designed to solve specific problems commonly encountered in DeFi applications.
+
+## DeFi Modules
+
+These modules are designed for direct integration with your smart contracts and DeFi applications:
+
+<CardGroup cols={3}>
+  <Card title="Interchain Queries (ICQ)" icon="link" href="/developers/modules/interchain-queries/overview">
+    Query data from any IBC-connected blockchain
+  </Card>
+  
+  <Card title="Interchain Transactions (ICTX)" icon="arrow-right-arrow-left" href="/developers/modules/interchaintxs/overview">
+    Execute transactions on remote chains via ICA
+  </Card>
+  
+  <Card title="Cron" icon="clock" href="/developers/modules/cron/overview">
+    Schedule automated contract executions
+  </Card>
+  
+  <Card title="Oracle" icon="database" href="/developers/modules/oracle/overview">
+    High-frequency price data for assets
+  </Card>
+  
+  <Card title="Contract Manager" icon="shield" href="/developers/modules/contractmanager/overview">
+    Safe IBC acknowledgment handling
+  </Card>
+  
+  <Card title="Dex" icon="arrows-rotate" href="/developers/modules/dex/overview">
+    Decentralized exchange functionality
+  </Card>
+  
+  <Card title="Harpoon" icon="anchor" href="/developers/modules/harpoon/overview">
+    Staking hooks for historical voting power
+  </Card>
+  
+  <Card title="Transfer" icon="arrow-right-arrow-left" href="/developers/modules/transfer/overview">
+    IBC transfers with contract callbacks
+  </Card>
+</CardGroup>
+
+## System Modules
+
+These modules handle chain-level operations and are primarily managed through governance:
+
+<CardGroup cols={4}>
+  <Card title="Admin" icon="user-gear" href="/developers/modules/admin/overview">
+    DAO governance operations
+  </Card>
+  
+  <Card title="Revenue" icon="money-bill-trend-up" href="/developers/modules/revenue/overview">
+    Validator compensation system
+  </Card>
+  
+  <Card title="Fee Burner" icon="fire" href="/developers/modules/feeburner/overview">
+    NTRN burning & treasury management
+  </Card>
+  
+  <Card title="Fee Refunder" icon="money-bill-transfer" href="/developers/modules/feerefunder/overview">
+    IBC relayer incentives
+  </Card>
+  
+  <Card title="IBC Rate Limit" icon="gauge-high" href="/developers/modules/ibc-rate-limit/overview">
+    Network protection mechanisms
+  </Card>
+</CardGroup>
+
+## Integration Patterns
+
+Most Neutron modules follow consistent patterns when used in CosmWasm smart contracts:
+
+### 1. Import Dependencies
+```rust
+use neutron_sdk::interchain_queries::...; // for ICQ
+use neutron_sdk::bindings::...; // for other modules
+```
+
+### 2. Create Messages
+```rust
+let msg = NeutronMsg::RegisterInterchainQuery { ... };
+```
+
+### 3. Handle Callbacks
+```rust
+#[entry_point]
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> StdResult<Response> {
+    match msg {
+        SudoMsg::ModuleCallback { ... } => { ... }
+        _ => Err(StdError::generic_err("unsupported sudo message")),
+    }
+}
+```
+
+## Documentation Structure
+
+Each module provides comprehensive documentation following the [Divio system](https://documentation.divio.com/):
+
+- **Overview**: Core concepts and capabilities
+- **Explanation**: Detailed mechanisms and architecture  
+- **How-to Guides**: Step-by-step instructions
+- **Reference**: Complete API and technical specifications 

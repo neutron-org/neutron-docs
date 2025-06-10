@@ -1,0 +1,357 @@
+---
+title: "Transfer How-To"
+---
+
+This guide covers how to use the Neutron Transfer module to send and receive tokens across IBC-connected chains, with a particular focus on integrating transfers into smart contracts.
+
+## Sending IBC Transfers
+
+### From a CLI Wallet
+
+For basic token transfers using the command line:
+
+```bash
+neutron tx ibc-transfer transfer \
+  transfer \
+  [channel-id] \
+  [receiver-address] \
+  [amount] \
+  --from [sender-key] \
+  --memo [optional-memo] \
+  --fee-amount=[fee-amount] \
+  --timeout-height [optional-timeout-height] \
+  --timeout-timestamp [optional-timeout-timestamp] \
+  --chain-id neutron-1
+```
+
+Example:
+```bash
+neutron tx ibc-transfer transfer \
+  transfer \
+  channel-10 \
+  cosmos1abcdefghijklmnopqrstuvwxyz \
+  1000untrn \
+  --from mykey \
+  --memo "Transfer from Neutron" \
+  --fee-amount="2000untrn,1000untrn,1000untrn" \
+  --chain-id neutron-1
+```
+
+### From a CosmWasm Contract
+
+To send IBC transfers from a smart contract:
+
+```rust
+use cosmwasm_std::{
+    Coin, CosmosMsg, IbcMsg, DepsMut, Env, MessageInfo, Response, StdResult,
+    to_binary, Binary, Timestamp, Uint128, Uint64,
+};
+use neutron_sdk::bindings::{msg::NeutronMsg, types::Height};
+use neutron_sdk::bindings::types::FeeRefunder;
+
+// Assuming ExecuteMsg enum has an IbcTransfer variant
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ExecuteMsg {
+    // Other messages...
+    IbcTransfer {
+        channel_id: String,
+        receiver: String,
+        amount: Coin,
+        timeout_timestamp: Option<u64>,
+    },
+}
+
+fn execute_ibc_transfer(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    channel_id: String,
+    receiver: String,
+    amount: Coin,
+    timeout_timestamp: Option<u64>,
+) -> StdResult<Response> {
+    // Create the IBC transfer message
+    let timeout_timestamp = timeout_timestamp.unwrap_or_else(|| 
+        env.block.time.plus_seconds(3600).nanos() // Default 1 hour timeout
+    );
+    
+    // Create the fee for the IBC packet
+    let fee = FeeRefunder {
+        recv_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(2000u128),
+        }],
+        ack_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(1000u128),
+        }],
+        timeout_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(1000u128),
+        }],
+    };
+    
+    // Create the transfer message
+    let transfer_msg = NeutronMsg::IbcTransfer {
+        source_port: "transfer".to_string(),
+        source_channel: channel_id.clone(),
+        token: amount.clone(),
+        sender: env.contract.address.to_string(),
+        receiver,
+        timeout_height: Height {
+            revision_number: 0,
+            revision_height: 0,
+        },
+        timeout_timestamp,
+        memo: format!("Transfer from contract {}", env.contract.address),
+        fee,
+    };
+    
+    // Create the cosmos message
+    let cosmos_msg = CosmosMsg::Custom(transfer_msg);
+    
+    // Return the response with the message
+    Ok(Response::new()
+        .add_message(cosmos_msg)
+        .add_attribute("action", "ibc_transfer")
+        .add_attribute("sender", env.contract.address)
+        .add_attribute("channel", channel_id)
+        .add_attribute("amount", amount.amount.to_string())
+        .add_attribute("denom", amount.denom))
+}
+
+// In your contract's execute function
+pub fn execute(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: ExecuteMsg,
+) -> StdResult<Response> {
+    match msg {
+        // Other message handlers...
+        ExecuteMsg::IbcTransfer {
+            channel_id,
+            receiver,
+            amount,
+            timeout_timestamp,
+        } => execute_ibc_transfer(deps, env, info, channel_id, receiver, amount, timeout_timestamp),
+    }
+}
+```
+
+## Handling IBC Transfer Results in Contracts
+
+The Transfer module uses Sudo callbacks to inform contracts about the result of their IBC transfers. To handle these callbacks, implement the Sudo entry point in your contract:
+
+```rust
+use cosmwasm_std::{
+    to_binary, DepsMut, Env, Response, StdResult, Binary, Empty
+};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum SudoMsg {
+    // IBC acknowledgement callback
+    Response {
+        request_id: String,
+        data: Binary,
+    },
+    // IBC error acknowledgement callback
+    Error {
+        request_id: String,
+        error: String,
+    },
+    // IBC packet timeout callback
+    Timeout {
+        request_id: String,
+    },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct AckResponse {
+    pub channel: String,
+    pub sequence: u64,
+    pub success: bool,
+    pub denom: String,
+    pub amount: String,
+    pub receiver: String,
+    // Other fields...
+}
+
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> StdResult<Response> {
+    match msg {
+        SudoMsg::Response { request_id, data } => {
+            // Handle successful acknowledgement
+            // request_id is in format "channel-{channel_id}-{sequence_id}"
+            // Parse the channel ID and sequence from request_id
+            let parts: Vec<&str> = request_id.split('-').collect();
+            if parts.len() < 3 {
+                return Err(cosmwasm_std::StdError::generic_err("Invalid request ID format"));
+            }
+            
+            let channel_id = format!("{}-{}", parts[0], parts[1]);
+            let sequence = parts[2].parse::<u64>().unwrap_or(0);
+            
+            // Process the IBC transfer success
+            // You can use the saved transfer info to match with this callback
+            
+            // Return success response
+            Ok(Response::new()
+                .add_attribute("action", "process_ibc_success")
+                .add_attribute("channel", channel_id)
+                .add_attribute("sequence", sequence.to_string()))
+        },
+        SudoMsg::Error { request_id, error } => {
+            // Handle error acknowledgement
+            // Similar parsing of request_id as above
+            
+            // Process the IBC transfer error
+            
+            Ok(Response::new()
+                .add_attribute("action", "process_ibc_error")
+                .add_attribute("request_id", request_id)
+                .add_attribute("error", error))
+        },
+        SudoMsg::Timeout { request_id } => {
+            // Handle timeout
+            // Similar parsing of request_id as above
+            
+            // Process the IBC transfer timeout
+            
+            Ok(Response::new()
+                .add_attribute("action", "process_ibc_timeout")
+                .add_attribute("request_id", request_id))
+        }
+    }
+}
+```
+
+## Tracking IBC Transfers in Contracts
+
+To correlate IBC transfer requests with their responses in your contract, use the following pattern:
+
+1. **When sending an IBC transfer**, store the transfer details indexed by channel and sequence:
+
+```rust
+// Define a struct to store transfer information
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct TransferInfo {
+    pub channel: String,
+    pub sequence: u64,
+    pub recipient: String,
+    pub amount: Coin,
+    pub timestamp: u64,
+    // Add any other information you need to track
+}
+
+// Use this map to store transfer information
+const TRANSFERS: Map<(String, u64), TransferInfo> = Map::new("transfers");
+
+// In your execute function, after getting the response:
+fn execute_ibc_transfer(/* params */) -> StdResult<Response> {
+    // ... existing code to create and send the IBC transfer
+    
+    // Extract sequence and channel from the response
+    let res: MsgTransferResponse = // ... parse the response
+    
+    // Store the transfer information
+    let transfer_info = TransferInfo {
+        channel: res.channel.clone(),
+        sequence: res.sequence_id,
+        recipient: receiver.clone(),
+        amount: amount.clone(),
+        timestamp: env.block.time.nanos(),
+    };
+    
+    TRANSFERS.save(deps.storage, (res.channel, res.sequence_id), &transfer_info)?;
+    
+    // Return response
+    Ok(Response::new()
+        // ... existing attributes
+        .add_attribute("sequence_id", res.sequence_id.to_string()))
+}
+```
+
+2. **When handling Sudo callbacks**, use the request_id to find your stored transfer:
+
+```rust
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> StdResult<Response> {
+    match msg {
+        SudoMsg::Response { request_id, data } => {
+            // Parse channel and sequence from request_id
+            let parts: Vec<&str> = request_id.split('-').collect();
+            let channel_id = format!("{}-{}", parts[0], parts[1]);
+            let sequence = parts[2].parse::<u64>().unwrap_or(0);
+            
+            // Retrieve the transfer information
+            let transfer_info = TRANSFERS.may_load(deps.storage, (channel_id.clone(), sequence))?;
+            
+            if let Some(info) = transfer_info {
+                // Process the acknowledgement with the original transfer details
+                
+                // Optionally, remove the transfer from storage once processed
+                TRANSFERS.remove(deps.storage, (channel_id.clone(), sequence));
+                
+                // ... handle the success case
+            }
+            
+            Ok(Response::new()
+                .add_attribute("action", "process_ibc_success")
+                .add_attribute("channel", channel_id)
+                .add_attribute("sequence", sequence.to_string()))
+        },
+        // ... similar for Error and Timeout handlers
+    }
+}
+```
+
+## IBC Transfer Fees
+
+When sending IBC transfers, you need to specify fees for packet relaying:
+
+```rust
+let fee = FeeRefunder {
+    recv_fee: vec![Coin {
+        denom: "untrn".to_string(),
+        amount: Uint128::from(2000u128),
+    }],
+    ack_fee: vec![Coin {
+        denom: "untrn".to_string(),
+        amount: Uint128::from(1000u128),
+    }],
+    timeout_fee: vec![Coin {
+        denom: "untrn".to_string(),
+        amount: Uint128::from(1000u128),
+    }],
+};
+```
+
+These fees serve the following purposes:
+
+- `recv_fee`: Paid to relayers for delivering the packet to the destination chain
+- `ack_fee`: Paid to relayers for delivering the acknowledgement back to Neutron
+- `timeout_fee`: Paid to relayers for delivering a timeout if the packet times out
+
+If the transfer is successful, both `recv_fee` and `ack_fee` are paid to the relayers. If the transfer times out, the `timeout_fee` is paid instead. The fees are automatically handled by the Fee Refunder module.
+
+## Error Handling
+
+When receiving callbacks via Sudo, be aware that:
+
+1. Errors from your contract's Sudo handler are suppressed by the Contract Manager middleware
+2. The Sudo handler is limited with gas as defined by the Contract Manager module
+3. Even if your contract's callback handler fails, the IBC packet processing will still complete
+
+To ensure reliable processing of IBC results, implement proper error handling and state management in your contract's Sudo handler.
+
+## Best Practices
+
+1. **Store minimal information**: When saving transfer details, store only what you need to correlate with callbacks
+2. **Set appropriate timeouts**: Choose timeouts that make sense for your application (e.g., 1 hour for fast operations, longer for complex flows)
+3. **Use meaningful memos**: Include transaction purposes or identifiers in memos to help with debugging and tracking
+4. **Handle all callback types**: Implement proper handling for success, error, and timeout callbacks
+5. **Clean up after processing**: Remove stored transfer information once you've processed the result
+6. **Consider retry logic**: Implement retry mechanisms for failed or timed-out transfers if appropriate for your application 

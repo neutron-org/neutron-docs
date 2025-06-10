@@ -1,0 +1,188 @@
+---
+title: "API"
+---
+
+This document details the API endpoints provided by the Fee Burner module.
+
+## REST Endpoints
+
+The Fee Burner module exposes several REST endpoints for querying module parameters and the total burned NTRN amount.
+
+### GET: Query Module Parameters
+
+```
+GET /neutron/feeburner/params
+```
+
+Returns the current parameters of the Fee Burner module.
+
+#### Response Structure
+
+```json
+{
+  "params": {
+    "neutron_denom": "untrn",
+    "reserve_address": "",
+    "treasury_address": "neutron1..."
+  }
+}
+```
+
+### GET: Query Total Burned NTRN Amount
+
+```
+GET /neutron/feeburner/total_burned_neutrons_amount
+```
+
+Returns the total amount of NTRN tokens burned since genesis.
+
+#### Response Structure
+
+```json
+{
+  "total_burned_neutrons_amount": {
+    "coin": {
+      "denom": "untrn",
+      "amount": "1532687456789"
+    }
+  }
+}
+```
+
+## gRPC Endpoints
+
+The Fee Burner module exposes gRPC query endpoints.
+
+### Query Service
+
+```protobuf
+service Query {
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/neutron/feeburner/params";
+  }
+
+  // TotalBurnedNeutronsAmount queries total amount of burned neutron fees.
+  rpc TotalBurnedNeutronsAmount(QueryTotalBurnedNeutronsAmountRequest) returns (QueryTotalBurnedNeutronsAmountResponse) {
+    option (google.api.http).get = "/neutron/feeburner/total_burned_neutrons_amount";
+  }
+}
+```
+
+#### Params
+
+`Params` queries the module parameters.
+
+Request:
+```protobuf
+message QueryParamsRequest {}
+```
+
+Response:
+```protobuf
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+```
+
+#### TotalBurnedNeutronsAmount
+
+`TotalBurnedNeutronsAmount` queries the total amount of burned NTRN tokens.
+
+Request:
+```protobuf
+message QueryTotalBurnedNeutronsAmountRequest {}
+```
+
+Response:
+```protobuf
+message QueryTotalBurnedNeutronsAmountResponse {
+  TotalBurnedNeutronsAmount total_burned_neutrons_amount = 1 [(gogoproto.nullable) = false];
+}
+```
+
+### Msg Service
+
+```protobuf
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+}
+```
+
+#### UpdateParams
+
+`UpdateParams` allows the governance account to update the module's parameters.
+
+Request:
+```protobuf
+message MsgUpdateParams {
+  option (amino.name) = "feeburner/MsgUpdateParams";
+  option (cosmos.msg.v1.signer) = "authority";
+
+  // Authority is the address of the governance account.
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // params defines the x/feeburner parameters to update.
+  //
+  // NOTE: All parameters must be supplied.
+  feeburner.Params params = 2 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
+```
+
+Response:
+```protobuf
+message MsgUpdateParamsResponse {}
+```
+
+## API Usage Examples
+
+### Querying Parameters Using curl
+
+```bash
+curl -X GET "http://localhost:1317/neutron/feeburner/params"
+```
+
+### Querying Total Burned NTRN Amount Using curl
+
+```bash
+curl -X GET "http://localhost:1317/neutron/feeburner/total_burned_neutrons_amount"
+```
+
+### Querying Parameters Using grpcurl
+
+```bash
+grpcurl -plaintext \
+  -d '{}' \
+  localhost:9090 \
+  neutron.feeburner.Query/Params
+```
+
+### Querying Total Burned NTRN Amount Using grpcurl
+
+```bash
+grpcurl -plaintext \
+  -d '{}' \
+  localhost:9090 \
+  neutron.feeburner.Query/TotalBurnedNeutronsAmount
+```
+
+### Updating Parameters Using gRPC
+
+```bash
+grpcurl -plaintext \
+  -d '{
+    "authority": "neutron1...",
+    "params": {
+      "neutron_denom": "untrn",
+      "treasury_address": "neutron1..."
+    }
+  }' \
+  localhost:9090 \
+  neutron.feeburner.Msg/UpdateParams
+``` 

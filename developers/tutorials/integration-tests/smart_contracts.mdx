@@ -1,0 +1,104 @@
+---
+title: "Smart Contract Integration Tests"
+description: "Test your CosmWasm smart contracts in a realistic chain environment"
+---
+
+An improved integration tests framework is available for testing smart contracts, based on [Cosmopark](https://github.com/neutron-org/cosmopark/) and [Contracts2ts](https://github.com/neutron-org/contracts2ts). This approach offers a more elegant testing experience compared to chain integration tests.
+
+## Key Components
+
+### Cosmopark
+
+Cosmopark runs multiple networks on the same machine using Docker containers. It can spin up `Hermes Relayer` and `Neutron Query Relayer` for your deployment if required.
+
+### Contracts2ts
+
+Contracts2ts generates TypeScript clients for your contracts using JSON schemas generated with the `write_api` method, making contract interaction in tests more straightforward.
+
+## Getting Started
+
+Follow these steps to set up and use the integration tests framework:
+
+1. Clone the [repository](https://github.com/hadronlabs-org/demo-integration-tests)
+2. Place your contract source code in the `contracts` folder (the included `pump` contract is just an example and can be removed)
+3. Run `make schema` to generate JSON schemas for your contracts
+4. Run `make build` to build your contracts
+5. Navigate to the integration tests directory: `cd integration-tests`
+6. Install dependencies: `yarn`
+7. Build Docker images: `yarn build-images`
+8. Build TypeScript client for your contracts: `yarn build-ts-client`
+9. Implement your tests in the `src/testcases` folder (the existing `pump` test files are examples which can be removed)
+10. Run your tests: `yarn test`
+
+## Understanding the Test Structure
+
+The integration tests directory contains several important components:
+
+- **src/testSuite.ts**: Contains configuration of the networks with defined network parameters and Docker image names.
+- **src/testcases**: Contains the tests for the contracts. Each test is a separate file with a set of tests for a contract.
+- **src/vite.config.ts**: Contains the configuration for the tests.
+
+When writing tests, use the `beforeAll` method to configure networks and deploy contracts. Check the existing tests to understand the structure and approach.
+
+## Environment Variables
+
+You can configure the test environment using the following environment variables:
+
+```
+MAX_THREADS - Maximum threads to run tests in parallel
+```
+
+## Example Test
+
+Here's a simplified example of what a test file might look like:
+
+```typescript
+import { TestingApp } from '../testSuite';
+import { MyContract } from '../types/MyContract';
+
+describe('My Contract Tests', () => {
+  let app: TestingApp;
+  let myContract: MyContract;
+  let contractAddress: string;
+
+  beforeAll(async () => {
+    // Initialize the test environment
+    app = new TestingApp();
+    await app.start();
+    
+    // Upload and instantiate your contract
+    const { codeId } = await app.neutron.uploadContract('my_contract.wasm');
+    const result = await app.neutron.instantiateContract(codeId, {
+      admin: app.neutron.wallets.admin.address,
+      // Additional instantiation parameters as needed
+    });
+    
+    contractAddress = result.contractAddress;
+    myContract = new MyContract(app.neutron.client, app.neutron.wallets.admin, contractAddress);
+  });
+
+  afterAll(async () => {
+    await app.stop();
+  });
+
+  test('Contract initialization', async () => {
+    // Test that the contract was instantiated correctly
+    const state = await myContract.getState();
+    expect(state).toHaveProperty('initialized', true);
+  });
+
+  test('Contract functionality', async () => {
+    // Test your contract's functionality
+    await myContract.executeMethod({ param1: 'value1' });
+    const newState = await myContract.getState();
+    expect(newState).toHaveProperty('someValue', 'expectedValue');
+  });
+});
+```
+
+## Benefits of Using This Framework
+
+- **Realistic Testing Environment**: Tests run against actual blockchain nodes, providing a more accurate testing environment.
+- **TypeScript Integration**: Generated TypeScript clients make it easy to interact with your contracts.
+- **Multiple Network Support**: Test cross-chain functionality with multiple networks running simultaneously.
+- **Docker-based**: Consistent and reproducible test environment using Docker containers. 

@@ -1,0 +1,176 @@
+---
+title: Events
+sidebar_position: 8
+---
+
+# Events
+
+The Transfer module emits the following events:
+
+## IBC Transfer Events
+
+### `ibc_transfer`
+
+Emitted when an IBC transfer packet is sent.
+
+| Attribute Key | Description |
+| --- | --- |
+| `sender` | The sender address |
+| `receiver` | The receiver address |
+| `amount` | The amount being transferred |
+| `denom` | The denomination of the tokens being transferred |
+| `packet_data` | The IBC packet data |
+| `packet_data_hex` | Hex-encoded packet data |
+
+```go
+sdk.Event{
+    Type: "ibc_transfer",
+    Attributes: []sdk.Attribute{
+        {Key: "sender", Value: "neutron1..."},
+        {Key: "receiver", Value: "cosmos1..."},
+        {Key: "amount", Value: "1000untrn"},
+        {Key: "packet_data", Value: "..."},
+        {Key: "packet_data_hex", Value: "0x..."},
+    },
+}
+```
+
+### `fungible_token_packet`
+
+Emitted when a fungible token packet is sent or received.
+
+| Attribute Key | Description |
+| --- | --- |
+| `module` | Always set to "transfer" |
+| `sender` | The sender address |
+| `receiver` | The receiver address |
+| `denom` | The denomination of the token |
+| `amount` | The amount of tokens |
+| `memo` | Any memo attached to the transfer, if present |
+
+```go
+sdk.Event{
+    Type: "fungible_token_packet",
+    Attributes: []sdk.Attribute{
+        {Key: "module", Value: "transfer"},
+        {Key: "sender", Value: "neutron1..."},
+        {Key: "receiver", Value: "cosmos1..."},
+        {Key: "denom", Value: "untrn"},
+        {Key: "amount", Value: "1000"},
+        {Key: "memo", Value: "payment for services"},
+    },
+}
+```
+
+### `denomination_trace`
+
+Emitted when a new denomination trace is created.
+
+| Attribute Key | Description |
+| --- | --- |
+| `trace_hash` | The hash of the denomination trace |
+| `denom` | The full IBC denomination |
+| `base_denom` | The base denomination |
+
+```go
+sdk.Event{
+    Type: "denomination_trace",
+    Attributes: []sdk.Attribute{
+        {Key: "trace_hash", Value: "EFG123..."},
+        {Key: "denom", Value: "ibc/EFG123..."},
+        {Key: "base_denom", Value: "uatom"},
+    },
+}
+```
+
+## IBC Acknowledgement Events
+
+### `acknowledge_packet`
+
+Emitted when an IBC packet is acknowledged.
+
+| Attribute Key | Description |
+| --- | --- |
+| `module` | Always set to "transfer" |
+| `source_port` | The source port ID |
+| `source_channel` | The source channel ID |
+| `destination_port` | The destination port ID |
+| `destination_channel` | The destination channel ID |
+| `sequence` | The packet sequence |
+| `success` | Indicates acknowledgement success (true/false) |
+| `error` | Error message if success is false |
+
+```go
+sdk.Event{
+    Type: "acknowledge_packet",
+    Attributes: []sdk.Attribute{
+        {Key: "module", Value: "transfer"},
+        {Key: "source_port", Value: "transfer"},
+        {Key: "source_channel", Value: "channel-1"},
+        {Key: "destination_port", Value: "transfer"},
+        {Key: "destination_channel", Value: "channel-0"},
+        {Key: "sequence", Value: "42"},
+        {Key: "success", Value: "true"},
+    },
+}
+```
+
+## IBC Timeout Events
+
+### `timeout_packet`
+
+Emitted when an IBC packet times out.
+
+| Attribute Key | Description |
+| --- | --- |
+| `module` | Always set to "transfer" |
+| `source_port` | The source port ID |
+| `source_channel` | The source channel ID |
+| `destination_port` | The destination port ID |
+| `destination_channel` | The destination channel ID |
+| `sequence` | The packet sequence |
+| `timeout_height` | The timeout height (if specified) |
+| `timeout_timestamp` | The timeout timestamp (if specified) |
+
+```go
+sdk.Event{
+    Type: "timeout_packet",
+    Attributes: []sdk.Attribute{
+        {Key: "module", Value: "transfer"},
+        {Key: "source_port", Value: "transfer"},
+        {Key: "source_channel", Value: "channel-1"},
+        {Key: "destination_port", Value: "transfer"},
+        {Key: "destination_channel", Value: "channel-0"},
+        {Key: "sequence", Value: "42"},
+        {Key: "timeout_height", Value: "1-1000"},
+        {Key: "timeout_timestamp", Value: "1630000000000000000"},
+    },
+}
+```
+
+## Relayer Events
+
+### `multi_hop_transfer`
+
+Emitted during a multi-hop transfer through multiple IBC channels.
+
+| Attribute Key | Description |
+| --- | --- |
+| `path` | The path of the multi-hop transfer (comma-separated channel IDs) |
+| `sender` | The original sender address |
+| `receiver` | The final receiver address |
+| `denom` | The original denomination |
+| `amount` | The amount transferred |
+
+```go
+sdk.Event{
+    Type: "multi_hop_transfer",
+    Attributes: []sdk.Attribute{
+        {Key: "path", Value: "channel-0,channel-1,channel-2"},
+        {Key: "sender", Value: "neutron1..."},
+        {Key: "receiver", Value: "osmosis1..."},
+        {Key: "denom", Value: "untrn"},
+        {Key: "amount", Value: "1000"},
+    },
+}
+``` 

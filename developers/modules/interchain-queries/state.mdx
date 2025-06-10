@@ -1,0 +1,313 @@
+# State
+
+This document describes the state management of the Interchain Queries module.
+
+## State Objects
+
+The Interchain Queries module maintains several key objects in its state:
+
+### InterchainQuery
+
+The primary state object tracking registered interchain queries:
+
+```go
+type InterchainQuery struct {
+    Id                 uint64
+    Owner              string
+    Type               string
+    Keys               []KVKey
+    TransactionsFilter *TransactionsFilter
+    ConnectionId       string
+    UpdatePeriod       uint64
+    LastHeight         uint64
+    Deposit            cosmos.Coin
+    SubmitTimeout      uint64
+    RegisteredAt       uint64
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `Id` | uint64 | Unique identifier for the query |
+| `Owner` | string | Address of the query owner |
+| `Type` | string | Type of query (`kv` or `tx`) |
+| `Keys` | []KVKey | KV store keys to query (for KV queries) |
+| `TransactionsFilter` | *TransactionsFilter | Filter for transactions (for TX queries) |
+| `ConnectionId` | string | ID of the IBC connection used |
+| `UpdatePeriod` | uint64 | Minimum number of blocks between query updates |
+| `LastHeight` | uint64 | Last height at which the query was updated |
+| `Deposit` | cosmos.Coin | Amount deposited when registering the query |
+| `SubmitTimeout` | uint64 | Number of blocks after which a query is considered expired |
+| `RegisteredAt` | uint64 | Block height at which the query was registered |
+
+### KVQueryResult
+
+Stores the results for KV queries:
+
+```go
+type KVQueryResult struct {
+    QueryId         uint64
+    ClientId        string
+    Height          int64
+    RevisionNumber  uint64
+    Result          []byte
+    ProofOps        ProofOps
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `QueryId` | uint64 | ID of the query this result is for |
+| `ClientId` | string | ID of the IBC light client used to verify the proof |
+| `Height` | int64 | Height of the result (on the remote chain) |
+| `RevisionNumber` | uint64 | IBC revision number |
+| `Result` | []byte | Query result data |
+| `ProofOps` | ProofOps | Proof operations that verify the result |
+
+### TxQueryResult
+
+Stores the results for TX queries:
+
+```go
+type TxQueryResult struct {
+    QueryId         uint64
+    ClientId        string
+    Height          int64
+    RevisionNumber  uint64
+    TxsData         []TxData
+}
+
+type TxData struct {
+    Hash      string
+    Height    int64
+    Index     uint32
+    Tx        []byte
+    Result    TxResult
+}
+
+type TxResult struct {
+    Code      uint32
+    Log       string
+    Events    []abci.Event
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `QueryId` | uint64 | ID of the query this result is for |
+| `ClientId` | string | ID of the IBC light client used to verify the result |
+| `Height` | int64 | Height of the result (on the remote chain) |
+| `RevisionNumber` | uint64 | IBC revision number |
+| `TxsData` | []TxData | Array of transaction data matching the filter |
+| `TxData.Hash` | string | Transaction hash |
+| `TxData.Height` | int64 | Block height containing the transaction |
+| `TxData.Index` | uint32 | Index of the transaction in the block |
+| `TxData.Tx` | []byte | Raw transaction data |
+| `TxData.Result` | TxResult | Result of transaction execution |
+
+## State Mappings
+
+The module maintains the following state mappings:
+
+### Queries by ID
+
+Stores all registered interchain queries by their unique ID:
+
+```
+queries: map[uint64]InterchainQuery
+```
+
+Key: `[]byte{QueryKey} + []byte{id}`
+
+### Queries by Owner
+
+Indexes queries by their owner address:
+
+```
+owner_queries: map[string][]uint64
+```
+
+Key: `[]byte{OwnerQueriesKey} + []byte{owner}`  
+Value: List of query IDs owned by this address
+
+### KV Query Results
+
+Stores results of KV queries:
+
+```
+kv_results: map[uint64]KVQueryResult
+```
+
+Key: `[]byte{KVResultKey} + []byte{id}`
+
+### TX Query Results
+
+Stores results of TX queries:
+
+```
+tx_results: map[uint64]TxQueryResult
+```
+
+Key: `[]byte{TXResultKey} + []byte{id}`
+
+### Last Query ID
+
+Tracks the last allocated query ID for auto-incrementing:
+
+```
+last_id: uint64
+```
+
+Key: `[]byte{LastIdKey}`
+
+## State Flow
+
+### Query Registration
+
+When a query is registered:
+
+1. A new unique ID is generated
+2. `InterchainQuery` object is created and stored in `queries`
+3. Query ID is added to owner's list in `owner_queries`
+4. Deposit is transferred from the owner to the module account
+
+### Query Result Submission
+
+When a query result is submitted:
+
+1. The corresponding `InterchainQuery` is retrieved from `queries`
+2. The result is validated (proof verification, update period check)
+3. Depending on query type:
+   - For KV queries: `KVQueryResult` is stored in `kv_results`
+   - For TX queries: `TxQueryResult` is stored in `tx_results`
+4. `LastHeight` in the query is updated to the current block height
+
+### Query Removal
+
+When a query is removed:
+
+1. The `InterchainQuery` is retrieved and deleted from `queries`
+2. The entry is removed from the owner's list in `owner_queries`
+3. Associated results are deleted from `kv_results` or `tx_results`
+4. The deposit is returned to the owner
+
+### Query Update
+
+When a query is updated:
+
+1. The `InterchainQuery` is retrieved from `queries`
+2. Fields are updated based on the update message
+3. The updated query is stored back to `queries`
+
+## Gas and Resource Limits
+
+The module enforces various limits to prevent abuse:
+
+1. **Maximum Key Size**: The maximum allowed size for a key in a KV query
+2. **Maximum Keys Per Query**: The maximum number of keys in a single KV query
+3. **Maximum Filter Size**: The maximum size of transaction filters
+4. **Minimum Update Period**: The minimum allowed value for `UpdatePeriod`
+5. **Maximum Result Size**: The maximum allowed size for query results
+
+The specific values are configurable through module parameters.
+
+## Example State Structure
+
+Here's an example of what the state might look like with two registered queries:
+
+```
+queries:
+  1 -> InterchainQuery{
+        Id: 1,
+        Owner: "neutron1...",
+        Type: "kv",
+        Keys: [{Path: "store/bank/key", Key: "balances/cosmos1..."}],
+        TransactionsFilter: nil,
+        ConnectionId: "connection-0",
+        UpdatePeriod: 100,
+        LastHeight: 5000,
+        Deposit: {Denom: "untrn", Amount: "100000000"},
+        SubmitTimeout: 10000,
+        RegisteredAt: 4900
+      }
+  2 -> InterchainQuery{
+        Id: 2,
+        Owner: "neutron2...",
+        Type: "tx",
+        Keys: [],
+        TransactionsFilter: {TransferFilter: {Recipient: "cosmos1..."}},
+        ConnectionId: "connection-0",
+        UpdatePeriod: 200,
+        LastHeight: 5100,
+        Deposit: {Denom: "untrn", Amount: "100000000"},
+        SubmitTimeout: 10000,
+        RegisteredAt: 5000
+      }
+
+owner_queries:
+  "neutron1..." -> [1]
+  "neutron2..." -> [2]
+
+kv_results:
+  1 -> KVQueryResult{
+        QueryId: 1,
+        ClientId: "07-tendermint-0",
+        Height: 12345,
+        RevisionNumber: 1,
+        Result: [0x01, 0x02, ...],
+        ProofOps: {...}
+      }
+
+tx_results:
+  2 -> TxQueryResult{
+        QueryId: 2,
+        ClientId: "07-tendermint-0",
+        Height: 12346,
+        RevisionNumber: 1,
+        TxsData: [{
+          Hash: "ABC123...",
+          Height: 12346,
+          Index: 3,
+          Tx: [0x01, 0x02, ...],
+          Result: {...}
+        }]
+      }
+
+last_id: 2
+```
+
+## Genesis State
+
+The genesis state of the Interchain Queries module includes:
+
+```go
+type GenesisState struct {
+    Params           Params
+    Queries          []InterchainQuery
+    KVQueryResults   []KVQueryResult
+    TXQueryResults   []TxQueryResult
+    LastQueryId      uint64
+}
+
+type Params struct {
+    MinQueryDeposit               cosmos.Coin
+    DepositRefundTimeout          uint64
+    QuerySubmitTimeout            uint64
+    FeesSettings                  FeesSettings
+    KVQueryMinGasAmount           uint64
+    TXQueryMinGasAmount           uint64
+    MaxQueryGasAmount             uint64
+    MinUpdateIntervalAmount       uint64
+    QueryGasLimit                 uint64
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `Params` | Params | Module parameters |
+| `Queries` | []InterchainQuery | List of all registered queries |
+| `KVQueryResults` | []KVQueryResult | Results of KV queries |
+| `TXQueryResults` | []TxQueryResult | Results of TX queries |
+| `LastQueryId` | uint64 | Last allocated query ID |
+
+The module's genesis state is initialized with default parameters and empty collections for queries and results. 

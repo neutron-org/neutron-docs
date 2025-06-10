@@ -1,0 +1,217 @@
+---
+title: "Becoming a Validator"
+description: "Steps to register as a Neutron validator"
+icon: "user-plus"
+---
+
+This guide will help you join Neutron's validator set after you have [set up your node](/validators/running-a-node) and [configured your oracle service](/validators/oracle-setup).
+
+<Note>
+  The Neutron DAO maintains a curated set of 20 validators selected based on performance metrics and technical capabilities. New validators are added when slots become available through the DAO's rotation policy.
+</Note>
+
+## Prerequisites
+
+Before proceeding, ensure you have:
+
+<CheckboxGroup>
+  <Checkbox title="Full Node Setup">
+    A fully synced Neutron node running the latest version
+  </Checkbox>
+  <Checkbox title="Oracle Configuration">
+    Properly configured Slinky oracle service
+  </Checkbox>
+  <Checkbox title="NTRN Tokens">
+    Sufficient NTRN tokens for self-delegation (minimum 1 NTRN)
+  </Checkbox>
+  <Checkbox title="Monitoring">
+    Monitoring and alerting systems to maintain high performance
+  </Checkbox>
+</CheckboxGroup>
+
+## Validator Selection Process
+
+The Neutron DAO implements a transparent selection process for validators, based on:
+
+1. **Technical Performance**: Validators must consistently meet or exceed performance thresholds
+2. **Dual Network Requirement**: Operators must run nodes on both mainnet and testnet
+3. **Prioritization**: Eligible operators are prioritized by reverse order of mainnet voting power
+
+<div className="my-6 p-4 border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20">
+  <h3 className="text-lg font-medium mb-2">Validator Rotation Policy</h3>
+  <p>The Validator Set Rotation Framework ensures the network maintains a high-performing validator set. After the initial one-month grace period following the Mercury upgrade, validators are evaluated based on objective performance metrics by the Neutron DAO.</p>
+</div>
+
+### Rotation Criteria
+
+Validators may be rotated out of the active set under the following conditions determined by the Neutron DAO:
+
+<AccordionGroup>
+  <Accordion title="Performance-Based Offboarding">
+    A validator is considered for offboarding if:
+    
+    - **Consecutive Performance Failure**: No rewards from x/revenue for two months in a row
+      - Notified after first month
+      - Flagged for rotation after second consecutive month
+    - **Intermittent Performance Issues**: No rewards from x/revenue for three months in a 6-month period
+      - Notified after second month within a 6-month period
+      - Flagged for rotation after third missed month
+    - **Tombstoning**: Validator was tombstoned
+  </Accordion>
+  <Accordion title="Downtime-Based Offboarding">
+    A validator is considered for offboarding if:
+    
+    - **Resumption Latency**: Failed to resume signing within 60 minutes of the first finalized block after a successful upgrade
+    - **Precommit Latency**: Failed to begin precommitting within 2 hours of the distribution of correct upgrade instructions
+    
+    In both cases, validators are notified on the first occurrence and marked for rotation on the second.
+  </Accordion>
+</AccordionGroup>
+
+### Onboarding Process
+
+When a slot becomes available, the Neutron DAO selects new validators according to the following process:
+
+1. Must run both mainnet and testnet nodes
+2. Eligible operators are prioritized by reverse order of mainnet voting power 
+3. Selected operators initially receive a small delegation from the DAO
+4. After demonstrating adequate performance for three months, they will receive a full delegation
+5. If they fail to perform adequately, the DAO will redelegate to the next operator in line
+
+## Creating Your Validator
+
+### Step 1: Create a Wallet
+
+First, create a wallet for your validator:
+
+```bash
+neutrond keys add <wallet-name>
+```
+
+Save the mnemonic phrase in a secure location. This wallet will be used for managing your validator.
+
+### Step 2: Obtain NTRN Tokens
+
+You'll need NTRN tokens to stake. These can be obtained from:
+
+- Exchanges that list NTRN
+- Purchasing ATOM and using IBC transfer to Neutron
+- The community (Discord/Telegram) for testnet tokens
+
+### Step 3: Submit the Create Validator Transaction
+
+Once your node is synced and you have NTRN tokens, register your validator:
+
+```bash
+neutrond tx staking create-validator \
+  --amount=1000000untrn \
+  --pubkey=$(neutrond tendermint show-validator) \
+  --moniker="<your-validator-name>" \
+  --website="<your-website>" \
+  --details="<description>" \
+  --security-contact="<email>" \
+  --chain-id=neutron-1 \
+  --commission-rate="0.10" \
+  --commission-max-rate="0.20" \
+  --commission-max-change-rate="0.01" \
+  --min-self-delegation="1" \
+  --gas="auto" \
+  --gas-adjustment="1.5" \
+  --gas-prices="0.025untrn" \
+  --from=<wallet-name>
+```
+
+### Command Parameters Explained
+
+<div className="overflow-x-auto">
+  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+    <thead>
+      <tr className="bg-gray-50 dark:bg-gray-800">
+        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Parameter</th>
+        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Description</th>
+      </tr>
+    </thead>
+    <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+      <tr>
+        <td className="px-4 py-2 text-sm">amount</td>
+        <td className="px-4 py-2 text-sm">The amount to self-delegate (in untrn)</td>
+      </tr>
+      <tr>
+        <td className="px-4 py-2 text-sm">pubkey</td>
+        <td className="px-4 py-2 text-sm">Your validator's public key</td>
+      </tr>
+      <tr>
+        <td className="px-4 py-2 text-sm">moniker</td>
+        <td className="px-4 py-2 text-sm">A name for your validator</td>
+      </tr>
+      <tr>
+        <td className="px-4 py-2 text-sm">commission-rate</td>
+        <td className="px-4 py-2 text-sm">Initial commission rate (e.g., 10%)</td>
+      </tr>
+      <tr>
+        <td className="px-4 py-2 text-sm">commission-max-rate</td>
+        <td className="px-4 py-2 text-sm">Maximum commission rate (e.g., 20%)</td>
+      </tr>
+      <tr>
+        <td className="px-4 py-2 text-sm">min-self-delegation</td>
+        <td className="px-4 py-2 text-sm">Minimum self-delegation amount</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+## Verify Your Validator
+
+After submitting the transaction, verify that your validator was created:
+
+```bash
+neutrond query staking validators --limit 1000 -o json | jq '.validators[] | select(.description.moniker=="<your-validator-name>")'
+```
+
+You can also check your validator status on Neutron block explorers:
+
+- [Mintscan](https://www.mintscan.io/neutron)
+- [Ping.pub](https://ping.pub/neutron)
+
+## Security and Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Dedicated Machine" icon="server" iconType="duotone">
+    Run your validator on a dedicated machine separate from other services
+  </Card>
+  <Card title="Firewall Configuration" icon="shield-check" iconType="duotone">
+    Allow only necessary ports (26656, 26657, etc.) and use SSH key authentication
+  </Card>
+  <Card title="Sentry Architecture" icon="network-wired" iconType="duotone">
+    Deploy sentry nodes to protect your validator from DDoS attacks
+  </Card>
+  <Card title="Key Management" icon="key" iconType="duotone">
+    Consider using a hardware security module (HSM) for key management
+  </Card>
+</CardGroup>
+
+## Monitoring Performance
+
+Set up comprehensive monitoring to ensure your validator meets performance requirements:
+
+- Block signing rate (minimum 95%, target 99.5%)
+- Oracle price updates (minimum 95%, target 98%)
+- System resource utilization
+- Network connectivity
+
+Popular monitoring solutions include:
+
+- Prometheus + Grafana
+- Cosmos Validator Monitoring
+- TenderDuty
+
+## Maintaining Eligibility
+
+To maintain your position in the validator set and remain eligible for DAO delegations:
+
+1. **Stay Updated**: Keep your node software updated to the latest version
+2. **Active Upgrades**: Participate promptly in network upgrades
+3. **Community Participation**: Join validator discussions and governance
+4. **Performance Monitoring**: Ensure you consistently meet or exceed performance thresholds
+5. **Run a Testnet Node**: Maintain an active testnet validator alongside your mainnet node
+

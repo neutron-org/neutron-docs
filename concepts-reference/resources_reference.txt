@@ -1,0 +1,906 @@
+ok, so @reference , can actually be made into it's own tab in @docs.json ,so remove it from @developers accordingly, and then make a new tab for it, and the new tab should be resources, it should include al of the following: 
+v6.0.1	Upgrade (more info)	Coordinated consensus breaking security upgrade on 23rd of April 2025 approximately at 15:00 UTC on height 22996000.
+Parameters
+Below are the neutron-1 chain parameters:
+
+Name	Value
+chain-id	neutron-1
+denom	untrn
+minimum-gas-prices	0.01untrn
+timeout_commit	1s
+genesis_time	2023-05-10T15:00:00.000000Z
+The minimum-gas-prices parameter must be set to 0.01untrn. At chain launch (and until the end of the Token Generation Event) the only address that will have untrns will be the initial Hermes relayer. This relayer will be configured to only process Transfer messages between Neutron and Cosmos Hub. As soon as the chain starts, some uatoms will be transferred from Cosmos Hub to Neutron and the bridged ATOM denom will be communicated to the validators. After that, the validators will be able to set the minimum-gas-prices in bridged ATOMs.
+
+Binary
+The release binary information is provided below:
+
+Item	Description
+GitHub repo	neutron-org/neutron
+Release	v1.0.1
+Reference binary	neutrond-linux-amd64
+Checksum (sha256)	b628d3eb1e0e12617b2c905f07dc39bd91d5dd3bd284a2a51d47c04cc3aa2e6d
+The neutrond-linux-amd64 binary is only provided to verify the SHA256. It was built with Interchain Security release v1.2.0-multiden. You can generate the binary following the build instructions in the neutron-org/neutron repo.
+
+The Cosmos Hub was recently upgraded to v9.1.0, which bumps ICS to v1.1.0-multiden. This version introduces two new parameters to prevent Replicated Security’s logic for handling rewards to be abused as a DOS vector.
+
+This required a release of a new version of Neutron, v1.0.1, which must be used for the mainnet launch. The only difference between v1.0.0-rc1, which was used in the proposal, and v1.0.1 is the upgrade of Interchain Security to the latest release, v1.2.0-multiden, which is compatible with the new parameters. You can check the difference here.
+
+⚠️ All validators are required to use Neutron v1.0.1 during the mainnet launch. The instructions on how to build v1.0.1 can be found in the How to Join section.
+
+Genesis
+The final genesis.json information is provided below:
+
+Item	Description
+Genesis	genesis.json
+Checksum (sha256)	9496492c81b31befb59a4336d5ae4444c24b863721d21be143d7d4fdf8072c84
+⚠️ All validators are required use the genesis.json file provided in this instruction.
+
+If you want to get a better idea of what was changed in the genesis since Proposal 792, please read the sections below.
+
+ccvconsumer section updates
+Due to the upgrade of the Neutron's ICS dependency to v1.2.0-multiden, and due to using a version of ICS with soft opt-out, there is 3 parameters that were added to the ccvconsumer section of the genesis:
+
+{
+  "soft_opt_out_threshold": "0.05",
+  "reward_denoms": ["untrn"],
+  "provider_reward_denoms": ["uatom"]
+}
+rewards_denoms: rewards denominations from the Consumer chain (e.g. uNTRN or IBC denoms used on the consumer chain);
+provider_rewards_denoms: rewards denomination from the Provider chain (e.g. uATOM);
+soft_opt_out_threshold: this parameter was set to 0.05 to allow the smaller validators to opt out of validating Neutron without being slashed.
+slashing parameters
+In the pre-genesis, we used incorrect slashing parameters. Below you can see the slashing parameters diff:
+
++ "signed_blocks_window": "140000",
++ "min_signed_per_window": "0.050000000000000000",
++ "slash_fraction_downtime": "0.000100000000000000"
+- "signed_blocks_window": "100",
+- "min_signed_per_window": "0.500000000000000000",
+- "slash_fraction_downtime": "0.010000000000000000"
+signed_blocks_window was increased to approximately 4 days given a 2.5s block production time that we are expecting. This is done to give the validators more time to recover a failed node;
+min_signed_per_window was adjusted to match the value used by he Cosmos Hub;
+slash_fraction_downtime was adjusted to match the value used by he Cosmos Hub.
+wasm artifacts
+Neutron genesis instantiates dozens of smart contracts that are used by the Neutron DAO and the Neutron Token Generation Event. Since the time when Proposal 792 was published, we fixed some bugs and introduced some improvements to our smart contracts.
+
+We have a script that you can copy to an empty directory and run to get the final genesis. We provide this script for information purposes only, and we do not guarantee that it will work on your machine (although if you have a Mac and the Docker daemon is running, it should produce the final genesis.json within approximately 30 minutes because it will build all the wasm binaries).
+
+⚠️ Please use the genesis.json file provided above during the coordinated launch.
+
+Endpoints
+Seed nodes:
+
+24f609fb5946ca3a979f40b7f54132c00104433e@p2p-erheim.neutron-1.neutron.org:26656
+20e1000e88125698264454a884812746c2eb4807@seeds.lavenderfive.com:19156
+b1c6fa570a184c56d0d736d260b8065d887e717c@p2p-kralum.neutron-1.neutron.org:26656
+f80e07ebb0ae3f11d938e8e224705b1039f000b5@neutron.dhk.org:26656
+ade4d8bc8cbe014af6ebdf3cb7b1e9ad36f412c0@seeds.polkachu.com:19156
+Persistent nodes:
+
+e5d2743d9a3de514e4f7b9461bf3f0c1500c58d9@neutron.peer.stakewith.us:39956
+982f968cd6ac567fdddf2170f7da9725ba21693d@51.210.209.49:15600
+8e2af33b3fc9fee81dda7d351a65d93e8ac97409@65.108.71.163:2480
+b119a600d082963d27a9ba9cd762c7c83f00e7d1@81.196.190.108:10083
+9cede4e9f58fc3dfc80ad643c0e1f1cbab26b8ba@138.201.135.251:26656
+2ee64f9f128e8a9f15f47a8f8d0e9cde7351fd17@46.101.193.151:26656
+ce526dc00568900d54dedf2fd2680ddfc7a58c59@138.201.124.215:36656
+5865c2bae7c0403c0c6d90c01556b1b2bb437ef8@51.89.195.173:26656
+Also you can use this addrbook.json to bootstrap your nodes.
+
+The following state sync node serve snapshots every 2000 blocks:
+
+http://rpc-kralum.neutron-1.neutron.org:26657
+latest version: 
+---
+title: Neutron v6.0.1 Upgrade
+order: 2
+---
+
+<!-- markdown-link-check-disable -->
+
+# Neutron v6.0.1 Upgrade, Instructions
+
+- Chain upgrade point: `April 23rd 2025, 15:00 UTC (approximately)`, at height `22996000`;
+- Go version: `v1.23`
+- Release: https://github.com/neutron-org/neutron/releases/tag/v6.0.1
+
+This document describes the steps for validators and full node operators, to upgrade successfully to the Neutron v6.0.1 release. For more details on the release, please see the [release notes](https://github.com/neutron-org/neutron/releases/tag/v6.0.1).
+
+## Upgrade date
+
+The upgrade will take place approximately on April 10th at `15:00 UTC` approximately at height `22996000`;
+
+## Chain-id will remain the same
+
+The chain-id of the network will remain the same, `neutron-1`. This is because an in-place migration of state will take place, i.e., this upgrade does not export any state.
+
+### System requirement
+
+- 64GB RAM is recommended to ensure a smooth upgrade.
+
+If you have less than 64GB RAM, you might try creating a swapfile to swap an idle program onto the hard disk to free up memory. This can allow your machine to run the binary than it could run in RAM alone.
+
+```shell
+sudo fallocate -l 64G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+```
+
+- Make sure you have enough disk space for upgrade, the state can grow twice durng upgrade.
+
+### Backups
+
+Prior to the upgrade, validators are encouraged to take a full data snapshot. Snapshotting depends heavily on infrastructure, but generally this can be done by backing up the `.neutrond` directory.
+If you use Cosmovisor to upgrade, by default, Cosmovisor will backup your data upon upgrade. See below [upgrade using cosmovisor](#method-ii-upgrade-using-cosmovisor) section.
+
+It is critically important for validator operators to back-up the `.neutrond/data/priv_validator_state.json` file after stopping the neutrond process. This file is updated every block as your validator participates in consensus rounds. It is a critical file needed to prevent double-signing, in case the upgrade fails and the previous chain needs to be restarted.
+
+### Current runtime
+
+The Neutron mainnet network, `neutron-1`, is currently running [Neutron v6.0.0](https://github.com/neutron-org/neutron/releases/tag/v6.0.0). We anticipate that operators who are running on v6.0.0, will be able to upgrade successfully. Validators are expected to ensure that their systems are up-to-date and capable of performing the upgrade. This includes running the correct binary, or if building from source, building with go `1.23`.
+
+### Target runtime
+
+The Neutron mainnet network, `neutron-1`, will run [Neutron v6.0.1](https://github.com/neutron-org/neutron/releases/tag/v6.0.1). Operators _**MUST**_ use this version post-upgrade to remain connected to the network.
+
+## Upgrade steps
+
+There are 2 major ways to upgrade a node:
+
+- Manual upgrade
+- Upgrade using [Cosmovisor](https://pkg.go.dev/cosmossdk.io/tools/cosmovisor)
+    - Either by manually preparing the new binary
+    - Or by using the auto-download functionality (this is not yet recommended)
+
+If you prefer to use Cosmovisor to upgrade, some preparation work is needed before upgrade.
+
+## Create the updated Neutron binary of v6.0.1
+
+### Go to neutron directory if present else clone the repository
+
+```shell
+   git clone https://github.com/neutron-org/neutron.git
+```
+
+### Follow these steps if neutron repo already present
+
+```shell
+   cd $HOME/neutron
+   git pull
+   git fetch --tags
+   git checkout v6.0.1
+   make install
+```
+
+### Check the new neutron version, verify the latest commit hash
+```shell
+   $ neutrond version --long
+   build_tags: netgo,ledger
+    commit: b6f5a3765906d4ef6f848e805f1ccf02063056f4
+    cosmos_sdk_version: v0.50.13-neutron
+    go: go version go1.23.7 darwin/arm64
+    name: neutron
+    server_name: neutrond
+    version: 6.0.1
+   ...
+```
+
+### Or check checksum of the binary if you decided to [download it](https://github.com/neutron-org/neutron/releases/tag/v6.0.1)
+
+```shell
+$ shasum -a 256 neutrond-linux-amd64
+ca72a3833662485e5edb395911657c1bd4618750ed8ca5fbb14e4d9a9c4d1f8e  neutrond-linux-amd64
+```
+
+
+### Make sure you are using the proper version of libwasm
+
+You can check the version you are currently using by running the following command:
+```
+$ neutrond q wasm libwasmvm-version
+
+2.1.5
+```
+The proper version is `2.1.5`.
+
+**If the version on your machine is different you MUST change it immediately!**
+
+#### Ways to change libwasmvm
+
+- Use a statically built Neutrond binary from an official Neutron release: [https://github.com/neutron-org/neutron/releases/tag/v6.0.1](https://github.com/neutron-org/neutron/releases/tag/v6.0.1)
+- If you built Neutron binary by yourself, `libwasmvm` should be loaded dynamically in your binary and somehow, the wrong `libwasmvm` library was present on your machine. You can change it by downloading the proper one and linking it to the Neutron binary manually:
+1. download a proper version of `libwasmvm`:
+
+```
+$ wget https://github.com/CosmWasm/wasmvm/releases/download/v2.1.5/libwasmvm.x86_64.so
+```
+
+2. tell the linker where to find it:
+```
+$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/lib/
+```
+
+3. check that libwasmvm version is correct:
+```
+$ neutrond q wasm libwasmvm-version
+2.1.5
+```
+
+### Method I: Manual Upgrade
+
+Make sure Neutron v6.0.1 is installed by either downloading a [compatible binary](https://github.com/neutron-org/neutron/releases/tag/v6.0.1), or building from source. Building from source requires **Golang 1.23.x**.
+
+Run Neutron v6.0.0 till upgrade height, the node will panic:
+
+```shell
+ERR UPGRADE "v6.0.1" NEEDED at height: 22996000: upgrade to v6.0.1 and applying upgrade "v6.0.1" at height: 22996000
+```
+
+Stop the node, and switch the binary to **Neutron v6.0.1** and re-start by `neutrond start`.
+
+It may take several minutes to a few hours until validators with a total sum voting power > 2/3 to complete their node upgrades. After that, the chain can continue to produce blocks.
+
+### Method II: Upgrade using Cosmovisor
+
+### Manually preparing the binary
+
+##### Preparation
+
+Install the latest version of Cosmovisor (`1.5.0`):
+
+```shell
+go install cosmossdk.io/tools/cosmovisor/cmd/cosmovisor@v1.5.0
+```
+
+**Verify Cosmovisor Version**
+
+```shell
+cosmovisor version
+cosmovisor version: v1.5.0
+```
+
+Create a cosmovisor folder:
+
+create a Cosmovisor folder inside `$NEUTRON_HOME` and move Neutron v6.0.0 into `$NEUTRON_HOME/cosmovisor/genesis/bin`
+
+```shell
+mkdir -p $NEUTRON_HOME/cosmovisor/genesis/bin
+cp $(which neutrond) $NEUTRON_HOME/cosmovisor/genesis/bin
+```
+
+build **Neutron v6.0.1**, and move neutrond v6.0.1 to `$NEUTRON_HOME/cosmovisor/upgrades/v6.0.1/bin`
+
+```shell
+mkdir -p  $NEUTRON_HOME/cosmovisor/upgrades/v6.0.1/bin
+cp $(which neutrond) $NEUTRON_HOME/cosmovisor/upgrades/v6.0.1/bin
+```
+
+Then you should get the following structure:
+
+```shell
+.
+├── current -> genesis or upgrades/<name>
+├── genesis
+│   └── bin
+│       └── neutrond  #v6.0.0
+└── upgrades
+    └── v6.0.1
+        └── bin
+            └── neutrond  #v6.0.1
+```
+
+Export the environmental variables:
+
+```shell
+export DAEMON_NAME=neutrond
+# please change to your own neutron home dir
+# please note `DAEMON_HOME` has to be absolute path
+export DAEMON_HOME=$NEUTRON_HOME
+export DAEMON_RESTART_AFTER_UPGRADE=true
+```
+
+Start the node:
+
+```shell
+cosmovisor run  start --x-crisis-skip-assert-invariants --home $DAEMON_HOME
+```
+
+Skipping the invariant checks is strongly encouraged since it decreases the upgrade time significantly and since there are some other improvements coming to the crisis module in the next release of the Cosmos SDK.
+
+#### Expected upgrade result
+
+When the upgrade block height is reached, Neutron will panic and stop.
+
+After upgrade, the chain will continue to produce blocks when validators with a total sum voting power > 2/3 complete their node upgrades.
+
+## Upgrade duration
+
+Most likely it takes a couple of minutes.
+
+## Rollback plan
+
+During the network upgrade, core Neutron team will be keeping an ever vigilant eye and communicating with operators on the status of their upgrades. During this time, the core team will listen to operator needs to determine if the upgrade is experiencing unintended challenges. In the event of unexpected challenges, the core team, after conferring with operators and attaining social consensus, may choose to declare that the upgrade will be skipped.
+
+Steps to skip this upgrade proposal are simply to resume the neutron-1 network with the (downgraded) v6.0.0 binary using the following command:
+
+> neutrond start --unsafe-skip-upgrade 22996000
+
+Note: There is no particular need to restore a state snapshot prior to the upgrade height, unless specifically directed by core Neutron team.
+
+Important: A social consensus decision to skip the upgrade will be based solely on technical merits, thereby respecting and maintaining the decentralized governance process of the upgrade proposal's successful YES vote.
+
+## Risks
+
+As a validator performing the upgrade procedure on your consensus nodes carries a heightened risk of double-signing and being slashed. The most important piece of this procedure is verifying your software version and genesis file hash before starting your validator and signing.
+
+The riskiest thing a validator can do is discover that they made a mistake and repeat the upgrade procedure again during the network startup. If you discover a mistake in the process, the best thing to do is wait for the network to start before correcting it.
+
+## FAQ
+
+1. Q: My node restarted in the middle of upgrade process (OOM killed, hardware issues, etc), is it safe to just proceed with the upgrade
+
+   A: No. Most likely the upgrade will be completed successfully. But you get AppHash error after the network gets up. It's a lot safer to restart full process from scratch(recover the node from a backup).
+
+   To perform an upgrade you need to keep your `./data/priv_validator_state.json` file when you are applying a snapshot from the backup.
+   This will help you avoid the risk of slashing due to double signing.
+
+<!-- markdown-link-check-enable -->
+
+^^that's mainnet
+
+this is tesntet
+---
+title: Neutron v7.0.0-rc0 Upgrade
+order: 2
+---
+
+<!-- markdown-link-check-disable -->
+
+# Neutron v7.0.0-rc0 Upgrade, Instructions
+
+- Chain upgrade point: `April 30th 2025, 15:00 UTC (approximately) at height 28545000`;
+- Go version: `v1.23`
+- Release: https://github.com/neutron-org/neutron/releases/tag/v7.0.0-rc0
+
+This document describes the steps for validators and full node operators, to upgrade successfully to the Neutron v7.0.0-rc0 release. For more details on the release, please see the [release notes](https://github.com/neutron-org/neutron/releases/tag/v7.0.0-rc0).
+
+## Upgrade date
+
+The upgrade will take place approximately on April 30th at `15:00 UTC` approximately at height 28545000;
+
+## Chain-id will remain the same
+
+The chain-id of the network will remain the same, `pion-1`. This is because an in-place migration of state will take place, i.e., this upgrade does not export any state.
+
+### System requirement
+
+- 64GB RAM is recommended to ensure a smooth upgrade.
+
+If you have less than 64GB RAM, you might try creating a swapfile to swap an idle program onto the hard disk to free up memory. This can allow your machine to run the binary than it could run in RAM alone.
+
+```shell
+sudo fallocate -l 64G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+```
+
+- Make sure you have enough disk space for upgrade, the state can grow twice durng upgrade.
+
+### Backups
+
+Prior to the upgrade, validators are encouraged to take a full data snapshot. Snapshotting depends heavily on infrastructure, but generally this can be done by backing up the `.neutrond` directory.
+If you use Cosmovisor to upgrade, by default, Cosmovisor will backup your data upon upgrade. See below [upgrade using cosmovisor](#method-ii-upgrade-using-cosmovisor) section.
+
+It is critically important for validator operators to back-up the `.neutrond/data/priv_validator_state.json` file after stopping the neutrond process. This file is updated every block as your validator participates in consensus rounds. It is a critical file needed to prevent double-signing, in case the upgrade fails and the previous chain needs to be restarted.
+
+### Current runtime
+
+The Neutron mainnet network, `pion-1`, is currently running [Neutron v6.0.0-rc0](https://github.com/neutron-org/neutron/releases/tag/v6.0.0-rc0). We anticipate that operators who are running on v6.0.0-rc0, will be able to upgrade successfully. Validators are expected to ensure that their systems are up-to-date and capable of performing the upgrade. This includes running the correct binary, or if building from source, building with go `1.23`.
+
+### Target runtime
+
+The Neutron mainnet network, `pion-1`, will run [Neutron v7.0.0-rc0](https://github.com/neutron-org/neutron/releases/tag/v7.0.0-rc0). Operators _**MUST**_ use this version post-upgrade to remain connected to the network.
+
+## Upgrade steps
+
+There are 2 major ways to upgrade a node:
+
+- Manual upgrade
+- Upgrade using [Cosmovisor](https://pkg.go.dev/cosmossdk.io/tools/cosmovisor)
+    - Either by manually preparing the new binary
+    - Or by using the auto-download functionality (this is not yet recommended)
+
+If you prefer to use Cosmovisor to upgrade, some preparation work is needed before upgrade.
+
+## Create the updated Neutron binary of v7.0.0-rc0
+
+### Go to neutron directory if present else clone the repository
+
+```shell
+   git clone https://github.com/neutron-org/neutron.git
+```
+
+### Follow these steps if neutron repo already present
+
+```shell
+   cd $HOME/neutron
+   git pull
+   git fetch --tags
+   git checkout v7.0.0-rc0
+   make install
+```
+
+### Check the new neutron version, verify the latest commit hash
+```shell
+   $ neutrond version --long
+    build_tags: netgo,ledger
+    commit: 3a20f9cd1144e0713eb8637242884624f9aaa1bf
+    cosmos_sdk_version: v0.50.13-neutron
+    go: go version go1.23.7 darwin/arm64
+    name: neutron
+    server_name: neutrond
+    version: 7.0.0-rc0
+   ...
+```
+
+### Or check checksum of the binary if you decided to [download it](https://github.com/neutron-org/neutron/releases/tag/v7.0.0-rc0)
+
+```shell
+$ shasum -a 256 neutrond-linux-amd64
+e6dd03cd39d2098baa1abb0900aa79a27515942bd31295d3ca9b5d73427e56a1  neutrond-linux-amd64
+```
+
+
+### Make sure you are using the proper version of libwasm
+
+You can check the version you are currently using by running the following command:
+```
+$ neutrond q wasm libwasmvm-version
+
+2.2.3
+```
+The proper version is `2.2.3`.
+
+**If the version on your machine is different you MUST change it immediately!**
+
+#### Ways to change libwasmvm
+
+- Use a statically built Neutrond binary from an official Neutron release: [https://github.com/neutron-org/neutron/releases/tag/v7.0.0-rc0](https://github.com/neutron-org/neutron/releases/tag/v7.0.0-rc0)
+- If you built Neutron binary by yourself, `libwasmvm` should be loaded dynamically in your binary and somehow, the wrong `libwasmvm` library was present on your machine. You can change it by downloading the proper one and linking it to the Neutron binary manually:
+1. download a proper version of `libwasmvm`:
+
+```
+$ wget https://github.com/CosmWasm/wasmvm/releases/download/v2.2.3/libwasmvm.x86_64.so
+```
+
+2. tell the linker where to find it:
+```
+$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/lib/
+```
+
+3. check that libwasmvm version is correct:
+```
+$ neutrond q wasm libwasmvm-version
+2.2.3
+```
+
+### Method I: Manual Upgrade
+
+Make sure Neutron v7.0.0-rc0 is installed by either downloading a [compatible binary](https://github.com/neutron-org/neutron/releases/tag/v7.0.0-rc0), or building from source. Building from source requires **Golang 1.23.x**.
+
+Run Neutron v6.0.0-rc0 till upgrade height, the node will panic:
+
+```shell
+ERR UPGRADE "v7.0.0-rc0" NEEDED at height: 28545000: upgrade to v7.0.0-rc0 and applying upgrade "v7.0.0-rc0" at height: 28545000
+```
+
+Stop the node, and switch the binary to **Neutron v7.0.0-rc0** and re-start by `neutrond start`.
+
+It may take several minutes to a few hours until validators with a total sum voting power > 2/3 to complete their node upgrades. After that, the chain can continue to produce blocks.
+
+### Method II: Upgrade using Cosmovisor
+
+### Manually preparing the binary
+
+##### Preparation
+
+Install the latest version of Cosmovisor (`1.5.0`):
+
+```shell
+go install cosmossdk.io/tools/cosmovisor/cmd/cosmovisor@v1.5.0
+```
+
+**Verify Cosmovisor Version**
+
+```shell
+cosmovisor version
+cosmovisor version: v1.5.0
+```
+
+Create a cosmovisor folder:
+
+create a Cosmovisor folder inside `$NEUTRON_HOME` and move Neutron v6.0.0-rc0 into `$NEUTRON_HOME/cosmovisor/genesis/bin`
+
+```shell
+mkdir -p $NEUTRON_HOME/cosmovisor/genesis/bin
+cp $(which neutrond) $NEUTRON_HOME/cosmovisor/genesis/bin
+```
+
+build **Neutron v7.0.0-rc0**, and move neutrond v7.0.0-rc0 to `$NEUTRON_HOME/cosmovisor/upgrades/v7.0.0/bin`
+
+```shell
+mkdir -p  $NEUTRON_HOME/cosmovisor/upgrades/v7.0.0/bin
+cp $(which neutrond) $NEUTRON_HOME/cosmovisor/upgrades/v7.0.0/bin
+```
+
+Then you should get the following structure:
+
+```shell
+.
+├── current -> genesis or upgrades/<name>
+├── genesis
+│   └── bin
+│       └── neutrond  #v6.0.0-rc0
+└── upgrades
+    └── v7.0.0
+        └── bin
+            └── neutrond  #v7.0.0-rc0
+```
+
+Export the environmental variables:
+
+```shell
+export DAEMON_NAME=neutrond
+# please change to your own neutron home dir
+# please note `DAEMON_HOME` has to be absolute path
+export DAEMON_HOME=$NEUTRON_HOME
+export DAEMON_RESTART_AFTER_UPGRADE=true
+```
+
+Start the node:
+
+```shell
+cosmovisor run  start --x-crisis-skip-assert-invariants --home $DAEMON_HOME
+```
+
+Skipping the invariant checks is strongly encouraged since it decreases the upgrade time significantly and since there are some other improvements coming to the crisis module in the next release of the Cosmos SDK.
+
+#### Expected upgrade result
+
+When the upgrade block height is reached, Neutron will panic and stop.
+
+After upgrade, the chain will continue to produce blocks when validators with a total sum voting power > 2/3 complete their node upgrades.
+
+## Upgrade duration
+
+Most likely it takes a couple of minutes.
+
+## Rollback plan
+
+During the network upgrade, core Neutron team will be keeping an ever vigilant eye and communicating with operators on the status of their upgrades. During this time, the core team will listen to operator needs to determine if the upgrade is experiencing unintended challenges. In the event of unexpected challenges, the core team, after conferring with operators and attaining social consensus, may choose to declare that the upgrade will be skipped.
+
+Steps to skip this upgrade proposal are simply to resume the pion-1 network with the (downgraded) v6.0.0-rc0 binary using the following command:
+
+> neutrond start --unsafe-skip-upgrade 28545000
+
+Note: There is no particular need to restore a state snapshot prior to the upgrade height, unless specifically directed by core Neutron team.
+
+Important: A social consensus decision to skip the upgrade will be based solely on technical merits, thereby respecting and maintaining the decentralized governance process of the upgrade proposal's successful YES vote.
+
+## Risks
+
+As a validator performing the upgrade procedure on your consensus nodes carries a heightened risk of double-signing and being slashed. The most important piece of this procedure is verifying your software version and genesis file hash before starting your validator and signing.
+
+The riskiest thing a validator can do is discover that they made a mistake and repeat the upgrade procedure again during the network startup. If you discover a mistake in the process, the best thing to do is wait for the network to start before correcting it.
+
+## FAQ
+
+1. Q: My node restarted in the middle of upgrade process (OOM killed, hardware issues, etc), is it safe to just proceed with the upgrade
+
+   A: No. Most likely the upgrade will be completed successfully. But you get AppHash error after the network gets up. It's a lot safer to restart full process from scratch(recover the node from a backup).
+
+   To perform an upgrade you need to keep your `./data/priv_validator_state.json` file when you are applying a snapshot from the backup.
+   This will help you avoid the risk of slashing due to double signing.
+
+<!-- markdown-link-check-enable -->
+
+Neutron
+https://rpc-vertexa.neutron-1.neutron.org	
+Status	Available
+Height	24086220
+Response time	26ms
+Last check	4 minutes ago
+Last error	Response code 502 (Bad Gateway)
+13 days ago
+
+Neutron
+https://rpc-solara.neutron-1.neutron.org	
+Status	Available
+Height	24086217
+Response time	17ms
+Last check	4 minutes ago
+Last error	Response code 502 (Bad Gateway)
+13 days ago
+Neutron
+https://rest-solara.neutron-1.neutron.org	
+Status	Available
+Height	24086220
+Response time	12ms
+Last check	4 minutes ago
+Last error	Response code 502 (Bad Gateway)
+13 days ago
+Neutron
+https://rest-vertexa.neutron-1.neutron.org	
+Status	Available
+Height	24086222
+Response time	45ms
+Last check	4 minutes ago
+Last error	Response code 502 (Bad Gateway)
+13 days ago
+
+
+APIs
+RPC
+REST
+GRPC
+Provider	Status
+Neutron
+grpc-lb.neutron.org:80	Unknown
+Neutron
+grpc-kralum.neutron-1.neutron.org:80	Unknown
+
+Peers
+Seeds
+Peers
+Provider	Address
+Neutron	74f3a4a0423e72334f4439b438b29934e5f0dbbd@p2p-xyphion.neutron-1.neutron.org:26656
+Neutron	65beeffac5c0f29e6c3749687f03b2040d265895@p2p-talzor.neutron-1.neutron.org:26656
+
+cosmos.directory / neutron 
+Overview
+Chain
+Validators
+Nodes
+Chain Registry updated: a day ago
+
+
+Neutron
+Chain ID	neutron-1
+Height	24086222
+Token	NTRN
+Chain Status	Live
+API Status	Available
+Website	https://neutron.org/
+Explorers	https://www.mintscan.io/neutron
+https://ezstaking.app/neutron
+https://mainnet.whispernode.com/neutron
+Data sources
+Chain Registry	chains.cosmos.directory/neutron
+chains.cosmos.directory/neutron/chain
+chains.cosmos.directory/neutron/assetlist
+Validator Registry	validators.cosmos.directory/chains/neutron
+API Proxies	rpc.cosmos.directory/neutron
+rest.cosmos.directory/neutron
+API Status	status.cosmos.directory/neutron
+
+
+cosmos.directory / neutron 
+Overview
+Chain
+Validators
+Nodes
+Chain Registry updated: a day ago
+
+Configuration
+Chain ID	neutron-1
+Height	24086222
+Bech32 Prefix	neutron
+Slip44	118
+Key Algorithms	secp256k1
+Fee Tokens	untrn, ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9, ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349, factory/neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry/wstETH, ibc/2CB87BCE0937B1D1DFCEE79BE4501AAF3C265E923509AEAC410AD85D27F35130, ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7
+Git Repository	https://github.com/neutron-org/neutron
+Version	v5.0.2
+Compatible Versions	v5.0.2
+Daemon Name	neutrond
+Node Home	$HOME/.neutrond
+Genesis URL	https://raw.githubusercontent.com/neutron-org/mainnet-assets/main/neutron-1-genesis.json
+Website	https://neutron.org/
+Explorers	https://www.mintscan.io/neutron
+https://ezstaking.app/neutron
+https://mainnet.whispernode.com/neutron
+Native Assets
+NTRN
+ATOM
+axlUSDC
+TIA
+ELYS
+ASTROPEPE
+wstETH
+DYDX
+NEWT
+ASTRO
+xASTRO
+ASTRO.cw20
+CORGI
+CIRCUS
+JIMMY
+BAD
+BTC
+WTF
+NLS
+GODRD
+APOLLO
+NTRL
+RETRO
+GODDARD
+WOSMO
+BOY
+BADKID
+CARTEL
+ATOM1KLFG
+USDC
+WEIRD
+TAKUMI
+NBZ
+MARS
+dNTRN
+dATOM
+SIN
+GOP
+ARENA
+AXV
+axlWBTC
+xATOM
+amATOM
+JSD
+FUEL
+bglUSDC
+dTIA
+NEPT
+DOGE.int3
+BTC.int3
+BCH.int3
+LTC.int3
+Name	Neutron
+Symbol	NTRN
+Description	Neutron is a smart contract blockchain within the Cosmos ecosystem, leveraging the Cosmos Hub's security to provide cross-chain DeFi applications.
+Coingecko ID	neutron-3
+Display	ntrn
+Base	untrn
+Denom Units	
+Denom	Exponent
+untrn	0
+ntrn	6
+
+
+pion-1 [testnet]
+IBC Denoms
+Symbol	
+axlWETH	ibc/CC8B40E3F3536D003C6ED7C65421067215453AECE1517A6F0935470C634A036B
+Neutron DAO
+Name	Address	Source Code
+Neutron DAO Core	neutron1kvxlf27r0h7mzjqgdydqdf76dtlyvwz6u9q8tysfae53ajv8urtq4fdkvy	cwd-core
+Single Proposal Module	neutron19sf2y4dvgt02kczemvhktrwvt4aunrahw8qkjq6u3pehdujwssgqrs5e4h	cwd-proposal-single
+Single Pre-Proposal Module	neutron1fyhj2gq9k4dduahlyy46ffy22ad7lagglcec2acacyzjsd6w5n7qdx5hn4	cwd-pre-propose-single
+Multiple Proposal Module	neutron14yu369rhq9pz6clxrvpeyxcuj66ay9k98p2dfh3sc9tlwtcqaxcqpk8rky	cwd-proposal-multiple
+Multiple Pre-Proposal Module	neutron1a73cny2tvr0wggxkfgw72pmr03jwz6vkg0m3q8dzu4qpd983yfcsmxcurx	cwd-pre-propose-multiple
+Overrule Proposal Module	neutron164w6crv7u0ya0aqqr74ghzt8k4ycwfjrzekxms00vzh07wekj4sq6lk8w7	cwd-proposal-single
+Overrule Pre-Proposal Module	neutron16qcmkxjma2c9f07lsewjcnnx436s0x67flwfhx98xaq2ncss4p0s296q2w	cwd-pre-propose-single-overrule
+Voting Registry	neutron1nusmqy8tmx5y2y5qrxprlm64fzwvjl9fhhn0qk5wy6mjkdrudsgqpmyywl	neutron-voting-registry
+NTRN Vault	neutron1hjjqfvpwpkl5ssc6hk76es2lznd4tws75jcvkql9xncmgasemjuqhzyzvg	neutron-vault
+Security subDAO Core	neutron1zv35zgj7d6khqxfl3tx95scjljz0rvmkxcsxmggqxrltkm8ystsqvt0qc7	cwd-subdao-core
+Security subDAO Single Proposal Module	neutron1wyvwhmnvc43reeptqllqmu3a55cz5lj4remvv7gwwt79kdxvchws7npv9u	cwd-subdao-proposal-single
+Security subDAO Pre-Proposal Module	neutron1kr23ya5ahn6dksmtyhxhhfn9t62384nk78mjlhgcetmk7q0vr9nqmvdm9y	cwd-subdao-pre-propose-single
+Security subDAO Voting Module	neutron1ujdzgmjaks2s2uwnvm24tqdu0kmtlegr8gu87ngly2hdlumxtg7q3ca6lg	cwd-voting-cw4
+Security subDAO CW4 Group	neutron1lcepwp9hc95v8yq4tetrc989sp2rshaejmqa487jjyq8zmg0luuqg4ke0f	cw4-group
+Bridge
+Contracts
+Name	Address
+Lido Satellite (pion-1)	neutron1pf7u5tqkc9xc5l2xjqzsufc467ccmjxw68v5hl0k5gaye7zer3tqvrucam
+GMP Helper (Sepolia)	0x5b154522aa5CDDCed12515719E1d4dFf76F2b37b
+Denoms
+Symbol	Denom
+wstETH	factory/neutron1pf7u5tqkc9xc5l2xjqzsufc467ccmjxw68v5hl0k5gaye7zer3tqvrucam/wstETH
+Previous
+SubQuery Indexer
+Next
+neutron-1 [mainnet]
+IBC Denoms
+Neutron DAO
+Bridge
+Contracts
+Denoms
+Docs
+Intro
+Community
+Stack Overflow
+Discord
+Twitter
+More
+GitHub
+Copyright © 2025 Neutron Org. Built with Docusaurus.
+
+
+neutron-1 [mainnet]
+IBC Denoms
+Symbol	
+ATOM	ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9
+TIA	ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7
+stTIA	ibc/6569E05DEE32B339D9286A52BE33DFCEFC97267F23EF9CFDE0C055140967A9A5
+AXL	ibc/C0E66D1C81D8AAF0E6896E05190FDFBC222367148F86AC3EA679C28327A763CD
+axlUSDC	ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349
+axlWETH	ibc/A585C2D15DCD3B010849B453A2CFCB5E213208A5AB665691792684C26274304D
+USDC	ibc/B559A80D62249C8AA07A380E2A2BEA6E5CA9A6F079C912C3A9E9B494105E4F81
+DYDX	ibc/2CB87BCE0937B1D1DFCEE79BE4501AAF3C265E923509AEAC410AD85D27F35130
+OSMO	ibc/376222D6D9DAE23092E29740E56B758580935A6D77C24C2ABD57A6A78A1F3955
+NLS	ibc/6C9E6701AC217C0FC7D74B0F7A6265B9B4E3C3CDA6E80AADE5F950A8F52F9972
+TokenFactory Denoms
+Symbol	Denom
+wstETH	factory/neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry/wstETH
+Neutron DAO
+Name		Source Code	Code ID
+Neutron DAO Core	neutron1suhgf5svhu4usrurvxzlgn54ksxmn8gljarjtxqnapv8kjnp4nrstdxvff	cwd-core	325
+Single Proposal Module	neutron1436kxs0w2es6xlqpp9rd35e3d0cjnw4sv8j3a7483sgks29jqwgshlt6zh	cwd-proposal-single	339
+Single Pre-Proposal Module	neutron1hulx7cgvpfcvg83wk5h96sedqgn72n026w6nl47uht554xhvj9nsgs8v0z	cwd-pre-propose-single	346
+Multiple Proposal Module	neutron1pvrwmjuusn9wh34j7y520g8gumuy9xtl3gvprlljfdpwju3x7ucsj3fj40	cwd-proposal-multiple	331
+Multiple Pre-Proposal Module	neutron1up07dctjqud4fns75cnpejr4frmjtddzsmwgcktlyxd4zekhwecqt2h8u6	cwd-pre-propose-multiple	341
+Overrule Proposal Module	neutron12pwnhtv7yat2s30xuf4gdk9qm85v4j3e6p44let47pdffpklcxlq56v0te	cwd-proposal-single	339
+Overrule Pre-Proposal Module	neutron1w798gp0zqv3s9hjl3jlnwxtwhykga6rn93p46q2crsdqhaj3y4gsum0096	cwd-pre-propose-single-overrule	342
+Voting Registry	neutron1f6jlx7d9y408tlzue7r2qcf79plp549n30yzqjajjud8vm7m4vdspg933s	neutron-voting-registry	326
+NTRN Vault	neutron1qeyjez6a9dwlghf9d6cy44fxmsajztw257586akk6xn6k88x0gus5djz4e	neutron-vault	8
+Credits Vault	neutron1rxwzsw37ulveefk20575mlxl3hzhzv9k46c8gklfkt4g2vk4w3tse8usrs	credits-vault	26
+Lockdrop Vault	neutron1f8gs4rp232ngyta3g2efwfkznymvv85du7qm9y0mhvjxpp3cq68qgquudm	lockdrop-vault	27
+Lockdrop Vault PCL	neutron15lc33nfyp943s59pxylz8kvhhqxdfsurn2e70380evqzzkns422qnzt6n3	lockdrop-vault-for-cl-pools	1085
+LP Vesting Vault	neutron1adavpfxyp5kgs3zp0n0vkc37qakeh5eqwxqxzysgg0ahlx82rmsqp4rnz8	vesting-lp-vault	41
+LP Vesting Vault PCL	neutron1w2jqqefaalu9ylyh6sge8atxg0re4llade8xwc5r2tx4zkdj4keq5r4pxk	vesting-lp-vault-for-cl-pools	1086
+Vesting Investors Vault	neutron1dmd56h7hlevuwssp203fgc2uh0qdtwep2m735fzksuavgq3naslqp0ehvx	investors-vesting-vault	30
+Security subDAO Core	neutron1fuyxwxlsgjkfjmxfthq8427dm2am3ya3cwcdr8gls29l7jadtazsuyzwcc	cwd-subdao-core	327
+Security subDAO Single Proposal Module	neutron15m728qxvtat337jdu2f0uk6pu905kktrxclgy36c0wd822tpxcmqvnrurt	cwd-subdao-proposal-single	333
+Security subDAO Pre-Proposal Module	neutron1zjd5lwhch4ndnmayqxurja4x5y5mavy9ktrk6fzsyzan4wcgawnqjk5g26	cwd-subdao-pre-propose-single	346
+Security subDAO Voting Module	neutron1wastjc07zuuy46mzzl3egz4uzy6fs59752grxqvz8zlsqccpv2wqhjw0cl	cwd-voting-cw4	15
+Timelock Module	neutron1lvl674duw26psvzux5050du5kfg40kmy5z70t6am8pw6yje2wfjq66lmj2	cwd-subdao-timelock-single	332
+Security subDAO CW4 Group	neutron1hyja4uyjktpeh0fxzuw2fmjudr85rk2qu98fa6nuh6d4qru9l0ssh3kgnu	cw4-group	16
+Grants subDAO Core	neutron1zjdv3u6svlazlydmje2qcp44yqkt0059chz8gmyl5yrklmgv6fzq9chelu	cwd-subdao-core	327
+Grants subDAO Single Proposal Module	neutron14n7jt2qkngxtgr7dgdt50g4xn2a29llz79h9y25lrsqyxrwmngmsmt9kta	cwd-subdao-proposal-single	333
+Grants subDAO Pre-Proposal Module	neutron1s0fjev2pmgyaj0uthszzp3tpx59yp2p07vwhj0467sl9j343dk9qss6x9w	cwd-subdao-pre-propose-single	335
+Grants subDAO Voting Module	neutron1aj3xpcumkx3jr5kncr6gvtduuy4suu6m628ftadv8x8vx9vrfhxs8gkzk7	cwd-voting-cw4	15
+Security subDAO Pre-Proposal Module(without timelock)		cwd-security-subdao-pre-propose)	785
+Neutron TGE
+Name		Source code	Code ID
+Airdrop	neutron198sxsrjvt2v2lln2ajn82ks76k97mj72mtgl7309jehd0vy8rezs7e6c56	cw20-merkle-airdrop	196
+Distribution	neutron1dk9c86h7gmvuaq89cv72cjhq4c97r2wgl5gyfruv6shquwspalgq5u7sy5	distribution	9
+Lockdrop	neutron1ryhxe5fzczelcfmrhmcw9x2jsqy677fw59fsctr09srk24lt93eszwlvyj	lockdrop	50
+Lockdrop PCL	neutron1jm5x56f6z9n7ca7545y93runm00hd4lafqeq929w0a7ug6nwd20s4a8cfw	lockdrop-pcl	1089
+Reserve	neutron13we0myxwzlpx8l5ark8elw5gj5d59dl6cjkzmt80c5q5cv5rt54qvzkv2a	reserve	337
+Price Feed	neutron1lxansfc8vkujy997e3xksd3ugsppv6a9jt32pjtgaxr0zkcnkznq67z3ax	price-feed	23
+Factory	neutron1hptk0k5kng7hjy35vmh009qd5m6l33609nypgf2yc6nqnewduqasxplt4e	factory	698
+Auction	neutron1qj296vdrjfhuvrm96el3yhx8rcpz4k0huqcp9vwtqzhxwrduhs8s49y3p4	auction	20
+Credits	neutron1h6828as2z5av0xqtlh4w9m75wxewapk8z9l2flvzc29zeyzhx6fqgp648z	credits	21
+Neutron Vesting LP [ATOM]	neutron1kkwp7pd4ts6gukm3e820kyftz4vv5jqtmal8pwqezrnq2ddycqasr87x9p	vesting-lp	25
+Neutron Vesting LP [USDC]	neutron1wgzzn83hhcc5asrtslqvaw2wuqqkfulgac7ze94dmqkrxu8nsensmy9dkv	vesting-lp	25
+Neutron Vesting LP PCL [ATOM]	neutron1cdr9hr2fm6a4xpxkukp55de5s2d8med45nr6klhhjnccz0dh6hqsevltdk	vesting-lti	29
+Neutron Vesting LP PCL [USDC]	neutron1at3qzgunxmddepew6zgc7zl76t2w2qh4p54u0k72ckfj8myxsd4qycjjkf	vesting-lti	29
+Neutron Vesting
+Name		Source code	Code ID
+Neutron Vesting Investors [no voting power]	neutron14q5elxj4ghktt7d7d0uw0cs0gqyeay25h5fkree897gjm38gevxqmvqsq5	vesting-investors	28
+Neutron Vesting Investors	neutron17fcdl6crgsp49ja270fp0pdwm354ar5qqv3mda07py58lgqmm2sqasvgz9	vesting-investors	28
+LTI Vesting	neutron1a5xz4zm0gkpcf92ddm7fw8pghg2mf4wm6cyu6cgcruq35upf7auslnnfye	vesting-lti	29
+Validator Incentivization Vesting	neutron1lzw9jmag8kj7py46z83zuvlwx944a3we3h9nwe804lp0qex3qa9qvp82l4	vesting-investors	28
+Bridge
+Contracts
+Name	Address	Code ID
+Lido Satellite (neutron-1)	neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry	233
+GMP Helper (Ethereum)	0x8A5fcd88B4aC70A1939955fAeA4E12bd0C7B1237	-
+Previous
+pion-1 [testnet]
+Next
+Overview
+IBC Denoms
+TokenFactory Denoms
+Neutron DAO
+Neutron TGE
+Neutron Vesting
+Bridge
+Contracts

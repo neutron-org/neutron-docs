@@ -1,0 +1,73 @@
+---
+title: "Known Bugs"
+sidebar_position: 5
+---
+
+This page documents known bugs and limitations in the Dex module.
+
+## Current Limitations
+
+### Price Calculation Precision
+
+The price calculation for extremely large or small tick indexes may experience precision issues due to the exponential formula `1.0001^i`. When dealing with tokens that have vastly different value scales, consider:
+
+- Using appropriate tick indexes that avoid extreme values
+- Testing trades with small amounts first before executing large trades
+- Being aware that displayed prices may have minor rounding differences from actual execution prices
+
+### Multi-Hop Swap Routing
+
+When using multi-hop swaps with many hops (>5), you might encounter:
+
+- Increased computation cost that may exceed block gas limits
+- Degraded price execution due to compounding slippage
+- Higher chance of route failure if any intermediate pool has insufficient liquidity
+
+For complex routes, consider breaking them into smaller segments or using simulation queries to verify feasibility before execution.
+
+### Limit Order Fill Behavior
+
+When placing limit orders, be aware that:
+
+- Fill or Kill (FOK) orders may fail in volatile market conditions even when the price briefly crosses the limit price
+- Good Til Time (GTT) orders do not guarantee execution even if the price reaches the specified level before expiration
+- If the blockchain is congested, order execution might be delayed, potentially affecting fill prices
+
+### Deposit and Withdrawal Precision
+
+When adding or removing liquidity:
+
+- Very small deposits may result in zero share tokens due to rounding
+- When withdrawing small amounts of shares, you might receive slightly less than expected due to rounding
+- Imbalanced deposits with the `disable_autoswap` option may result in unused tokens remaining in your account
+
+## Resolved Issues
+
+Previous versions of the Dex module had the following issues that have been resolved:
+
+### v4 to v5 Migration
+
+The v4 to v5 migration fixed:
+
+- Limit order expiration handling for GTT orders
+- Price calculation for negative tick indexes
+- Share token calculation for certain edge cases
+
+### Fee Calculation Improvements
+
+Recent updates have addressed:
+
+- Fee distribution proportionality issues for imbalanced liquidity providers
+- Precision loss in fee accrual for very small trades
+- Inconsistent fee application across multiple hops
+
+## Reporting New Issues
+
+If you encounter a bug or issue with the Dex module, please report it on our [GitHub repository](https://github.com/neutron-org/neutron/issues) with the label `module:dex`. Include:
+
+1. Transaction hash or command used
+2. Expected behavior vs. actual outcome
+3. Steps to reproduce the issue
+4. Any error messages received
+
+The Neutron team actively monitors reported issues and prioritizes fixes for the next release. 

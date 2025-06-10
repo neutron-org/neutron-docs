@@ -1,0 +1,179 @@
+---
+title: "Contract Manager How-To"
+---
+
+This guide provides practical instructions for interacting with the Contract Manager module, including handling failures and resubmitting failed operations.
+
+## Handling IBC Acknowledgments in Smart Contracts
+
+When developing contracts that use IBC functionality on Neutron, you need to properly handle acknowledgments:
+
+```rust
+// Example of a proper IBC acknowledgment handler in CosmWasm
+#[entry_point]
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+    match msg {
+        SudoMsg::Response { request, data } => {
+            // Store the data instead of processing it immediately
+            PENDING_RESPONSES.save(deps.storage, &data)?;
+            
+            // Return success - failures will be captured by Contract Manager
+            Ok(Response::new().add_attribute("action", "response_received"))
+        },
+        _ => Err(ContractError::UnknownSudoMsg {}),
+    }
+}
+```
+
+### Best Practices
+
+1. **Keep Sudo Handlers Light**: Due to gas limitations, sudo handlers should only store data without complex processing
+2. **Separate Processing Logic**: Use separate execute messages to process the stored data
+3. **Handle All Message Types**: Implement handlers for all expected sudo message types
+4. **Prepare for Resubmission**: Design your contract to handle potential resubmission of messages
+
+## Checking for Contract Failures
+
+To check if your contract has experienced any failures, you can use the Contract Manager query functionality:
+
+### Using CLI
+
+```bash
+neutrond query contractmanager failures [contract-address]
+```
+
+Example output:
+```json
+{
+  "failures": [
+    {
+      "address": "neutron1...",
+      "id": "1",
+      "error": "codespace: wasm, code: 5",
+      "sudo_payload": "..."
+    }
+  ]
+}
+```
+
+### Via CosmWasm Contract
+
+You can query failures from within another contract using bindings:
+
+```rust
+// Query failures from a CosmWasm contract
+pub fn query_failures(
+    querier: &QuerierWrapper,
+    contract_address: String,
+) -> StdResult<FailuresResponse> {
+    let request = NeutronQuery::ContractManagerFailures { 
+        address: contract_address,
+        pagination: None,
+    };
+    
+    querier.query(&QueryRequest::Custom(request))
+}
+```
+
+## Getting Detailed Failure Information
+
+For more detailed error information (beyond the redacted error in state):
+
+```bash
+neutrond query contractmanager failure-details [address] [failure_id]
+```
+
+Note: This query requires a node that indexes transactions and still has the relevant blocks available.
+
+## Resubmitting Failed Operations
+
+If your contract experiences a failure due to gas limits or other temporary issues, you can resubmit the operation:
+
+### Using CosmWasm Bindings
+
+```rust
+// Example of resubmitting a failed operation
+pub fn resubmit_failure(
+    deps: DepsMut,
+    env: Env,
+    failure_id: u64,
+) -> Result<Response, ContractError> {
+    // Create the resubmit message
+    let resubmit_msg = NeutronMsg::ResubmitFailure { 
+        failure_id,
+    };
+    
+    // Return a response with the message
+    Ok(Response::new()
+        .add_message(resubmit_msg)
+        .add_attribute("action", "resubmit_failure")
+        .add_attribute("failure_id", failure_id.to_string()))
+}
+```
+
+Important rules for resubmission:
+1. Only the original contract that received the IBC message can resubmit the failure
+2. Resubmission runs with full gas, not limited by the usual sudo gas constraints
+3. You should fix any issues in your contract before resubmitting
+
+## Implementing Error Handling Patterns
+
+Here's a pattern for robust IBC acknowledgment handling:
+
+```rust
+// Store received acknowledgment for later processing
+#[entry_point]
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+    match msg {
+        SudoMsg::IbcAcknowledgement { ack, .. } => {
+            // Just store the acknowledgment with minimal processing
+            PENDING_ACKS.save(deps.storage, &ack)?;
+            
+            Ok(Response::new().add_attribute("action", "ack_stored"))
+        },
+        _ => Err(ContractError::UnknownSudoMsg {}),
+    }
+}
+
+// Process stored acknowledgments with separate message
+#[entry_point]
+pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> Result<Response, ContractError> {
+    match msg {
+        ExecuteMsg::ProcessPendingAcks {} => {
+            let acks = PENDING_ACKS.load(deps.storage)?;
+            // Process acks with full gas available
+            // ...
+            
+            Ok(Response::new().add_attribute("action", "processed_acks"))
+        },
+        // Handle resubmission of failures
+        ExecuteMsg::ResubmitFailure { id } => {
+            Ok(Response::new()
+                .add_message(NeutronMsg::ResubmitFailure { failure_id: id })
+                .add_attribute("action", "resubmit"))
+        },
+        // Other execute messages
+        // ...
+    }
+}
+```
+
+## Monitoring Contract Failures
+
+For production applications, implement a monitoring system that:
+
+1. Regularly queries the Contract Manager for failures related to your contracts
+2. Alerts operators about new failures
+3. Provides tooling to diagnose and resubmit failures when appropriate
+
+This can be implemented as a separate service that uses the Neutron RPC endpoints to monitor your contract's status.
+
+## Testing Contract Manager Integration
+
+When testing contracts that interact with IBC:
+
+1. Test how your contract handles out-of-gas scenarios
+2. Verify that resubmission logic works correctly
+3. Ensure error states are properly captured and can be recovered from
+
+You can use Neutron's testnet environment to test these scenarios with actual IBC interactions. 

@@ -1,0 +1,236 @@
+This guide provides step-by-step instructions for Neutron validators to set up the Slinky price oracle service, which is essential for providing accurate price data to the Neutron blockchain.
+
+## Overview
+
+Slinky is a price oracle service that fetches market prices from various providers and makes them available to the Neutron blockchain. As a validator, running Slinky properly ensures that your node contributes accurate price data to the network.
+
+## Installation
+
+You can install Slinky using the pre-built binary. Make sure you're using the latest stable version (currently v1.2.0).
+
+## Configuration
+
+### Method 1: Using SystemD Service
+
+Create a systemd service file to manage the Slinky service:
+
+```bash
+sudo nano /etc/systemd/system/slinky.service
+```
+
+Add the following content:
+
+```
+[Unit]
+Description=Slinky Price Oracle Service
+After=network-online.target
+
+[Service]
+User=$USER
+ExecStart=/usr/local/bin/slinky --host=0.0.0.0 --port=8080 --market-map-endpoint="127.0.0.1:9090" --log-file="/var/log/slinky/sidecar.log"
+Restart=always
+RestartSec=3
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
+
+```
+
+**Important**: Replace `$USER` with your actual username and adjust the path to the Slinky binary as needed. The `--market-map-endpoint` should point to your node's gRPC port.
+
+### Method 2: Using Configuration Files
+
+### 1. Create oracle.json
+
+Create a configuration file for Slinky:
+
+```bash
+mkdir -p /usr/local/slinky
+nano /usr/local/slinky/oracle.json
+
+```
+
+Add the following content:
+
+```json
+{
+  "port": "8080",
+  "metrics": {
+    "prometheusServerAddress": "0.0.0.0:8001"
+  },
+  "providers": {
+    "marketmap_api": {
+      "api": {
+        "endpoints": [
+          {
+            "url": "localhost:9090"
+          }
+        ]
+      }
+    }
+  }
+}
+
+```
+
+**Note**: Adjust the port numbers as needed for your environment.
+
+### 2. Create a SystemD Service for Configuration File Method
+
+```bash
+sudo nano /etc/systemd/system/slinky.service
+
+```
+
+Add the following content:
+
+```
+[Unit]
+After=network-online.target
+Description=slinky service
+
+[Service]
+ExecStart=/usr/local/bin/slinky --oracle-config /usr/local/slinky/oracle.json
+EnvironmentFile=-/etc/default/slinky
+Type=simple
+RestartSec=1
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+```
+
+### Configure Neutron Node
+
+Edit the Neutron node's `app.toml` file to enable the oracle:
+
+```bash
+nano $HOME/.neutrond/config/app.toml
+
+```
+
+Find the `[oracle]` section and update it:
+
+```toml
+[oracle]
+enabled = "true"
+oracle_address = "0.0.0.0:8080"
+client_timeout = "2s"
+metrics_enabled = "true"
+price_ttl = "10s"
+interval = "1500ms"
+prometheus_server_address = "0.0.0.0:8001"
+
+```
+
+**Important**: Make sure to use lowercase `true` for boolean values, not capitalized `True`.
+
+Also, check that gRPC is enabled in your `app.toml`:
+
+```toml
+[grpc]
+# Enable defines if the gRPC server should be enabled.
+enable = true
+
+```
+
+## Starting the Service
+
+Enable and start the Slinky service:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable slinky
+sudo systemctl start slinky
+
+```
+
+Check the status:
+
+```bash
+sudo systemctl status slinky
+
+```
+
+## Verifying the Setup
+
+### 1. Check Slinky Logs
+
+```bash
+sudo journalctl -u slinky -f
+
+```
+
+### 2. Check if Oracle is Working
+
+Verify that your Prometheus metrics are working:
+
+```bash
+curl -s http://localhost:26660 | grep 'app_oracle_responses'
+
+```
+
+The output should look similar to:
+
+```
+# HELP app_oracle_responses The number of oracle responses
+# TYPE app_oracle_responses gauge
+app_oracle_responses{chain_id="neutron-1",status="Failure"} 128
+app_oracle_responses{chain_id="neutron-1",status="Success"} 841042
+
+```
+
+If you see responses with `Success` values increasing, your setup is working correctly.
+
+## Common Issues and Troubleshooting
+
+### Missing Prices
+
+If you see log entries like:
+
+```
+{"level":"info","ts":"2025-04-22T06:42:51.970Z","caller":"oracle/aggregator.go:134","msg":"failed to calculate prices for price feeds","pid":2469887,"process":"index_price_aggregator","missing_prices":["RNDR/USD","AGIX/USD","SAGA/USD","MATIC/USD"]}
+
+```
+
+This is normal and can be ignored. It indicates that some price feeds are temporarily unavailable from providers.
+
+### WebSocket Errors
+
+If you see errors like:
+
+```
+{"level":"error","ts":"2025-04-22T06:43:03.168Z","caller":"base/fetch.go:130","msg":"websocket query handler returned error","pid":2469887,"process":"oracle","provider":"binance_ws","error":"failed to start connection: websocket connection handler failed to write message\nwrite tcp 88.211.218.89:22360->35.79.60.252:443: write: broken pipe"}
+
+```
+
+These are typically transient connection issues with price providers and can be ignored as long as your oracle responses show successful metrics.
+
+### Configuration Issues
+
+1. Make sure the `market-map-endpoint` in your configuration points to the correct gRPC port of your Neutron node.
+2. Ensure all boolean values in `app.toml` use lowercase `true` not capitalized `True`.
+3. Verify that your Neutron node's gRPC service is enabled and running.
+
+## Best Practices
+
+1. **Monitoring**: Set up monitoring for your Slinky service to ensure it's always running.
+2. **Regular Updates**: Keep your Slinky binary updated to the latest version.
+3. **Logs Management**: Configure log rotation for Slinky logs to prevent disk space issues.
+4. **Network Configuration**: Ensure proper firewall rules to allow Slinky to access external price providers.
+
+## FAQs
+
+**Q: Does Slinky use a lot of resources?**
+A: No, Slinky is lightweight and should run comfortably on any validator setup.
+
+**Q: How can I tell if my Slinky installation is working properly?**
+A: Check the Prometheus metrics as described in the "Verifying the Setup" section.
+
+## Additional Resources
+
+- [Slinky GitHub Repository](https://github.com/skip-mev/slinky)
+- [Neutron Documentation](https://docs.neutron.org/)
+- [Skip Protocol Documentation](https://docs.skip.build/)

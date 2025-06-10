@@ -1,0 +1,69 @@
+---
+title: "Known Bugs"
+---
+
+This page documents known bugs and limitations of the Interchain Transactions module. These issues are being tracked for future updates.
+
+## Error Handling in Remote Transactions
+
+**Status:** Known limitation
+
+When an interchain transaction fails on a remote chain, the error information returned to the contract is limited. Due to IBC protocol constraints, error messages are typically truncated to just an error code without detailed information.
+
+To find detailed error information, you need to query the packet events on the remote chain. This requires running a command on the remote chain, which may not be easily accessible to contracts or end users.
+
+## Channel Closure Handling
+
+**Status:** Known limitation
+
+Currently, if an IBC channel for an interchain account is closed unexpectedly, there's no automatic way to reestablish the channel. You need to register a new interchain account with a different ID.
+
+A future update may include functionality to automatically reopen channels or provide more robust channel management tools.
+
+## Blocking Wait for Account Registration
+
+**Status:** Known behavior (by design)
+
+The registration of an interchain account is asynchronous, but there's no built-in way to query whether the account registration is complete. Contracts must wait for the channel open acknowledgement callback before using the interchain account.
+
+If a contract attempts to submit a transaction using an interchain account that hasn't completed registration, the transaction will fail. Contracts need to implement their own state tracking to avoid this issue.
+
+## Message Type Restrictions
+
+**Status:** Known behavior (by design)
+
+The module restricts which message types can be executed on remote chains through the `allow_messages` parameter. This is a security feature to prevent potentially dangerous messages from being executed, but it can limit the functionality available to contracts.
+
+If you need to execute a message type that isn't in the allowed list, a governance proposal would be required to update the module parameters.
+
+## Fee Management Complexity
+
+**Status:** Known limitation
+
+The fee structure for interchain transactions is complex, requiring separate fees for packet delivery, acknowledgement, and timeout. This can be confusing for users and contracts, and it's difficult to estimate the optimal fee amounts.
+
+Future updates may include fee estimation tools or simplified fee structures.
+
+## Cross-Chain Nondeterminism
+
+**Status:** Known limitation
+
+Transactions executed on remote chains can have nondeterministic results due to differences in chain state, block time, and other factors. This makes it challenging to develop contracts that depend on predictable outcomes from interchain transactions.
+
+Contracts must be designed to handle varying results and potential failures gracefully.
+
+## Escrow Management
+
+**Status:** Known limitation
+
+When using an interchain account to manage assets on a remote chain, those assets are technically controlled by the interchain account module on the host chain. If there's an issue with the IBC connection or the module itself, accessing those assets may become difficult or impossible.
+
+It's recommended to implement recovery mechanisms and to limit the value held by interchain accounts to what you're willing to risk.
+
+## Transaction Ordering Constraints
+
+**Status:** Known behavior (by design)
+
+Interchain accounts use ORDERED channels, which means that transactions must be processed in sequence. If one transaction in the sequence fails or times out, all subsequent transactions will be blocked until the issue is resolved.
+
+This can cause delays or require manual intervention in case of stuck transactions. Future updates may provide more tools for handling stuck transactions. 

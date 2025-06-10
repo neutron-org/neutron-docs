@@ -1,0 +1,256 @@
+---
+title: "State"
+description: "State management in the Cron module"
+---
+
+# State
+
+This document describes the state management of the Cron module, including the data structures and storage patterns used to maintain schedules and execution state.
+
+## State Objects
+
+### Schedule
+
+The primary state object in the Cron module is the `Schedule`, which represents a time-based task:
+
+```protobuf
+message Schedule {
+  string name = 1;                   // Unique identifier for the schedule
+  string owner = 2;                  // Address that created the schedule
+  uint64 period = 3;                 // Number of blocks between executions
+  repeated ScheduleMsg msgs = 4;     // Messages to execute
+  optional uint64 boundary = 5;      // Optional starting point (block height)
+  optional uint64 last_execute_height = 6; // Last block height when executed
+}
+
+message ScheduleMsg {
+  string msg = 1;                    // Base64-encoded message to execute
+  optional uint64 gas_limit = 2;     // Gas limit for execution
+}
+```
+
+**Fields explanation:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Unique identifier for the schedule, used as a key in state storage |
+| `owner` | string | Address that created the schedule, used for authorization of updates and removals |
+| `period` | uint64 | Number of blocks between executions (0 for one-time execution) |
+| `msgs` | []ScheduleMsg | Array of messages to execute when the schedule triggers |
+| `boundary` | uint64 (optional) | Starting point for execution, specified as a block height |
+| `last_execute_height` | uint64 (optional) | Last block height when the schedule was executed |
+
+### Params
+
+Module-wide parameters:
+
+```protobuf
+message Params {
+  uint64 max_gas_per_block = 1;        // Maximum gas for scheduled tasks per block
+  uint64 max_msg_size = 2;             // Maximum size for scheduled messages
+  uint64 max_msgs_per_schedule = 3;    // Maximum number of messages in a schedule
+  uint64 max_name_length = 4;          // Maximum length of schedule names
+  uint64 min_period = 5;               // Minimum blocks between executions
+}
+```
+
+## State Mappings
+
+The Cron module uses the following state mappings:
+
+### Schedules by Name
+
+```
+ScheduleKey (name string) -> Schedule
+```
+
+This mapping stores all schedules, indexed by their unique name. It is the primary storage mechanism for accessing schedules.
+
+### Schedules by Execution Time
+
+```
+ExecutionTimeKey (last_execution_height + period, name string) -> Schedule Name
+```
+
+This mapping creates an index to efficiently find schedules that are due for execution at a specific block height. The composite key ensures deterministic ordering when multiple schedules are due at the same height.
+
+## State Flow
+
+### Schedule Creation
+
+When a `MsgCreateSchedule` is processed:
+
+1. The module validates the message parameters
+2. It creates a new `Schedule` object:
+   - Sets `name` and `owner` from the message
+   - Sets `period`, `msgs`, and optional `boundary` from the message
+   - Initializes `last_execute_height` to 0
+3. The schedule is stored in state using the `name` as the key
+4. An entry is added to the execution time index
+
+```go
+func CreateSchedule(ctx Context, msg MsgCreateSchedule) error {
+  // Validate message
+  if err := validateCreateScheduleMsg(ctx, msg); err != nil {
+    return err
+  }
+  
+  // Create schedule
+  schedule := Schedule{
+    Name:              msg.Name,
+    Owner:             msg.Sender,
+    Period:            msg.Period,
+    Msgs:              msg.Msgs,
+    Boundary:          msg.Boundary,
+    LastExecuteHeight: 0,
+  }
+  
+  // Store schedule
+  SetSchedule(ctx, schedule)
+  
+  // Update execution time index
+  AddToExecutionTimeIndex(ctx, schedule)
+  
+  // Emit event
+  EmitCreateScheduleEvent(ctx, schedule)
+  
+  return nil
+}
+```
+
+### Schedule Execution
+
+During each block's `EndBlock` phase:
+
+1. The module queries the execution time index for schedules due at the current block height
+2. For each due schedule:
+   - It loads the schedule from state
+   - Executes each message in the schedule with the specified gas limit
+   - Updates the `last_execute_height` to the current block height
+   - Updates the execution time index for the next execution
+   - Emits an `execute_schedule` event
+
+```go
+func EndBlock(ctx Context) {
+  currentHeight := ctx.BlockHeight()
+  
+  // Get schedules due for execution
+  dueSchedules := GetSchedulesDueAtHeight(ctx, currentHeight)
+  
+  // Process each due schedule
+  for _, scheduleName := range dueSchedules {
+    schedule := GetSchedule(ctx, scheduleName)
+    
+    // Execute schedule messages
+    success, err := ExecuteScheduleMessages(ctx, schedule)
+    
+    // Update schedule state
+    schedule.LastExecuteHeight = currentHeight
+    SetSchedule(ctx, schedule)
+    
+    // Update execution time index
+    UpdateExecutionTimeIndex(ctx, schedule)
+    
+    // Emit event
+    EmitExecuteScheduleEvent(ctx, schedule, success, err)
+  }
+}
+```
+
+### Schedule Update
+
+When a `MsgUpdateSchedule` is processed:
+
+1. The module validates the message parameters and ownership
+2. It loads the existing schedule from state
+3. Updates the schedule with new values from the message
+4. Updates the schedule in state
+5. Updates the execution time index
+
+### Schedule Removal
+
+When a `MsgRemoveSchedule` is processed:
+
+1. The module validates the message parameters and ownership
+2. It loads the existing schedule from state
+3. Removes the schedule from the primary state
+4. Removes the schedule from the execution time index
+
+## Gas and Resource Limits
+
+The Cron module implements several limits to ensure network stability:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `max_gas_per_block` | 6,000,000 | Maximum gas that can be used by all scheduled tasks in a single block |
+| `max_msg_size` | 10,240 bytes | Maximum size for a scheduled message |
+| `max_msgs_per_schedule` | 10 | Maximum number of messages in a single schedule |
+| `max_name_length` | 64 characters | Maximum length for schedule names |
+| `min_period` | 5 blocks | Minimum blocks between executions (except for one-time schedules) |
+
+These limits ensure that scheduled tasks:
+- Cannot consume excessive resources
+- Cannot overload the block processing
+- Cannot spam the network with frequent executions
+
+## Example State Structure
+
+Here's an example of the state structure with two registered schedules:
+
+### Schedule 1: Daily Reward Distribution
+
+```json
+{
+  "name": "daily_reward_distribution",
+  "owner": "neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq",
+  "period": 7200,
+  "msgs": [
+    {
+      "msg": "eyJleGVjdXRlX2NvbnRyYWN0Ijp7ImNvbnRyYWN0X2FkZHIiOiJuZXV0cm9uMTZjNHVtbnAzN3BnODl2bDI0YTJtMWdwNnFwcW5ld3d0OHB6d2h4M3FkdnU3aDd5c3l3N2RhcnVxbWVtMHdkZyIsIm1zZyI6ImV5SnNiMkZrY21WM1lYSmtjeUk2ZXlKMllXeHBaR0YwYjNJaU9pSmphR0Z1Ym1Wc0xUVXlJaXdpY21WemEybHBZblYwWlNJNlptRnNjMlY5ZlE9PSIsImZ1bmRzIjpbXX19",
+      "gas_limit": 200000
+    }
+  ],
+  "boundary": null,
+  "last_execute_height": 8764230
+}
+```
+
+### Schedule 2: Weekly Parameter Update
+
+```json
+{
+  "name": "weekly_parameter_update",
+  "owner": "neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq",
+  "period": 50400,
+  "msgs": [
+    {
+      "msg": "eyJleGVjdXRlX2NvbnRyYWN0Ijp7ImNvbnRyYWN0X2FkZHIiOiJuZXV0cm9uMTZjNHVtbnAzN3BnODl2bDI0YTJtMWdwNnFwcW5ld3d0OHB6d2h4M3FkdnU3aDd5c3l3N2RhcnVxbWVtMHdkZyIsIm1zZyI6ImV5SndjbTl3YjNObElIdlpaSndaWEp3bVdWMFpYSWlPbnNpY0dGeVlXMWxkR1Z5Y3lJNmV5SndjbTl3YjNObFgzWmhiSFZsSWpvaUxqSXdJbjE5ZlE9PSIsImZ1bmRzIjpbXX19",
+      "gas_limit": 150000
+    }
+  ],
+  "boundary": 8800000,
+  "last_execute_height": 8749830
+}
+```
+
+### Execution Time Index
+
+```
+(8764230 + 7200, "daily_reward_distribution") -> "daily_reward_distribution"
+(8749830 + 50400, "weekly_parameter_update") -> "weekly_parameter_update"
+```
+
+## Genesis State
+
+The Genesis state of the Cron module includes:
+- Module parameters
+- All registered schedules
+
+```protobuf
+message GenesisState {
+  Params params = 1;              // Module parameters
+  repeated Schedule schedules = 2; // All schedules
+}
+```
+
+This allows the chain to be initialized with predefined schedules and execution state. 

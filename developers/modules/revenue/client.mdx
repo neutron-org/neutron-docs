@@ -1,0 +1,223 @@
+---
+title: "Client"
+---
+
+This document details how to interact with the Revenue module using the CLI and gRPC.
+
+## CLI Commands
+
+The Revenue module provides several commands to query state and send transactions.
+
+### Queries
+
+#### Query Module Parameters
+
+```bash
+neutron query revenue params [flags]
+```
+
+Example:
+```bash
+neutron query revenue params --output json
+```
+
+#### Query Validator Information
+
+```bash
+neutron query revenue validator-info [validator-addr] [flags]
+```
+
+Example:
+```bash
+neutron query revenue validator-info neutronvaloper1... --output json
+```
+
+#### Query Payment Schedule
+
+```bash
+neutron query revenue payment-schedule [flags]
+```
+
+Example:
+```bash
+neutron query revenue payment-schedule --output json
+```
+
+### Transactions
+
+#### Fund Treasury
+
+```bash
+neutron tx revenue fund-treasury [amount] [flags]
+```
+
+Example:
+```bash
+neutron tx revenue fund-treasury 1000000untrn \
+  --from mykey \
+  --chain-id neutron-1 \
+  --gas auto \
+  --gas-adjustment 1.4
+```
+
+## gRPC Queries
+
+The Revenue module exposes gRPC endpoints for querying state.
+
+### Params
+
+Query the current parameters of the module.
+
+```bash
+grpcurl -plaintext \
+    localhost:9090 \
+    neutron.revenue.Query/Params
+```
+
+Example Response:
+```json
+{
+  "params": {
+    "baseCompensation": "2000",
+    "denomCompensation": "untrn",
+    "twapWindowSize": "30",
+    "performanceRequirements": {
+      "requiredAtLeast": "0.800000000000000000",
+      "allowedToMiss": "0.050000000000000000"
+    },
+    "paymentScheduleType": "PAYMENT_SCHEDULE_TYPE_MONTHLY"
+  }
+}
+```
+
+### ValidatorInfo
+
+Query the performance metrics for a specific validator.
+
+```bash
+grpcurl -plaintext \
+    -d '{"validator_addr": "neutronvaloper1..."}' \
+    localhost:9090 \
+    neutron.revenue.Query/ValidatorInfo
+```
+
+Example Response:
+```json
+{
+  "validatorInfo": {
+    "address": "neutronvaloper1...",
+    "signedBlocks": "980",
+    "blocksInWindow": "1000",
+    "providedOracleVotes": "950",
+    "oracleVotesInWindow": "1000"
+  }
+}
+```
+
+### PaymentSchedule
+
+Query the current payment schedule.
+
+```bash
+grpcurl -plaintext \
+    localhost:9090 \
+    neutron.revenue.Query/PaymentSchedule
+```
+
+Example Response:
+```json
+{
+  "paymentSchedule": {
+    "type": "PAYMENT_SCHEDULE_TYPE_MONTHLY",
+    "periodsPassed": "5",
+    "periodsCount": "0",
+    "monthEndTime": "2023-11-01T00:00:00Z"
+  }
+}
+```
+
+## gRPC Transactions
+
+The Revenue module supports the following transactions via gRPC.
+
+### FundTreasury
+
+Fund the revenue treasury with tokens.
+
+```bash
+grpcurl -plaintext \
+    -d '{
+      "sender": "neutron1...",
+      "amount": [
+        {
+          "denom": "untrn",
+          "amount": "1000000"
+        }
+      ]
+    }' \
+    localhost:9090 \
+    neutron.revenue.Msg/FundTreasury
+```
+
+## REST API
+
+The Revenue module exposes REST endpoints for querying state. The base URL is typically `http://localhost:1317`.
+
+### Query Parameters
+
+```
+GET /neutron/revenue/params
+```
+
+Example Response:
+```json
+{
+  "params": {
+    "base_compensation": "2000",
+    "denom_compensation": "untrn",
+    "twap_window_size": 30,
+    "performance_requirements": {
+      "required_at_least": "0.800000000000000000",
+      "allowed_to_miss": "0.050000000000000000"
+    },
+    "payment_schedule_type": "PAYMENT_SCHEDULE_TYPE_MONTHLY"
+  }
+}
+```
+
+### Query Validator Info
+
+```
+GET /neutron/revenue/validator_info/{validatorAddr}
+```
+
+Example Response:
+```json
+{
+  "validator_info": {
+    "address": "neutronvaloper1...",
+    "signed_blocks": 980,
+    "blocks_in_window": 1000,
+    "provided_oracle_votes": 950,
+    "oracle_votes_in_window": 1000
+  }
+}
+```
+
+### Query Payment Schedule
+
+```
+GET /neutron/revenue/payment_schedule
+```
+
+Example Response:
+```json
+{
+  "payment_schedule": {
+    "type": "PAYMENT_SCHEDULE_TYPE_MONTHLY",
+    "periods_passed": 5,
+    "periods_count": 0,
+    "month_end_time": "2023-11-01T00:00:00Z"
+  }
+}
+``` 

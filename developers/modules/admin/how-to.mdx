@@ -1,0 +1,392 @@
+---
+title: "How-to Guide"
+description: "Step-by-step instructions for using the admin module in governance and administrative operations"
+---
+
+This guide provides practical instructions for interacting with the admin module, creating governance proposals, and executing administrative operations on the Neutron network.
+
+## Prerequisites
+
+Before working with the admin module, ensure you have:
+
+- A Neutron node or access to a Neutron RPC endpoint
+- The `neutrond` CLI tool installed and configured
+- Appropriate permissions (typically DAO membership or governance authority)
+- Understanding of Cosmos SDK message formats
+
+## Basic Operations
+
+### Checking Admin Module Status
+
+First, verify that the admin module is properly configured and operational:
+
+```bash
+# Query module parameters
+neutrond query adminmodule params
+
+# Check current admins (if applicable)
+neutrond query adminmodule admins
+```
+
+### Viewing Whitelisted Messages
+
+To see which message types are currently whitelisted for execution:
+
+```bash
+# Query the current whitelist configuration
+neutrond query adminmodule whitelist
+```
+
+## Creating Governance Proposals
+
+### Legacy Proposal Creation
+
+For traditional governance proposals using the legacy format:
+
+#### Parameter Change Proposal
+
+```bash
+# Create a parameter change proposal
+neutrond tx gov submit-proposal param-change proposal.json \
+  --from=<your-key> \
+  --chain-id=neutron-1 \
+  --gas=auto \
+  --gas-adjustment=1.5
+```
+
+Where `proposal.json` contains:
+
+```json
+{
+  "title": "Update Module Parameters",
+  "description": "Proposal to update specific module parameters",
+  "changes": [
+    {
+      "subspace": "targetmodule",
+      "key": "parameter_key",
+      "value": "new_value"
+    }
+  ],
+  "deposit": "1000000untrn"
+}
+```
+
+#### Community Pool Spend Proposal
+
+```bash
+# Submit a community pool spend proposal
+neutrond tx gov submit-proposal community-pool-spend proposal.json \
+  --from=<your-key> \
+  --chain-id=neutron-1
+```
+
+With proposal JSON:
+
+```json
+{
+  "title": "Community Fund Allocation",
+  "description": "Allocate funds for development initiatives",
+  "recipient": "neutron1...",
+  "amount": [
+    {
+      "denom": "untrn",
+      "amount": "1000000"
+    }
+  ],
+  "deposit": "1000000untrn"
+}
+```
+
+### Message-Based Proposals
+
+For modern SDK 0.47+ message-based proposals:
+
+#### Direct Message Execution
+
+```bash
+# Submit a message-based proposal
+neutrond tx adminmodule submit-proposal messages.json \
+  --from=<your-key> \
+  --chain-id=neutron-1
+```
+
+Where `messages.json` contains:
+
+```json
+{
+  "messages": [
+    {
+      "@type": "/cosmos.bank.v1beta1.MsgSend",
+      "from_address": "neutron1...",
+      "to_address": "neutron1...",
+      "amount": [
+        {
+          "denom": "untrn",
+          "amount": "1000000"
+        }
+      ]
+    }
+  ],
+  "proposer": "neutron1..."
+}
+```
+
+## Smart Contract Integration
+
+### Using WASM Bindings
+
+When integrating with smart contracts, use the ProposalExecuteMessage binding:
+
+```rust
+use neutron_sdk::bindings::msg::NeutronMsg;
+
+// Create a proposal execution message
+let proposal_msg = NeutronMsg::SubmitProposal {
+    messages: vec![
+        CosmosMsg::Bank(BankMsg::Send {
+            to_address: recipient.to_string(),
+            amount: coins(amount, "untrn"),
+        })
+    ],
+};
+
+// Execute through contract
+let response = Response::new()
+    .add_message(proposal_msg)
+    .add_attribute("action", "submit_proposal");
+```
+
+### Contract-Based Proposal Creation
+
+From a CosmWasm contract:
+
+```rust
+#[execute]
+pub fn submit_governance_proposal(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    proposal: ProposalExecuteMsg,
+) -> Result<Response<NeutronMsg>, ContractError> {
+    // Validate proposer authority
+    if !is_authorized(&deps, &info.sender)? {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    // Create the admin module message
+    let admin_msg = NeutronMsg::SubmitProposal {
+        messages: proposal.messages,
+    };
+
+    Ok(Response::new()
+        .add_message(admin_msg)
+        .add_attribute("action", "governance_proposal")
+        .add_attribute("proposer", info.sender))
+}
+```
+
+## Administrative Operations
+
+### Managing Module Parameters
+
+#### Updating Oracle Parameters
+
+```bash
+# Create parameter update proposal for oracle module
+neutrond tx adminmodule submit-proposal \
+  --messages='[{
+    "@type": "/neutron.oracle.MsgUpdateParams",
+    "authority": "neutron1...",
+    "params": {
+      "vote_period": "10",
+      "vote_threshold": "0.5"
+    }
+  }]' \
+  --from=<your-key>
+```
+
+#### Updating Fee Parameters
+
+```bash
+# Update fee-related parameters
+neutrond tx adminmodule submit-proposal \
+  --messages='[{
+    "@type": "/neutron.feeburner.MsgUpdateParams",
+    "authority": "neutron1...",
+    "params": {
+      "treasury_address": "neutron1...",
+      "burn_rate": "0.1"
+    }
+  }]' \
+  --from=<your-key>
+```
+
+### Smart Contract Administration
+
+#### Instantiating Contracts
+
+```bash
+# Submit proposal to instantiate a new contract
+neutrond tx adminmodule submit-proposal \
+  --messages='[{
+    "@type": "/cosmwasm.wasm.v1.MsgInstantiateContract",
+    "sender": "neutron1...",
+    "admin": "neutron1...",
+    "code_id": "1",
+    "label": "governance-contract",
+    "msg": "{\"owner\":\"neutron1...\"}"
+  }]' \
+  --from=<your-key>
+```
+
+#### Migrating Contracts
+
+```bash
+# Submit contract migration proposal
+neutrond tx adminmodule submit-proposal \
+  --messages='[{
+    "@type": "/cosmwasm.wasm.v1.MsgMigrateContract",
+    "sender": "neutron1...",
+    "contract": "neutron1...",
+    "code_id": "2",
+    "msg": "{\"migrate\":{}}"
+  }]' \
+  --from=<your-key>
+```
+
+## Monitoring and Verification
+
+### Tracking Proposal Status
+
+```bash
+# Query proposal by ID
+neutrond query gov proposal <proposal-id>
+
+# Check voting status
+neutrond query gov votes <proposal-id>
+
+# Monitor proposal tally
+neutrond query gov tally <proposal-id>
+```
+
+### Verifying Execution
+
+```bash
+# Check transaction hash for proposal execution
+neutrond query tx <tx-hash>
+
+# Verify state changes
+neutrond query <module> <state-query>
+```
+
+### Event Monitoring
+
+Monitor admin module events to track governance activities:
+
+```bash
+# Subscribe to admin module events
+neutrond query txs --events='message.module=adminmodule'
+
+# Filter by message type
+neutrond query txs --events='message.action=submit_proposal'
+```
+
+## Advanced Use Cases
+
+### Batch Operations
+
+Execute multiple operations in a single proposal:
+
+```json
+{
+  "messages": [
+    {
+      "@type": "/cosmos.bank.v1beta1.MsgSend",
+      "from_address": "neutron1...",
+      "to_address": "neutron1...",
+      "amount": [{"denom": "untrn", "amount": "1000000"}]
+    },
+    {
+      "@type": "/neutron.cron.MsgAddSchedule",
+      "authority": "neutron1...",
+      "name": "weekly_task",
+      "period": "604800",
+      "msgs": ["..."]
+    }
+  ]
+}
+```
+
+### Multi-Module Coordination
+
+Coordinate changes across multiple modules:
+
+```json
+{
+  "messages": [
+    {
+      "@type": "/neutron.oracle.MsgUpdateParams",
+      "authority": "neutron1...",
+      "params": {"vote_period": "10"}
+    },
+    {
+      "@type": "/neutron.cron.MsgUpdateParams", 
+      "authority": "neutron1...",
+      "params": {"security_address": "neutron1..."}
+    }
+  ]
+}
+```
+
+## Error Handling
+
+### Common Error Messages
+
+- **Unauthorized**: The proposer doesn't have the required authority
+- **Message not whitelisted**: The proposed message type is not in the whitelist
+- **Invalid message format**: The message doesn't conform to expected format
+- **Insufficient permissions**: The operation requires higher-level permissions
+
+### Debugging Failed Proposals
+
+```bash
+# Check proposal failure reasons
+neutrond query gov proposal <proposal-id> --output json | jq '.final_tally_result'
+
+# Examine transaction logs
+neutrond query tx <tx-hash> --output json | jq '.logs'
+```
+
+### Recovery Procedures
+
+If a proposal fails:
+
+1. **Analyze Error**: Examine the error message and logs
+2. **Correct Issues**: Fix message format, permissions, or parameters
+3. **Resubmit**: Create a new proposal with corrected parameters
+4. **Monitor**: Track the new proposal through the voting process
+
+## Best Practices
+
+### Security Considerations
+
+- Always validate message parameters before submission
+- Use test networks for complex proposals before mainnet
+- Implement proper access controls in smart contracts
+- Monitor proposal execution for unexpected results
+
+### Efficiency Tips
+
+- Batch related operations in single proposals
+- Use appropriate gas limits for complex operations
+- Test message formats using local development environments
+- Prepare contingency plans for failed proposals
+
+### Governance Participation
+
+- Engage with the community before submitting proposals
+- Provide clear documentation for proposal rationale
+- Allow sufficient time for community review
+- Respond to community feedback and concerns
+
+This guide provides the foundation for effective use of the admin module in Neutron governance operations. For specific use cases or advanced scenarios, consult the detailed API reference documentation. 

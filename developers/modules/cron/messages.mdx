@@ -1,0 +1,266 @@
+---
+title: "Messages"
+description: "Detailed explanation of all messages in the Cron module"
+---
+
+# Messages
+
+This document provides a detailed reference for all messages supported by the Cron module, including their structure, validation requirements, and processing logic.
+
+## Message Types
+
+The Cron module supports the following message types:
+
+| Message Type | Description |
+|--------------|-------------|
+| `MsgCreateSchedule` | Creates a new schedule |
+| `MsgUpdateSchedule` | Updates an existing schedule |
+| `MsgRemoveSchedule` | Removes an existing schedule |
+
+## MsgCreateSchedule
+
+The `MsgCreateSchedule` message creates a new schedule in the Cron module.
+
+### Structure
+
+```protobuf
+message MsgCreateSchedule {
+  string name = 1;             // Unique identifier for the schedule
+  uint64 period = 2;           // Number of blocks between executions
+  repeated ScheduleMsg msgs = 3; // Messages to execute
+  optional uint64 boundary = 4; // Starting point (block height)
+  string sender = 5;           // Address creating the schedule
+}
+
+message ScheduleMsg {
+  string msg = 1;              // Base64-encoded message
+  optional uint64 gas_limit = 2; // Gas limit for execution
+}
+```
+
+### Validation
+
+The message is validated against the following rules:
+
+1. **Name must be unique**: No other schedule with the same name can exist
+2. **Name length check**: The name must not exceed `max_name_length` parameter
+3. **Period check**: The period must be at least `min_period` blocks (or 0 for one-time execution)
+4. **Message count**: The number of messages must not exceed `max_msgs_per_schedule` parameter
+5. **Message size**: Each message must not exceed `max_msg_size` parameter
+6. **Message format**: Each message must be a valid JSON-encoded CosmWasm message
+
+### Processing
+
+When processing a `MsgCreateSchedule`, the module:
+
+1. Validates the message according to the rules above
+2. Creates a new `Schedule` object
+3. Sets `owner` to the message sender
+4. Sets `last_execute_height` to 0 (indicating it hasn't been executed yet)
+5. Stores the schedule in the module's state
+6. Emits a `create_schedule` event
+
+### Example
+
+```json
+{
+  "create_schedule": {
+    "name": "daily_reward_distribution",
+    "period": 7200,
+    "msgs": [
+      {
+        "msg": "eyJleGVjdXRlX2NvbnRyYWN0Ijp7ImNvbnRyYWN0X2FkZHIiOiJuZXV0cm9uMTZjNHVtbnAzN3BnODl2bDI0YTJtMWdwNnFwcW5ld3d0OHB6d2h4M3FkdnU3aDd5c3l3N2RhcnVxbWVtMHdkZyIsIm1zZyI6ImV5SnNiMkZrY21WM1lYSmtjeUk2ZXlKMllXeHBaR0YwYjNJaU9pSmphR0Z1Ym1Wc0xUVXlJaXdpY21WemEybHBZblYwWlNJNlptRnNjMlY5ZlE9PSIsImZ1bmRzIjpbXX19",
+        "gas_limit": 200000
+      }
+    ],
+    "sender": "neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq"
+  }
+}
+```
+
+## MsgUpdateSchedule
+
+The `MsgUpdateSchedule` message updates an existing schedule.
+
+### Structure
+
+```protobuf
+message MsgUpdateSchedule {
+  string name = 1;             // Name of the schedule to update
+  uint64 period = 2;           // New period
+  repeated ScheduleMsg msgs = 3; // New messages
+  optional uint64 boundary = 4; // New boundary
+  string sender = 5;           // Address updating the schedule
+}
+```
+
+### Validation
+
+The message is validated against the following rules:
+
+1. **Schedule exists**: A schedule with the specified name must exist
+2. **Ownership**: The sender must be the owner of the schedule
+3. **Period check**: The new period must be at least `min_period` blocks (or 0 for one-time execution)
+4. **Message count**: The number of new messages must not exceed `max_msgs_per_schedule` parameter
+5. **Message size**: Each new message must not exceed `max_msg_size` parameter
+6. **Message format**: Each new message must be a valid JSON-encoded CosmWasm message
+
+### Processing
+
+When processing a `MsgUpdateSchedule`, the module:
+
+1. Validates the message according to the rules above
+2. Updates the existing schedule with the new parameters
+3. Stores the updated schedule in the module's state
+4. Emits an `update_schedule` event
+
+### Example
+
+```json
+{
+  "update_schedule": {
+    "name": "daily_reward_distribution",
+    "period": 14400,
+    "msgs": [
+      {
+        "msg": "eyJleGVjdXRlX2NvbnRyYWN0Ijp7ImNvbnRyYWN0X2FkZHIiOiJuZXV0cm9uMTZjNHVtbnAzN3BnODl2bDI0YTJtMWdwNnFwcW5ld3d0OHB6d2h4M3FkdnU3aDd5c3l3N2RhcnVxbWVtMHdkZyIsIm1zZyI6ImV5SnNiMkZrY21WM1lYSmtjeUk2ZXlKMllXeHBaR0YwYjNJaU9pSmphR0Z1Ym1Wc0xUVXlJaXdpY21WemEybHBZblYwWlNJNlptRnNjMlY5ZlE9PSIsImZ1bmRzIjpbXX19",
+        "gas_limit": 300000
+      }
+    ],
+    "sender": "neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq"
+  }
+}
+```
+
+## MsgRemoveSchedule
+
+The `MsgRemoveSchedule` message removes an existing schedule.
+
+### Structure
+
+```protobuf
+message MsgRemoveSchedule {
+  string name = 1;             // Name of the schedule to remove
+  string sender = 2;           // Address removing the schedule
+}
+```
+
+### Validation
+
+The message is validated against the following rules:
+
+1. **Schedule exists**: A schedule with the specified name must exist
+2. **Ownership**: The sender must be the owner of the schedule
+
+### Processing
+
+When processing a `MsgRemoveSchedule`, the module:
+
+1. Validates the message according to the rules above
+2. Removes the schedule from the module's state
+3. Emits a `remove_schedule` event
+
+### Example
+
+```json
+{
+  "remove_schedule": {
+    "name": "daily_reward_distribution",
+    "sender": "neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq"
+  }
+}
+```
+
+## Schedule Message Format
+
+The `msg` field in a `ScheduleMsg` contains a base64-encoded JSON representation of a message that will be executed when the schedule triggers. The format of this message depends on the type of operation you want to perform.
+
+### Wasm Execute Message
+
+To execute a CosmWasm contract:
+
+```json
+{
+  "wasm": {
+    "execute": {
+      "contract_addr": "neutron1...",
+      "msg": "base64_encoded_execute_msg",
+      "funds": []
+    }
+  }
+}
+```
+
+The `msg` field within this structure is a base64-encoded JSON string that will be passed to the target contract.
+
+### Bank Send Message
+
+To send tokens:
+
+```json
+{
+  "bank": {
+    "send": {
+      "to_address": "neutron1...",
+      "amount": [
+        {
+          "denom": "untrn",
+          "amount": "1000000"
+        }
+      ]
+    }
+  }
+}
+```
+
+### Gov Vote Message
+
+To vote on a governance proposal:
+
+```json
+{
+  "gov": {
+    "vote": {
+      "proposal_id": "1",
+      "option": "VOTE_OPTION_YES"
+    }
+  }
+}
+```
+
+## Message Construction in CosmWasm Contracts
+
+When integrating with the Cron module from a CosmWasm contract, you'll need to construct the appropriate messages. Here's an example using the `neutron-sdk`:
+
+```rust
+use cosmwasm_std::{to_json_binary, Response};
+use neutron_sdk::bindings::{msg::NeutronMsg, types::ScheduleMsg};
+
+// Create a new schedule
+pub fn create_daily_update_schedule(
+    contract_to_call: String,
+    update_msg: &ExecuteMsg,
+) -> Response {
+    // Serialize the message to send to the target contract
+    let serialized_msg = to_json_binary(update_msg).unwrap();
+    
+    // Create the schedule message
+    let msg = NeutronMsg::CreateSchedule {
+        name: "daily_update".to_string(),
+        period: 7200, // Approximately daily with 12s block time
+        msgs: vec![ScheduleMsg {
+            msg: serialized_msg,
+            gas_limit: Some(100_000),
+        }],
+        boundary: None,
+    };
+    
+    // Return the response with the schedule message
+    Response::new()
+        .add_message(msg)
+        .add_attribute("action", "create_schedule")
+        .add_attribute("name", "daily_update")
+}
+```
+
+This example creates a schedule that will execute approximately once per day (assuming 12-second blocks), calling the specified contract with the provided message. 

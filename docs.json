@@ -1,0 +1,537 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "Neutron Documentation",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#31D99C",
+    "light": "#AFF0D0",
+    "dark": "#101A15"
+  },
+  "background": {
+    "decoration": "grid",
+    "color": {
+      "light": "#EDEDED",
+      "dark": "#000000"
+    }
+  },
+  "theme": "mint",
+  "navbar": {
+    "links": [  
+      {
+        "label": "Website",
+        "href": "https://neutron.org"
+      },
+      {
+        "label": "GitHub",
+        "href": "https://github.com/neutron-org"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Launch App",
+      "href": "https://app.neutron.org"
+    }
+  },
+  "navigation": {
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Discord",
+          "icon": "discord",
+          "href": "https://discord.com/invite/bzPBzbDvWC"
+        },
+        {
+          "anchor": "Twitter",
+          "icon": "twitter",
+          "href": "https://twitter.com/neutron_org"
+        },
+        {
+          "anchor": "GitHub",
+          "icon": "github",
+          "href": "https://github.com/neutron-org"
+        }
+      ]
+    },
+    "tabs": [
+      {
+        "tab": "Home",
+        "icon": "home",
+        "groups": [
+          {
+            "group": "Introduction",
+            "icon": "book-open",
+            "pages": [
+              "home",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "icon": "lightbulb",
+            "pages": [
+              "concepts/integrated-architecture",
+              "concepts/opinionated-blockchains",
+              "concepts/proof-of-liquid-staking",
+              "concepts/modular-governance",
+              "concepts/tokenomics"
+            ]
+          },
+          {
+            "group": "DeFi on Neutron",
+            "icon": "chart-line",
+            "pages": [
+              "defi/overview",
+              "defi/duality",
+              "defi/supervaults",
+              "defi/bull-vs-bear",
+              "defi/drop"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Developers",
+        "icon": "code",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "icon": "rocket",
+            "pages": [
+              "developers/overview",
+              "developers/quickstart",
+              {
+                "group": "SDK & Developer Tools",
+                "icon": "toolbox",
+                "pages": [
+                  "developers/sdk",
+                  "developers/sdk/boilerplates",
+                  "developers/sdk/neutron-template",
+                  "developers/sdk/bullbear-integration"
+                ]
+              },
+              "developers/faq"
+            ]
+          },
+          {
+            "group": "Tutorials",
+            "icon": "graduation-cap",
+            "pages": [
+              "developers/tutorials/overview",
+              "developers/tutorials/introduction_to_cosmwasm",
+              "developers/tutorials/cosmwasm_ica",
+              "developers/tutorials/cosmwasm_icq",
+              {
+                "group": "Onboarding",
+                "icon": "user-plus",
+                "pages": [
+                  "developers/tutorials/onboarding/overview",
+                  "developers/tutorials/onboarding/cosmopark",
+                  "developers/tutorials/onboarding/part-1-minimal-application",
+                  "developers/tutorials/onboarding/part-2-modules-contracts",
+                  "developers/tutorials/onboarding/part-3-web-app"
+                ]
+              },
+              {
+                "group": "3rd Party Tools",
+                "icon": "toolbox",
+                "pages": [
+                  "developers/tutorials/cosmwasm_remix",
+                  "developers/tutorials/cosmwasm_wasmkit"
+                ]
+              },
+              {
+                "group": "Integration tests",
+                "icon": "vial",
+                "pages": [
+                  "developers/tutorials/integration-tests/overview",
+                  "developers/tutorials/integration-tests/chain",
+                  "developers/tutorials/integration-tests/smart-contracts"
+                ]
+              },
+              {
+                "group": "Indexers",
+                "icon": "database",
+                "pages": [
+                  "developers/tutorials/indexers/overview",
+                  "developers/tutorials/indexers/intro",
+                  "developers/tutorials/indexers/subquery"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Modules",
+            "icon": "cubes",
+            "pages": [
+              "developers/modules/overview",
+              {
+                "group": "Interchain Queries (ICQ)",
+                "icon": "link",
+                "pages": [
+                  "developers/modules/interchain-queries/overview",
+                  "developers/modules/interchain-queries/explanation",
+                  "developers/modules/interchain-queries/how-to",
+                  "developers/modules/interchain-queries/known-bugs",
+                  {
+                    "group": "Reference",
+                    "icon": "book",
+                    "pages": [
+                      "developers/modules/interchain-queries/reference",
+                      "developers/modules/interchain-queries/api",
+                      "developers/modules/interchain-queries/messages",
+                      "developers/modules/interchain-queries/events",
+                      "developers/modules/interchain-queries/state",
+                      "developers/modules/interchain-queries/client"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Cron",
+                "icon": "clock",
+                "pages": [
+                  "developers/modules/cron/overview",
+                  "developers/modules/cron/explanation",
+                  "developers/modules/cron/how-to",
+                  "developers/modules/cron/known-bugs",
+                  {
+                    "group": "Reference",
+                    "icon": "book",
+                    "pages": [
+                      "developers/modules/cron/reference",
+                      "developers/modules/cron/messages",
+                      "developers/modules/cron/events",
+                      "developers/modules/cron/state",
+                      "developers/modules/cron/client",
+                      "developers/modules/cron/api"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Oracle",
+                "icon": "database",
+                "pages": [
+                  "developers/modules/oracle/overview",
+                  "developers/modules/oracle/explanation",
+                  "developers/modules/oracle/how-to",
+                  "developers/modules/oracle/known-bugs",
+                  {
+                    "group": "Reference",
+                    "icon": "book",
+                    "pages": [
+                      "developers/modules/oracle/reference",
+                      "developers/modules/oracle/api"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Harpoon",
+                "icon": "anchor",
+                "pages": [
+                  "developers/modules/harpoon/overview",
+                  "developers/modules/harpoon/explanation",
+                  "developers/modules/harpoon/how-to",
+                  "developers/modules/harpoon/known-bugs",
+                  {
+                    "group": "Reference",
+                    "icon": "book",
+                    "pages": [
+                      "developers/modules/harpoon/api",
+                      "developers/modules/harpoon/messages",
+                      "developers/modules/harpoon/state",
+                      "developers/modules/harpoon/client"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Interchain Transactions (ICTX)",
+                "icon": "arrow-right-arrow-left",
+                "pages": [
+                  "developers/modules/interchaintxs/overview",
+                  "developers/modules/interchaintxs/explanation",
+                  "developers/modules/interchaintxs/how-to",
+                  "developers/modules/interchaintxs/known-bugs",
+                  {
+                    "group": "Reference",
+                    "icon": "book",
+                    "pages": [
+                      "developers/modules/interchaintxs/reference",
+                      "developers/modules/interchaintxs/api",
+                      "developers/modules/interchaintxs/messages",
+                      "developers/modules/interchaintxs/events",
+                      "developers/modules/interchaintxs/state",
+                      "developers/modules/interchaintxs/client"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Fee Burner",
+                "icon": "fire",
+                "pages": [
+                  "developers/modules/feeburner/overview",
+                  "developers/modules/feeburner/explanation",
+                  "developers/modules/feeburner/how-to",
+                  {
+                    "group": "Reference",
+                    "icon": "book",
+                    "pages": [
+                      "developers/modules/feeburner/reference",
+                      "developers/modules/feeburner/api",
+                      "developers/modules/feeburner/messages",
+                      "developers/modules/feeburner/events",
+                      "developers/modules/feeburner/state",
+                      "developers/modules/feeburner/client"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Fee Refunder",
+                "icon": "money-bill-transfer",
+                "pages": [
+                  "developers/modules/feerefunder/overview",
+                  "developers/modules/feerefunder/explanation",
+                  "developers/modules/feerefunder/how-to",
+                  {
+                    "group": "Reference",
+                    "icon": "book",
+                    "pages": [
+                      "developers/modules/feerefunder/reference",
+                      "developers/modules/feerefunder/api",
+                      "developers/modules/feerefunder/messages",
+                      "developers/modules/feerefunder/events",
+                      "developers/modules/feerefunder/state",
+                      "developers/modules/feerefunder/client"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Revenue",
+                "icon": "money-bill-trend-up",
+                "pages": [
+                  "developers/modules/revenue/overview",
+                  "developers/modules/revenue/explanation",
+                  "developers/modules/revenue/how-to",
+                  "developers/modules/revenue/known-bugs",
+                  {
+                    "group": "Reference",
+                    "icon": "book",
+                    "pages": [
+                      "developers/modules/revenue/reference",
+                      "developers/modules/revenue/api",
+                      "developers/modules/revenue/messages",
+                      "developers/modules/revenue/events",
+                      "developers/modules/revenue/state",
+                      "developers/modules/revenue/client"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "IBC Rate Limit",
+                "icon": "gauge-high",
+                "pages": [
+                  "developers/modules/ibc-rate-limit/overview",
+                  "developers/modules/ibc-rate-limit/explanation",
+                  "developers/modules/ibc-rate-limit/how-to",
+                  "developers/modules/ibc-rate-limit/known-bugs",
+                  {
+                    "group": "Reference",
+                    "icon": "book",
+                    "pages": [
+                      "developers/modules/ibc-rate-limit/reference",
+                      "developers/modules/ibc-rate-limit/api",
+                      "developers/modules/ibc-rate-limit/messages",
+                      "developers/modules/ibc-rate-limit/events",
+                      "developers/modules/ibc-rate-limit/state",
+                      "developers/modules/ibc-rate-limit/client"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Transfer",
+                "icon": "arrow-right-arrow-left",
+                "pages": [
+                  "developers/modules/transfer/overview",
+                  "developers/modules/transfer/explanation",
+                  "developers/modules/transfer/how-to",
+                  "developers/modules/transfer/known-bugs",
+                  {
+                    "group": "Reference",
+                    "icon": "book",
+                    "pages": [
+                      "developers/modules/transfer/reference",
+                      "developers/modules/transfer/api",
+                      "developers/modules/transfer/messages",
+                      "developers/modules/transfer/events",
+                      "developers/modules/transfer/state",
+                      "developers/modules/transfer/client"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Dex",
+                "icon": "arrows-rotate",
+                "pages": [
+                  "developers/modules/dex/overview",
+                  "developers/modules/dex/explanation",
+                  "developers/modules/dex/how-to",
+                  "developers/modules/dex/known-bugs",
+                  {
+                    "group": "Reference",
+                    "icon": "book",
+                    "pages": [
+                      "developers/modules/dex/reference",
+                      "developers/modules/dex/api",
+                      "developers/modules/dex/messages",
+                      "developers/modules/dex/events",
+                      "developers/modules/dex/state",
+                      "developers/modules/dex/client"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Contract Manager",
+                "icon": "shield",
+                "pages": [
+                  "developers/modules/contractmanager/overview",
+                  "developers/modules/contractmanager/explanation",
+                  "developers/modules/contractmanager/how-to",
+                  {
+                    "group": "Reference",
+                    "icon": "book",
+                    "pages": [
+                      "developers/modules/contractmanager/reference",
+                      "developers/modules/contractmanager/api",
+                      "developers/modules/contractmanager/messages",
+                      "developers/modules/contractmanager/events",
+                      "developers/modules/contractmanager/state",
+                      "developers/modules/contractmanager/client"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Admin",
+                "icon": "user-gear",
+                "pages": [
+                  "developers/modules/admin/overview",
+                  "developers/modules/admin/explanation",
+                  "developers/modules/admin/how-to",
+                  "developers/modules/admin/known-bugs",
+                  {
+                    "group": "Reference",
+                    "icon": "book",
+                    "pages": [
+                      "developers/modules/admin/reference",
+                      "developers/modules/admin/api",
+                      "developers/modules/admin/messages",
+                      "developers/modules/admin/events",
+                      "developers/modules/admin/state",
+                      "developers/modules/admin/client"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Operators",
+        "icon": "server",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "icon": "flag",
+            "pages": [
+              "validators/overview",
+              "validators/running-a-node",
+              "validators/oracle-setup",
+              "validators/becoming-a-validator"
+            ]
+          },
+          {
+            "group": "Economics",
+            "icon": "coins",
+            "pages": [
+              "validators/economics/validator-incentives"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Resources",
+        "icon": "book-atlas",
+        "groups": [
+          {
+            "group": "Network Information",
+            "icon": "network-wired",
+            "pages": [
+              "resources/chain-parameters",
+              "resources/endpoints",
+              "resources/peers",
+              "resources/chain-registry"
+            ]
+          },
+          {
+            "group": "Upgrades",
+            "icon": "arrow-up-right-dots",
+            "pages": [
+              "resources/upgrades/v6.0.1",
+              "resources/upgrades/v7.0.0-rc0"
+            ]
+          },
+          {
+            "group": "Assets",
+            "icon": "coins",
+            "pages": [
+              "resources/ibc-denoms",
+              "resources/tokenfactory-denoms"
+            ]
+          },
+          {
+            "group": "Contracts",
+            "icon": "file-contract",
+            "pages": [
+              "resources/contracts/neutron-dao",
+              "resources/contracts/neutron-tge",
+              "resources/contracts/neutron-vesting",
+              "resources/contracts/bridge",
+              "resources/contracts/mainnet",
+              "resources/contracts/testnet"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "twitter": "https://twitter.com/neutron_org",
+      "discord": "https://discord.com/invite/bzPBzbDvWC",
+      "telegram": "https://t.me/neutron_community",
+      "github": "https://github.com/neutron-org"
+    }
+  },
+  "hero": {
+    "image": {
+      "light": "/images/hero-light.png",
+      "dark": "/images/hero-dark.png"
+    },
+    "title": "Neutron: The Integrated DeFi Blockchain",
+    "subtitle": "Build, stake, and govern the next generation of decentralized finance"
+  }
+}

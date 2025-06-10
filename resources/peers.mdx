@@ -1,0 +1,75 @@
+---
+title: "Peers"
+description: "Seed nodes and persistent peers for connecting to Neutron networks"
+icon: "link"
+---
+
+This page lists peer information for connecting to Neutron networks.
+
+## Mainnet (neutron-1)
+
+### Seed Nodes
+
+```
+24f609fb5946ca3a979f40b7f54132c00104433e@p2p-erheim.neutron-1.neutron.org:26656
+20e1000e88125698264454a884812746c2eb4807@seeds.lavenderfive.com:19156
+b1c6fa570a184c56d0d736d260b8065d887e717c@p2p-kralum.neutron-1.neutron.org:26656
+f80e07ebb0ae3f11d938e8e224705b1039f000b5@neutron.dhk.org:26656
+ade4d8bc8cbe014af6ebdf3cb7b1e9ad36f412c0@seeds.polkachu.com:19156
+```
+
+### Persistent Peers
+
+```
+e5d2743d9a3de514e4f7b9461bf3f0c1500c58d9@neutron.peer.stakewith.us:39956
+982f968cd6ac567fdddf2170f7da9725ba21693d@51.210.209.49:15600
+8e2af33b3fc9fee81dda7d351a65d93e8ac97409@65.108.71.163:2480
+b119a600d082963d27a9ba9cd762c7c83f00e7d1@81.196.190.108:10083
+9cede4e9f58fc3dfc80ad643c0e1f1cbab26b8ba@138.201.135.251:26656
+2ee64f9f128e8a9f15f47a8f8d0e9cde7351fd17@46.101.193.151:26656
+ce526dc00568900d54dedf2fd2680ddfc7a58c59@138.201.124.215:36656
+5865c2bae7c0403c0c6d90c01556b1b2bb437ef8@51.89.195.173:26656
+```
+
+### Additional P2P Peers
+
+```
+74f3a4a0423e72334f4439b438b29934e5f0dbbd@p2p-xyphion.neutron-1.neutron.org:26656
+65beeffac5c0f29e6c3749687f03b2040d265895@p2p-talzor.neutron-1.neutron.org:26656
+```
+
+## Configuration
+
+To add these peers to your node configuration:
+
+1. Edit your `config.toml` file:
+
+```bash
+nano ~/.neutrond/config/config.toml
+```
+
+2. Add the seed nodes:
+
+```toml
+# Comma separated list of seed nodes to connect to
+seeds = "24f609fb5946ca3a979f40b7f54132c00104433e@p2p-erheim.neutron-1.neutron.org:26656,20e1000e88125698264454a884812746c2eb4807@seeds.lavenderfive.com:19156,b1c6fa570a184c56d0d736d260b8065d887e717c@p2p-kralum.neutron-1.neutron.org:26656,f80e07ebb0ae3f11d938e8e224705b1039f000b5@neutron.dhk.org:26656,ade4d8bc8cbe014af6ebdf3cb7b1e9ad36f412c0@seeds.polkachu.com:19156"
+```
+
+3. Optionally, add some persistent peers:
+
+```toml
+# Comma separated list of nodes to keep persistent connections to
+persistent_peers = "e5d2743d9a3de514e4f7b9461bf3f0c1500c58d9@neutron.peer.stakewith.us:39956,982f968cd6ac567fdddf2170f7da9725ba21693d@51.210.209.49:15600"
+```
+
+## Addrbook
+
+You can also bootstrap your node with a pre-existing addrbook:
+
+```bash
+wget -O ~/.neutrond/config/addrbook.json https://raw.githubusercontent.com/neutron-org/mainnet-assets/main/addrbook.json
+```
+
+## Testnet (pion-1)
+
+For testnet peers, please refer to the [Neutron Testnet documentation](https://docs.neutron.org/neutron/join-testnet). 

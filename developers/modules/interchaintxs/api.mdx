@@ -1,0 +1,351 @@
+---
+title: "API"
+---
+
+This document details the API endpoints provided by the Interchain Transactions module for blockchain integration.
+
+## REST Endpoints
+
+All REST routes are defined in the module's `client/rest` package. The base URL is typically `http://localhost:1317`.
+
+### GET: Query Parameters
+
+```
+GET /neutron/interchaintxs/params
+```
+
+Returns the current parameters of the Interchain Transactions module.
+
+#### Response Structure
+
+```json
+{
+  "params": {
+    "host_enabled": true,
+    "allow_messages": [
+      "/cosmos.bank.v1beta1.MsgSend",
+      "/cosmos.staking.v1beta1.MsgDelegate",
+      "/cosmos.staking.v1beta1.MsgUndelegate",
+      "/cosmos.staking.v1beta1.MsgBeginRedelegate",
+      "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+      "/cosmos.gov.v1beta1.MsgVote"
+    ]
+  }
+}
+```
+
+### GET: Query Interchain Account Address
+
+```
+GET /neutron/interchaintxs/{owner_address}/{interchain_account_id}/{connection_id}/interchain_account_address
+```
+
+Returns the address of an interchain account on a remote chain.
+
+#### Request Parameters
+
+- `owner_address` (path): The address of the owner on Neutron (e.g., `neutron1...`)
+- `interchain_account_id` (path): The identifier of the interchain account (e.g., `myaccount`)
+- `connection_id` (path): The IBC connection ID (e.g., `connection-0`)
+
+#### Response Structure
+
+```json
+{
+  "interchain_account_address": "cosmos1xyz..."
+}
+```
+
+## gRPC Endpoints
+
+The Interchain Transactions module provides gRPC query and transaction endpoints.
+
+### Query Service
+
+#### Params
+
+Query the current parameters of the module:
+
+```protobuf
+rpc Params(QueryParamsRequest) returns (QueryParamsResponse)
+```
+
+##### Request
+
+```protobuf
+message QueryParamsRequest {}
+```
+
+##### Response
+
+```protobuf
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+```
+
+#### InterchainAccountAddress
+
+Query the address of an interchain account on a remote chain:
+
+```protobuf
+rpc InterchainAccountAddress(QueryInterchainAccountAddressRequest) returns (QueryInterchainAccountAddressResponse)
+```
+
+##### Request
+
+```protobuf
+message QueryInterchainAccountAddressRequest {
+  string owner_address = 1;
+  string interchain_account_id = 2;
+  string connection_id = 3;
+}
+```
+
+##### Response
+
+```protobuf
+message QueryInterchainAccountAddressResponse {
+  string interchain_account_address = 1;
+}
+```
+
+### Msg Service
+
+#### RegisterInterchainAccount
+
+Register an interchain account on a remote chain:
+
+```protobuf
+rpc RegisterInterchainAccount(MsgRegisterInterchainAccount) returns (MsgRegisterInterchainAccountResponse)
+```
+
+##### Message
+```protobuf
+message MsgRegisterInterchainAccount {
+  string from_address = 1;
+  string connection_id = 2;
+  string interchain_account_id = 3;
+  repeated cosmos.base.v1beta1.Coin register_fee = 4;
+  ibc.core.channel.v1.Order ordering = 5;
+}
+```
+
+##### Response
+```protobuf
+message MsgRegisterInterchainAccountResponse {
+  string channel_id = 1;
+  string port_id = 2;
+}
+```
+
+#### SubmitTx
+
+Submit a transaction for execution on a remote chain:
+
+```protobuf
+rpc SubmitTx(MsgSubmitTx) returns (MsgSubmitTxResponse)
+```
+
+##### Message
+```protobuf
+message MsgSubmitTx {
+  string from_address = 1;
+  string interchain_account_id = 2;
+  string connection_id = 3;
+  repeated google.protobuf.Any msgs = 4;
+  string memo = 5;
+  uint64 timeout = 6;
+  neutron.feerefunder.Fee fee = 7;
+}
+```
+
+##### Response
+```protobuf
+message MsgSubmitTxResponse {
+  uint64 sequence_id = 1;
+  string channel = 2;
+}
+```
+
+#### UpdateParams
+
+Update the module's parameters (admin/governance only):
+
+```protobuf
+rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse)
+```
+
+##### Message
+```protobuf
+message MsgUpdateParams {
+  string authority = 1;
+  Params params = 2;
+}
+```
+
+##### Response
+```protobuf
+message MsgUpdateParamsResponse {}
+```
+
+## JavaScript/TypeScript Integration
+
+Here's an example of how to interact with the Interchain Transactions module using JavaScript:
+
+### Querying Interchain Account Address
+
+```typescript
+import { QueryClient } from '@cosmjs/stargate';
+import { Tendermint34Client } from '@cosmjs/tendermint-rpc';
+
+async function queryInterchainAccountAddress(
+  ownerAddress: string,
+  interchainAccountId: string,
+  connectionId: string
+) {
+  // Connect to the node
+  const tmClient = await Tendermint34Client.connect("http://localhost:26657");
+  const queryClient = new QueryClient(tmClient);
+  
+  // Craft the query path
+  const path = `/neutron.interchaintxs.v1.Query/InterchainAccountAddress`;
+  
+  // Encode the request
+  const request = {
+    owner_address: ownerAddress,
+    interchain_account_id: interchainAccountId,
+    connection_id: connectionId
+  };
+  const requestBytes = new TextEncoder().encode(JSON.stringify(request));
+  
+  // Send the query
+  const responseBytes = await queryClient.queryAbci(path, requestBytes);
+  
+  // Decode the response
+  const response = JSON.parse(new TextDecoder().decode(responseBytes));
+  
+  return response.interchain_account_address;
+}
+
+// Usage example
+queryInterchainAccountAddress(
+  "neutron1abcdef...",
+  "myaccount",
+  "connection-0"
+)
+  .then(address => console.log("Interchain account address:", address))
+  .catch(err => console.error("Query failed:", err));
+```
+
+### Registering an Interchain Account
+
+```typescript
+import { SigningStargateClient } from '@cosmjs/stargate';
+import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
+
+async function registerInterchainAccount(
+  mnemonic: string,
+  connectionId: string,
+  interchainAccountId: string
+) {
+  // Create wallet and client
+  const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
+    prefix: "neutron"
+  });
+  const accounts = await wallet.getAccounts();
+  const fromAddress = accounts[0].address;
+  
+  const client = await SigningStargateClient.connectWithSigner(
+    "http://localhost:26657",
+    wallet
+  );
+  
+  // Create the message
+  const msg = {
+    typeUrl: "/neutron.interchaintxs.v1.MsgRegisterInterchainAccount",
+    value: {
+      fromAddress,
+      connectionId,
+      interchainAccountId,
+      registerFee: [
+        {
+          denom: "untrn",
+          amount: "1000"
+        }
+      ],
+      ordering: 1 // ORDERED
+    }
+  };
+  
+  // Send the transaction
+  const response = await client.signAndBroadcast(
+    fromAddress,
+    [msg],
+    "auto"
+  );
+  
+  return response;
+}
+
+// Usage example
+registerInterchainAccount(
+  "your mnemonic here",
+  "connection-0",
+  "myaccount"
+)
+  .then(result => console.log("Transaction result:", result))
+  .catch(err => console.error("Transaction failed:", err));
+```
+
+## CosmWasm Integration
+
+Smart contracts can interact with the Interchain Transactions module through custom messages. Here's an example:
+
+### Registering an Interchain Account from a CosmWasm Contract
+
+```rust
+use cosmwasm_std::{CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Response};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
+// Define the custom message
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum NeutronMsg {
+    RegisterInterchainAccount {
+        connection_id: String,
+        interchain_account_id: String,
+        register_fee: Vec<Coin>,
+    },
+    // Other message variants...
+}
+
+// Implementation
+pub fn register_interchain_account(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    connection_id: String,
+    interchain_account_id: String,
+) -> Result<Response, ContractError> {
+    // Create the message
+    let register_msg = NeutronMsg::RegisterInterchainAccount {
+        connection_id,
+        interchain_account_id: interchain_account_id.clone(),
+        register_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(1000u128),
+        }],
+    };
+    
+    // Convert to CosmosMsg
+    let cosmos_msg: CosmosMsg = register_msg.into();
+    
+    // Return response
+    Ok(Response::new()
+        .add_message(cosmos_msg)
+        .add_attribute("action", "register_interchain_account")
+        .add_attribute("interchain_account_id", interchain_account_id))
+}
+``` 

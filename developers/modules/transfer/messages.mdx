@@ -1,0 +1,207 @@
+---
+title: "Messages"
+---
+
+The Transfer module exposes messages for sending tokens between IBC-connected chains and for updating module parameters.
+
+## MsgTransfer
+
+`MsgTransfer` initiates a token transfer from Neutron to another chain.
+
+```protobuf
+message MsgTransfer {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  // the port on which the packet will be sent
+  string source_port = 1;
+  // the channel by which the packet will be sent
+  string source_channel = 2;
+  // the tokens to be transferred
+  cosmos.base.v1beta1.Coin token = 3;
+  // the sender address
+  string sender = 4;
+  // the recipient address on the destination chain
+  string receiver = 5;
+  // Timeout height relative to the current block height.
+  // The timeout is disabled when set to 0.
+  ibc.core.client.v1.Height timeout_height = 6;
+  // Timeout timestamp in absolute nanoseconds since unix epoch.
+  // The timeout is disabled when set to 0.
+  uint64 timeout_timestamp = 7;
+  // optional memo
+  string memo = 8;
+  // fees for IBC packet processing
+  neutron.feerefunder.Fee fee = 9;
+}
+```
+
+### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `source_port` | string | Port identifier on Neutron ("transfer") |
+| `source_channel` | string | Channel identifier on Neutron (e.g., "channel-1") |
+| `token` | Coin | Token to transfer with denom and amount |
+| `sender` | string | Address of the sender on Neutron |
+| `receiver` | string | Address of the recipient on the destination chain |
+| `timeout_height` | Height | Block height on the destination chain after which the packet times out |
+| `timeout_timestamp` | uint64 | Timestamp after which the packet times out (nanoseconds) |
+| `memo` | string | Optional memo to include with the transfer |
+| `fee` | Fee | IBC packet fees with different components |
+
+### Fee Structure
+
+The `fee` field has the following structure:
+
+```protobuf
+message Fee {
+  repeated cosmos.base.v1beta1.Coin recv_fee = 1;
+  repeated cosmos.base.v1beta1.Coin ack_fee = 2;
+  repeated cosmos.base.v1beta1.Coin timeout_fee = 3;
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `recv_fee` | []Coin | Fee paid to the relayer for delivering the packet to the destination chain |
+| `ack_fee` | []Coin | Fee paid to the relayer for delivering the acknowledgement back to Neutron |
+| `timeout_fee` | []Coin | Fee paid to the relayer for delivering a timeout packet if the transfer times out |
+
+### Response
+
+Neutron's Transfer module provides an extended response that includes tracking information:
+
+```protobuf
+message MsgTransferResponse {
+  // channel's sequence_id for outgoing ibc packet. Unique per a channel.
+  uint64 sequence_id = 1;
+  // channel src channel on neutron side transaction was submitted from
+  string channel = 2;
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `sequence_id` | uint64 | Sequence number of the outgoing IBC packet |
+| `channel` | string | Source channel ID on Neutron's side |
+
+### Processing
+
+When a `MsgTransfer` is processed:
+
+1. The module validates the provided parameters (token, channel, sender, timeout, fees)
+2. It prepares an IBC packet with the transfer data
+3. It sends the packet to the IBC core module
+4. It returns the sequence ID and channel of the outgoing packet
+
+## MsgUpdateParams
+
+`MsgUpdateParams` updates the module parameters. This message can only be executed by the governance account.
+
+```protobuf
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "signer";
+
+  // signer address
+  string signer = 1;
+  // params defines the transfer parameters to update.
+  ibc.applications.transfer.v1.Params params = 2;
+}
+```
+
+### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `signer` | string | The address of the governance account |
+| `params` | Params | The new parameters to set |
+
+### Params Structure
+
+```protobuf
+message Params {
+  // send_enabled enables or disables all cross-chain token transfers from this chain.
+  bool send_enabled = 1;
+  // receive_enabled enables or disables all cross-chain token transfers to this chain.
+  bool receive_enabled = 2;
+}
+```
+
+### Response
+
+```protobuf
+message MsgUpdateParamsResponse {}
+```
+
+### Processing
+
+When a `MsgUpdateParams` is processed:
+
+1. The module verifies that the signer is the authorized governance account
+2. It updates the module parameters in state
+3. It returns an empty response
+
+## Sudo Call Interface
+
+The Transfer module also uses a Sudo call interface to communicate with sending contracts when acknowledgements or timeouts are received for IBC packets. These are not directly invokable messages but part of the module's internal processing.
+
+### Success Response
+
+```json
+{
+  "response": {
+    "request_id": "channel-1-42",
+    "data": "base64encodeddata"
+  }
+}
+```
+
+The `request_id` follows the format `channel-{channelID}-{sequence}` to allow contracts to correlate callbacks with their original transfer requests.
+
+The `data` field is a Base64-encoded JSON object containing the acknowledgement data.
+
+### Error Response
+
+```json
+{
+  "error": {
+    "request_id": "channel-1-42",
+    "error": "error message"
+  }
+}
+```
+
+The `error` field contains information about what went wrong with the transfer on the destination chain.
+
+### Timeout Response
+
+```json
+{
+  "timeout": {
+    "request_id": "channel-1-42"
+  }
+}
+```
+
+This indicates that the packet timed out before being processed by the destination chain.
+
+## IBC Packet Data Format
+
+When a transfer is sent through the Transfer module, the IBC packet contains data in the following format:
+
+```protobuf
+message FungibleTokenPacketData {
+  // the token denomination to be transferred
+  string denom = 1;
+  // the token amount to be transferred
+  string amount = 2;
+  // the sender address
+  string sender = 3;
+  // the recipient address on the destination chain
+  string receiver = 4;
+  // optional memo
+  string memo = 5;
+}
+```
+
+This packet data is serialized and included in the IBC packet that is sent to the destination chain. 

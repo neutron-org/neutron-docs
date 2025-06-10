@@ -1,0 +1,318 @@
+---
+title: "API Reference"
+description: "Reference documentation for the Harpoon module's messages, queries, and events"
+---
+
+# API Reference
+
+This page provides technical reference information for the Harpoon module, including message specifications, query endpoints, and events.
+
+## Messages
+
+The Harpoon module exposes the following messages that can be used to manage hook subscriptions:
+
+### MsgManageHookSubscription
+
+This message allows governance to subscribe or unsubscribe contracts to specific hook types.
+
+```protobuf
+// Defines the Msg/ManageHookSubscription request type.
+message MsgManageHookSubscription {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "harpoon/MsgManageHookSubscription";
+
+  // Address of the governance account.
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // Hook subscription to be updated.
+  HookSubscription hook_subscription = 2;
+}
+
+// Defines the response structure for executing a MsgManageHookSubscription message.
+message MsgManageHookSubscriptionResponse {}
+
+// Specifies new hook subscriptions for the contract_address.
+message HookSubscription {
+  // Contract address to update subscriptions for.
+  string contract_address = 2;
+
+  // List of hooks to subscribe to. Hooks not listed here will be removed.
+  repeated HookType hooks = 3;
+}
+```
+
+#### Parameters
+
+| Parameter          | Type             | Description                                                    |
+|--------------------|------------------|----------------------------------------------------------------|
+| authority          | string           | Address of the governance account that can manage subscriptions |
+| hook_subscription  | HookSubscription | The subscription details to update                             |
+
+#### HookSubscription Parameters
+
+| Parameter        | Type       | Description                                                   |
+|------------------|------------|---------------------------------------------------------------|
+| contract_address | string     | Address of the contract to update subscriptions for           |
+| hooks            | []HookType | List of hook types to subscribe to (empty list to unsubscribe)|
+
+#### Hook Types
+
+The following hook types are available for subscription:
+
+```protobuf
+// Hook types that can be subscribed to.
+enum HookType {
+  option (gogoproto.goproto_enum_prefix) = false;
+  // cosmos-sdk requirement; we don't allow to save this value in store
+  HOOK_TYPE_UNSPECIFIED = 0;
+  // Triggered after validator is created
+  HOOK_TYPE_AFTER_VALIDATOR_CREATED = 1;
+  // Triggered before validator is modified
+  HOOK_TYPE_BEFORE_VALIDATOR_MODIFIED = 2;
+  // Triggered after validator is removed
+  HOOK_TYPE_AFTER_VALIDATOR_REMOVED = 3;
+  // Triggered after validator is bonded
+  HOOK_TYPE_AFTER_VALIDATOR_BONDED = 4;
+  // Triggered after validator begins unbonding
+  HOOK_TYPE_AFTER_VALIDATOR_BEGIN_UNBONDING = 5;
+  // Triggered before delegation is created
+  HOOK_TYPE_BEFORE_DELEGATION_CREATED = 6;
+  // Triggered before delegation's shares are modified
+  HOOK_TYPE_BEFORE_DELEGATION_SHARES_MODIFIED = 7;
+  // Triggered before delegation is removed
+  HOOK_TYPE_BEFORE_DELEGATION_REMOVED = 8;
+  // Triggered after delegation is modified
+  HOOK_TYPE_AFTER_DELEGATION_MODIFIED = 9;
+  // Triggered before validator is slashed
+  HOOK_TYPE_BEFORE_VALIDATOR_SLASHED = 10;
+  // Triggered after unbonding is initiated
+  HOOK_TYPE_AFTER_UNBONDING_INITIATED = 11;
+}
+```
+
+#### Response
+
+`MsgManageHookSubscriptionResponse` is an empty response that indicates the operation was successful.
+
+#### Usage Example
+
+Example of a governance proposal to subscribe a contract to delegation-related hooks:
+
+```json
+{
+  "title": "Subscribe Governance Contract to Delegation Hooks",
+  "description": "This proposal subscribes the governance contract to delegation-related hooks for tracking historical voting power",
+  "messages": [
+    {
+      "@type": "/neutron.harpoon.MsgManageHookSubscription",
+      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6z2zm3",
+      "hook_subscription": {
+        "contract_address": "neutron1abcdef...",
+        "hooks": [
+          "HOOK_TYPE_BEFORE_DELEGATION_CREATED",
+          "HOOK_TYPE_BEFORE_DELEGATION_SHARES_MODIFIED",
+          "HOOK_TYPE_BEFORE_DELEGATION_REMOVED",
+          "HOOK_TYPE_AFTER_DELEGATION_MODIFIED"
+        ]
+      }
+    }
+  ],
+  "deposit": "1000000000untrn"
+}
+```
+
+## Queries
+
+The Harpoon module exposes the following query endpoints:
+
+### SubscribedContracts
+
+This query allows you to retrieve all contracts that are subscribed to a specific hook type.
+
+```protobuf
+// Defines the Query interface of the module.
+service Query {
+  // Retrieves contracts subscribed to a specific hook type.
+  rpc SubscribedContracts(QuerySubscribedContractsRequest) returns (QuerySubscribedContractsResponse) {
+    option (google.api.http).get = "/neutron/harpoon/subscribed_contracts";
+  }
+}
+
+// Request type for the Query/SubscribedContracts RPC method.
+message QuerySubscribedContractsRequest {
+  // The response will include only contract addresses for this hook type.
+  HookType hook_type = 1;
+}
+
+// Response type for the Query/SubscribedContracts RPC method.
+message QuerySubscribedContractsResponse {
+  // List of contract addresses subscribed to a specific hook.
+  repeated string contract_addresses = 1;
+}
+```
+
+#### Parameters
+
+| Parameter | Type     | Description                                  |
+|-----------|----------|----------------------------------------------|
+| hook_type | HookType | The hook type to query subscriptions for     |
+
+#### Response
+
+| Field             | Type       | Description                                       |
+|-------------------|------------|---------------------------------------------------|
+| contract_addresses| []string   | List of contract addresses subscribed to the hook |
+
+#### Example
+
+Query for contracts subscribed to delegation creation events:
+
+```bash
+neutrond query harpoon subscribed-contracts HOOK_TYPE_BEFORE_DELEGATION_CREATED
+```
+
+Example response:
+
+```json
+{
+  "contract_addresses": [
+    "neutron1abcdefghijklmnopqrstuvwxyz0123456789",
+    "neutron19876543210zyxwvutsrqponmlkjihgfedcba"
+  ]
+}
+```
+
+## Smart Contract Integration
+
+### Sudo Message Format
+
+When a hook is triggered, the Harpoon module sends a sudo message to all subscribed contracts. The format of this message depends on the hook type, but generally follows this structure:
+
+```json
+{
+  "hook_type": "HOOK_TYPE_*",
+  "payload": {
+    // Hook-specific data
+  }
+}
+```
+
+### Payload Formats
+
+The payload content varies depending on the hook type. Below are examples of payloads for some common hook types:
+
+#### Validator Events
+
+For `HOOK_TYPE_AFTER_VALIDATOR_CREATED`:
+
+```json
+{
+  "validator_address": "neutronvaloper1abc...",
+  "commission": {
+    "rate": "0.100000000000000000",
+    "max_rate": "0.200000000000000000",
+    "max_change_rate": "0.010000000000000000"
+  },
+  "min_self_delegation": "1000000",
+  "delegator_address": "neutron1abc...",
+  "pubkey": {
+    "type": "tendermint/PubKeyEd25519",
+    "value": "abc123..."
+  },
+  "value": {
+    "denom": "untrn",
+    "amount": "1000000"
+  }
+}
+```
+
+#### Delegation Events
+
+For `HOOK_TYPE_BEFORE_DELEGATION_CREATED`:
+
+```json
+{
+  "delegator_address": "neutron1abc...",
+  "validator_address": "neutronvaloper1abc...",
+  "amount": {
+    "denom": "untrn",
+    "amount": "1000000"
+  }
+}
+```
+
+For `HOOK_TYPE_BEFORE_DELEGATION_SHARES_MODIFIED`:
+
+```json
+{
+  "delegator_address": "neutron1abc...",
+  "validator_address": "neutronvaloper1abc...",
+  "shares": "1000000.000000000000000000",
+  "amount": {
+    "denom": "untrn",
+    "amount": "1000000"
+  }
+}
+```
+
+#### Slashing Events
+
+For `HOOK_TYPE_BEFORE_VALIDATOR_SLASHED`:
+
+```json
+{
+  "validator_address": "neutronvaloper1abc...",
+  "fraction": "0.100000000000000000"
+}
+```
+
+### Handling Messages in Contracts
+
+Contracts should implement the sudo entry point to handle these messages:
+
+```rust
+#[entry_point]
+pub fn sudo(deps: DepsMut, env: Env, msg: Binary) -> Result<Response, ContractError> {
+    let sudo_msg: HookMessage = from_binary(&msg)?;
+    
+    match sudo_msg.hook_type {
+        HookType::AfterValidatorCreated => {
+            let payload: AfterValidatorCreatedPayload = from_binary(&sudo_msg.payload)?;
+            // Process validator creation
+        },
+        HookType::BeforeDelegationCreated => {
+            let payload: BeforeDelegationCreatedPayload = from_binary(&sudo_msg.payload)?;
+            // Process delegation creation
+        },
+        // Handle other hook types...
+        _ => {
+            // Ignore unhandled hook types
+        }
+    }
+    
+    Ok(Response::new())
+}
+```
+
+## Storage
+
+### Storage Format
+
+The Harpoon module uses the following storage format to track subscriptions:
+
+```
+KEY: []byte("subscriptions") + BigEndian(uint32(hookType))
+VALUE: HookSubscriptions (serialized)
+```
+
+The `HookSubscriptions` structure is defined as:
+
+```protobuf
+// Defines how subscribed contract_addresses are stored in KV store under each hook kind.
+message HookSubscriptions {
+  // Contract addresses that are subscribed to the hook kind.
+  repeated string contract_addresses = 1;
+}
+```
+
+This format allows for efficient retrieval of all contracts subscribed to a specific hook type, which is the most frequent operation during hook execution. 

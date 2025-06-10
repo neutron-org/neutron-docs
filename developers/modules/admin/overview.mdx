@@ -1,0 +1,88 @@
+---
+title: "Admin Module"
+description: "Central governance module enabling DAO-driven network administration and proposal execution"
+---
+
+The admin module serves as Neutron's central governance mechanism, empowering the DAO to propose and execute critical network operations. Built with Cosmos SDK compatibility and upgraded for SDK 0.50, this module enables secure, controlled administration of the entire Neutron network.
+
+The admin module provides a unified interface for governance operations, supporting both legacy proposal mechanisms and modern message-based execution. Through careful whitelisting and permission controls, it ensures that only authorized operations can be performed while maintaining the flexibility needed for network evolution.
+
+## Table of contents
+
+- [Overview](/developers/modules/admin/overview) — a high-level description of the module.
+- [Explanation](/developers/modules/admin/explanation) — an explanation of the module's concepts and the reasoning behind its design choices.
+- [How To](/developers/modules/admin/how-to) — short guides on performing basic operations with the module.
+- [Known Bugs](/developers/modules/admin/known-bugs) — a list of known issues in the module.
+- [API](/developers/modules/admin/api) — details about the module's interface, including endpoints, message models, and emitted events.
+
+## Concepts
+
+The admin module operates on the principle of controlled delegation, where the Neutron DAO acts as the network's administrator with the authority to execute proposals that can significantly change the network state. This includes:
+
+- **Parameter Modifications**: Adjusting module parameters such as transaction fees, validator incentives, and governance thresholds
+- **Smart Contract Management**: Executing WebAssembly (WASM) proposals for contract instantiation, migration, and administration
+- **Network Upgrades**: Coordinating protocol upgrades and consensus parameter changes
+- **Message Execution**: Processing any valid `sdk.Msg` through the governance framework
+
+### Dual Proposal Mechanism
+
+The admin module supports two distinct proposal execution paths:
+
+1. **Legacy Proposals**: Traditional governance proposals rooted in the Cosmos SDK's `x/gov` module, supporting predefined proposal types like `MigrateContract`, `InstantiateContract`, and parameter changes. These proposals are processed through dedicated handlers and remain supported for backward compatibility.
+
+2. **Message-Based Proposals**: Modern proposal execution introduced with SDK 0.47+, allowing any valid `sdk.Msg` to be executed through governance. This approach provides greater flexibility and aligns with the evolving Cosmos SDK architecture.
+
+### Security Through Whitelisting
+
+To maintain network security while enabling governance flexibility, the admin module implements a comprehensive whitelisting system. Only pre-approved message types and operations can be executed through the governance process, preventing potential security vulnerabilities while allowing legitimate administrative functions.
+
+## Authority and Permissions
+
+The admin module operates under a clear authority model where specific addresses (typically the DAO's governance module) are granted permission to execute administrative operations. Each module in the Neutron network maintains an `authority` field that specifies which addresses can send critical messages like parameter updates.
+
+### Administration Workflow
+
+1. **Proposal Creation**: Governance proposals are created through the DAO's smart contracts or governance module
+2. **Message Validation**: The admin module validates that proposed messages are whitelisted and properly formatted
+3. **Authority Verification**: The module confirms that the sender has the required authority to execute the proposed operation
+4. **Execution**: Approved proposals are executed immediately within the message server context
+
+## Integration with Neutron DAO
+
+The admin module is tightly integrated with Neutron's DAO infrastructure, receiving governance instructions through WebAssembly bindings. This integration ensures that all network administration flows through the democratic governance process while maintaining the technical capability to execute complex administrative operations.
+
+The module processes `ProposalExecuteMessage` bindings from the Main DAO, enabling smart contracts to trigger administrative actions through the governance framework. Signer verification ensures that only authorized entities can initiate these operations.
+
+## Migration from Legacy Systems
+
+The admin module represents an evolution from earlier administrative systems, incorporating lessons learned from SDK transitions and governance best practices. It maintains backward compatibility with legacy proposal types while providing a path forward for modern governance mechanisms.
+
+Key improvements include:
+- Elimination of active/inactive proposal queues for immediate execution
+- Streamlined message processing without cache contexts
+- Enhanced security through comprehensive whitelisting
+- Support for both legacy and modern proposal formats
+
+## Documentation Sections
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 mb-8">
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/admin/explanation">
+    <h4 className="font-semibold mb-2">Technical Details</h4>
+    <p className="text-sm">Deep dive into governance mechanisms, proposal types, and security models</p>
+  </a>
+  
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/admin/how-to">
+    <h4 className="font-semibold mb-2">How-to Guide</h4>
+    <p className="text-sm">Step-by-step instructions for creating and executing governance proposals</p>
+  </a>
+  
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/admin/api">
+    <h4 className="font-semibold mb-2">API Reference</h4>
+    <p className="text-sm">Complete API documentation for the admin module</p>
+  </a>
+  
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/admin/known-bugs">
+    <h4 className="font-semibold mb-2">Known Bugs</h4>
+    <p className="text-sm">Known issues and limitations of the admin module</p>
+  </a>
+</div> 

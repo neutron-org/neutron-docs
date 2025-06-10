@@ -1,0 +1,53 @@
+---
+title: "Interchain Transactions Module"
+icon: "arrow-right-arrow-left"
+---
+
+The Interchain Transactions module enables CosmWasm smart contracts to interact with other blockchains in the IBC ecosystem by managing interchain accounts and executing transactions on remote zones. This module provides a critical bridge between smart contracts on Neutron and functionality on connected IBC-enabled chains.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Interchain Account Management" icon="user-astronaut">
+    Register and control dedicated accounts on remote chains through IBC connections.
+  </Card>
+  <Card title="Remote Transaction Execution" icon="paper-plane">
+    Submit transactions with multiple messages to be executed on remote chains via interchain accounts.
+  </Card>
+  <Card title="Asynchronous Callbacks" icon="arrows-spin">
+    Process acknowledgments and timeouts from IBC packets with deterministic contract callbacks.
+  </Card>
+  <Card title="Fee Management" icon="coins">
+    Built-in fee payment and refund mechanism to handle relayer costs for IBC packet delivery.
+  </Card>
+</CardGroup>
+
+## Usage Examples
+
+- **Cross-Chain DeFi**: Enabling a Neutron-based protocol to participate in DeFi activities on other chains
+- **Governance Participation**: Allowing Neutron contracts to vote in governance proposals on remote chains
+- **Asset Management**: Managing tokens and NFTs held on connected chains through secure IBC channels
+- **Multi-Chain Orchestration**: Creating complex workflows that span multiple blockchains in the Cosmos ecosystem
+
+## Module Interactions
+
+The Interchain Transactions module extensively interacts with:
+
+- **IBC Module**: For establishing connections and channels to remote chains
+- **CosmWasm Module**: For executing contract callbacks on IBC events
+- **Fee Refunder Module**: For handling packet fee payments and refunds
+- **Contract Manager Module**: For managing gas limits and error handling during contract callbacks
+
+## Learn More
+
+<CardGroup cols={2}>
+  <Card title="How Interchain Transactions Work" icon="book" href="/developers/modules/interchaintxs/explanation">
+    Understand the concepts and processes behind interchain accounts and transactions
+  </Card>
+  <Card title="Implementation Guide" icon="code" href="/developers/modules/interchaintxs/how-to">
+    Learn how to implement interchain accounts in your smart contracts
+  </Card>
+  <Card title="API & Messages" icon="file-code" href="/developers/modules/interchaintxs/reference">
+    View technical specifications and message formats
+  </Card>
+</CardGroup> 

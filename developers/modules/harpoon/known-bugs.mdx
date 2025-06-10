@@ -1,0 +1,110 @@
+---
+title: "Known Bugs"
+---
+
+This document outlines known issues, limitations, and edge cases in the Harpoon module. Developers should be aware of these when building applications that interact with the module.
+
+## Error Propagation from Contracts
+
+### Issue Description
+
+When a contract returns an error during a hook execution, the Harpoon module does not continue execution and propagates the error directly. This behavior can have significant consequences:
+
+- For hooks triggered during transaction processing, the error can abort the entire transaction
+- For hooks triggered during block processing (such as validator slashing), the error can potentially halt the chain
+
+### Workaround
+
+Contracts must be designed to handle all possible inputs without returning errors. Implement defensive programming techniques:
+
+1. Use try/catch patterns to handle unexpected inputs
+2. Add fallback logic for edge cases
+3. Always return success responses, even when internal processing fails
+4. Log errors instead of returning them
+5. Test contracts extensively with all possible hook scenarios
+
+## Transaction Gas Costs
+
+### Issue Description
+
+As more contracts subscribe to hooks, the gas cost of operations that trigger those hooks increases. This can lead to unexpected transaction failures due to out-of-gas errors, especially if subscribed contracts perform complex operations.
+
+### Workaround
+
+- Keep hook-handling logic as efficient as possible
+- Avoid complex computations in hook handlers
+- Be aware of the number of contracts subscribed to specific hooks
+- Consider the gas implications when designing governance proposals to add hook subscriptions
+
+## BeforeValidatorSlashed Hook Error Handling
+
+### Issue Description
+
+Unlike most staking hooks, the `BeforeValidatorSlashed` hook in the staking module already has error handling that prevents chain halts. If a contract returns an error during this hook, the staking module logs the error but does not propagate it:
+
+```go
+// call the before-slashed hook
+if err := k.Hooks().BeforeValidatorSlashed(ctx, operatorAddress, effectiveFraction); err != nil {
+    k.Logger(ctx).Error("failed to call before validator slashed hook", "error", err)
+}
+```
+
+This creates an inconsistency with other hooks, which may confuse developers.
+
+### Workaround
+
+- Be aware that errors in the `BeforeValidatorSlashed` hook will not propagate
+- Do not rely on this behavior, as it is specific to this hook only
+- Continue to implement robust error handling in all hook handlers
+
+## Limited Historical Data Recovery
+
+### Issue Description
+
+If a contract subscribes to hooks after staking events have already occurred, it cannot retroactively receive those past events. This means that historical data will only be complete starting from the subscription point.
+
+### Workaround
+
+- Subscribe contracts to hooks as early as possible
+- For contracts that require complete historical data, consider implementing a data seeding mechanism to populate historical records manually
+- Document the subscription time in the contract's state to clarify the completeness of historical records
+
+## Governance-Only Subscription Management
+
+### Issue Description
+
+The reliance on governance for subscription management creates a high barrier to entry for contracts that want to use the Harpoon module. The governance process can be lengthy and requires significant community engagement.
+
+### Workaround
+
+- Plan ahead for hook subscriptions in your contract development timeline
+- Prepare comprehensive documentation explaining why your contract needs specific hooks
+- Consider creating contracts that can proxy hook data to other contracts, reducing the number of governance proposals needed
+
+## Performance Considerations
+
+### Issue Description
+
+While not a bug, it's important to note that the module is optimized for the most frequent operation: retrieving all contracts subscribed to a specific hook. However, as the number of subscribed contracts grows, the performance cost of hook execution increases linearly.
+
+### Workaround
+
+- Be mindful of the number of contracts subscribed to each hook type
+- For high-frequency hooks (like delegation modifications), limit the number of subscribed contracts
+- Consider batching state updates in contract handlers to reduce storage operations
+
+## No Built-in Pagination or Filtering
+
+### Issue Description
+
+The module does not provide built-in pagination or filtering mechanisms for hook subscription queries. If the number of subscribed contracts grows very large, query responses could become unwieldy.
+
+### Workaround
+
+- Implement client-side pagination if needed
+- Keep the number of subscribed contracts manageable
+- Consider implementing additional indexing in contracts if complex filtering is required
+
+## Conclusion
+
+While the Harpoon module provides valuable functionality for contracts that need to track staking events, developers should be aware of these limitations and design their applications accordingly. The most critical consideration is ensuring that contract hook handlers never return errors, as this could disrupt chain operations. 
