@@ -1,0 +1,293 @@
+---
+title: "How-To Guide"
+---
+
+This guide provides practical instructions for developers who want to use the Harpoon module with their CosmWasm smart contracts.
+
+## Implementing a Contract to Receive Staking Hooks
+
+### Step 1: Define the Hook Message Structure
+
+Create a structure in your contract to receive hook messages from the Harpoon module:
+
+```rust
+#[cw_serde]
+pub enum HookType {
+    #[serde(rename = "HOOK_TYPE_AFTER_VALIDATOR_CREATED")]
+    AfterValidatorCreated,
+    #[serde(rename = "HOOK_TYPE_BEFORE_VALIDATOR_MODIFIED")]
+    BeforeValidatorModified,
+    #[serde(rename = "HOOK_TYPE_AFTER_VALIDATOR_REMOVED")]
+    AfterValidatorRemoved,
+    #[serde(rename = "HOOK_TYPE_AFTER_VALIDATOR_BONDED")]
+    AfterValidatorBonded,
+    #[serde(rename = "HOOK_TYPE_AFTER_VALIDATOR_BEGIN_UNBONDING")]
+    AfterValidatorBeginUnbonding,
+    #[serde(rename = "HOOK_TYPE_BEFORE_DELEGATION_CREATED")]
+    BeforeDelegationCreated,
+    #[serde(rename = "HOOK_TYPE_BEFORE_DELEGATION_SHARES_MODIFIED")]
+    BeforeDelegationSharesModified,
+    #[serde(rename = "HOOK_TYPE_BEFORE_DELEGATION_REMOVED")]
+    BeforeDelegationRemoved,
+    #[serde(rename = "HOOK_TYPE_AFTER_DELEGATION_MODIFIED")]
+    AfterDelegationModified,
+    #[serde(rename = "HOOK_TYPE_BEFORE_VALIDATOR_SLASHED")]
+    BeforeValidatorSlashed,
+    #[serde(rename = "HOOK_TYPE_AFTER_UNBONDING_INITIATED")]
+    AfterUnbondingInitiated,
+}
+
+#[cw_serde]
+pub struct HookMessage<T> {
+    pub hook_type: HookType,
+    pub payload: T,
+}
+```
+
+### Step 2: Implement Sudo Handler
+
+Implement the `sudo` entry point in your contract to handle hook messages:
+
+```rust
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn sudo(deps: DepsMut, env: Env, msg: Binary) -> Result<Response, ContractError> {
+    let hook_msg: HookMessage<Binary> = from_binary(&msg)?;
+    
+    match hook_msg.hook_type {
+        HookType::AfterValidatorCreated => handle_validator_created(deps, env, hook_msg.payload),
+        HookType::BeforeDelegationCreated => handle_delegation_created(deps, env, hook_msg.payload),
+        // Implement handlers for other hook types as needed
+        _ => Ok(Response::new().add_attribute("action", "hook_ignored")),
+    }
+}
+```
+
+### Step 3: Implement Hook-Specific Handlers
+
+Create handlers for each hook type your contract needs to process:
+
+```rust
+fn handle_validator_created(
+    deps: DepsMut,
+    _env: Env,
+    payload: Binary,
+) -> Result<Response, ContractError> {
+    // Parse the payload according to the hook type
+    let validator_info: ValidatorInfo = from_binary(&payload)?;
+    
+    // Process the validator creation event
+    // For example, store the validator in your contract's state
+    
+    Ok(Response::new().add_attribute("action", "validator_created_processed"))
+}
+
+fn handle_delegation_created(
+    deps: DepsMut,
+    _env: Env,
+    payload: Binary,
+) -> Result<Response, ContractError> {
+    // Parse the delegation information from the payload
+    let delegation_info: DelegationInfo = from_binary(&payload)?;
+    
+    // Update your contract's state to track this delegation
+    // For example, update a user's voting power
+    
+    Ok(Response::new().add_attribute("action", "delegation_created_processed"))
+}
+```
+
+### Step 4: Ensure Robustness
+
+Since hook errors can potentially abort transactions or halt the chain, your contract must be designed to handle all possible inputs without errors:
+
+```rust
+// Example of a robust handler that never fails
+fn handle_delegation_modified(
+    deps: DepsMut,
+    _env: Env,
+    payload: Binary,
+) -> Result<Response, ContractError> {
+    // Try to parse the payload, but don't fail if it's invalid
+    let delegation_result = from_binary::<DelegationInfo>(&payload);
+    
+    match delegation_result {
+        Ok(delegation_info) => {
+            // Process the delegation modification
+            // ...
+            
+            Ok(Response::new().add_attribute("action", "delegation_modified_processed"))
+        },
+        Err(_) => {
+            // Log the error but don't fail
+            deps.api.debug("Failed to parse delegation info");
+            Ok(Response::new().add_attribute("action", "delegation_modified_skipped"))
+        }
+    }
+}
+```
+
+## Submitting a Governance Proposal for Hook Subscription
+
+Since hook subscriptions can only be managed through governance, you'll need to create and submit a governance proposal.
+
+### Step 1: Prepare the Proposal
+
+Create a JSON file with the proposal content:
+
+```json
+{
+  "title": "Subscribe Contract to Staking Hooks",
+  "description": "This proposal subscribes the contract at neutron1... to specific staking hooks for tracking historical voting power",
+  "messages": [
+    {
+      "@type": "/neutron.harpoon.MsgManageHookSubscription",
+      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6z2zm3",  // Gov module account
+      "hook_subscription": {
+        "contract_address": "neutron1...",  // Your contract address
+        "hooks": [  // List of hooks to subscribe to
+          "HOOK_TYPE_BEFORE_DELEGATION_CREATED",
+          "HOOK_TYPE_BEFORE_DELEGATION_SHARES_MODIFIED",
+          "HOOK_TYPE_BEFORE_DELEGATION_REMOVED",
+          "HOOK_TYPE_AFTER_DELEGATION_MODIFIED"
+        ]
+      }
+    }
+  ],
+  "deposit": "1000000000untrn"  // Minimum deposit required by governance
+}
+```
+
+### Step 2: Submit the Proposal
+
+Use the CLI to submit the governance proposal:
+
+```bash
+neutrond tx gov submit-proposal /path/to/proposal.json --from <your-key> --chain-id neutron-1 --gas-prices 0.025untrn --gas auto --gas-adjustment 1.3
+```
+
+### Step 3: Vote on the Proposal
+
+Once the proposal is submitted, validators and delegators will need to vote on it:
+
+```bash
+neutrond tx gov vote <proposal-id> yes --from <your-key> --chain-id neutron-1 --gas-prices 0.025untrn --gas auto --gas-adjustment 1.3
+```
+
+If the proposal passes, your contract will be subscribed to the specified hooks.
+
+## Querying Hook Subscriptions
+
+You can query to see which contracts are subscribed to specific hook types.
+
+### Using the CLI
+
+```bash
+neutrond query harpoon subscribed-contracts HOOK_TYPE_BEFORE_DELEGATION_CREATED
+```
+
+### Using CosmWasm
+
+From another contract, you can query the Harpoon module to check subscriptions:
+
+```rust
+#[cw_serde]
+pub enum HarpoonQuery {
+    SubscribedContracts { hook_type: String },
+}
+
+pub fn query_subscribed_contracts(
+    querier: &QuerierWrapper,
+    hook_type: String,
+) -> StdResult<Vec<String>> {
+    let query = HarpoonQuery::SubscribedContracts { hook_type };
+    let response: SubscribedContractsResponse = querier.query(&QueryRequest::Custom(query))?;
+    Ok(response.contract_addresses)
+}
+
+#[cw_serde]
+pub struct SubscribedContractsResponse {
+    pub contract_addresses: Vec<String>,
+}
+```
+
+## Example: Tracking Historical Voting Power
+
+Here's a simplified example of using the Harpoon module to track historical voting power:
+
+```rust
+#[cw_serde]
+pub struct HistoricalVotingPower {
+    pub height: u64,
+    pub voting_power: Uint128,
+}
+
+#[cw_serde]
+pub struct DelegationInfo {
+    pub delegator: String,
+    pub validator: String,
+    pub shares: Uint128,
+}
+
+// Store voting power at each height for each user
+pub fn update_voting_power(
+    deps: DepsMut,
+    env: Env,
+    delegator: String,
+    shares_change: Uint128,
+) -> StdResult<()> {
+    let mut voting_power = VOTING_POWER
+        .may_load(deps.storage, &delegator)?
+        .unwrap_or_default();
+    
+    // Add the current height and updated voting power
+    let new_entry = HistoricalVotingPower {
+        height: env.block.height,
+        voting_power: voting_power.voting_power.checked_add(shares_change)?,
+    };
+    
+    VOTING_POWER.save(deps.storage, &delegator, &new_entry)?;
+    Ok(())
+}
+
+// Handler for delegation events
+pub fn handle_delegation_modified(
+    deps: DepsMut,
+    env: Env,
+    payload: Binary,
+) -> Result<Response, ContractError> {
+    let delegation_info: DelegationInfo = from_binary(&payload)?;
+    
+    // Update the delegator's voting power
+    update_voting_power(deps, env, delegation_info.delegator, delegation_info.shares)?;
+    
+    Ok(Response::new().add_attribute("action", "voting_power_updated"))
+}
+
+// Query voting power at a specific height
+pub fn query_voting_power_at_height(
+    deps: Deps,
+    delegator: String,
+    height: u64,
+) -> StdResult<Uint128> {
+    let voting_power = VOTING_POWER.load(deps.storage, &delegator)?;
+    
+    // In a real implementation, you'd search through a history of entries
+    // to find the voting power at the specific height
+    
+    Ok(voting_power.voting_power)
+}
+```
+
+## Best Practices
+
+1. **Ensure Robust Error Handling**: Your contract should never return errors from sudo handlers, as this could disrupt chain operations.
+
+2. **Minimize Gas Usage**: Since hooks are called during staking operations, ensure your handlers are efficient to avoid excessive gas costs.
+
+3. **Handle All Hook Types**: Even if you're only interested in specific hooks, implement handlers for all types you subscribe to.
+
+4. **Test Thoroughly**: Before proposing to subscribe your contract to hooks on mainnet, test extensively on testnet to ensure it behaves correctly.
+
+5. **Document Hook Usage**: Clearly document which hooks your contract subscribes to and how it uses them, to help with the governance proposal process.
+
+By following these guidelines, you can effectively leverage the Harpoon module to create sophisticated contracts that react to staking events. 

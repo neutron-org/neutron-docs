@@ -1,0 +1,299 @@
+Mercury: Towards the Integrated Endgame
+DAO Governance
+Main DAO Proposals
+parameter-change
+
+992
+views
+
+9
+likes
+
+4
+links
+
+6
+users
+
+
+
+
+
+read
+9 min
+17 Mar
+27d ago
+
+Spaydh
+
+4
+29d
+image
+image
+1200×675 59.7 KB
+Summary
+The Mercury upgrade marks an important transition towards Neutron’s endgame by migrating from Interchain Security (ICS) to a fully sovereign network. This shift will enable NTRN staking and drive the productive use of NTRN across the ecosystem.
+
+To ensure a smooth migration while maintaining continued alignment between the Cosmos Hub and Neutron, the proposal signals support for the repurposing and return of NTRN from the Cosmos Hub Community Pool.
+
+What Does it Mean for Me as an NTRN Holder?
+As an NTRN holder, this proposal offers the opportunity to participate in staking, either natively or through liquid staking, and to secure the network and receive rewards, which can be magnified by participating in DeFi.
+
+It preserves Neutron’s fixed supply and deflationary properties while creating new opportunities to use NTRN and its derivatives throughout the ecosystem.
+
+What Does it Mean for Me as a Validator?
+If this proposal is accepted, Cosmos Hub validators will continue running Neutron nodes until the network migration is complete. This requires performing the Mercury upgrade and successfully validating a number of blocks thereafter. To ensure a smooth migration, an initial set of 20 validators has been selected to run the network post-Mercury.
+
+Motivation
+In 2023, Neutron became the first network secured by the Cosmos Hub’s Interchain Security (ICS).
+
+Since then, both networks have evolved. Cosmos Hub has undergone fundamental changes in its leadership and vision, and Neutron has doubled down on revolutionizing finance by enabling an ecosystem of unique, powerful, and deeply integrated DeFi applications.
+
+Mercury opens the next chapter in the relationship between the two networks, empowering them both to progress rapidly towards their goals:
+
+It signals support for the launch of permissionless smart-contracts on the Hub, to bootstrap a native, ATOM-aligned ecosystem and offer best-in-class service to appchains to become the center for interchain services and drive more value to ATOM.
+It empowers Neutron to improve network performance and infrastructure reliability, target new, exciting markets, drive value to the NTRN token, and enable new use cases within the network’s ecosystem.
+Benefits to Neutron
+Mercury marks a key milestone in Neutron’s history, heralding groundbreaking technical improvements and rapid ecosystem growth.
+
+Faster & More Powerful
+What makes Neutron unique is its integrated infrastructure. Providing leading performance on top of this differentiated value proposition optimizes the user experience and the design space for financial applications.
+
+Thanks to improvement in the network’s consensus and block production process, Mercury paves the way to massive performance improvements. It empowers Neutron to reduce latency from ~1.8s today to ~100ms by the end of the year, for lightning-fast transactions and trades.
+
+image
+image
+1920×1080 70.3 KB
+These improvements also support a 11x increase in gas per block, from 30M to 330M, making Neutron one of the highest throughput chains in the industry and unlocking compute intensive and advanced use cases like perpetual futures clusters.
+
+image
+image
+1200×675 39.1 KB
+Overall, Mercury considerably improves the performance and reliability of Neutron’s core primitives:
+
+High Frequency Oracle: High reliability per-block price updates thanks to hardware and consensus stability improvements.
+Duality Performance Boost & Risk Reduction: Improved performance and reduced risk for market-making protocols built on Duality (Neutron’s built-in orderbook) through auto-swap and behind-enemy-lines liquidity management.
+Rapid Protocol Upgrades: Neutron’s sovereign validator set and distributed stake will enable faster network upgrades and incident response.
+Bleeding-edge Tech Stack: Fewer dependencies such as the legacy CCV module unlock rapid iterations and network improvements.
+Seamless user experience
+Wallet abstraction: Log in to Neutron apps with Metamask, Phantom and other leading wallets or just an email address thanks to Neutron’s Ethereum Signature Verification and ecosystem-wide Privy integration.
+Streamlined funding flows: Fund new accounts < 30s, starting with USDC over Skip Go Fast and expanding to BTC, ETH, SOL and other denoms this year.
+Gas abstraction: No more getting stuck, pay gas in any token liquid on the network. Enjoy 30% discounts with $NTRN and $ATOM.
+Ecosystem Growth
+image
+image
+1920×1080 82.3 KB
+Mercury is meant to strengthen the NTRN token and rapidly grow the network’s market size:
+
+2x Network TVL: New markets and deep borrowing capacity for NTRN.
+>$10M Liquidity: Trade in and out of positions with deep, out-of-the-box liquidity for NTRN and its derivatives.
+20+ New DeFi Opportunities for NTRN: From liquid staking to lending, borrowing, yield, bribes, spot and perps trading, and more.
+New Ways to Earn: Earn NTRN staking rewards, Droplets, Ingots, and more by participating in DeFi.
+Best Prices: Trade BTC, ETH, SOL, and other leading assets in size with minimal slippage, thanks to Duality and Supervaults.
+Cosmos Hub Campaign: ~4.2M NTRN earmarked to drive the growth of ATOM and other Cosmos Hub-related assets and use-cases through Neutron DeFi.
+Technical Implementation
+Overview
+Mercury includes an array of technical changes and executable messages:
+
+Schedule a network ugprade on April 9th to perform the migration out of ICS
+Implement Neutron’s staking model:
+Set base validator compensation to $3,000 per month
+Set performance thresholds as follows:
+Block signing: 95% to 99.5%
+Price updates: 95% to 98%
+Set target staking rewards to 3% APR
+Disable slashing
+Register the DAO’s Staked NTRN Voting Vault
+Bolster the network’s security and economy by strategically deploying the DAO’s treasury:
+Stake 225,000,000 NTRN with Drop Protocol
+Migrate NTRN - USDC liquidity to dNTRN - USDC
+Provide 25,000,000 NTRN and the equivalent value of dNTRN as Passive Concentrated Liquidity on Astroport
+Lend 5,000,000 NTRN on Mars Protocol
+Executable messages and network binaries have been thoroughly reviewed, tested, audited, and rehearsed on the pion-1 testnet. Audit reports will be attached once publicly released ahead of the upgrade.
+
+Network Migration
+Mercury introduces the native staking module and a special upgrade handler to migrate the validator set. New validators are introduced with real voting power (VP) and follow all standard staking rules. The new validator set gets voting power via a delegation of NTRN tokens by Neutron Main DAO to Drop in the upgrade handler. Legacy ICS validators are added with a nominal stake (1 token) to ensure they are processed correctly before being removed from the active set.
+
+IBC Channel Migration
+Post-Mercury, Hermes automatically sends multiple UpdateClient messages. The headers include both the legacy (ICS) and new validator sets, ensuring that the IBC light client transitions correctly.
+
+Staking Model
+Mercury differs from traditional PoS in several ways:
+
+Fixed Supply: NTRN will remain a fixed-supply asset. Block rewards will remain set to 0. All rewards will be paid by the Neutron DAO Treasury, and all revenue will accrue to the Neutron DAO Treasury.
+Opinionated Approach: The network’s DAO participates in staking by setting and enforcing policies, as well as directly through staking via its treasury. The development and adoption of liquid staking is actively encouraged within the boundaries and checks and balances set by the DAO.
+DAO Delegations: The Neutron DAO will delegate a large portion of its treasury to the set of curated validators to help ensure the security of the network and the stability of these operators in the set.
+Narrow Validator Scope: The role of node operators is to provide performant, reliable infrastructure, but not to serve as governance representatives. Delegated stake will not confer governance voting power to validators. It is possible for validators to opt into participating in the ecosystem in additional capacities, but this is not required as it is on other dPoS networks.
+Base Comp: Validators will automatically receive stable monthly compensation from the Neutron DAO Treasury based on their performance.
+No Commissions: Commissions do not apply to delegator staking rewards, which will be paid out by the Neutron DAO Treasury through an independent system that targets a stable 3% APR.
+No Slashing: In dPoS, slashing disproportionately impacts delegators rather than the misbehaving operators themselves. Slashing also disincentivizes validators from being reactive during network upgrades, as that is when the slashing risk is the highest. For these reasons, slashing will be disabled in favor of jailing and tombstoning.
+Initial Validator Set
+This proposal recommends the following 20 operators for the network’s initial validator set:
+
+CryptoCrew, Quokka Stake, Allnodes, Chorus One, cosmosrescue, Cosmostation, Crosnest, Golden Ratio Staking, Hadron Labs, Informal Systems, iqlusion, Kiln, P2P, Polkachu, POSTHUMAN, Provalidator, SG-1, Smart Stake, Stake&Relax, Stakecito
+
+To assemble the proposed validator set, we analyzed the historical performance and service quality of all Cosmos Hub validators running the Neutron network and eliminated known sybil nodes, as well as nodes affiliated with centralized exchanges and custodians. We weighted raw performance metrics (90D % oracle/block signed, etc) with qualitative metrics based on more than a year of experience coordinating planned and emergency upgrades.
+
+Validator Compensation
+Mercury’s validator compensation mechanism is designed to ensure that performing validators receive predictable rewards to cover their costs and margin, regardless of market prices, while ensuring the network does not overpay for security during bull phases.
+
+It implements x/revenue , a new module responsible for rewarding validators for their operational performance. Using the network’s oracle, the module calculates the appropriate amount of NTRN tokens needed to cover the target compensation set by the DAO. These rewards are transferred from the Neutron DAO Treasury directly to the validators.
+
+The initial target compensation is $3,000 / month.
+
+Validator Performance Thresholds
+The x/revenue module also tracks validator performance and adjusts the reward accordingly.
+
+Each criterion represents a critical service provided by the validator set: % of blocks signed and % of x/oracle prices provided. Additional criteria may be added in the future as the network evolves. For each criterion, the module implements a lower and upper performance threshold.
+
+Val. performance	30D Block Signed	30D Prices Provided	Outcome
+Above…	99.5%	98%	Full rewards
+Between…	99.5% - 95%	98% - 95%	Partial rewards
+Below…	95%	95%	No rewards
+Validators who fail to meet the minimum performance for any of the criteria receive no reward for the period, regardless of their performance in the other criterion.
+
+Delegator Compensation
+Users who delegate NTRN tokens to node operators via native or liquid staking receive staking rewards from the DAO treasury. The mechanism distributing these rewards is designed to target a low, fixed APR set by the DAO. The initial target APR parameter is 3%.
+
+DeFi Landscape
+A strong set of initial DeFi primitives have already assembled on the network, but to continue growing, it’s critical for its overall market size to increase.
+
+To accomplish this, we propose that the Neutron DAO (currently holding ~370M NTRN) allocates 261M of its Neutron to proactively support liquidity and the creation of efficient markets while ensuring it doesn’t saturate attractive opportunities.
+
+Position	Allocation	Protocol	Rationale
+Pre-load staking rewards contract	6,000,000 NTRN	Neutron	Fund staking rewards for the next 6-12 months
+Pre-load x/revenue	700,000 NTRN	Neutron	Fund validator compensation prior to the receipt of Prop 993 NTRN
+Stake NTRN with Drop as part of the migration	100,000,000 NTRN	Drop	Network security & Valset curation
+Stake NTRN with Drop over time with Valence	125,000,000 NTRN	Drop	Network security & Valset curation
+Bootstrap dNTRN - NTRN liquidity	25,000,000 NTRN + an equivalent value of dNTRN from the DAO’s stake	Astroport	Maintain deep liquidity between NTRN and USDC through multihop swaps
+Migrate NTRN - USDC POL to dNTRN - USDC	N/A	Astroport	Maximize dNTRN liquidity in order to unlock DeFi integrations & Minimize IL for the DAO through the PCL algorithm.
+Total	256,000,000 NTRN		
+Protocol Self-Stake
+Today, Drop is the only liquid staking protocol on the network and, therefore, the most logical choice for the DAO’s delegation.
+
+In the future, should additional liquid staking protocols launch on Neutron, the DAO should consider splitting its delegations accordingly and adopting guidelines on how to define protocol eligibility and weights among the protocols.
+
+In the meantime, by delegating ~22.5% of the NTRN token supply through Drop, the DAO may protect the network from economic attacks and facilitate ongoing delegation management thanks to Drop’s expertise and existing monitoring infrastructure.
+
+In exchange for its delegation, the DAO will receive a corresponding amount of dNTRN, a portion of which will be earmarked for bootstrapping dNTRN - NTRN liquidity.
+
+Deep Spot Liquidity for NTRN and dNTRN
+Liquidity determines slippage for large participants when entering and exiting positions, as well as the listing parameters for an asset on credit protocols such as Mars.
+
+Ensuring there is tremendous liquidity available for NTRN and dNTRN minimizes onboarding friction for large participants, which are critical to an active market, and ensures competitive listing parameters/capacity for all users to use NTRN as collateral.
+
+Of the six possible venues for the DAO to bootstrap liquidity, Astroport Passive Concentrated Liquidity (PCL) is preferred because:
+
+The DAO already relies on PCL for POL, and the protocol has been live since the mainnet launch.
+PCL is designed to protect passive LPs through its dynamic fee model and rebalancing logic.
+Deep PCL liquidity on Duality will generate significant volumes alongside Margined, Supervaults, and other liquidity managers.
+Venue / Criteria	Live?	Passive?	On Duality?	Trustless?
+Astroport PCL	Yes	Yes	Yes	Yes
+Margined vault	Yes	Yes	Yes	No
+Astrovault	Yes	Yes	No	
+Duality	Yes	No		
+Supervaults	No			
+Electron	No			
+Migrate NTRN - USDC Liquidity to dNTRN - USDC
+Token-to-stablecoin is the most capital-intensive form of liquidity to secure.
+
+Instead of focusing on native-asset-to-stablecoin, the DAO and Drop have demonstrated with dATOM that concentrating on derivative-to-stablecoin liquidity effectively lowers the cost of liquidity, improves peg stability, and maintains volumes (e.g., Astroport volumes migrated from ATOM pools to dATOM pools after the DAO’s liquidity migration).
+
+Therefore, the DAO should migrate its NTRN - USDC liquidity to dNTRN - USDC, lowering the cost of liquidity and enabling deep dNTRN DeFi integrations.
+
+Bootstrap dNTRN - NTRN Liquidity
+To ensure that NTRN retains a deep path to stablecoin liquidity, bootstrapping deep NTRN - dNTRN liquidity is also critical. Fortunately, the DAO is well-positioned to ensure that this is achieved as early as the migration.
+
+We propose to pair 25,000,000 NTRN tokens from the treasury with the equivalent amount of dNTRN from the initial staking operation to the provisioning of dNTRN - NTRN liquidity to preserve all existing listing parameters and integrations.
+
+Deep Lending Supply
+To stimulate network activity, the DAO should provide additional lending capacity, keeping borrowing rates low and encouraging users to borrow and use NTRN throughout the ecosystem.
+
+Today, Mars is the primary credit protocol on the network. We propose to start by gradually allocating 5,000,000 NTRN to the Red Bank, which has been deployed on the network for an extended period of time.
+
+Edit: the execution of this allocation will be handled in a separate proposal to minimize code complexity during the migration.
+
+The Use of NTRN in DeFi
+The above measures will create favorable conditions for the use of NTRN and its derivatives in DeFi by ensuring ample liquidity for users to enter/exit positions, as well as for protocols to manage risks. In turn, this is expected to increase borrowing activity, perpetual futures trading, basis trading, and more.
+
+Governance Model
+The introduction of NTRN staking has an impact on Neutron’s governance model, which currently relies on liquid NTRN deposits to dedicated voting vaults. To ensure a smooth transition, this proposal implemented Staked NTRN vaults, which ensure native stakers have access to governance voting power.
+
+For the sake of brevity, future governance developments and improvements, such as optimistic governance, delegations, proof-based governance, and technical subDAOs, will be discussed separately.
+
+Staked NTRN Voting Vault
+To ensure that native stake delegations are recognized as voting power on the network, a dedicated vault will be deployed as part of the network’s migration. For each address, the vault will grant 1 point of governance power per NTRN delegated to a validator via the staking module.
+
+Relationship with the Hub
+To date, a key challenge for the Interchain has been the relative lack of success stories to drive activity and capital into the ecosystem. For the Interchain to grow, we believe the success of Neutron and the Hub is critical.
+
+Productively Utilizing Community Pool Tokens
+The Cosmos Hub Community Pool received 42,727,950 unclaimed NTRN from Neutron’s airdrop to the Cosmos Hub. As part of the ICS off-boarding process, NTRN allocations will be proposed to Cosmos Hub governance to enable the smooth migration while sponsoring the continued alignment of the network and their communities.
+
+See the related proposal on the Cosmos Hub forum: [PROPOSAL 993][DRAFT] Neutron and the Hub: A new chapter - Hub Proposals - Cosmos Hub Forum
+
+The proposed allocations are presented below:
+
+image
+image
+1044×646 42.6 KB
+Item	Amount	%	Recipient
+Honor existing commitments	2,160,000	5.06%	Already distributed to relevant multisigs, does not need to be transferred
+Fund offboarding validation	1,000,000	2.34%	Joint Committee
+Ongoing security budget	10,800,000	25.28%	Joint Committee
+ATOM-related incentives/campaigns	4,272,795	10.00%	Joint Committee
+Allocated for future partnerships	4,272,795	10.00%	Joint Committee
+Return to the Neutron DAO	20,222,360	47.33%	Joint Committee
+Total	42,727,950	100.00%	NA
+Left in CP	> 5,672.19	NA	From CP tax on staking rewards
+Honor Existing Commitments (Connect Beta + Validator Incentives)
+Validator Incentives that have already been allocated to vesting contracts are slated to fully vest on March 26th, 2025.
+
+Connect incentives remain to be distributed. We are finalizing work with Numia to provide the data required to check the validator’s performance and distribute the rewards. Once that is done, we will coordinate with the prop 931 committee signers to execute the transfer.
+
+Fund Validator Operations Leading Up to Migration
+Since the migration’s success relies on smooth validator operations, we propose to allocate an additional 1M NTRN to be distributed to validators pro-rata their voting power based on the following criteria:
+
+≥ 50% participation on the last 10 Cosmos Hub proposals
+≥ 95% block uptime on Neutron over the past 3 months, looking back from migration time
+≥ 95% Slinky uptime on Neutron over the past 3 months, looking back from migration time
+Properly carry out the migration upgrade
+Fund Neutron’s Security Budget Following Migration
+To migrate from ICS, Neutron will need to bootstrap a sovereign validator set and fund its operations. This validator set will be inherited from the best/most aligned Cosmos Hub validators.
+
+Tokens will be allocated to the Base Comp mechanism to cover validator costs for the first 24 months of the network’s operations as an independent blockchain.
+
+Fund ATOM-related Campaigns on Neutron
+To sponsor the continued alignment of the projects and their communities, ~4M NTRN will be reserved for incentives/campaigns tailored to the Cosmos Hub’s assets and community.
+
+Liquidity incentives to ATOM, dATOM, and other Cosmos Hub assets
+Incentives to cover the opportunity cost of converting from native staking to liquid staking
+ATOM spot and perps trading campaigns
+Other ATOM-aligned campaigns
+Allocation for Future Joint Ventures
+Tokens earmarked to support future joint ventures benefiting both ecosystems, such as supporting the growth and adoption of CosmWasm, joint hacker houses and hackathons, etc.
+
+Return Excess to the Neutron DAO
+The remainder will be returned to the Neutron DAO Treasury.
+
+Supporting Permissionless smart-contracts on the Hub
+The launch of permissionless smart-contracts on the Hub will contribute to the growth of the Cosmos market and create new opportunities to attract ambitious developers and entrepreneurs. The success of the Hub and ATOM will attract attention, users, and liquidity to the ecosystem.
+
+This proposal signals the Neutron DAO’s continued support for the success of the Cosmos Hub and the launch of permissionless smart-contracts on the Hub.
+
+Future Collaborations
+Mercury marks the start of a new chapter in the relationship between Neutron and the Cosmos Hub.
+
+Looking ahead:
+
+Neutron will continue to be a prime venue for ATOM holders looking to participate in DeFi.
+The Neutron Foundation and DAO will continue to work closely with Cosmos Hub-related entities to sponsor the development and adoption of CosmWasm.
+The Hub’s routing, bridging, and intents offering under IBC Eureka will be integrated with Neutron, which will drive volume and activity to both networks.
+Governance votes
+The following items summarize the voting options and what it means for this proposal:
+
+YES - You support the launch of permissionless smart-contracts on the Hub, Neutron’s migration to a sovereign network and the proposed allocation of Community Pool NTRN.
+
+NO - You disagree with the launch of permissionless smart-contracts on the Hub, Neutron’s migration to a sovereign network and the proposed allocation of Community Pool NTRN.
+
+ABSTAIN - You wish to contribute to the quorum but you formally decline to vote either for or against the proposal.

@@ -1,0 +1,115 @@
+---
+title: "Oracle Module"
+description: "Access high-frequency price data for DeFi applications"
+---
+
+This document explains the Oracle module for the Neutron network.
+
+The Oracle module provides reliable, high-frequency price data for a wide range of assets, enabling DeFi applications to operate with accurate and timely market information.
+
+## Table of contents
+
+- [Overview](/developers/modules/oracle/overview) — a high-level description of the module.
+- [Explanation](/developers/modules/oracle/explanation) — an explanation of the module's concepts and the reasoning behind its design choices.
+- [How To](/developers/modules/oracle/how-to) — short guides on performing basic operations with the module.
+- [Known Bugs](/developers/modules/oracle/known-bugs) — a list of known issues and limitations in the module.
+- **Reference**:
+  - [Reference](/developers/modules/oracle/reference) — comprehensive technical details.
+  - [API](/developers/modules/oracle/api) — API endpoints and message specifications.
+
+## Features
+
+### High-Frequency Price Updates
+
+- **Per-Block Updates**: Price data is updated every block
+- **Low Latency**: Minimized delay between market price changes and on-chain availability
+- **Consistent Delivery**: Reliable delivery even during high volatility
+
+### Multiple Data Sources
+
+- **Aggregated Feeds**: Price data aggregated from multiple sources
+- **Weighted Averaging**: Advanced weighting algorithms for optimal accuracy
+- **Outlier Rejection**: Automatic filtering of anomalous data points
+
+### Extensive Asset Coverage
+
+- **Major Cryptocurrencies**: BTC, ETH, ATOM, and more
+- **Stablecoins**: USDC, USDT, DAI, and others
+- **Protocol Tokens**: NTRN and other ecosystem tokens
+- **Fiat Currencies**: USD, EUR, and other major currencies
+
+### Smart Contract Integration
+
+- **Simple Query Interface**: Easy-to-use query methods for contracts
+- **Multiple Price Types**: Spot prices, TWAPs, and other statistical measures
+- **Historical Data**: Access to recent historical prices for trend analysis
+
+## Architecture
+
+The Oracle module operates through a multi-layered architecture:
+
+1. **Data Collection Layer**: External relayers gather price data from exchanges and other sources
+2. **Aggregation Layer**: On-chain logic validates and combines multiple data points
+3. **Storage Layer**: Efficient state management optimized for frequent updates
+4. **Access Layer**: Query interfaces for smart contracts and other modules
+
+## Use Cases
+
+### Lending Protocols
+
+- Accurate collateral valuation
+- Precise liquidation thresholds
+- Dynamic interest rate determination
+
+### Automated Market Makers (AMMs)
+
+- Reduced impermanent loss through price-aware LP mechanisms
+- Enhanced arbitrage protection
+- Improved price discovery
+
+### Derivatives Protocols
+
+- Settlement price determination
+- Mark price calculation
+- Funding rate updates
+
+### Portfolio Management
+
+- Real-time portfolio valuation
+- Dynamic rebalancing triggers
+- Performance tracking
+
+## Price Feed List
+
+| Asset | Ticker | Update Frequency | Sources |
+|-------|--------|------------------|---------|
+| Bitcoin | BTC/USD | Every block | Binance, Coinbase, Kraken |
+| Ethereum | ETH/USD | Every block | Binance, Coinbase, Kraken |
+| Cosmos | ATOM/USD | Every block | Binance, Coinbase, Kraken |
+| Neutron | NTRN/USD | Every block | Osmosis, multiple DEXes |
+| USDC | USDC/USD | Every block | Binance, Coinbase, Kraken |
+| USDT | USDT/USD | Every block | Binance, Coinbase, Kraken |
+
+## Documentation Sections
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 mb-8">
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/oracle/explanation">
+    <h4 className="font-semibold mb-2">Explanation</h4>
+    <p className="text-sm">Deep dive into how the Oracle module works and its design principles</p>
+  </a>
+  
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/oracle/how-to">
+    <h4 className="font-semibold mb-2">How-to Guide</h4>
+    <p className="text-sm">Step-by-step instructions for using the Oracle in your contracts</p>
+  </a>
+  
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/oracle/known-bugs">
+    <h4 className="font-semibold mb-2">Known Bugs</h4>
+    <p className="text-sm">Known issues and limitations of the Oracle module</p>
+  </a>
+  
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/oracle/reference">
+    <h4 className="font-semibold mb-2">Reference</h4>
+    <p className="text-sm">Complete technical reference for the Oracle module</p>
+  </a>
+</div> 

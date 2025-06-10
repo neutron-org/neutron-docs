@@ -1,0 +1,195 @@
+---
+title: "Bull vs. Bear"
+description: "Advanced trading platform for creating and managing long-short strategies through narrative-based Clusters"
+icon: "chart-mixed"
+---
+
+## Strategic Trading with Bull vs. Bear
+
+Bull vs. Bear is Neutron's innovative trading platform that enables users to create and execute sophisticated long-short strategies through narrative-based Clusters. It provides a powerful way to gain targeted exposure to specific market narratives without managing multiple individual positions.
+
+## What are Clusters?
+
+<div className="p-4 border-l-4 border-primary bg-primary/5 rounded my-6">
+  Clusters are strategic groupings of multiple long and short positions packaged into a single tradable unit. This allows traders to express directional views on broader market narratives or trends, rather than individual assets.
+</div>
+
+## Key Features
+
+**Narrative-Based Trading**: Express views on market narratives like "BTC Dominance," "Ethereum L2 Growth," or "AI Tokens" through unified positions.
+
+**Long-Short Combinations**: Gain exposure to relative price movements by simultaneously going long on certain assets and short on others.
+
+**Pre-Made Clusters**: Choose from professionally designed Clusters or create your own custom combinations to match your market thesis.
+
+**Customizable Weights**: Adjust the weighting of individual assets within a Cluster to fine-tune your exposure and risk profile.
+
+## How Clusters Work
+
+Clusters allow you to express complex market views through unified positions:
+```mermaid
+graph TD
+    A[Market Narrative] --> B[Cluster Creation]
+    B --> C[Long Positions]
+    B --> D[Short Positions]
+    C --> E[Asset 1 - Long]
+    C --> F[Asset 2 - Long]
+    D --> G[Asset 3 - Short]
+    D --> H[Asset 4 - Short]
+    E --> I[Single Tradable Position]
+    F --> I
+    G --> I
+    H --> I
+```
+
+For example, if you believe in Bitcoin dominance increasing:
+1. Create a Cluster that goes long on Bitcoin
+2. Add short positions on altcoins you expect to underperform
+3. Set your preferred weights for each position
+4. Trade the entire Cluster as a single unit
+
+## Example Clusters
+
+<div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
+  <div className="flex flex-col p-6 border border-gray-200 dark:border-gray-800 rounded-lg">
+    <h3 className="text-xl font-semibold mb-2">BTC vs Blue Chips</h3>
+    <div className="mb-4">
+      <div className="flex justify-between mb-1">
+        <span className="text-sm font-medium">BTC (Long)</span>
+        <span className="text-sm font-medium">50%</span>
+      </div>
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+        <div className="bg-green-500 h-2 rounded-full" style={{ width: '50%' }}></div>
+      </div>
+    </div>
+    <div className="mb-4">
+      <div className="flex justify-between mb-1">
+        <span className="text-sm font-medium">ETH (Short)</span>
+        <span className="text-sm font-medium">25%</span>
+      </div>
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+        <div className="bg-red-500 h-2 rounded-full" style={{ width: '25%' }}></div>
+      </div>
+    </div>
+    <div className="mb-4">
+      <div className="flex justify-between mb-1">
+        <span className="text-sm font-medium">SOL (Short)</span>
+        <span className="text-sm font-medium">25%</span>
+      </div>
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+        <div className="bg-red-500 h-2 rounded-full" style={{ width: '25%' }}></div>
+      </div>
+    </div>
+    <p className="text-sm text-gray-600 dark:text-gray-400">This Cluster expresses a bullish view on Bitcoin's dominance relative to leading altcoins.</p>
+  </div>
+  
+  <div className="flex flex-col p-6 border border-gray-200 dark:border-gray-800 rounded-lg">
+    <h3 className="text-xl font-semibold mb-2">Ethereum L2's</h3>
+    <div className="mb-4">
+      <div className="flex justify-between mb-1">
+        <span className="text-sm font-medium">ZK (Long)</span>
+        <span className="text-sm font-medium">33%</span>
+      </div>
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+        <div className="bg-green-500 h-2 rounded-full" style={{ width: '33%' }}></div>
+      </div>
+    </div>
+    <div className="mb-4">
+      <div className="flex justify-between mb-1">
+        <span className="text-sm font-medium">OP (Long)</span>
+        <span className="text-sm font-medium">33%</span>
+      </div>
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+        <div className="bg-green-500 h-2 rounded-full" style={{ width: '33%' }}></div>
+      </div>
+    </div>
+    <div className="mb-4">
+      <div className="flex justify-between mb-1">
+        <span className="text-sm font-medium">ARB (Long)</span>
+        <span className="text-sm font-medium">34%</span>
+      </div>
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+        <div className="bg-green-500 h-2 rounded-full" style={{ width: '34%' }}></div>
+      </div>
+    </div>
+    <p className="text-sm text-gray-600 dark:text-gray-400">This Cluster expresses a bullish view on the Ethereum Layer 2 ecosystem.</p>
+  </div>
+  
+  <div className="flex flex-col p-6 border border-gray-200 dark:border-gray-800 rounded-lg">
+    <h3 className="text-xl font-semibold mb-2">Dynamic Funding Strategy</h3>
+    <div className="mb-4">
+      <div className="flex justify-between mb-1">
+        <span className="text-sm font-medium">BERA (Long)</span>
+        <span className="text-sm font-medium">25%</span>
+      </div>
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+        <div className="bg-green-500 h-2 rounded-full" style={{ width: '25%' }}></div>
+      </div>
+    </div>
+    <div className="mb-4">
+      <div className="flex justify-between mb-1">
+        <span className="text-sm font-medium">Trump (Long)</span>
+        <span className="text-sm font-medium">25%</span>
+      </div>
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+        <div className="bg-green-500 h-2 rounded-full" style={{ width: '25%' }}></div>
+      </div>
+    </div>
+    <div className="mb-4">
+      <div className="flex justify-between mb-1">
+        <span className="text-sm font-medium">OSMO (Short)</span>
+        <span className="text-sm font-medium">25%</span>
+      </div>
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+        <div className="bg-red-500 h-2 rounded-full" style={{ width: '25%' }}></div>
+      </div>
+    </div>
+    <div className="mb-4">
+      <div className="flex justify-between mb-1">
+        <span className="text-sm font-medium">TIA (Short)</span>
+        <span className="text-sm font-medium">25%</span>
+      </div>
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+        <div className="bg-red-500 h-2 rounded-full" style={{ width: '25%' }}></div>
+      </div>
+    </div>
+    <p className="text-sm text-gray-600 dark:text-gray-400">This Cluster capitalizes on funding rate differentials across various assets.</p>
+  </div>
+</div>
+
+## Benefits of Cluster Trading
+
+<div className="p-4 border-l-4 border-primary bg-primary/5 rounded my-6">
+  <strong>Key advantages:</strong>
+  <ul className="mt-2">
+    <li><strong>Narrative Exposure:</strong> Gain exposure to thematic market movements rather than individual assets</li>
+    <li><strong>Simplified Management:</strong> Manage multiple positions through a single interface</li>
+    <li><strong>Reduced Transaction Costs:</strong> Execute complex strategies with fewer individual trades</li>
+    <li><strong>Balanced Risk:</strong> Diversify within a theme while maintaining directional exposure</li>
+    <li><strong>Capital Efficiency:</strong> Deploy capital across multiple positions with a single transaction</li>
+  </ul>
+</div>
+
+## Creating and Using Clusters
+
+**Define Narrative**: Identify the market trend or thesis you want to express → **Select Assets**: Choose which assets to go long and short → **Set Weights**: Determine capital allocation for each position → **Deploy Capital**: Execute your strategy with a single transaction and monitor performance
+
+### Use Cases
+
+**Sector Rotation**: Create Clusters that express views on one sector outperforming another, such as DeFi vs CeFi or NFTs vs Gaming.
+
+**Market Hedging**: Establish hedge positions against your existing portfolio by creating inverse Clusters to specific market segments.
+
+**Trend Following**: Capitalize on emerging market narratives by creating Clusters aligned with developing trends.
+
+## Get Started with Bull vs. Bear
+
+**Explore Clusters**: Browse pre-made Clusters or create your own on the [Neutron app](https://app.neutron.org)
+
+**Trading Dashboard**: Monitor and manage your active Clusters through the platform interface
+
+**Community**: Discuss trading strategies with other Cluster traders in the [Neutron Community Telegram](https://t.me/neutronzone)
+
+<div className="p-4 border-l-4 border-primary bg-primary/5 rounded my-6">
+  <strong>Coming Soon:</strong> Enhanced Cluster analytics, automated rebalancing, and additional asset types for even more sophisticated narrative-based trading strategies.
+</div> 

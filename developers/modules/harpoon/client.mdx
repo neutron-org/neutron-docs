@@ -1,0 +1,229 @@
+---
+title: "Client"
+description: "Client interactions with the Harpoon module"
+---
+
+# Client
+
+This document describes how to interact with the Harpoon module using the command-line interface (CLI), REST API, and gRPC.
+
+## CLI
+
+The Neutron daemon (`neutrond`) provides command-line interface commands to interact with the Harpoon module.
+
+### Queries
+
+#### Query Subscribed Contracts
+
+To query the contracts subscribed to a specific hook type:
+
+```bash
+neutrond query harpoon subscribed-contracts [hook-type]
+```
+
+Example:
+
+```bash
+neutrond query harpoon subscribed-contracts HOOK_TYPE_BEFORE_DELEGATION_CREATED
+```
+
+Response:
+
+```json
+{
+  "contract_addresses": [
+    "neutron1abcdefghijklmnopqrstuvwxyz0123456789",
+    "neutron19876543210zyxwvutsrqponmlkjihgfedcba"
+  ]
+}
+```
+
+### Transactions
+
+Since the Harpoon module only allows subscriptions to be managed through governance, direct transaction commands are not available. Instead, you need to submit a governance proposal.
+
+#### Submit a Governance Proposal
+
+To create a proposal to update hook subscriptions:
+
+1. Create a proposal JSON file:
+
+```json
+{
+  "title": "Subscribe Contract to Delegation Hooks",
+  "description": "This proposal subscribes the contract to delegation-related hooks",
+  "messages": [
+    {
+      "@type": "/neutron.harpoon.MsgManageHookSubscription",
+      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6z2zm3",
+      "hook_subscription": {
+        "contract_address": "neutron1abcdef...",
+        "hooks": [
+          "HOOK_TYPE_BEFORE_DELEGATION_CREATED",
+          "HOOK_TYPE_BEFORE_DELEGATION_SHARES_MODIFIED",
+          "HOOK_TYPE_BEFORE_DELEGATION_REMOVED",
+          "HOOK_TYPE_AFTER_DELEGATION_MODIFIED"
+        ]
+      }
+    }
+  ],
+  "deposit": "1000000000untrn"
+}
+```
+
+2. Submit the proposal:
+
+```bash
+neutrond tx gov submit-proposal /path/to/proposal.json --from <your-key> --chain-id neutron-1 --gas-prices 0.025untrn --gas auto --gas-adjustment 1.3
+```
+
+3. Vote on the proposal:
+
+```bash
+neutrond tx gov vote <proposal-id> yes --from <your-key> --chain-id neutron-1 --gas-prices 0.025untrn --gas auto --gas-adjustment 1.3
+```
+
+## REST API
+
+The Harpoon module exposes REST endpoints through the Cosmos SDK's REST server.
+
+### Queries
+
+#### Query Subscribed Contracts
+
+Endpoint:
+
+```
+GET /neutron/harpoon/subscribed_contracts?hook_type=HOOK_TYPE_VALUE
+```
+
+Example:
+
+```
+GET /neutron/harpoon/subscribed_contracts?hook_type=HOOK_TYPE_BEFORE_DELEGATION_CREATED
+```
+
+Response:
+
+```json
+{
+  "contract_addresses": [
+    "neutron1abcdefghijklmnopqrstuvwxyz0123456789",
+    "neutron19876543210zyxwvutsrqponmlkjihgfedcba"
+  ]
+}
+```
+
+## gRPC
+
+The Harpoon module provides gRPC endpoints for efficient querying.
+
+### Query Service
+
+```protobuf
+// Defines the Query interface of the module.
+service Query {
+  // Retrieves contracts subscribed to a specific hook type.
+  rpc SubscribedContracts(QuerySubscribedContractsRequest) returns (QuerySubscribedContractsResponse) {
+    option (google.api.http).get = "/neutron/harpoon/subscribed_contracts";
+  }
+}
+```
+
+### Message Service
+
+```protobuf
+// Defines the Msg interface of the module.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // Updates hook subscriptions for a specific contract address.
+  // To remove a subscription, pass an empty array to `hook_subscription.hooks`.
+  // Can only be executed by the module's authority.
+  rpc ManageHookSubscription(MsgManageHookSubscription) returns (MsgManageHookSubscriptionResponse);
+}
+```
+
+## JavaScript/TypeScript Client
+
+The following example demonstrates how to interact with the Harpoon module using JavaScript/TypeScript with the CosmJS library:
+
+```typescript
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
+import { SigningStargateClient } from "@cosmjs/stargate";
+
+// Setup client
+const wallet = await DirectSecp256k1HdWallet.fromMnemonic(
+  "your mnemonic here",
+  { prefix: "neutron" }
+);
+const client = await SigningStargateClient.connectWithSigner(
+  "https://rpc.neutron.org",
+  wallet
+);
+
+// Query subscribed contracts
+const queryClient = client.getQueryClient();
+const result = await queryClient.queryAbci(
+  "/neutron.harpoon.Query/SubscribedContracts",
+  {
+    hook_type: "HOOK_TYPE_BEFORE_DELEGATION_CREATED"
+  }
+);
+
+const decodedResult = JSON.parse(new TextDecoder().decode(result.value));
+console.log(decodedResult.contract_addresses);
+```
+
+## Contract Integration
+
+For CosmWasm contracts that need to interact with the Harpoon module:
+
+### Querying Subscribed Contracts
+
+```rust
+use cosmwasm_std::{Deps, QueryRequest, StdResult};
+
+#[cw_serde]
+pub enum HarpoonQuery {
+    SubscribedContracts { hook_type: String },
+}
+
+#[cw_serde]
+pub struct SubscribedContractsResponse {
+    pub contract_addresses: Vec<String>,
+}
+
+pub fn query_subscribed_contracts(
+    deps: Deps,
+    hook_type: String,
+) -> StdResult<Vec<String>> {
+    let query = QueryRequest::Custom(HarpoonQuery::SubscribedContracts { hook_type });
+    let result: SubscribedContractsResponse = deps.querier.query(&query)?;
+    Ok(result.contract_addresses)
+}
+```
+
+### Implementing Hook Handlers
+
+Contracts that subscribe to hooks must implement the `sudo` entry point:
+
+```rust
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn sudo(deps: DepsMut, env: Env, msg: Binary) -> Result<Response, ContractError> {
+    let hook_msg: HookMessage<Binary> = from_binary(&msg)?;
+    
+    match hook_msg.hook_type {
+        HookType::BeforeDelegationCreated => {
+            let payload: BeforeDelegationCreatedPayload = from_binary(&hook_msg.payload)?;
+            // Process delegation creation
+        },
+        // Handle other hook types...
+        _ => {
+            // Ignore unhandled hook types
+        }
+    }
+    
+    Ok(Response::new())
+}
+``` 

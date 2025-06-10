@@ -1,0 +1,382 @@
+---
+title: "Bull vs. Bear Integration"
+description: "Tools and documentation for integrating with Bull vs. Bear trading platform"
+icon: "chart-line"
+---
+
+Bull vs. Bear is Neutron's innovative narrative trading platform that enables long-short strategies through Clusters. This guide provides developers with the tools and knowledge needed to integrate with the platform or build similar functionality.
+
+<div className="p-4 border-l-4 border-primary bg-primary/5 rounded my-6">
+  <strong>Platform Overview:</strong> Bull vs. Bear allows users to execute leveraged long-short strategies in a single transaction using USDC as collateral, with 100% of USDC earning lending yield while trading.
+</div>
+
+## Integration Tools
+
+<CardGroup cols={3}>
+  <Card title="BullBearLib" icon="code" iconType="duotone" href="https://github.com/Deploydon/BullBearLib" target="_blank">
+    <p className="mt-2">JavaScript helper library for interacting with Bull vs. Bear platform programmatically.</p>
+    <p className="text-xs mt-2 text-gray-500">JavaScript • Trading Bot Compatible</p>
+  </Card>
+  
+  <Card title="Mars Protocol Integration" icon="handshake" iconType="duotone">
+    <p className="mt-2">Documentation and examples for leveraging Mars Protocol's lending capabilities.</p>
+    <p className="text-xs mt-2 text-gray-500">DeFi • Lending • Leverage</p>
+  </Card>
+  
+  <Card title="LocalTesting Setup" icon="vial" iconType="duotone" href="https://github.com/Deploydon/LocalTesting" target="_blank">
+    <p className="mt-2">Local environment setup for testing trading strategies and contract interactions.</p>
+    <p className="text-xs mt-2 text-gray-500">Testing • Development</p>
+  </Card>
+</CardGroup>
+
+## How Bull vs. Bear Works
+
+Bull vs. Bear enables sophisticated trading strategies through its Cluster system:
+
+<Steps>
+  <Step title="Deposit USDC">
+    Users deposit USDC as collateral, which earns lending yield while trading
+  </Step>
+  
+  <Step title="Select Strategy">
+    Choose from pre-made Clusters or create custom long-short combinations
+  </Step>
+  
+  <Step title="Configure Position">
+    Set position size, leverage, and asset weights within the Cluster
+  </Step>
+  
+  <Step title="Execute Trade">
+    Deploy the entire strategy in a single transaction
+  </Step>
+  
+  <Step title="Monitor & Manage">
+    Track performance and manage positions through the platform interface
+  </Step>
+</Steps>
+
+## Understanding Clusters
+
+Clusters are the core innovation of Bull vs. Bear, allowing narrative-based trading:
+
+### What are Clusters?
+
+Clusters package multiple long and short positions into a single tradable unit, enabling traders to express views on broader market narratives rather than individual assets.
+
+### Example Cluster Strategies
+
+<Tabs>
+  <Tab title="BTC Dominance">
+    **Strategy**: Bitcoin outperforms major altcoins
+    
+    ```javascript
+    {
+      "name": "BTC vs Blue Chips",
+      "positions": {
+        "BTC": { "direction": "long", "weight": 50 },
+        "ETH": { "direction": "short", "weight": 25 },
+        "SOL": { "direction": "short", "weight": 25 }
+      }
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Ethereum L2s">
+    **Strategy**: Bullish on Ethereum Layer 2 ecosystem
+    
+    ```javascript
+    {
+      "name": "Ethereum L2 Growth",
+      "positions": {
+        "ZK": { "direction": "long", "weight": 33 },
+        "OP": { "direction": "long", "weight": 33 },
+        "ARB": { "direction": "long", "weight": 34 }
+      }
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Funding Arbitrage">
+    **Strategy**: Capitalize on funding rate differentials
+    
+    ```javascript
+    {
+      "name": "Dynamic Funding Strategy",
+      "positions": {
+        "BERA": { "direction": "long", "weight": 25 },
+        "TRUMP": { "direction": "long", "weight": 25 },
+        "OSMO": { "direction": "short", "weight": 25 },
+        "TIA": { "direction": "short", "weight": 25 }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Key Features for Developers
+
+### Leveraged Trading
+- Uses Mars Protocol for borrowing and lending
+- Single-transaction execution of complex strategies
+- Automatic liquidation protection
+
+### Position Management
+- Independent position isolation (no cross-collateralization)
+- Real-time P&L tracking
+- Flexible position sizing with minimum $10 trades
+
+### Risk Management
+- Liquidation price calculation and monitoring
+- Funding rate tracking and optimization
+- Position-specific risk containment
+
+## Integration Examples
+
+### Basic Position Query
+
+```javascript
+// Example using BullBearLib
+import { BullBearClient } from '@deploydon/bullbear-lib';
+
+const client = new BullBearClient({
+  rpcEndpoint: 'https://rpc-neutron.keplr.app',
+  restEndpoint: 'https://rest-neutron.keplr.app'
+});
+
+// Get user positions
+const positions = await client.getUserPositions(userAddress);
+console.log('Active positions:', positions);
+
+// Get cluster information
+const cluster = await client.getClusterDetails(clusterId);
+console.log('Cluster composition:', cluster);
+```
+
+### Creating Custom Clusters
+
+```javascript
+// Define a custom cluster
+const customCluster = {
+  name: "My Custom Strategy",
+  description: "Custom long-short narrative play",
+  positions: [
+    {
+      asset: "BTC",
+      direction: "long",
+      weight: 40,
+      leverage: 3
+    },
+    {
+      asset: "ETH", 
+      direction: "short",
+      weight: 60,
+      leverage: 2
+    }
+  ]
+};
+
+// Execute cluster trade
+const result = await client.executeClusterTrade({
+  cluster: customCluster,
+  collateralAmount: "1000", // USDC
+  userAddress: userAddress
+});
+```
+
+### Position Monitoring
+
+```javascript
+// Monitor position performance
+const monitorPosition = async (positionId) => {
+  const position = await client.getPosition(positionId);
+  
+  console.log({
+    pnl: position.unrealizedPnl,
+    liquidationPrice: position.liquidationPrice,
+    fundingRate: position.currentFundingRate,
+    timeToLiquidation: position.estimatedLiquidationTime
+  });
+  
+  // Check if position needs attention
+  if (position.healthFactor < 1.2) {
+    console.warn('Position approaching liquidation!');
+  }
+};
+```
+
+## Mars Protocol Integration
+
+Bull vs. Bear leverages Mars Protocol for its lending and borrowing infrastructure:
+
+### Key Mars Features Used
+
+<CardGroup cols={2}>
+  <Card title="Lending Yield" icon="percentage" iconType="duotone">
+    <p className="mt-2">USDC collateral earns lending yield while positions are active, maximizing capital efficiency.</p>
+  </Card>
+  
+  <Card title="Borrowing for Leverage" icon="arrows-up-down" iconType="duotone">
+    <p className="mt-2">Automated borrowing enables leveraged positions without manual debt management.</p>
+  </Card>
+  
+  <Card title="Liquidation Protection" icon="shield" iconType="duotone">
+    <p className="mt-2">Mars Protocol's liquidation engine ensures borrowed funds are protected.</p>
+  </Card>
+  
+  <Card title="Multi-Asset Support" icon="layer-group" iconType="duotone">
+    <p className="mt-2">Support for multiple assets enables diverse cluster compositions.</p>
+  </Card>
+</CardGroup>
+
+### Integration with Mars
+
+```javascript
+// Example Mars Protocol interaction
+import { MarsClient } from '@mars-protocol/mars.js';
+
+const marsClient = new MarsClient(neutronRpc);
+
+// Check lending rates
+const lendingRates = await marsClient.getLendingRates();
+console.log('USDC lending APY:', lendingRates.USDC);
+
+// Monitor health factors
+const healthFactor = await marsClient.getHealthFactor(userAddress);
+if (healthFactor < 1.0) {
+  console.warn('Position at risk of liquidation');
+}
+```
+
+## Risk Management
+
+### Liquidation Mechanics
+
+<div className="p-4 border-l-4 border-orange-500 bg-orange-50 dark:bg-orange-900/20 rounded my-6">
+  <strong>Important:</strong> Liquidation occurs when a position's value drops too far relative to borrowed amount. The platform automatically closes positions to protect borrowed funds.
+</div>
+
+### Key Risk Factors
+
+1. **Leverage Risk**: Higher leverage amplifies both gains and losses
+2. **Funding Costs**: Negative funding rates can erode profits over time
+3. **Liquidation Risk**: Positions can be liquidated if health factor drops too low
+4. **Market Risk**: Narrative trades can be subject to sudden sentiment shifts
+
+### Risk Monitoring Tools
+
+```javascript
+// Comprehensive risk monitoring
+const riskMetrics = await client.getRiskMetrics(positionId);
+
+console.log({
+  healthFactor: riskMetrics.healthFactor,
+  liquidationPrice: riskMetrics.liquidationPrice,
+  timeToLiquidation: riskMetrics.estimatedTimeToLiquidation,
+  fundingCost: riskMetrics.dailyFundingCost,
+  unrealizedPnl: riskMetrics.unrealizedPnl
+});
+```
+
+## Building Trading Bots
+
+The BullBearLib is designed to support automated trading strategies:
+
+### Bot Architecture
+
+```javascript
+class TradingBot {
+  constructor(config) {
+    this.client = new BullBearClient(config);
+    this.strategies = config.strategies;
+  }
+  
+  async runStrategy(strategyName) {
+    const strategy = this.strategies[strategyName];
+    
+    // Analyze market conditions
+    const marketData = await this.client.getMarketData();
+    
+    // Check if strategy conditions are met
+    if (strategy.shouldExecute(marketData)) {
+      // Execute cluster trade
+      await this.client.executeClusterTrade(strategy.cluster);
+    }
+    
+    // Monitor existing positions
+    await this.monitorPositions();
+  }
+  
+  async monitorPositions() {
+    const positions = await this.client.getUserPositions();
+    
+    for (const position of positions) {
+      if (position.healthFactor < 1.2) {
+        // Close position to avoid liquidation
+        await this.client.closePosition(position.id);
+      }
+    }
+  }
+}
+```
+
+## Development Resources
+
+<CardGroup cols={3}>
+  <Card title="BullBearLib Repository" icon="github" href="https://github.com/Deploydon/BullBearLib" target="_blank">
+    Source code and documentation for the integration library
+  </Card>
+  
+  <Card title="LocalTesting Tools" icon="terminal" href="https://github.com/Deploydon/LocalTesting" target="_blank">
+    Local development environment for testing strategies
+  </Card>
+  
+  <Card title="Bull vs. Bear Platform" icon="external-link" href="https://app.neutron.org" target="_blank">
+    Live platform for testing and strategy development
+  </Card>
+</CardGroup>
+
+## Common Use Cases
+
+### Portfolio Hedging
+Use clusters to hedge existing crypto positions by creating inverse exposure to market segments.
+
+### Narrative Trading
+Express views on emerging market themes like "AI tokens vs traditional crypto" or "L1 vs L2 performance."
+
+### Yield Enhancement
+Combine position trading with USDC lending yield for enhanced returns on capital.
+
+### Arbitrage Opportunities
+Capitalize on funding rate differentials across different assets and time periods.
+
+## Getting Started
+
+<Steps>
+  <Step title="Install Dependencies">
+    ```bash
+    npm install @deploydon/bullbear-lib
+    # or
+    git clone https://github.com/Deploydon/BullBearLib.git
+    ```
+  </Step>
+  
+  <Step title="Configure Connection">
+    Set up your Neutron RPC connection and wallet integration
+  </Step>
+  
+  <Step title="Explore Strategies">
+    Study existing clusters and market conditions to identify opportunities
+  </Step>
+  
+  <Step title="Start Small">
+    Begin with small position sizes to understand the platform mechanics
+  </Step>
+  
+  <Step title="Build & Iterate">
+    Develop your integration and gradually increase complexity
+  </Step>
+</Steps>
+
+<div className="p-4 border-l-4 border-primary bg-primary/5 rounded my-6">
+  <strong>Community Support:</strong> Join the <a href="https://t.me/+bmfRCVSmiPJmZTc1" target="_blank" className="text-primary hover:underline">Neutron Builders Chat</a> for questions, strategy discussions, and integration support.
+</div> 

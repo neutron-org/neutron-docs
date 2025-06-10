@@ -1,0 +1,368 @@
+﻿Neutron : The Integrated Application Network
+ Neutron.org 
+
+·
+8 min read
+116
+3
+By granting smart contracts the powers of appchains, Neutron enables developers to build breakthrough applications and onboard users from anywhere.
+  
+
+Cosmos builders are some of the most forward-thinking minds in the entire industry. They’ve shipped Tendermint, ABCI++ and Appchains years before single-slot finality, protocol-enforced proposer commitments, or application-specific rollups were seen as the “Endgame”.
+But, history has shown that being right and being first doesn’t necessarily translate to success and widespread adoption.
+In an effort to translate this prescient development into widespread success, effective distribution is also needed. To bring distribution to the ecosystem, Neutron is unveiling Integrated Applications, a powerful approach to building DeFi applications that combines the power of appchains with the scalability of smart-contracts.
+Cosmos has a Distribution Problem
+Cosmos has faced significant challenges in distributing its technological innovations. Much of the value from these advancements has been accrued to other ecosystems, which have stronger network effects and broader distribution.
+Difficult Onboarding
+A key reason for this shortfall is the complex nature of onboarding to Cosmos. Limited support from centralised exchanges means users must undergo a multi-step process to transfer and swap tokens. Routing solutions like Skip, TFM, and Squid, which streamline this process, are often overlooked by–or never brought to the attention of–new users. Bridging assets from Ethereum to Cosmos is both slow and expensive, which furthers the barrier to entry. This complexity is compounded by the requirement for a dedicated wallet and seed phrase, different from those used in other ecosystems.
+The Same-Old Apps
+Few Cosmos applications have fully leveraged their appchain’s capabilities to offer genuinely unique products. The ecosystem’s lack of differentiation can be attributed in part to the high development costs and slower iteration speed of appchains, which limits these applications’ ability to evolve and reach product-market fit.
+To compete with and surpass the competition, applications should be empowered to go-to-market faster while providing significantly better safety, performance, and user experience.
+In summary, what makes Cosmos great has also been one of its main weaknesses. To avoid being subsumed by other ecosystems’ variants of its ideas, Cosmos must focus on distribution. To thrive, it must provide a more integrated experience, reinvent user onboarding and take advantage of being the home of breakthrough applications.
+The Integrated Advantage
+Despite being generally more cumbersome to develop, appchains have a fundamental advantage over pure smart-contract-based applications: access to functionality that exists outside of the VM. Smart-contracts on the other hand are more accessible, standardised and modular. They benefit from faster iteration cycles and feature easier maintenance and upgradeability, but are constrained by their VM’s capabilities.
+Integrated Applications inherit the best features of both approaches: they combine powerful enshrined features with the development speed and synchronous composability of smart-contracts, enhancing efficiency, security, and reach.P
+  
+
+Unlike typical smart contracts, Integrated Applications have access to components of the blockchain that exist outside of their virtual machine: begin and end block automation, mempools, transaction fee mechanisms, consensus votes, interchain transactions and queries, and more.
+Integrated Applications can customise their network’s blockspace to provide gasless onboarding to newly acquired users and do away with network selectors to onboard deposits from any connected blockchain in a single click. They can deploy and manage capital and integrations across multiple chains, maximising network effects and the ubiquity of their denominations.
+These features allow Integrated Applications to establish stronger moats around their technology and business model, while providing a competitive edge that standard applications lack. This makes them inherently more attractive and competitive, as they operate on an enhanced platform offering higher performance and broader reach compared to traditional applications.
+Enter Neutron
+Neutron is the only blockchain network specifically designed to support Integrated Applications. By granting contracts the power of an appchain, Neutron minimises development overhead, facilitates improved mechanism design, lowers risk and enhances the scalability of decentralised applications.
+Smarter Contracts
+Neutron’s app-specific infrastructure enables developers to reduce the risks presented to users when core functions fail to execute properly. When risks are reduced, applications can provide users better pricing and new functionality. Enhancements to the liveness and reliability of core functions are enabled by two key features:
+The CRON Module provides permissioned smart contracts hooks into end-of-block computation, enabling applications to automate critical functionality. The network itself can guarantee the execution of certain DeFi functions without relying on incentivizing third-party bots or trusted third-parties for automation. This is critical for applications which need to regularly rebalance (yield aggregators, vaults, etc.) or efficiently offload capital (lending, stablecoins, etc. ). The CRON Module can be used to implement novel market designs, such as batch auctions, which require automated solutions to clear orders against each other in consistent time intervals.
+Through the Block SDK, Neutron’s blockspace and mempool can be segmented and customised to best support specific application and network objectives. For instance, blockspace auction lanes provide high performance and predictability to power users such as searchers or liquidators, while gas-free lanes support the seamless onboarding of less sophisticated users, without requiring them to locate and purchase gas tokens to start using the network.
+Enshrined infrastructure also contributes to enhancing the reliability and quality of data feeds, which can otherwise be censored or gamed as a part of profitable DeFi exploits. For example, attackers can adversely select other users of a DeFi protocol by delaying oracle updates to their own benefit. By bringing the oracle in-protocol, Neutron’s upcoming Oracle Module can serve as a native substitute for third-party bots and trusted providers for data feeds. It ensures that oracle feeds are updated consistently and at lower latencies, safeguarding its DeFi ecosystem. By enabling arbitrary data to be brought on-chain through consensus, the oracle module unlocks Verifiable Random Functions (VRF), Proof-of-Asset tokens and other API integrations that significantly expand the DeFi design space.
+As a result, smart contract developers now have tools at their disposal to build applications with reduced risk and improved efficiency, allowing them to provide better pricing and more capital efficient products safely.
+Onboard From Anywhere, Scale Everywhere
+Neutron’s infrastructure empowers applications to scale efficiently across many chains. This lets them tap into the liquidity and activity of remote chains and improve their distribution in other ecosystems.
+The Interchain Transactions (ICTX) module allows smart-contracts to register and control accounts on remote blockchains. Rather than rely on trusted, cumbersome multisigs, applications on Neutron are able to register accounts, deploy smart-contracts and manage portfolios remotely. Their contracts and governance instances are able to execute transactions, receive acknowledgments and trigger callbacks across networks. As a result, an ICTX-enabled app can securely onboard and restake collateral from one network while extending loans to users on another. It can programmatically sequence actions such as transfers, swaps, and liquidity provision. This enables cross-chain protocols to abstract away the network’s boundaries without compromising on scalability, trustlessness and security to build applications that leverage the liquidity and features of any connected networks.
+Decentralised Applications heavily rely on being able to query the state of a blockchain. These are usually retrieved through standard queries which are limited to their local blockchain. For example, yield aggregators must frequently retrieve reward rates from lending protocols on numerous networks to rebalance their portfolio. Liquid staking protocols need to confirm deposits before minting liquid staked tokens. Without interchain queries, cross-chain applications would normally have to deploy individual instances on every single network, significantly increasing their deployment and maintenance overhead.
+Instead, Neutron implements Interchain Queries (ICQ), which enable applications to query the state and transaction history of any IBC connected blockchain. This allows cross-chain applications to compute directly over the state of another blockchain, significantly reducing maintenance overhead and increasing security.
+Packet-Forward Middleware and IBC Hooks enable applications on other chains to zap into or route through any Neutron application in a single click. This considerably improves the user experience and makes applications on Neutron compatible with cross-chain aggregators and applications which initiate transactions off of Neutron. Users from other ecosystems can onboard and tap into Neutron’s liquidity and functionality without complex manipulations.
+This functionality supports a wide range of networks today through IBC, which now connects all Cosmos chains as well as Polkadot and Avalanche. This extensive cross-chain support allows applications built on Neutron to serve user bases across different networks, expanding their reach and utility.
+Bye-Bye Backlog
+Focus is a primary concern of serious developers and entrepreneurs, particularly in such competitive and fast-changing environments as the blockchain industry. By providing the key infrastructure, node operators and integrations needed to scale DeFi applications, Neutron empowers builders to focus on their application’s growth.
+Neutron eliminates the overhead associated with establishing, sustaining and coordinating a validator set and relayer network. It provides out-of-the-box support for block explorers, wallets, oracles, security monitors and provides hooks into valuable functionality accessible directly from your smart contracts. By providing secure, feature-rich, cross-chain functionality, it eliminates the burden of managing chain-specific deployments and simplifies trustless DAO operations.
+Thanks to a combination of WebAssembly and Rust, CosmWasm smart contracts on Neutron have unparalleled efficiency and security. Because these technologies are widely used outside of the blockchain industry, they benefit from robust, constantly optimised compilers and libraries:
+Instead of implementing algorithms and cryptographic primitives from scratch, developers can simply import battle-tested Rust libraries to save time and improve their contract’s efficiency, without having to worry about writing Assembly code to optimise gas cost.
+CosmWasm is also designed with a security-first approach through native reentrancy protection and upgradability standards. This allows developers to spend less time thinking about securing edge cases and more time building the breakthrough apps they have in mind.
+Ship against the noise
+Neutron is ushering in a new generation of DeFi products called Integrated Applications. By granting smart contracts the powers of an appchain, Neutron enables developers to build the most differentiated, secure and capital efficient applications that can scale cross-chain and onboard users from anywhere.
+A tremendous amount of talent is being committed to revolutionising the financial system: Neutron builds on the work of amazing Cosmos builders across from Confio, Binary Builders, Skip, Strangelove, Osmosis, Informal Systems and many others.
+However, and unfortunately, the industry is also riddled with hype, scepticism, maximalism, etc. We believe in cutting through the noise with focus, pragmatism, and cooperation. If you’re an engineer or an entrepreneur who is looking to build something so good it simply can’t be built anywhere else, Neutron is the right place for you:
+Get funded to ship the next generation of DeFi applications
+
+
+Mercury: Accelerating Integrated Finance with Neutron’s Sovereign L1
+ Neutron.org 
+
+·
+4 min read
+1
+  
+
+Fast block times and cheap gas are table stakes. The next arms race in DeFi is unlocking new capabilities for entrepreneurs without fragmenting liquidity and users.
+Neutron is at the forefront of this shift as the industry’s first integrated blockchain. By integrating financial infrastructure and applications with unprecedented depth, Neutron unlocks new DeFi products that maximize capital efficiency and execution quality.
+Today, after months of hard work, the Neutron Foundation is proud to announce Mercury, Neutron’s upcoming graduation from Cosmos Hub’s Interchain Security (ICS) to a fully sovereign proof-of-stake network.
+Beyond merely transitioning Neutron’s security architecture, the Mercury upgrade opens the next chapter in Neutron’s relationship with the Hub and introduces an array of exciting new developments, including greater utility and liquidity for NTRN, as well as vastly improved blockchain performance.
+🔀 Read the Neutron governance proposal here
+⚛️ Read the Cosmos Hub governance proposal here
+Supercharging DeFi
+Since its inception, Neutron has been empowering entrepreneurs to push the boundaries of what’s possible in DeFi. The thesis is simple:
+1. Financial market participants optimize for capital efficiency (i.e., more exposure on less capital), execution quality (i.e., the best prices), and UX.
+2. Optimally delivering on these properties requires an integrated approach that combines app-specific infrastructure and atomic composability.
+The Mercury upgrade takes this even further, elevating Neutron’s speed and throughput to industry-leading levels while introducing powerful DeFi primitives and new opportunities:
+* 11x Higher Throughput: 11x increase in gas per block from 30M to 330M, unlocking advanced DeFi applications like perpetual futures clusters.
+* Unlocking 18x Faster Block Times: From ~1.8s today to ~0.1s by the end of the year for lightning-fast transactions and trades.
+* Supervaults: A novel way to provide liquidity that makes liquidity provisioning lucrative and enables large trades with minimal slippage, leveraging Neutron’s built-in oracle and Cron module.
+* New Ways to Earn: Earn NTRN staking rewards, Droplets, Ingots, and more by liquid staking NTRN for dNTRN and participating in Neutron DeFi.
+* Rapid Onboarding: Create and fund a Neutron account in under 30 seconds with Neutron’s Ethereum signature verification, Privy, and Skip Go Fast integrations.
+  
+
+A new chapter for Neutron and the Hub
+In 2023, Neutron made history as the first network to be secured through Cosmos Hub’s Interchain Security. This served as a strong foundation to bootstrap the ecosystem. Now, as Neutron matures, it is time to evolve into a sovereign L1 network.
+This upgrade proposal opens the next chapter in the relationship between the Cosmos Hub and Neutron, empowering both communities to progress rapidly toward their goals:
+* It signals support for launching smart contracts on the Hub to bootstrap a native, ATOM-aligned ecosystem and offer best-in-class service to appchains to become the center for interchain services, driving value to ATOM.
+* It empowers Neutron to continue cultivating an ecosystem of unique, powerful, and deeply integrated DeFi applications by improving network performance and infrastructure reliability, targeting new, exciting markets, driving value to NTRN, and enabling new use cases.
+* It introduces the ATOM Reward Program, enabling ATOM holders to earn exclusive rewards by participating in Neutron DeFi, reinforcing the Hub’s alignment with the broader ecosystem.
+🎙️ Set a reminder to join us for a special ICL & Neutron Townhall space on X on Friday, March 21st at 10 AM EST, as we dive into the Mercury upgrade.
+Looking ahead
+Mercury represents a significant step forward in Neutron’s mission to revolutionize finance. With support from the Neutron Foundation, Interchain Labs, and the network’s communities, Neutron is expected to complete the Mercury upgrade on April 9th.
+The future is bright — and we’re just getting warmed up.
+About Cosmos
+Cosmos is the Internet of Blockchains. An ecosystem of sovereign, interoperable appchains built on the Cosmos Stack. The Cosmos SDK, the Inter-blockchain Communication Protocol (IBC), CometBFT, and other modular components — the Cosmos Hub is the home of ATOM, and the founding chain of this ecosystem.
+About Neutron
+Home to an expanding array of cutting-edge, tightly integrated DeFi applications such as Mars, Drop, Astroport, and others, Neutron is a rapidly growing smart contract platform that enables entrepreneurs to build and scale breakthrough financial applications.
+Unlike generalized L1s that provide generic infrastructure regardless of an application’s needs, Neutron focuses exclusively on DeFi by making high-performance, app-specific infrastructure available to any DeFi protocol. This tailored approach allows entrepreneurs to build new types of protocols that improve capital efficiency, execution quality, and UX — all within a shared execution environment that ensures atomic composability.
+Join a community of entrepreneurs, creators, and explorers
+* Trade NTRN on Binance, Kraken, and Kucoin, as well as on the Neutron Portal where you can swap on-chain assets from any network for NTRN.
+* Join the Neutron Community on Telegram
+* Join the Neutron Community on Discord
+* Build with Neutron Foundation support
+* Follow Neutron on Twitter
+Crypto
+Blockchain
+
+
+Introducing the Neutron Creator Program
+ Neutron.org 
+
+·
+4 min read
+371
+6
+  
+
+Unlike generalized L1s that provide generic infrastructure regardless of an application’s needs, Neutron focuses exclusively on DeFi by making high-performance, app-specific infrastructure available to any DeFi application. This tailored approach allows entrepreneurs to build new types of protocols that improve capital efficiency, execution quality, and UX — all within an environment that ensures atomic composability.
+Over time, Neutron aims to bring a significant percentage of the world’s wealth on-chain, enabling fair and efficient finance for everyone. The Neutron Creator Program was designed to accelerate progress toward this goal. Neutron Creators will help architect the future of finance, pioneering a world where everyone can win — not just the privileged few.
+Apply today to join the first cohort of the Neutron Creator Program.
+How the Program Works
+New cohorts of the Neutron Creator Program will be announced periodically, with applications opening for a two-week window.
+The application process is straightforward:
+1. Apply online — No need to reveal personal information unless you choose to.
+2. Interview stage — Selected applicants will receive invitations for an interview.
+3. Onboarding — Accepted applicants will be onboarded into the program and introduced to fellow creators.
+What Neutron Creators Do
+Neutron Creators will help shape the ecosystem by contributing in various ways, including:
+* Educating the community through tweets, podcasts, threads, videos, tutorials, infographics, memes, articles, and guides.
+* Onboarding new community members via Telegram and Discord.
+* Spreading awareness by sharing Neutron content.
+* Creating and managing community accounts.
+* Translating Neutron content into other languages.
+* Moderating channels and advocating for correct information.
+* Organizing online or IRL events.
+* Networking with potential partners to expand the Neutron economy.
+* Helping establish community media channels.
+Roles are customizable, allowing creators to focus on their strengths while collaborating with others who have complementary skills.
+Ranking Up: Creator Tiers
+Neutron Creators progress through four tiers, each unlocking new opportunities and benefits.
+* Explorer (Tier 1): Meet the Neutron Foundation (NF) team and fellow creators in your cohort. Creators focus on content creation, community engagement, and spreading awareness.
+* Catalyst (Tier 2): Creators receive the Catalyst rank and possibly receive new responsibilities depending on their skills, such as moderating community channels and translating content.
+* Trailblazer (Tier 3): As Creators build their influence within the community and contribute to its growth, they’ll obtain the Trailblazer rank. New responsibilities may consist of organizing IRL and/or online events.
+* Graduate (Tier 4): Once a Neutron Creator finishes the program, they’ll receive the Graduate rank and the opportunity to work on even more significant projects, possibly sponsored by the NF. Some may even be offered full-time positions.
+The NF has also partnered with several other prominent Web3 projects, including Symbiotic, XION, Initia, P2P, Pryzm, and Nolus, to connect Graduates with other opportunities where they may be able to continue their Web3 careers.
+Tracking Contributions
+Creator contributions will be tracked bi-weekly, with performance points allocated based on:
+* Content engagement
+* Awareness generated
+* Business development impact
+* Community growth and engagement contributions
+* Overall influence within the Neutron ecosystem
+Who We’re Looking For
+We’re seeking individuals passionate about DeFi and community-building, including:
+* Crypto content creators with a growing or established social media presence.
+* Community leaders and influencers managing Telegram, Discord, or other Web3 communities.
+* Media professionals who work with crypto-focused platforms.
+* Event organizers who enjoy hosting digital or in-person gatherings.
+* Multilingual individuals who can translate content and expand Neutron’s reach.
+* People with strong industry connections who can facilitate BD opportunities.
+Benefits of Being a Neutron Creator
+Being part of the Neutron Creator Program isn’t just about contributing — it’s about growing your influence, skills, and opportunities in the Web3 space.
+Perks include:
+* Competitive base pay: Explorer: $500/month. Catalyst: $1,500/month. Trailblazer: $2,500/month. Graduate: $3,500/month.
+* Performance bonuses for top creators each month.
+* $500 referral bonuses for bringing high-quality creators or BD/partner leads.
+* Personal brand and influence growth on Crypto Twitter and elsewhere through official Neutron social account amplification (including Creator Spotlights that share the stories of successful Creators with the rest of the community and beyond).
+* Private creator channels for networking, collaboration, and direct access to NF leadership team members for guidance and support.
+* Priority access to Neutron events, new feature or product launches, bounties, and more.
+* Skill development via workshops and direct mentorship from NF team members.
+* Potential full-time roles or other opportunities with the NF and partnered ecosystems.
+* Exclusive merchandise drops.
+* Opportunities for international event attendance for top-tier creators.
+Ensuring Quality: Performance Reviews
+To maintain high standards, the bottom performers will be reviewed every two months, with underperforming creators removed. However, if all creators are performing well, no one will be cut — our goal is to reward and nurture top talent, not eliminate contributors.
+Join a Community of Entrepreneurs, Creators, and Explorers
+We’re looking for passionate creators to join us in architecting the future of finance. If you’re tired of the status quo and are ready to take the leap into reimagining finance, we’d like to hear from you.
+Apply today and become a Neutron Creator!
+
+
+What is an Integrated Blockchain?
+ Neutron.org 
+
+·
+5 min read
+102
+3
+  
+
+Neutron is building the decentralized economy users were promised.
+Unlike generalized L1s that provide generic infrastructure regardless of an application’s needs, Neutron is an integrated blockchain focusing exclusively on DeFi by making highly-performant, application-specific infrastructure available to any DeFi protocol. This tailored approach allows entrepreneurs to build new types of protocols that improve capital efficiency, profitability, and UX — all within a shared execution environment that ensures atomic composability.
+Let’s explore this thesis more.
+The Global Financial System is Broken
+Today’s traditional financial system is extractive, inequitable, and gatekept.
+* Billions of people are restricted from accessing financial opportunities, and wealthier individuals and institutions have access to better rates, services, and investment opportunities, exacerbating wealth inequality.
+* 1.4B — 1.7B people remain unbanked.
+* Minimum balance requirements for premium banking services ($10,000+) exclude the majority of people from better rates, better performance, and lower fees.
+* High-net-worth loans come with lower interest rates, longer repayment periods, and more personalized service.
+* Firms with privileged positions extract monopolistic rents from everyday people and can change them on a whim with little transparency.
+Decentralized Economies Offer a Solution
+Decentralized economies promised solutions to these issues — an open, fair, and efficient financial system without middlemen — but have fallen short.
+* Most crypto activity still remains concentrated on centralized platforms which charge extractive rents for listings and lower trading fees to larger funds compared to individuals.
+* On-chain systems are highly inefficient. For example, liquidity providers frequently lose money due to infrastructure deficiencies.
+Generalized L1s have handicapped DeFi’s ability to compete with centralized alternatives by providing generic infrastructure that is unfit to solve highly specific financial problems.
+App-specific chains were proposed as an alternative, but they only increased costs and fragmentation. As a result, liquidity and user experiences suffered, rendering them largely ineffective and impractical for most use cases.
+Neutron overcomes these limitations by offering entrepreneurs app-specific infrastructure — tools previously exclusive to appchain builders — while preserving the atomic composability of a single state-machine and the cost-efficiency and speed of smart contracts.
+The Neutron Thesis
+Neutron’s thesis is simple:
+1. Financial market participants optimize for execution quality (i.e., the best prices), capital efficiency (i.e., more exposure on less capital), and UX.
+2. Optimally delivering on these properties requires an integrated approach that combines highly-performant app-specific infrastructure and atomic composability.
+Over time, Neutron’s goal is to bring a significant percentage of the world’s wealth on-chain, enabling open, fair, and efficient finance for everyone.
+Integrated Infra at Work
+Neutron addresses the shortcomings of generalized L1s and the fragmentation and overhead of app-specific domains by giving entrepreneurs the integrated infrastructure they need to build category-leading DeFi products and services.
+  
+
+One example of Neutron’s integrated, app-specific infrastructure at work is Supervaults.
+Supervaults are a new way to provide liquidity (coming soon to Neutron) that goes above and beyond what existing AMMs can do for depositors. Today’s AMMs are subject to massive losses due to arbitrageurs and rebalancing (aka LVR or Impermanent Loss).
+Leveraging Neutron’s built-in, high-frequency oracle and native automation features, Supervaults market make at the most recent CEX prices and automatically rebalance every block. This means that instead of getting arbitraged and losing money, Supervaults are doing the arbitrage themselves and democratizing the profits — all while supporting a liquid ecosystem on Neutron.
+Supervaults will be a superpower for Neutron: by making liquidity provisioning lucrative, they lower the cost of capital to acquire liquidity on the network and provide optimal prices, enabling greater trading volumes and capacity for leverage.
+Another example is Drop, a liquid staking protocol on Neutron backed by Lido and led by ex-Lido and P2P contributors.
+Drop is designed to unlock liquidity and drive growth for sovereign blockchain ecosystems by transforming frozen capital into liquid dAssets, which allow users to:
+* Support the growth of the networks they’re a part of
+* Earn auto-compounded staking rewards without locking their assets
+* Earn additional yield and benefits from using dAssets in ecosystem apps
+* Remain eligible for airdrops
+* Exit their position at any time
+Drop utilizes Neutron’s custom Interchain Transactions (ICTX) and Interchain Queries (ICQ) modules to read the state of other blockchains and adjust delegations made by the protocol’s remotely controlled accounts. This architecture allows Drop to deploy once and scale anywhere: new assets from 100+ connected chains can be onboarded in a single transaction, while users enjoy a seamless cross-chain staking experience.
+  
+
+The Power of Composability
+On Neutron, DeFi applications can atomically compose with one another (i.e., apps can build on one another like LEGO bricks, allowing multiple actions across different smart contracts to execute together as a single atomic unit — meaning either all of them succeed or none of them happen at all). This provides strong execution guarantees, and capital efficiency (e.g., flash loans, cyclical arbs, risk-free liquidations, etc.).
+Unlike other platforms, Neutron harnesses the full potential of atomic composability, tightly integrating DeFi protocols with one another to deliver optimal execution quality, UX, and capital efficiency.
+  
+
+Conclusion
+At Neutron, our focus is on enabling open, fair, and efficient finance for everyone. As strong believers in a decentralized future, we believe DeFi will transform the way our global financial system works — there will be new types of financial products and services, and demand will flow to the venues that offer the best execution, capital efficiency, and UX. As the first integrated blockchain, Neutron is positioned to deliver on the original promise of DeFi by combining advanced app-specific infrastructure with atomic composability to create a decentralized economy that is more capital-efficient, profitable, and convenient than anything that exists today.
+Join a Community of Entrepreneurs, Creators, and Explorers
+* Join the Neutron Community Telegram
+* Build with Neutron Foundation support
+* Follow Neutron on Twitter
+
+
+Introducing Duality: The Next Evolution in DeFi Trading
+ Neutron.org 
+
+·
+4 min read
+104
+2
+  
+
+All of DeFi revolves around exchange. Yet traders, investors, and liquidity providers frequently lose money due to high slippage, adverse selection (e.g., CEX arbitrage, sandwich attacks, frontrunning, etc.), and impermanent loss.
+These are problems of profitability and capital efficiency — two focal points of the decentralized economy Neutron is building. Today we’re proud to unveil Duality: a high-performance DEX built into Neutron that combines the advantages of orderbooks and AMMs into a single trading venue.
+Duality is optimized to offer the best prices. It does this by supporting all market participants — professional market makers, traders, and passive liquidity providers — with advanced order types and features that enhance their ability to accomplish their objectives.
+* For professional market makers, advanced order types support better prices at higher frequencies and with less risk.
+* For traders and investors, dynamic trade routing — currently live via CLI with a UI integration coming soon — finds the best price and mitigates the effects of extractive behaviors like sandwiching and front-running.
+* And for passive liquidity providers, vault providers (like Margined, Astroport and Blockwave) are enabling anyone to take part in exciting new trading strategies that offer professional-grade profitability without sacrificing convenience.
+Duality’s codebase has undergone multiple security audits by Informal Systems and Ottersec, has been battle-tested through an ongoing bug bounty program, and just finished a formal specification by Informal Systems using Quint.
+Starting today you can trade NTRN, TIA, and ATOM on Duality with zero fees. Other markets like wBTC and ETH are launching soon.
+Start trading on Duality
+Just-in-Time (JIT) Orders — Empowering Higher Frequency Market-making
+On one hand, we are told that sophisticated participants with advantages are parasitic to a DeFi ecosystem. For example, users lose money when these participants sandwich trades or take advantage of outdated AMM quotes.
+On the other hand, if furnished with the right tools, the involvement of sophisticated participants like active market-makers and arbitrageurs can be massively beneficial to traders. This is because their knowledge of price and finance makes them highly capable of being able to ensure there’s deep liquidity at good prices.
+This was the impetus behind developing the Just-In-Time order type.
+JIT orders enable users to provide liquidity at a specified price for one block only, after which the order will immediately cancel. This is important because it solves a critical barrier to bringing market-makers on-chain: adverse selection.
+If market-makers can’t cancel their orders in time after prices change, they lose money when someone trades against them. JIT orders allow market-makers to provide liquidity at competitive prices without taking on adverse selection risk. As a result, they can compete on tighter spreads with deeper liquidity as they have less value at risk. Vault providers (like Margined, Astroport, and Blockwave) are able to leverage this functionality to provide DeFi participants with the benefits of advanced strategies with powerful order types, while retaining the convenience of classic AMMs.
+If you’re a professional market-maker, MEV searcher, or anyone else interested in utilizing JIT orders on Duality, get started with the Duality Messages docs.
+Buy & Sell on Your Terms
+Duality also offers the flexibility to do quick token swaps or place limit orders directly on the orderbook. Limit orders allow you to specify the exact price at which you want to buy or sell, ensuring optimal execution. For a faster alternative, you can use the Market tab to execute instant token swaps, making it easy to trade one token for another in just a few clicks.
+The Base Layer for Capital-efficient & Profitable DeFi
+People invariably flock to financial products that allow them to do more (capital efficiency), earn more (profitability), and are the easiest to use (convenience). Duality will serve as the base layer of spot liquidity to enable maximally capital-efficient and profitable financial products on Neutron.
+Duality’s codebase is fully open-source and composable with other Neutron applications, allowing new products and services to innovate on it and benefit from the increase in trading volume and spot liquidity over time.
+Mars, Astroport, Margined, Blockwave Labs, Drop, and Eclipse Fi have already begun building on Duality:
+* Mars: Efficiently routes liquidations through Duality to safely offer higher lending deposit caps and borrowing capacity to users
+* Astroport: Increases LP rewards by enabling passive concentrated liquidity pool LPs on Astroport to provide liquidity on Duality
+* Margined: Enables off-chain market-making strategy vaults for Duality markets
+* Blockwave Labs: Allows anyone to arbitrage Duality markets without complexity via arbitrage vaults
+* Drop: Collaborating with Margined to develop profitable market-making strategy vaults for dAsset markets on Duality
+* Eclipse Fi: Coordinating with Margined to release arbitrage vaults for Duality pairs
+For questions, product feedback, or to discuss Duality, join the Neutron Community Telegram group.
+At Neutron, we aim to enable fair and efficient finance for everyone. As strong believers in a decentralized future, we believe DeFi will transform the way our global financial system works — there will be many chains, and demand will be routed to the most efficient and profitable venues. Neutron is delivering on the original promise of DeFi by combining the best of app-specific toolkits with the advantages of a single-state machine to create a deeply integrated decentralized economy that is more capital-efficient, profitable, and convenient than anything that exists today.
+Cryptocurrency
+Crypto Trading
+The Next Chapter: Astroport’s Migration to Neutron
+ Neutron.org 
+
+·
+6 min read
+59
+  
+
+Astroport — one of our industry’s leading cross-chain applications and the second-largest Automated Market Maker (AMM) in Cosmos with over $120M in liquidity — has completed its migration to Neutron 🎉
+Migration Overview
+* The Astral Assembly (i.e., Astroport’s governance and staking contracts) has moved from Terra to Neutron
+* New TokenFactory versions of the ASTRO and xASTRO tokens have been issued on Neutron
+* Current ASTRO has become ASTRO.cw20, and current xASTRO has become xASTRO.cw20
+* Users who held ASTRO can convert 1:1 with the new ASTRO token on Neutron
+* Governance votes on all Astroport deployments will settle on Neutron
+* ASTRO staking will take place on Neutron (~$43M in TVL pre-migration)
+* All system fees generated on the Astroport Hub and outposts will flow to xASTRO holders on Neutron
+* Astroport will launch vxASTRO and a Curve-style ‘tributes’ marketplace on Neutron, enabling users to lock their xASTRO to receive vxASTRO and become eligible to vote on ASTRO emissions and collect paid ‘tributes’
+This post will explore how the migration benefits both the NTRN and ASTRO communities, how to migrate and stake ASTRO on Neutron, and what to expect from Astroport in the coming months.
+Synergies Between Astroport & Neutron
+Astroport is a decentralized and open-source AMM operating on the Neutron, Osmosis, Terra, Injective, and Sei blockchains, enabling non-custodial liquidity and price discovery for any crypto asset. Astroport users can swap and provide liquidity for a myriad of Cosmos tokens and permissionlessly launch new liquidity pools using one of multiple pool types.
+  
+
+Astroport Swap page
+The initial proposal to establish Astroport’s Hub on Neutron was first introduced in May 2023 and was subsequently cemented with joint proposals on the governance forums of both Astroport and Neutron in September 2023. To align the NTRN and ASTRO communities, included as part of the dual proposals:
+* The Astral Assembly donated 5% of the ASTRO supply to the Neutron DAO (to be held long-term, staked in the Astral Assembly, and used to direct incentives to key Neutron LPs following the release of vxASTRO and the ASTRO ‘tributes’ marketplace on Neutron, which we overview below)
+* The Neutron DAO donated an equivalent amount of NTRN to the Astroport Protocol Foundation (to help fund Astroport’s migration and the release of vxASTRO and a the ‘tributes’ marketplace)
+* The Astral Assembly granted The Neutron Foundation 1% of the ASTRO supply (to incentivize liquidity on key Astroport pools on Neutron)
+* Off-chain agreements were formed between The Neutron Foundation and The Astroport Protocol Foundation: The Astroport Protocol Foundation covenants that any sales of its NTRN will be conducted OTC, and The Neutron Foundation covenants to provide liquidity incentives to one or more key Astroport pools and that any sales of its ASTRO will also be conducted OTC.
+Economically, the relocation of Astroport’s Hub to Neutron presented prodigious value creation/capture opportunities for the ASTRO community. Leveraging Neutron’s advanced cross-chain smart contract capabilities alongside a burgeoning array of high-caliber DeFi applications such as Mars and Apollo, Astroport is well-positioned to increase protocol earnings and compose with other apps to expand its functionality. Moreover, in collaboration with Duality — a sophisticated liquidity primitive provider building on Neutron — Astroport is set to further its mission of democratizing and decentralizing liquidity provision, aggregating liquidity from expert, active market-makers, as well as decentralized, passive LP strategies, into a single venue.
+As mentioned in one of our previous posts:
+An Astroport integration with Duality is a massive win-win for the Neutron ecosystem. Liquidity deployed on Duality protects Neutron from liquidity fragmentation. It reduces the ecosystem’s reliance on complex, expensive order aggregation and routing. Astroport LPs, in turn, receive more order flow from the network effects of traders using Duality. Aggregated liquidity results in better execution for traders. The entire ecosystem benefits from more robust, decentralized liquidity.
+Further, Astroport’s transition introduces additional advantages for the Neutron ecosystem and community, including:
+* Increased transaction volume
+* User & capital inflows
+* The emergence of novel DeFi use cases
+* Elevated appeal for launching new projects on Neutron
+* An early lead in the upcoming ASTRO Wars
+How to Migrate & Stake ASTRO on Neutron
+Astroport has upgraded its governance tokens, ASTRO and xASTRO, from the legacy CW20 format to the new and improved TokenFactory standard. To maintain participation in governance and continue earning rewards, ASTRO and xASTRO holders must migrate and stake their tokens on Neutron. To do so, either follow the steps below or follow along in this walkthrough video.
+Step 1: If you have xASTRO, unstake your tokens via the banner at the top of the screen or on the Governance page to receive ASTRO.cw20
+  
+
+Unstaking xASTRO on the Astroport Governance page
+Step 2: Swap your current ASTRO.cw20 for the new ASTRO token at a 1:1 ratio via the banner at the top of the screen or by navigating directly to the Astroport Swap page. Note that Osmosis users will need first to send their ASTRO.cw20 to Terra via the Astroport Bridge to execute the swap
+  
+
+Swapping ASTRO.cw20 1:1 for the new ASTRO token on the Astroport Swap page
+Step 3: Send your ASTRO to Neutron via the Astroport Bridge
+  
+
+Sending ASTRO from Terra to Neutron using the Astroport Bridge
+Step 4: Finally, ensure you’ve selected Neutron as your chain in the top right selector menu and stake your ASTRO tokens via the Governance page to receive xASTRO, participate in governance, and earn rewards
+  
+
+Staking ASTRO for xASTRO on Neutron on the Astroport Governance page
+vxASTRO & The Temple
+With the migration complete, Astroport contributors can focus on rolling out the highly anticipated vxASTRO and its accompanying ‘tributes’ marketplace on Neutron. Inspired by — but iterating on — Curve’s veCRV model, or vote-escrowed CRV, vxASTRO will allow users to lock their xASTRO tokens for a time period of their choosing in exchange for the right to determine the allocation of ASTRO emissions going to various pools during each epoch. On top of this, vxASTRO holders can earn ‘tributes’ from external parties who incentivize them on The Temple — Astroport’s soon-to-come tributes marketplace — to vote on certain pools. It’s worth noting that these tributes could end up being quite substantial.
+From the Astroport Blog:
+Votium, the vote buying marketplace for the Curve ecosystem, has facilitated at least $287m worth of vote incentives on the protocol, providing a substantial benefit for veCRV and vlCVX holders. And Velodrome’s own vote buying marketplace generates ~5.4x more yield for voters than trading fees ($25m in incentives for voters vs $4.6m in trading fees).
+The introduction of vxASTRO and The Temple have the potential to:
+* Align incentives between governance participants and LPs to maximize revenue for each party
+* Enable participants to influence the allocation and distribution of token rewards within the ecosystem based on their long-term commitment and involvement
+* Create a more efficient and decentralized system of allocating ASTRO emissions
+* Encourage token lock-ups and active governance participation
+Building Momentum
+Astroport’s successful migration to Neutron marks an important milestone in our shared journey toward fostering a robust, permissionless, and decentralized financial ecosystem. Amplifying mutual capabilities and setting the stage for future growth, Neutron and Astroport’s collaboration exemplifies Neutron’s commitment to supporting the entrepreneurs and teams that aspire to build the next generation of Internet-native applications and infrastructure.
+Stay tuned, frens — much more coming soon.
+Additional Resources
+Join the Neutron community and explore more of the ecosystem with these additional resources:
+* Visit the Neutron website
+* Follow Neutron on Twitter/X
+* Join the Neutron Community on Telegram
+* Join the Neutron Community on Discord
+* Read more from the Neutron Blog
+* Visit the Neutron governance forum
+* Explore the Neutron Docs
+59
+ Neutron.org 
+
+Written by Neutron.org
+623 Followers
+·
+3 Following
+The integrated blockchain purpose-built for finance.

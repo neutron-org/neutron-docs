@@ -1,0 +1,123 @@
+One of the `x/revenue` module responsibilities is validators incentivisation. Based on performance requirements (specified in the module’s parameters) and validator’s performance (percent of signed blocks and provided `x/oracle` prices), a validator might be eligible of rewards (a.k.a. revenue) for their conscientious work. The revenue amount is specified in the module’s parameters.
+
+### Keywords:
+
+- [module parameters](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/proto/neutron/revenue/params.proto#L12-L33) consists of rewards amount (measured in USD and paid in untrn), [performance requirements](https://www.notion.so/Neutron-revenue-module-validator-payments-16e85d6b9b10806aa7d7f45e589a5506?pvs=21), [payment schedule type](https://www.notion.so/Neutron-revenue-module-validator-payments-16e85d6b9b10806aa7d7f45e589a5506?pvs=21), and window size for [reward asset TWAP](https://www.notion.so/Neutron-revenue-module-validator-payments-16e85d6b9b10806aa7d7f45e589a5506?pvs=21) calculation.
+- [performance requirements](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/proto/neutron/revenue/params.proto#L60-L78) consists of two decimal values (acceptable in [0.0;1.0]).
+- [payment schedule type](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/proto/neutron/revenue/params.proto#L35-L58) defines period and conditions on rewards payment processing. While being defined in the module’s Params, it directly affects the [payment schedule](https://www.notion.so/Neutron-revenue-module-validator-payments-16e85d6b9b10806aa7d7f45e589a5506?pvs=21) which is a module’s state variable: if the payment schedule type is changed by MsgUpdateParams, the payment schedule value will be updated in the EndBlock. It is meant to use the Monthly payment schedule type on mainnet and the Block-based payment schedule type for integration tests.
+- reward asset TWAP is average price of the asset in USD that is used to pay revenue to validators. Calculated each block based on the price provided by the Oracle module.
+- validator’s performance is stored in a [ValidatorInfo](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/proto/neutron/revenue/genesis.proto#L44-L54) model.
+- [payment schedule](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/proto/neutron/revenue/genesis.proto#L30-L42) contains currently set [payment schedule value](https://www.notion.so/Neutron-revenue-module-validator-payments-16e85d6b9b10806aa7d7f45e589a5506?pvs=21) (a dynamic value that changes when payment period ends or the [payment schedule type](https://www.notion.so/Neutron-revenue-module-validator-payments-16e85d6b9b10806aa7d7f45e589a5506?pvs=21) configured in the module’s parameters changes).
+- [payment schedule implementations](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/proto/neutron/revenue/genesis.proto#L56-L76) that define payment period duration and end conditions (monthly — ends at the beginning of the next month; block based — ends when N blocks are created; empty — never ends, no rewards are distributed). The module always keeps the payment schedule value corresponding to the payment schedule type defined in Params by doing check + change operations in the [PreBlock hook](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/x/revenue/preblock.go#L42-L45).
+- payment period — duration (in time for [MonthlyPaymentSchedule](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/proto/neutron/revenue/genesis.proto#L56-L63) or in blocks for [BlockBasedPaymentSchedule](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/proto/neutron/revenue/genesis.proto#L65-L73)) between two sequential payment distributions.
+
+### Flow
+
+Everything related to validator’s performance recording, revenue processing, payment periods tracking and ending, price calculation happens in the module’s [PreBlock hook](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/x/revenue/preblock.go#L42-L45).
+
+The module’s PreBlock hook does the following:
+
+1. [invokes](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/x/revenue/preblock.go#L47) the parent hook which is the Oracle’s PreBlock hook
+2. [calculates](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/x/revenue/preblock.go#L58) a fresh cumulative price for the reward asset and removes outdated (older than the TWAP window) cumulative prices from the module’s store
+3. [checks](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/x/revenue/preblock.go#L97) whether the current payment period has ended
+    1. if it has, validators are rewarded by the module according to their [performance rating](https://www.notion.so/Neutron-revenue-module-validator-payments-16e85d6b9b10806aa7d7f45e589a5506?pvs=21), their performance is reset, and the next payment period is started
+4. [checks](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/x/revenue/preblock.go#L113) if the payment schedule’s type has been changed (e.g. via MsgUpdateParams)
+    1. if it has, the respected payment schedule value is set to the state and a new payment period is started
+5. [records](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/x/revenue/preblock.go#L163) validators’ participation in the current block creation and in providing Slinky oracle prices in the current block [by parsing ExtendedVoteInfo taken from the tx[0] injected into block’s txs](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/x/revenue/preblock.go#L67-L76)
+
+### Performance rating
+
+Performance rating is calculated using [this function](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/x/revenue/keeper/performance_rating.go#L9-L22). Briefly the rules are as follows:
+
+- if a validator has performance higher or equal to the `allowed_to_miss` value defined in the module’s Params **for both blocks and oracle votes**, they get `1.0` performance rating and therefore 100% rewards.
+- if a validator has failed to meet the performance defined in the `required_at_least` value defined in the module’s Params **for either blocks and oracle votes**, they get `0.0` performance rating and therefore don’t get any rewards at all. Read about the justification here: [**Q:** Why failure to meet the required_at_least on one criteria leads to 0 performance rating regardless of the performance on the other criteria?](https://www.notion.so/Q-Why-failure-to-meet-the-required_at_least-on-one-criteria-leads-to-0-performance-rating-regardles-18b85d6b9b1080bbb643fb4ec975eba6?pvs=21)
+- if a validator has met the `required_at_least` performance requirements for both blocks and oracle votes, but has more blocks or votes missed than `allowed_to_miss`, their performance rating is in the range of `(0.0;1.0)` and therefore they are eligible of getting a part of the rewards amount. The formula for performance rating in this case is the following one:
+    
+    $$
+    rating = 0.5 \cdot ((1 - missedBlocksPerfQuo^2) + (1 - missedOracleVotesPerfQuo^2))
+    $$
+    
+    Where:
+    
+    - missedBlocksPerfQuo — percent of blocks missed in span
+    [required_at_least; 100% - allowed_to_miss]
+    - missedOracleVotesPerfQuo — percent of oracle votes missed in span
+    [required_at_least; 100% - allowed_to_miss]
+    
+    For each criteria (blocks, oracle votes) there’s a max rating of 0.5, and in sum they can result in 1.0 for a validator. Between 0.0 and 0.5 there’s a quadratic dependence on the amount of missed blocks. Here’s a dependency visualisation for a single criteria:
+    
+
+![telegram-cloud-document-2-5246995489202662364.jpg](attachment:1399ff0b-cfa1-4e9c-a1bd-767907dd3995:telegram-cloud-document-2-5246995489202662364.jpg)
+
+**Simulation:**
+
+Given: allowed to miss = 0.1, required at least = 0.8. I.e.:
+
+- Validators get 1.0 perf rating per criteria if missed LTE 10% of blocks **and** oracle votes;
+- Validators get 0.0 total perf rating if missed GTE 20% of blocks **or** oracle votes;
+- Validators get (0.0;1.0) total perf rating if **neither** blocks **nor** oracle votes missed rate is more than 20%, and **either** blocks **or** oracle votes missed rate is greater than 10%.
+
+**Examples:**
+
+- Val1: missed 5% of blocks and 5% of oracle votes ⇒ 1.0 perf rating.
+- Val2: missed 10% of blocks and 20% of oracle votes ⇒ 0.5 perf rating: 0.5 for LTE 10% of blocks and 0.0 for GTE 20% of oracle votes.
+- Val3: missed 0% blocks and 30% of oracle votes ⇒ 0.0 perf rating: required at least 80% but missed 30% of oracle votes, so no rewards at all.
+
+More examples can be seen in the [performance rating calc test case](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/x/revenue/keeper/performance_rating_test.go#L12).
+
+### Revenue amount
+
+The rewards amount (or proportion) and denom are specified in the [module’s params](https://github.com/neutron-org/neutron-private/blob/ec9abb2b56f1b4d59d0d88c410eeb625acaca868/proto/neutron/revenue/params.proto#L15-L19). The `base_compensation` is measured in USD, and `denom_compensation` specifies the actual denom used for revenue payments. When time comes to distribute revenue across validators, a TWAP of the `denom_compensation` in USD is calculated and then multiplied to the `base_compensation` amount resulting in some amount of `denom_compensation` coins which amount equals to the `base_compensation` amount in USD.
+
+To calculate TWAP, we compute and store **RewardAssetPrice** in each block, which contains:
+
+1. **cumulative_price** from the beginning of observations. The cumulative_price in current block is currently calculated as the cumulative_price at the previous moment plus the price effective from the last moment to the present, multiplied by the number of seconds elapsed since the last moment.
+
+$CP_n = CP_{n-1} + AP_{n-1} * (t_n - t_{n-1})$
+
+Where:
+
+CP – cumulative_price
+
+AP – absolute_price
+
+t – timestamp
+
+1. **absolute_price** – the instantaneous asset price at the current block.
+2. **timestamp** - The current block timestamp.
+
+TWAP over the last N seconds is calculated as the difference between the current **cumulative_price** and the **cumulative_price** recorded at `now - N` (or the closest one after it), divided by the timestamp difference.
+
+$TWAP_N = (CP_{now} - CP_{now-N}) / (t_{now} - t_{now-N})$
+
+### Module interface
+
+[Message server](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/proto/neutron/revenue/tx.proto#L17-L27)
+
+[Query server](https://github.com/neutron-org/neutron-private/blob/f374b22a1cc85d1b20f78030a7022ed9aecfe8a3/proto/neutron/revenue/query.proto#L15-L36)
+
+### FAQ
+
+**Q:** Why are there Payment Schedule type and Payment Schedule value? The former is in Params, the latter is in state. Why don’t just have Payment Schedule value and store it in Params or state?
+
+**A:** Payment schedule stuff must be 1) controlled by the governance 2) reflected in some way in module’s state for dynamic updates. The first point is usually performed by module Params change proposals, this means that Payment Schedule must be at least partially reflected in the module’s Params. But it’s not good to put a value that dynamically changes in runtime into module’s Params. Therefore, at least partially Payment Schedule must be reflected outside module’s Params — in module’s state. But it’s not good to step away from the customary way and create a governance-controlled configuration of the module outside of Params. So, once again, at least a part of Payment schedule has to be stored in the module’s Params. According to this, there is a governance-controlled static Payment Schedule type that is represented as an enum, and a dynamically changed state of Payment Schedule that is represented as an implementation of Payment Schedule interface in the module’s state.
+
+Also, how would a MsgUpdateParams look like if Payment Schedule value was there? We would have to pass exact block or month to start from, i.e. specify the beginning of the payment period manually. Instead of this, the MsgUpdateParams requires only the type, and all these values are determined automatically in the EndBlock method and stored in the module’s state.
+
+**Q:** There’s a Payment Schedule type in the Params of the module, and a Payment Schedule value in the module’s state. On a MsgUpdateParams execution only the Params are affected, and the state remains intact leading to temporary inconsistency in the module. Why on Params change the Payment Schedule value is changed in the EndBlock, not in scope of the MsgUpdateParams handler?
+
+**A:** Because everything related to revenue payments processing, Payment Schedule updating, and validators’ performance calculation and storing is done in the EndBlock. It is so to say eventual consistency promised to be achieved by the end of the block.
+
+**Q:** Why failure to meet the required_at_least on one criteria leads to 0 performance rating regardless of the performance on the other criteria?
+
+**A:** Both blocks and oracle votes are vital for network thriving. A good performance on one criteria and a bad performance on the other one results in bad performance overall. Let’s try to justify it by contradiction: If validators create 100% of blocks and 0% of oracle votes, should they be eligible of 50% of rewards or 0% rewards?
+
+@Avril Dutheil: a couple of thoughts. From our perspective, if a validator does not meet the baseline threshold on either of the criteria, either something really bad happened or they suck at their job and are likely not the right operator for us to have in the set. Generally speaking producing blocks reliably and submitting oracle votes reliably should be a reasonably achievable task (most validator sign >95-98% of blocks on most cosmos sdk chains, not sure about slinky but assume getting over 80-90% should be fairly realistic). 
+
+More interestingly, we should try to consider it from the perspective of the incentive the economic game we are creating creates.
+
+- I’m a validator and I just failed the threshold on one. I no longer have any incentive to improve performance on the metric I failed or maintain good performance on the other metric for the rest of the period. That is not great.
+- At the same time if we don’t slash the other metric, it means some validator may be okay accepting half the comp in exchange for not having to run the oracle. But since running the oracle should be fairly trivial compared to the initial setup cost, the up to 50% additional revenue should provide an incentive to get gud with the oracle. This feels like a better outcome.
+- Is there a scenario in which a validator can do well with the oracle but fail at block production?
+
+I don’t currently have a strong opinion on this so it might be worth thinking about it more deeply and potentially having a call with Andrei to discuss it, but based on this I would lean in favor of « if a Val gets 100% perf and 0% on the other metric, they get 50% » of the rewards, unless it creates other issues that weren’t discussed here/there is a strong reason why that shouldn’t be the case.

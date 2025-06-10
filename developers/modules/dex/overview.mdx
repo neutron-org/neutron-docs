@@ -1,0 +1,62 @@
+---
+title: "Dex Overview"
+---
+
+The Dex module implements a decentralized exchange on Neutron, providing users with the ability to trade tokens, provide liquidity, and place limit orders. The module introduces a novel AMM design centered around constant-price liquidity pools that offer simplicity, flexibility, and capital efficiency.
+
+## Key Features
+
+### Constant-Price Liquidity Pools
+
+The fundamental building block of Neutron DEX is the constant-price liquidity pool, where liquidity is concentrated at specific price points (ticks). This design:
+
+- Enables zero or near-zero slippage trades for stablecoins and highly correlated assets
+- Allows liquidity providers to precisely target their capital to specific price ranges
+- Significantly improves capital efficiency compared to traditional AMM designs
+
+### Flexible Trading Options
+
+Neutron DEX supports multiple trading mechanisms:
+
+- **Market Orders**: Swap tokens at the current market price via multi-hop routing
+- **Limit Orders**: Place orders to buy or sell tokens at a specified price
+- **Liquidity Provision**: Add liquidity to pools and earn trading fees
+
+### Shared Liquidity
+
+Neutron DEX reduces liquidity fragmentation through its shared liquidity model:
+
+- All liquidity providers share the same underlying pools
+- Liquidity providers can create any feasible AMM curve by distributing liquidity strategically
+- Trading volume aggregates across all liquidity providers, enhancing capital efficiency
+
+## Module Capabilities
+
+The Dex module enables:
+
+1. **Pool Management**: Create and manage liquidity pools with specific price points and fee levels
+2. **Deposits and Withdrawals**: Add or remove liquidity from pools
+3. **Swapping**: Execute trades between token pairs with optimal routing
+4. **Limit Orders**: Place, fill, and cancel limit orders
+5. **Fee Collection**: Earn fees as a liquidity provider proportional to contribution
+
+## Integration with Neutron
+
+The Dex module is a core component of Neutron, leveraging the blockchain's:
+
+- Fast finality for trade execution
+- MEV protections at the consensus level
+- Low transaction costs through app-specific infrastructure
+- Integration with other Neutron modules like the Transfer module for IBC tokens
+
+## Trade Types and Order Matching
+
+Neutron DEX provides several limit order types:
+
+- **Good Til Cancelled (GTC)**: Remain active until explicitly cancelled
+- **Fill or Kill (FOK)**: Execute entirely or not at all
+- **Immediate or Cancel (IOC)**: Fill as much as possible immediately, then cancel any unfilled portion
+- **Good Til Time (GTT)**: Remain active until a specified expiration time
+- **Just in Time (JIT)**: Special limit orders that can only be filled by takers
+
+Order matching follows a price-time priority model, where orders at better prices are filled first, and within the same price, older orders take precedence. 

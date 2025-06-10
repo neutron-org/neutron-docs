@@ -1,0 +1,103 @@
+---
+title: "Known Bugs"
+---
+
+This page documents known bugs and limitations of the IBC Rate Limit module. These issues are being tracked for future updates.
+
+## Known Limitations
+
+### Channel Value Calculation Limitations
+
+**Status:** Known limitation
+
+The current implementation calculates the channel value (total token supply on Neutron) at the beginning of each quota period and caches it. This has a few limitations:
+
+1. It doesn't account for tokens in escrow across all IBC channels for native tokens
+2. The channel value becomes stale during the quota period, even if significant supply changes occur
+3. In case of extreme volatility in token supply, quotas may become too restrictive or too permissive
+
+Ideal future solution:
+- Track the amount of tokens in escrow across all channels for native tokens
+- More frequent updates to channel value during a quota period
+
+### Quota Period Boundaries
+
+**Status:** Known limitation
+
+Rate limit quotas use discrete time periods rather than rolling windows. This creates potential issues near period boundaries:
+
+1. If a time period is about to end, an adversary could wait for it to reset and then extract funds in quick succession across two periods
+2. To mitigate this, it's recommended to set up overlapping quotas with different start times
+
+Planned improvements:
+- Implement rolling windows that provide smoother rate limiting
+
+### Contract Upgrade Governance Requirements
+
+**Status:** Known behavior (by design)
+
+Since most of the rate limiting logic is in a CosmWasm contract, updating the rate limiting behavior requires:
+
+1. Deploying a new contract with the updated logic
+2. Submitting a parameter change proposal to update the contract address
+3. Passing governance to approve the change
+
+While this provides security benefits, it may slow down the response time to critical issues.
+
+## Testing and Edge Cases
+
+### Error Handling in IBC Callbacks
+
+**Status:** Potential issue
+
+When the contract tries to revert quota accounting due to an error acknowledgement or timeout, there's a risk of errors in the reversion process. If this happens, an event will be emitted with type `bad_revert`.
+
+The module has special error handling to ensure the IBC callbacks can still continue even if quota reversion fails, but this means that quotas might not be properly released if reverts fail repeatedly.
+
+### Long Receiver Addresses
+
+**Status:** Known limitation
+
+The module validates that IBC receiver addresses are not longer than 2048 bytes. This is to prevent potential DoS vulnerabilities with extraordinarily long addresses. If an address exceeds this limit, the transfer will be rejected.
+
+## Technical Limitations
+
+### CosmWasm Contract State Size
+
+**Status:** Potential scaling concern
+
+As more paths and quotas are added over time, the contract state will grow. This could potentially lead to higher gas costs for state access and updates. The current design should scale to hundreds of paths and quotas without issue, but there's no automatic cleanup for unused paths.
+
+Governance should periodically review and remove unused quotas to keep the contract state manageable.
+
+### Channel Value Determination for New Tokens
+
+**Status:** Known limitation
+
+For newly created tokens with little history, establishing appropriate rate limits can be challenging. Initial transfers might be severely limited until the token establishes a reasonable supply on Neutron.
+
+## Operational Considerations
+
+### Time Period Alignment
+
+**Status:** Implementation detail
+
+The quota time periods begin at the time when a path is added or when a quota naturally resets. They are not aligned to specific times like "start of day UTC". This means that different quotas may reset at different times, which can be confusing for users.
+
+### Global "Any" Channel Interactions
+
+**Status:** Known behavior (by design)
+
+When both a specific channel quota and an "any" channel quota exist for the same denomination, both are checked independently. This means that a transfer must satisfy all applicable quotas to succeed.
+
+The interaction between specific and global quotas is intentionally conservative but may be surprising to users.
+
+## Future Improvements
+
+The following improvements are planned for future versions:
+
+1. **Channel-Based Rate Limits**: Add support for channel-based limits using USDC equivalent values
+2. **Automatic Quota Installation**: Automatically add conservative rate limits after a channel has been active for some time
+3. **Governance-Based Quota Gradients**: Allow governance to pre-approve gradually increasing quotas that grow over time
+4. **Enhanced Monitoring Tools**: Develop tooling to monitor quota usage and provide alerts when quotas are close to being reached
+5. **Rolling Windows**: Replace discrete time periods with rolling windows for smoother rate limiting 

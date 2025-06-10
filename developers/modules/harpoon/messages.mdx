@@ -1,0 +1,156 @@
+---
+title: "Messages"
+description: "Detailed explanation of the Harpoon module's messages"
+---
+
+# Messages
+
+The Harpoon module exposes one message that can be used to manage hook subscriptions for contracts. This message can only be executed by the module's authority, which is typically the governance module.
+
+## MsgManageHookSubscription
+
+This message allows the module authority to update hook subscriptions for a specific contract address. It can be used to:
+
+- Add new hook subscriptions for a contract
+- Remove existing hook subscriptions
+- Update the complete set of hook subscriptions for a contract
+
+### Structure
+
+```protobuf
+// Defines the Msg/ManageHookSubscription request type.
+message MsgManageHookSubscription {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "harpoon/MsgManageHookSubscription";
+
+  // Address of the governance account.
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // Hook subscription to be updated.
+  HookSubscription hook_subscription = 2;
+}
+
+// Defines the response structure for executing a MsgManageHookSubscription message.
+message MsgManageHookSubscriptionResponse {}
+
+// Specifies new hook subscriptions for the contract_address.
+message HookSubscription {
+  // Contract address to update subscriptions for.
+  string contract_address = 2;
+
+  // List of hooks to subscribe to. Hooks not listed here will be removed.
+  repeated HookType hooks = 3;
+}
+```
+
+### Parameters
+
+| Parameter          | Type             | Description                                                    |
+|--------------------|------------------|----------------------------------------------------------------|
+| authority          | string           | Address of the governance account that can manage subscriptions |
+| hook_subscription  | HookSubscription | The subscription details to update                             |
+
+#### HookSubscription Parameters
+
+| Parameter        | Type       | Description                                                   |
+|------------------|------------|---------------------------------------------------------------|
+| contract_address | string     | Address of the contract to update subscriptions for           |
+| hooks            | []HookType | List of hook types to subscribe to (empty list to unsubscribe)|
+
+### HookType Enum
+
+The `HookType` enum defines all the possible staking hooks that a contract can subscribe to:
+
+```protobuf
+// Hook types that can be subscribed to.
+enum HookType {
+  option (gogoproto.goproto_enum_prefix) = false;
+  // cosmos-sdk requirement; we don't allow to save this value in store
+  HOOK_TYPE_UNSPECIFIED = 0;
+  // Triggered after validator is created
+  HOOK_TYPE_AFTER_VALIDATOR_CREATED = 1;
+  // Triggered before validator is modified
+  HOOK_TYPE_BEFORE_VALIDATOR_MODIFIED = 2;
+  // Triggered after validator is removed
+  HOOK_TYPE_AFTER_VALIDATOR_REMOVED = 3;
+  // Triggered after validator is bonded
+  HOOK_TYPE_AFTER_VALIDATOR_BONDED = 4;
+  // Triggered after validator begins unbonding
+  HOOK_TYPE_AFTER_VALIDATOR_BEGIN_UNBONDING = 5;
+  // Triggered before delegation is created
+  HOOK_TYPE_BEFORE_DELEGATION_CREATED = 6;
+  // Triggered before delegation's shares are modified
+  HOOK_TYPE_BEFORE_DELEGATION_SHARES_MODIFIED = 7;
+  // Triggered before delegation is removed
+  HOOK_TYPE_BEFORE_DELEGATION_REMOVED = 8;
+  // Triggered after delegation is modified
+  HOOK_TYPE_AFTER_DELEGATION_MODIFIED = 9;
+  // Triggered before validator is slashed
+  HOOK_TYPE_BEFORE_VALIDATOR_SLASHED = 10;
+  // Triggered after unbonding is initiated
+  HOOK_TYPE_AFTER_UNBONDING_INITIATED = 11;
+}
+```
+
+### Behavior
+
+When executed, the `MsgManageHookSubscription` message:
+
+1. Verifies that the signer is the module's authority (governance)
+2. Retrieves the current subscriptions for the specified contract
+3. Updates the subscriptions based on the provided hook list:
+   - Adds hooks that are in the new list but not currently subscribed
+   - Removes hooks that are currently subscribed but not in the new list
+4. Saves the updated subscriptions to the module's state
+
+### Response
+
+`MsgManageHookSubscriptionResponse` is an empty response that indicates the operation was successful.
+
+### Example Usage
+
+This message is typically used in governance proposals. Here's an example of a governance proposal to manage hook subscriptions:
+
+```json
+{
+  "title": "Update Governance Contract Hook Subscriptions",
+  "description": "This proposal updates the staking hook subscriptions for the governance contract",
+  "messages": [
+    {
+      "@type": "/neutron.harpoon.MsgManageHookSubscription",
+      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6z2zm3",
+      "hook_subscription": {
+        "contract_address": "neutron1abcdef...",
+        "hooks": [
+          "HOOK_TYPE_BEFORE_DELEGATION_CREATED",
+          "HOOK_TYPE_BEFORE_DELEGATION_SHARES_MODIFIED",
+          "HOOK_TYPE_BEFORE_DELEGATION_REMOVED",
+          "HOOK_TYPE_AFTER_DELEGATION_MODIFIED"
+        ]
+      }
+    }
+  ],
+  "deposit": "1000000000untrn"
+}
+```
+
+### Special Considerations
+
+#### Removing All Subscriptions
+
+To remove all hook subscriptions for a contract, pass an empty list of hooks:
+
+```json
+{
+  "contract_address": "neutron1abcdef...",
+  "hooks": []
+}
+```
+
+#### Modifying Subscriptions
+
+The message replaces the entire set of subscriptions for the contract. If you want to add or remove specific hooks while keeping others, you must include all hooks that should remain subscribed in the message.
+
+#### Governance Authority
+
+Since the message can only be executed by the module's authority (governance), changes to hook subscriptions must go through the governance process. This restriction is in place to ensure that only thoroughly vetted contracts can subscribe to hooks, as poorly implemented contracts could potentially disrupt chain operations. 

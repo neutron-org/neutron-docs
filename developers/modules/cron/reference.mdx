@@ -1,0 +1,359 @@
+---
+title: "Reference"
+description: "Technical reference for the Cron module"
+---
+
+## Messages
+
+### CreateSchedule
+
+Creates a new schedule for future execution.
+
+```protobuf
+message MsgCreateSchedule {
+  string name = 1;             // Unique identifier for the schedule
+  uint64 period = 2;           // Number of blocks between executions
+  repeated ScheduleMsg msgs = 3; // Messages to execute
+  optional uint64 boundary = 4; // Starting point (block or timestamp)
+}
+
+message ScheduleMsg {
+  string msg = 1;              // Base64-encoded message
+  optional uint64 gas_limit = 2; // Gas limit for execution
+}
+```
+
+**Response:**
+```protobuf
+message MsgCreateScheduleResponse {
+  // Empty response
+}
+```
+
+### UpdateSchedule
+
+Modifies an existing schedule.
+
+```protobuf
+message MsgUpdateSchedule {
+  string name = 1;             // Name of the schedule to update
+  uint64 period = 2;           // New period
+  repeated ScheduleMsg msgs = 3; // New messages
+  optional uint64 boundary = 4; // New boundary
+}
+```
+
+**Response:**
+```protobuf
+message MsgUpdateScheduleResponse {
+  // Empty response
+}
+```
+
+### RemoveSchedule
+
+Removes an existing schedule.
+
+```protobuf
+message MsgRemoveSchedule {
+  string name = 1;             // Name of the schedule to remove
+}
+```
+
+**Response:**
+```protobuf
+message MsgRemoveScheduleResponse {
+  // Empty response
+}
+```
+
+## Query Methods
+
+### GetSchedules
+
+Returns all schedules or filters by specific parameters.
+
+```protobuf
+message QueryGetSchedulesRequest {
+  optional string name = 1;    // Filter by name
+  optional string owner = 2;   // Filter by owner
+}
+```
+
+**Response:**
+```protobuf
+message QueryGetSchedulesResponse {
+  repeated Schedule schedules = 1;
+}
+
+message Schedule {
+  string name = 1;
+  string owner = 2;
+  uint64 period = 3;
+  repeated ScheduleMsg msgs = 4;
+  optional uint64 boundary = 5;
+  optional uint64 last_execute_height = 6;
+}
+```
+
+### GetSchedule
+
+Returns a specific schedule by name.
+
+```protobuf
+message QueryGetScheduleRequest {
+  string name = 1;             // Name of the schedule
+}
+```
+
+**Response:**
+```protobuf
+message QueryGetScheduleResponse {
+  Schedule schedule = 1;
+}
+```
+
+### GetScheduleByName
+
+Alternative method to get a schedule by name.
+
+```protobuf
+message QueryGetScheduleByNameRequest {
+  string name = 1;             // Name of the schedule
+}
+```
+
+**Response:**
+```protobuf
+message QueryGetScheduleByNameResponse {
+  Schedule schedule = 1;
+}
+```
+
+## Module Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `max_gas_per_block` | uint64 | 6,000,000 | Maximum gas that can be used by scheduled tasks per block |
+| `max_msg_size` | uint64 | 10,240 | Maximum size in bytes for a scheduled message |
+| `max_msgs_per_schedule` | uint64 | 10 | Maximum number of messages in a single schedule |
+| `max_name_length` | uint64 | 64 | Maximum length for schedule names |
+| `min_period` | uint64 | 5 | Minimum blocks between executions |
+
+## Events
+
+### EventCreateSchedule
+
+Emitted when a new schedule is created.
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `name` | string | Name of the created schedule |
+| `owner` | string | Address of the schedule creator |
+| `period` | uint64 | Execution period in blocks |
+| `msgs_count` | uint64 | Number of messages in the schedule |
+
+### EventUpdateSchedule
+
+Emitted when a schedule is updated.
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `name` | string | Name of the updated schedule |
+| `owner` | string | Address of the schedule owner |
+| `period` | uint64 | New execution period |
+| `msgs_count` | uint64 | New number of messages |
+
+### EventRemoveSchedule
+
+Emitted when a schedule is removed.
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `name` | string | Name of the removed schedule |
+| `owner` | string | Address of the schedule owner |
+
+### EventExecuteSchedule
+
+Emitted when a schedule is executed.
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `name` | string | Name of the executed schedule |
+| `height` | uint64 | Block height of execution |
+| `success` | bool | Whether execution was successful |
+
+## Error Codes
+
+| Code | Error | Description |
+|------|-------|-------------|
+| 1 | ScheduleNotFound | The specified schedule does not exist |
+| 2 | ScheduleAlreadyExists | A schedule with the given name already exists |
+| 3 | Unauthorized | The sender is not authorized to modify this schedule |
+| 4 | InvalidPeriod | The specified period is invalid (e.g., less than min_period) |
+| 5 | InvalidMsgCount | Too many messages in the schedule |
+| 6 | InvalidMsgSize | Message size exceeds maximum allowed |
+| 7 | InvalidName | Schedule name is invalid or too long |
+| 8 | InsufficientGas | Not enough gas provided for execution |
+| 9 | ExecutionError | Error during execution of scheduled message |
+
+## Integration with CosmWasm
+
+### Smart Contract Integration
+
+In your CosmWasm contract, import the necessary dependencies:
+
+```rust
+use neutron_sdk::bindings::{
+    msg::NeutronMsg,
+    types::ScheduleMsg,
+};
+```
+
+Create a schedule from your contract:
+
+```rust
+// Example: Creating a schedule
+let msg = NeutronMsg::CreateSchedule {
+    name: "my_schedule".to_string(),
+    period: 100,
+    msgs: vec![ScheduleMsg {
+        msg: to_json_binary(&ExecuteMsg::MyTask {})?,
+        gas_limit: Some(100_000),
+    }],
+    boundary: None,
+};
+
+// Return the message in your contract's response
+Ok(Response::new().add_message(msg))
+```
+
+### Message Format
+
+The `msg` field in a `ScheduleMsg` must be a base64-encoded JSON representation of a CosmWasm message. The format depends on the message type:
+
+#### ExecuteMsg Format
+
+```json
+{
+  "wasm": {
+    "execute": {
+      "contract_addr": "neutron1...",
+      "msg": "base64_encoded_execute_msg",
+      "funds": []
+    }
+  }
+}
+```
+
+#### Bank Send Format
+
+```json
+{
+  "bank": {
+    "send": {
+      "to_address": "neutron1...",
+      "amount": [
+        {
+          "denom": "untrn",
+          "amount": "1000000"
+        }
+      ]
+    }
+  }
+}
+```
+
+## Security Considerations
+
+### Gas Management
+
+The Cron module enforces gas limits to prevent DoS attacks:
+
+- Each scheduled execution has a gas limit
+- The total gas used for scheduled executions in a block is limited
+- If a schedule consistently fails due to out-of-gas errors, it may be disabled
+
+### Authorization
+
+Only the owner of a schedule can update or remove it.
+
+### Idempotency
+
+Schedule executions should be designed to be idempotent (safe to execute multiple times) as there are edge cases where a schedule might execute more than once.
+
+## Performance Recommendations
+
+For optimal performance:
+
+1. **Use Appropriate Periods**: Avoid very short periods that could congest the chain
+2. **Optimize Message Size**: Keep scheduled messages compact
+3. **Minimize Concurrent Schedules**: Design your application to use schedules efficiently
+4. **Handle Failures Gracefully**: Implement proper error handling in scheduled operations
+
+## Examples
+
+### JSON Message Examples
+
+Creating a schedule:
+
+```json
+{
+  "create_schedule": {
+    "name": "daily_rewards",
+    "period": 7200,
+    "msgs": [
+      {
+        "msg": "eyJleGVjdXRlIjp7ImNvbnRyYWN0X2FkZHIiOiJuZXV0cm9uMXh5ejEyMyIsIm1zZyI6ImV5SklaWE5sZEVSaGFXeDVWR0Z6YXlJNmV5SjlJbjA9IiwiZnVuZHMiOltdfX0=",
+        "gas_limit": 100000
+      }
+    ]
+  }
+}
+```
+
+Removing a schedule:
+
+```json
+{
+  "remove_schedule": {
+    "name": "daily_rewards"
+  }
+}
+```
+
+## CLI Usage
+
+### Creating a Schedule
+
+```bash
+neutrond tx cron create-schedule \
+  "weekly_task" \
+  50400 \
+  '[{"msg":"base64_encoded_msg","gas_limit":200000}]' \
+  --from mykey
+```
+
+### Querying Schedules
+
+```bash
+# Get all schedules
+neutrond q cron schedules
+
+# Get a specific schedule
+neutrond q cron schedule "weekly_task"
+```
+
+### Removing a Schedule
+
+```bash
+neutrond tx cron remove-schedule "weekly_task" --from mykey
+```
+
+## Module History
+
+The Cron module was introduced in Neutron v1.0 and has since been enhanced with additional features:
+
+- v1.5: Added support for boundary timestamps
+- v2.0: Improved gas management and error handling
+- v2.5: Added multi-message support within a single schedule 

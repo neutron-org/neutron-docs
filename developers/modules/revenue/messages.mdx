@@ -1,0 +1,155 @@
+---
+title: "Messages"
+---
+
+The Revenue module exposes the following messages for modifying state:
+
+## MsgUpdateParams
+
+`MsgUpdateParams` updates the module's parameters. This message can only be executed by the module's authority (typically governance).
+
+```protobuf
+message MsgUpdateParams {
+  option (amino.name) = "revenue/MsgUpdateParams";
+  option (cosmos.msg.v1.signer) = "authority";
+
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  Params params = 2 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+}
+```
+
+### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `authority` | string | The address of the account with authority to update parameters (typically the governance module account) |
+| `params` | Params | The new parameters to set |
+
+### Example
+
+```javascript
+{
+  "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6z2zm3",
+  "params": {
+    "base_compensation": "2000",
+    "denom_compensation": "untrn",
+    "twap_window_size": 30,
+    "performance_requirements": {
+      "required_at_least": "0.800000000000000000",
+      "allowed_to_miss": "0.050000000000000000"
+    },
+    "payment_schedule_type": "PAYMENT_SCHEDULE_TYPE_MONTHLY"
+  }
+}
+```
+
+### Response
+
+```protobuf
+message MsgUpdateParamsResponse {}
+```
+
+## MsgFundTreasury
+
+`MsgFundTreasury` allows an account to deposit funds into the Revenue module's treasury account. These funds are used to pay validators according to their performance.
+
+```protobuf
+message MsgFundTreasury {
+  option (amino.name) = "revenue/MsgFundTreasury";
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  repeated cosmos.base.v1beta1.Coin amount = 2 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+```
+
+### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `sender` | string | The address of the account sending funds to the treasury |
+| `amount` | []Coin | The amount of coins to fund the treasury with |
+
+### Example
+
+```javascript
+{
+  "sender": "neutron1zkleum9zqzph94l0e8xhl6nv3dvcsvtcqx0n49",
+  "amount": [
+    {
+      "denom": "untrn",
+      "amount": "10000000"
+    }
+  ]
+}
+```
+
+### Response
+
+```protobuf
+message MsgFundTreasuryResponse {}
+```
+
+## Message Processing
+
+### MsgUpdateParams
+
+The module authority updates the module's parameters through this message. This is typically executed through a governance proposal. The handler performs the following steps:
+
+1. Validates the sender has the required authority
+2. Validates the new parameters are valid
+3. Updates the parameters in the module's state
+
+### MsgFundTreasury
+
+This message allows any account to fund the treasury. The handler performs the following steps:
+
+1. Validates the sender has sufficient funds
+2. Transfers the specified coins from the sender to the treasury account
+3. Updates the treasury balance
+
+## Types Reference
+
+### Params
+
+```protobuf
+message Params {
+  string base_compensation = 1 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
+  string denom_compensation = 2;
+  uint64 twap_window_size = 3;
+  PerformanceRequirements performance_requirements = 4 [(gogoproto.nullable) = false];
+  PaymentScheduleType payment_schedule_type = 5;
+}
+```
+
+### PaymentScheduleType
+
+```protobuf
+enum PaymentScheduleType {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  PAYMENT_SCHEDULE_TYPE_UNSPECIFIED = 0;
+  PAYMENT_SCHEDULE_TYPE_MONTHLY = 1;
+  PAYMENT_SCHEDULE_TYPE_BLOCK_BASED = 2;
+  PAYMENT_SCHEDULE_TYPE_EMPTY = 3;
+}
+```
+
+### PerformanceRequirements
+
+```protobuf
+message PerformanceRequirements {
+  string required_at_least = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string allowed_to_miss = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+``` 

@@ -1,0 +1,339 @@
+---
+title: "API"
+---
+
+This document details the API endpoints provided by the Transfer module for blockchain interaction.
+
+## REST Endpoints
+
+The Transfer module exposes several REST endpoints for querying denom traces and parameters:
+
+### GET: Query Denom Trace
+
+```
+GET /ibc/apps/transfer/v1/denom_traces/{hash}
+```
+
+Returns information about a token's denomination trace.
+
+#### Parameters
+
+- `hash`: The hash of the denomination trace or the base denomination (optional)
+
+#### Response Structure
+
+```json
+{
+  "denom_trace": {
+    "path": "transfer/channel-1/transfer/channel-2",
+    "base_denom": "uatom"
+  }
+}
+```
+
+### GET: Query All Denom Traces
+
+```
+GET /ibc/apps/transfer/v1/denom_traces
+```
+
+Returns a list of all denomination traces.
+
+#### Parameters
+
+- `pagination.key`: Pagination key (optional)
+- `pagination.offset`: Pagination offset (optional) 
+- `pagination.limit`: Pagination limit (optional)
+- `pagination.count_total`: If true, counts total number of records (optional)
+- `pagination.reverse`: If true, results are returned in reverse order (optional)
+
+#### Response Structure
+
+```json
+{
+  "denom_traces": [
+    {
+      "path": "transfer/channel-1",
+      "base_denom": "uatom"
+    },
+    {
+      "path": "transfer/channel-2",
+      "base_denom": "untrn"
+    }
+  ],
+  "pagination": {
+    "next_key": "...",
+    "total": "2"
+  }
+}
+```
+
+### GET: Query Params
+
+```
+GET /ibc/apps/transfer/v1/params
+```
+
+Returns the parameters of the Transfer module.
+
+#### Response Structure
+
+```json
+{
+  "params": {
+    "send_enabled": true,
+    "receive_enabled": true
+  }
+}
+```
+
+### GET: Query Denom Hash
+
+```
+GET /ibc/apps/transfer/v1/denom_hashes/{trace}
+```
+
+Returns the hash for a given denomination trace.
+
+#### Parameters
+
+- `trace`: The complete trace path of the token denomination
+
+#### Response Structure
+
+```json
+{
+  "hash": "27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"
+}
+```
+
+## gRPC Endpoints
+
+The Transfer module provides gRPC query and transaction endpoints.
+
+### Query Service
+
+#### DenomTrace
+
+Query the denomination trace information.
+
+```protobuf
+rpc DenomTrace(QueryDenomTraceRequest) returns (QueryDenomTraceResponse)
+```
+
+#### DenomTraces
+
+Query all denomination traces.
+
+```protobuf
+rpc DenomTraces(QueryDenomTracesRequest) returns (QueryDenomTracesResponse)
+```
+
+#### Params
+
+Query the module parameters.
+
+```protobuf
+rpc Params(QueryParamsRequest) returns (QueryParamsResponse)
+```
+
+#### DenomHash
+
+Query a denomination hash information.
+
+```protobuf
+rpc DenomHash(QueryDenomHashRequest) returns (QueryDenomHashResponse)
+```
+
+### Msg Service
+
+#### Transfer
+
+Send tokens to a destination chain.
+
+```protobuf
+rpc Transfer(MsgTransfer) returns (MsgTransferResponse)
+```
+
+#### UpdateParams
+
+Update the module parameters (governance only).
+
+```protobuf
+rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse)
+```
+
+## JavaScript/TypeScript Integration
+
+Here's an example of how to interact with the Transfer module using JavaScript:
+
+### Querying Denom Traces
+
+```javascript
+import { QueryClient } from '@cosmjs/stargate';
+import { Tendermint34Client } from '@cosmjs/tendermint-rpc';
+
+async function queryDenomTraces() {
+  // Connect to the node
+  const tmClient = await Tendermint34Client.connect("https://rpc.neutron.org");
+  const queryClient = new QueryClient(tmClient);
+  
+  // Create query path
+  const path = `/ibc.applications.transfer.v1.Query/DenomTraces`;
+  
+  // Create request with pagination
+  const request = {
+    pagination: {
+      key: new Uint8Array(),
+      offset: 0,
+      limit: 10,
+      countTotal: true
+    }
+  };
+  const requestBytes = new TextEncoder().encode(JSON.stringify(request));
+  
+  // Execute query
+  const resultBytes = await queryClient.queryAbci(path, requestBytes);
+  const result = JSON.parse(new TextDecoder().decode(resultBytes));
+  
+  return result;
+}
+
+// Usage
+queryDenomTraces()
+  .then(traces => {
+    console.log("Denomination traces:", traces);
+  })
+  .catch(err => {
+    console.error("Error querying traces:", err);
+  });
+```
+
+### Sending a Token Transfer
+
+```javascript
+import { SigningStargateClient } from '@cosmjs/stargate';
+import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
+
+async function sendIbcTransfer(
+  mnemonic, 
+  sourceChannel, 
+  receiver, 
+  amount, 
+  denom,
+  memo = ""
+) {
+  // Create wallet and client
+  const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: "neutron" });
+  const client = await SigningStargateClient.connectWithSigner("https://rpc.neutron.org", wallet);
+  
+  const [account] = await wallet.getAccounts();
+  
+  // Create the fee for the IBC packet
+  const fee = {
+    recv_fee: [{ denom: "untrn", amount: "2000" }],
+    ack_fee: [{ denom: "untrn", amount: "1000" }],
+    timeout_fee: [{ denom: "untrn", amount: "1000" }]
+  };
+  
+  // Calculate a timeout time (e.g., 10 minutes from now)
+  const timeoutTimestamp = Math.floor(Date.now() / 1000) + 600;
+  
+  // Create the transfer message
+  const msg = {
+    typeUrl: "/neutron.transfer.MsgTransfer",
+    value: {
+      sourcePort: "transfer",
+      sourceChannel: sourceChannel,
+      token: {
+        denom: denom,
+        amount: amount
+      },
+      sender: account.address,
+      receiver: receiver,
+      timeoutHeight: {
+        revisionNumber: "0",
+        revisionHeight: "0"
+      },
+      timeoutTimestamp: timeoutTimestamp.toString() + "000000000", // Convert to nanoseconds
+      memo: memo,
+      fee: fee
+    }
+  };
+  
+  // Execute the transaction
+  const result = await client.signAndBroadcast(account.address, [msg], "auto");
+  
+  return result;
+}
+
+// Usage
+sendIbcTransfer(
+  "your mnemonic here", 
+  "channel-1", 
+  "cosmos1recipient...", 
+  "1000", 
+  "untrn", 
+  "Transfer from JS client"
+)
+  .then(result => {
+    console.log("Transfer result:", result);
+  })
+  .catch(err => {
+    console.error("Error sending transfer:", err);
+  });
+```
+
+## CosmWasm Contract Integration
+
+For CosmWasm contracts, the Neutron SDK provides bindings to interact with the Transfer module:
+
+```rust
+use cosmwasm_std::{CosmosMsg, Response};
+use neutron_sdk::bindings::{msg::NeutronMsg, types::Height};
+use neutron_sdk::bindings::types::FeeRefunder;
+
+pub fn execute_ibc_transfer(
+    // function parameters
+) -> Result<Response, ContractError> {
+    // Create the fee for the IBC packet
+    let fee = FeeRefunder {
+        recv_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(2000u128),
+        }],
+        ack_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(1000u128),
+        }],
+        timeout_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(1000u128),
+        }],
+    };
+    
+    // Create the transfer message
+    let transfer_msg = NeutronMsg::IbcTransfer {
+        source_port: "transfer".to_string(),
+        source_channel: channel_id,
+        token: amount,
+        sender: env.contract.address.to_string(),
+        receiver,
+        timeout_height: Height {
+            revision_number: 0,
+            revision_height: 0,
+        },
+        timeout_timestamp,
+        memo: format!("Transfer from contract {}", env.contract.address),
+        fee,
+    };
+    
+    // Create the cosmos message
+    let cosmos_msg = CosmosMsg::Custom(transfer_msg);
+    
+    // Return the response with the message
+    Ok(Response::new()
+        .add_message(cosmos_msg)
+        .add_attribute("action", "ibc_transfer"))
+}
+``` 

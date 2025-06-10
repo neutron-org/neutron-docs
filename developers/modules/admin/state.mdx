@@ -1,0 +1,348 @@
+---
+title: "State"
+description: "State structure and data models for the admin module"
+---
+
+The admin module maintains minimal state to ensure optimal performance while providing necessary governance functionality.
+
+## State Overview
+
+The admin module stores only essential information required for governance operations:
+
+- **Admin List**: Current authorized administrators
+- **Whitelist Configuration**: Approved message types for execution
+- **Module Parameters**: Core module configuration
+- **Active Proposals**: Currently processing governance proposals (optional)
+
+## Key-Value Store Layout
+
+### Admin Storage
+
+**Key:** `admin/{address}`  
+**Value:** `AdminInfo`
+
+Stores information about individual administrators.
+
+```protobuf
+message AdminInfo {
+  string address = 1;
+  int64 added_at = 2;
+  string added_by = 3;
+}
+```
+
+**Example:**
+```
+Key: admin/neutron1qzxcseq9e0jhcpj2ht7j9lqkhp0q5vrzhctlud
+Value: {
+  "address": "neutron1qzxcseq9e0jhcpj2ht7j9lqkhp0q5vrzhctlud",
+  "added_at": "1234567890",
+  "added_by": "neutron1h5lmx8gndrh0x0qlqhp2hxhf0v5u9hfpexkq5q"
+}
+```
+
+### Whitelist Storage
+
+**Key:** `whitelist/{message_type}`  
+**Value:** `WhitelistEntry`
+
+Stores whitelisted message types and their configuration.
+
+```protobuf
+message WhitelistEntry {
+  string message_type = 1;
+  bool enabled = 2;
+  int64 added_at = 3;
+  string added_by = 4;
+}
+```
+
+**Example:**
+```
+Key: whitelist//cosmos.bank.v1beta1.MsgSend
+Value: {
+  "message_type": "/cosmos.bank.v1beta1.MsgSend",
+  "enabled": true,
+  "added_at": "1234567890",
+  "added_by": "neutron1qzxcseq9e0jhcpj2ht7j9lqkhp0q5vrzhctlud"
+}
+```
+
+### Parameters Storage
+
+**Key:** `params`  
+**Value:** `Params`
+
+Stores module parameters and configuration.
+
+```protobuf
+message Params {
+  string admin_authority = 1;
+  bool whitelist_enabled = 2;
+  uint64 max_proposal_size = 3;
+  string proposal_authority = 4;
+}
+```
+
+**Example:**
+```
+Key: params
+Value: {
+  "admin_authority": "neutron1qzxcseq9e0jhcpj2ht7j9lqkhp0q5vrzhctlud",
+  "whitelist_enabled": true,
+  "max_proposal_size": "100",
+  "proposal_authority": "neutron1h5lmx8gndrh0x0qlqhp2hxhf0v5u9hfpexkq5q"
+}
+```
+
+### Proposal Storage (Optional)
+
+**Key:** `proposal/{proposal_id}`  
+**Value:** `StoredProposal`
+
+Optionally stores proposal information for tracking purposes.
+
+```protobuf
+message StoredProposal {
+  uint64 id = 1;
+  repeated google.protobuf.Any messages = 2;
+  string proposer = 3;
+  int64 submitted_at = 4;
+  string status = 5;
+  int64 executed_at = 6;
+  string error = 7;
+}
+```
+
+## State Transitions
+
+### Admin Management
+
+#### Adding an Admin
+
+1. Validate authority of the requester
+2. Check if admin already exists
+3. Create new `AdminInfo` entry
+4. Store with current timestamp
+5. Emit `AdminAdded` event
+
+#### Removing an Admin
+
+1. Validate authority of the requester
+2. Check if admin exists
+3. Delete `AdminInfo` entry
+4. Emit `AdminRemoved` event
+
+### Whitelist Management
+
+#### Adding Message Type
+
+1. Validate authority of the requester
+2. Check if message type already whitelisted
+3. Create new `WhitelistEntry`
+4. Store with enabled flag set to true
+5. Emit `WhitelistUpdated` event
+
+#### Removing Message Type
+
+1. Validate authority of the requester
+2. Check if message type exists in whitelist
+3. Delete `WhitelistEntry`
+4. Emit `WhitelistUpdated` event
+
+### Proposal Processing
+
+#### Proposal Submission
+
+1. Validate proposer authority
+2. Validate all messages against whitelist
+3. Assign unique proposal ID
+4. Optionally store proposal details
+5. Execute proposal immediately
+6. Emit appropriate events
+
+## State Queries
+
+### Querying Admins
+
+```go
+func (k Keeper) GetAdmins(ctx sdk.Context) []string {
+    store := ctx.KVStore(k.storeKey)
+    iterator := sdk.KVStorePrefixIterator(store, []byte("admin/"))
+    defer iterator.Close()
+
+    var admins []string
+    for ; iterator.Valid(); iterator.Next() {
+        var adminInfo AdminInfo
+        k.cdc.MustUnmarshal(iterator.Value(), &adminInfo)
+        admins = append(admins, adminInfo.Address)
+    }
+    return admins
+}
+```
+
+### Querying Whitelist
+
+```go
+func (k Keeper) GetWhitelistedMessages(ctx sdk.Context) []string {
+    store := ctx.KVStore(k.storeKey)
+    iterator := sdk.KVStorePrefixIterator(store, []byte("whitelist/"))
+    defer iterator.Close()
+
+    var messages []string
+    for ; iterator.Valid(); iterator.Next() {
+        var entry WhitelistEntry
+        k.cdc.MustUnmarshal(iterator.Value(), &entry)
+        if entry.Enabled {
+            messages = append(messages, entry.MessageType)
+        }
+    }
+    return messages
+}
+```
+
+## State Validation
+
+### Genesis State Validation
+
+The module validates genesis state during initialization:
+
+```go
+func ValidateGenesis(data GenesisState) error {
+    // Validate parameters
+    if err := data.Params.Validate(); err != nil {
+        return err
+    }
+
+    // Validate admin addresses
+    for _, admin := range data.Admins {
+        if _, err := sdk.AccAddressFromBech32(admin.Address); err != nil {
+            return fmt.Errorf("invalid admin address %s: %w", admin.Address, err)
+        }
+    }
+
+    // Validate whitelist entries
+    for _, entry := range data.WhitelistedMessages {
+        if entry.MessageType == "" {
+            return fmt.Errorf("empty message type in whitelist")
+        }
+    }
+
+    return nil
+}
+```
+
+### Runtime State Validation
+
+The module performs runtime validation to ensure state consistency:
+
+```go
+func (k Keeper) ValidateState(ctx sdk.Context) error {
+    // Check admin authority exists
+    params := k.GetParams(ctx)
+    if params.AdminAuthority == "" {
+        return fmt.Errorf("admin authority not set")
+    }
+
+    // Validate authority addresses
+    if _, err := sdk.AccAddressFromBech32(params.AdminAuthority); err != nil {
+        return fmt.Errorf("invalid admin authority: %w", err)
+    }
+
+    // Check whitelist consistency
+    if params.WhitelistEnabled {
+        whitelist := k.GetWhitelistedMessages(ctx)
+        if len(whitelist) == 0 {
+            return fmt.Errorf("whitelist enabled but no messages whitelisted")
+        }
+    }
+
+    return nil
+}
+```
+
+## Genesis State
+
+### Genesis State Structure
+
+```protobuf
+message GenesisState {
+  Params params = 1;
+  repeated AdminInfo admins = 2;
+  repeated WhitelistEntry whitelisted_messages = 3;
+  uint64 next_proposal_id = 4;
+}
+```
+
+### Default Genesis State
+
+```json
+{
+  "params": {
+    "admin_authority": "",
+    "whitelist_enabled": true,
+    "max_proposal_size": "100",
+    "proposal_authority": ""
+  },
+  "admins": [],
+  "whitelisted_messages": [
+    {
+      "message_type": "/cosmos.bank.v1beta1.MsgSend",
+      "enabled": true,
+      "added_at": "0",
+      "added_by": ""
+    }
+  ],
+  "next_proposal_id": "1"
+}
+```
+
+## State Migration
+
+### Migration Functions
+
+The module provides migration functions for state upgrades:
+
+```go
+func (m Migrator) Migrate1to2(ctx sdk.Context) error {
+    // Migrate from version 1 to version 2
+    store := ctx.KVStore(m.keeper.storeKey)
+    
+    // Add new parameter fields
+    params := m.keeper.GetParams(ctx)
+    params.MaxProposalSize = 100 // Set default value
+    m.keeper.SetParams(ctx, params)
+    
+    return nil
+}
+```
+
+### Upgrade Compatibility
+
+The module maintains backward compatibility during upgrades:
+
+- Legacy state formats are supported during transition periods
+- Migration functions handle data format changes
+- Default values are provided for new parameters
+
+## Performance Considerations
+
+### State Access Optimization
+
+- Use prefix iterators for efficient range queries
+- Implement caching for frequently accessed data
+- Minimize state reads during transaction execution
+
+### Storage Efficiency
+
+- Store only essential data
+- Use compact data formats
+- Implement state pruning for old proposals
+
+### Memory Management
+
+- Limit proposal size to prevent memory exhaustion
+- Use streaming for large state queries
+- Implement proper cleanup after proposal execution
+
+This state documentation provides a complete understanding of how the admin module manages and persists governance data. 

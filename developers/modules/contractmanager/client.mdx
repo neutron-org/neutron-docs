@@ -1,0 +1,198 @@
+---
+title: "Client"
+---
+
+This document describes the CLI commands and gRPC queries for the Contract Manager module.
+
+## CLI Commands
+
+The `neutrond` command-line interface provides several commands to interact with the Contract Manager module.
+
+### Transactions
+
+#### Update Parameters
+
+The `update-params` command allows the governance account to update the module's parameters.
+
+```bash
+neutrond tx contractmanager update-params [flags]
+```
+
+Flags:
+- `--sudo-call-gas-limit`: The new gas limit for sudo calls
+- `--from`: The governance account that signs the transaction
+- `--chain-id`: The chain ID
+
+Example:
+```bash
+neutrond tx contractmanager update-params \
+  --sudo-call-gas-limit=1000000 \
+  --from=validator \
+  --chain-id=neutron-1
+```
+
+### Queries
+
+#### Module Parameters
+
+The `params` command queries the current module parameters.
+
+```bash
+neutrond query contractmanager params
+```
+
+Example output:
+```json
+{
+  "params": {
+    "sudo_call_gas_limit": "1000000"
+  }
+}
+```
+
+#### Query All Failures
+
+The `failures` command returns all contract failures across the network.
+
+```bash
+neutrond query contractmanager failures [flags]
+```
+
+Flags:
+- `--page`: The page number (default: 1)
+- `--limit`: The maximum number of results per page (default: 100)
+
+Example:
+```bash
+neutrond query contractmanager failures
+```
+
+Example output:
+```yaml
+failures:
+- address: neutron1...
+  error: 'codespace: wasm, code: 5'
+  id: "1"
+  sudo_payload: <serialized data>
+- address: neutron1...
+  error: 'codespace: contractmanager, code: 1103'
+  id: "1"
+  sudo_payload: <serialized data>
+pagination:
+  next_key: null
+  total: "2"
+```
+
+#### Query Failures by Address
+
+The `failures` command with an address parameter returns all failures for a specific contract.
+
+```bash
+neutrond query contractmanager failures [address] [flags]
+```
+
+Flags:
+- `--page`: The page number (default: 1)
+- `--limit`: The maximum number of results per page (default: 100)
+
+Example:
+```bash
+neutrond query contractmanager failures neutron1...
+```
+
+Example output:
+```yaml
+failures:
+- address: neutron1...
+  error: 'codespace: wasm, code: 5'
+  id: "1"
+  sudo_payload: <serialized data>
+- address: neutron1...
+  error: 'codespace: contractmanager, code: 1103'
+  id: "2"
+  sudo_payload: <serialized data>
+pagination:
+  next_key: null
+  total: "2"
+```
+
+#### Query Detailed Failure Error
+
+The `failure-details` command returns the full error message for a specific failure, which is retrieved from transaction events.
+
+```bash
+neutrond query contractmanager failure-details [address] [failure_id]
+```
+
+Example:
+```bash
+neutrond query contractmanager failure-details neutron1... 1
+```
+
+Example output:
+```
+dispatch: submessages: Generic error: failed to process acknowledgment: execute wasm contract failed
+```
+
+Note that this query may fail if:
+1. The node does not index transactions
+2. The node has pruned the block containing the transaction with the error event
+3. The failure does not exist
+
+If the node doesn't have the transaction in its index, you will see:
+```
+detailed failure error message not found in node events
+```
+
+## gRPC Usage
+
+The Contract Manager module exposes gRPC endpoints that can be accessed programmatically:
+
+### Querying Module Parameters
+
+```bash
+grpcurl -plaintext \
+  -d '{}' \
+  localhost:9090 \
+  neutron.contractmanager.Query/Params
+```
+
+### Querying Failures by Address
+
+```bash
+grpcurl -plaintext \
+  -d '{"address": "neutron1..."}' \
+  localhost:9090 \
+  neutron.contractmanager.Query/AddressFailures
+```
+
+### Querying a Specific Failure
+
+```bash
+grpcurl -plaintext \
+  -d '{"address": "neutron1...", "failure_id": 1}' \
+  localhost:9090 \
+  neutron.contractmanager.Query/AddressFailure
+```
+
+## REST API Usage
+
+The Contract Manager module also exposes REST endpoints:
+
+### Querying Module Parameters
+
+```bash
+curl -X GET "http://localhost:1317/neutron/contractmanager/params"
+```
+
+### Querying Failures by Address
+
+```bash
+curl -X GET "http://localhost:1317/neutron/contractmanager/failures/neutron1..."
+```
+
+### Querying a Specific Failure
+
+```bash
+curl -X GET "http://localhost:1317/neutron/contractmanager/failures/neutron1.../1"
+``` 

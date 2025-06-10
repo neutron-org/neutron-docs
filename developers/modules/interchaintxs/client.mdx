@@ -1,0 +1,278 @@
+---
+title: "Client"
+---
+
+This document details how to interact with the Interchain Transactions module using the Command Line Interface (CLI) and gRPC.
+
+## CLI Commands
+
+The Interchain Transactions module provides commands for registering interchain accounts, submitting transactions, and querying state.
+
+### Transactions
+
+#### Register an Interchain Account
+
+```bash
+neutron tx interchaintxs register \
+  --from=<key-name> \
+  --connection-id=<connection-id> \
+  --interchain-account-id=<account-id> \
+  --register-fee=<register-fee> \
+  --chain-id=<chain-id>
+```
+
+Example:
+```bash
+neutron tx interchaintxs register \
+  --from=mykey \
+  --connection-id=connection-0 \
+  --interchain-account-id=myaccount \
+  --register-fee=1000untrn \
+  --chain-id=neutron-1
+```
+
+#### Submit a Transaction
+
+```bash
+neutron tx interchaintxs submit \
+  --from=<key-name> \
+  --interchain-account-id=<account-id> \
+  --connection-id=<connection-id> \
+  --msg='<json-encoded-messages>' \
+  --timeout=<timeout-seconds> \
+  --memo=<memo> \
+  --fee-amount=<fee-amount> \
+  --chain-id=<chain-id>
+```
+
+Example:
+```bash
+neutron tx interchaintxs submit \
+  --from=mykey \
+  --interchain-account-id=myaccount \
+  --connection-id=connection-0 \
+  --msg='[{"@type":"/cosmos.bank.v1beta1.MsgSend","from_address":"cosmos1...","to_address":"cosmos1...","amount":[{"denom":"uatom","amount":"1000"}]}]' \
+  --timeout=600 \
+  --memo="Transfer from Neutron" \
+  --fee-amount="2000untrn,1000untrn,1000untrn" \
+  --chain-id=neutron-1
+```
+
+### Queries
+
+#### Query Module Parameters
+
+```bash
+neutron query interchaintxs params
+```
+
+Example Response:
+```json
+{
+  "params": {
+    "host_enabled": true,
+    "allow_messages": [
+      "/cosmos.bank.v1beta1.MsgSend",
+      "/cosmos.staking.v1beta1.MsgDelegate",
+      "/cosmos.staking.v1beta1.MsgUndelegate",
+      "/cosmos.staking.v1beta1.MsgBeginRedelegate",
+      "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+      "/cosmos.gov.v1beta1.MsgVote"
+    ]
+  }
+}
+```
+
+#### Query Interchain Account Address
+
+```bash
+neutron query interchaintxs interchain-account-address \
+  <owner-address> \
+  <interchain-account-id> \
+  <connection-id>
+```
+
+Example:
+```bash
+neutron query interchaintxs interchain-account-address \
+  neutron1abcdef... \
+  myaccount \
+  connection-0
+```
+
+Example Response:
+```json
+{
+  "interchain_account_address": "cosmos1xyz..."
+}
+```
+
+## gRPC Queries
+
+The Interchain Transactions module exposes gRPC endpoints for querying state.
+
+### Params
+
+Query the current parameters of the module.
+
+```bash
+grpcurl -plaintext \
+    localhost:9090 \
+    neutron.interchaintxs.v1.Query/Params
+```
+
+Example Response:
+```json
+{
+  "params": {
+    "hostEnabled": true,
+    "allowMessages": [
+      "/cosmos.bank.v1beta1.MsgSend",
+      "/cosmos.staking.v1beta1.MsgDelegate",
+      "/cosmos.staking.v1beta1.MsgUndelegate",
+      "/cosmos.staking.v1beta1.MsgBeginRedelegate",
+      "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+      "/cosmos.gov.v1beta1.MsgVote"
+    ]
+  }
+}
+```
+
+### InterchainAccountAddress
+
+Query the address of an interchain account on a remote chain.
+
+```bash
+grpcurl -plaintext \
+    -d '{"owner_address": "neutron1...", "interchain_account_id": "myaccount", "connection_id": "connection-0"}' \
+    localhost:9090 \
+    neutron.interchaintxs.v1.Query/InterchainAccountAddress
+```
+
+Example Response:
+```json
+{
+  "interchainAccountAddress": "cosmos1xyz..."
+}
+```
+
+## gRPC Transactions
+
+The Interchain Transactions module supports the following transactions via gRPC.
+
+### RegisterInterchainAccount
+
+Register an interchain account on a remote chain.
+
+```bash
+grpcurl -plaintext \
+    -d '{
+      "from_address": "neutron1...",
+      "connection_id": "connection-0",
+      "interchain_account_id": "myaccount",
+      "register_fee": [
+        {
+          "denom": "untrn",
+          "amount": "1000"
+        }
+      ],
+      "ordering": 1
+    }' \
+    localhost:9090 \
+    neutron.interchaintxs.v1.Msg/RegisterInterchainAccount
+```
+
+### SubmitTx
+
+Submit a transaction to be executed on a remote chain.
+
+```bash
+grpcurl -plaintext \
+    -d '{
+      "from_address": "neutron1...",
+      "interchain_account_id": "myaccount",
+      "connection_id": "connection-0",
+      "msgs": [
+        {
+          "@type": "/cosmos.bank.v1beta1.MsgSend",
+          "from_address": "cosmos1...",
+          "to_address": "cosmos1...",
+          "amount": [
+            {
+              "denom": "uatom",
+              "amount": "1000"
+            }
+          ]
+        }
+      ],
+      "memo": "Transfer from Neutron",
+      "timeout": 600,
+      "fee": {
+        "recv_fee": [
+          {
+            "denom": "untrn",
+            "amount": "2000"
+          }
+        ],
+        "ack_fee": [
+          {
+            "denom": "untrn",
+            "amount": "1000"
+          }
+        ],
+        "timeout_fee": [
+          {
+            "denom": "untrn",
+            "amount": "1000"
+          }
+        ]
+      }
+    }' \
+    localhost:9090 \
+    neutron.interchaintxs.v1.Msg/SubmitTx
+```
+
+## REST API
+
+The Interchain Transactions module exposes REST endpoints via the gRPC-Gateway. The base URL is typically `http://localhost:1317`.
+
+### Query Parameters
+
+```
+GET /neutron/interchaintxs/params
+```
+
+Example Response:
+```json
+{
+  "params": {
+    "host_enabled": true,
+    "allow_messages": [
+      "/cosmos.bank.v1beta1.MsgSend",
+      "/cosmos.staking.v1beta1.MsgDelegate",
+      "/cosmos.staking.v1beta1.MsgUndelegate",
+      "/cosmos.staking.v1beta1.MsgBeginRedelegate",
+      "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+      "/cosmos.gov.v1beta1.MsgVote"
+    ]
+  }
+}
+```
+
+### Query Interchain Account Address
+
+```
+GET /neutron/interchaintxs/{owner_address}/{interchain_account_id}/{connection_id}/interchain_account_address
+```
+
+Example:
+```
+GET /neutron/interchaintxs/neutron1abcdef.../myaccount/connection-0/interchain_account_address
+```
+
+Example Response:
+```json
+{
+  "interchain_account_address": "cosmos1xyz..."
+}
+``` 

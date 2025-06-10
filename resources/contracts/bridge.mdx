@@ -1,0 +1,79 @@
+---
+title: "Bridge Contracts"
+description: "Information about Neutron's cross-chain bridge contracts"
+icon: "bridge"
+---
+
+This page provides information about the smart contracts that enable cross-chain bridging between Neutron and other networks.
+
+## Mainnet (neutron-1)
+
+| Contract | Address | Code ID |
+|----------|---------|---------|
+| Lido Satellite (neutron-1) | `neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry` | 233 |
+| GMP Helper (Ethereum) | `0x8A5fcd88B4aC70A1939955fAeA4E12bd0C7B1237` | - |
+
+## Testnet (pion-1)
+
+| Contract | Address |
+|----------|---------|
+| Lido Satellite (pion-1) | `neutron1pf7u5tqkc9xc5l2xjqzsufc467ccmjxw68v5hl0k5gaye7zer3tqvrucam` |
+| GMP Helper (Sepolia) | `0x5b154522aa5CDDCed12515719E1d4dFf76F2b37b` |
+
+## Lido Satellite Contract
+
+The Lido Satellite contract enables bridging of Lido's staked ETH (stETH) to Neutron. It provides a TokenFactory representation of the wrapped staked ETH (wstETH) which can be used throughout the Neutron ecosystem.
+
+### Supported Tokens
+
+| Network | Symbol | Denom |
+|---------|--------|-------|
+| Mainnet | wstETH | `factory/neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry/wstETH` |
+| Testnet | wstETH | `factory/neutron1pf7u5tqkc9xc5l2xjqzsufc467ccmjxw68v5hl0k5gaye7zer3tqvrucam/wstETH` |
+
+### How the Bridge Works
+
+1. **Axelar Integration**: The Neutron bridge uses Axelar's General Message Passing (GMP) to facilitate cross-chain communication
+2. **Minting and Burning**: When wstETH is bridged to Neutron, the corresponding tokens are locked on Ethereum, and native tokens are minted on Neutron
+3. **Token Standards**: TokenFactory standards on Neutron ensure that the bridged tokens behave like native Cosmos assets
+4. **Fee Mechanics**: The bridge charges a small fee for transfers to cover operational costs
+
+## Using the Bridge
+
+To interact with the bridge, you can use the [Neutron Bridge UI](https://bridge.neutron.org/) or interact directly with the contracts.
+
+### Example Bridge Queries
+
+```bash
+# Query bridge token info
+neutrond query wasm contract-state smart neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry '{"token_info":{}}'
+
+# Check bridge limits
+neutrond query wasm contract-state smart neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry '{"bridge_limits":{}}'
+```
+
+## Bridge Security
+
+The bridge security model includes:
+
+1. **Axelar Validators**: The bridge relies on Axelar's validator network for secure message passing
+2. **Multi-Signature Controls**: Administrative actions require approval from multiple parties
+3. **Rate Limiting**: The bridge includes rate limits to prevent catastrophic failures
+4. **Upgradability**: The bridge can be upgraded to patch security vulnerabilities
+
+## Future Bridge Developments
+
+The Neutron team is working on expanding bridge capabilities to include:
+
+1. More assets and token standards
+2. Additional source chains beyond Ethereum
+3. Improved efficiency and reduced fees
+4. Enhanced user interfaces for easier bridging
+
+## Bridge Monitoring
+
+You can monitor bridge activities using the following resources:
+
+- [Neutron Explorer](https://www.mintscan.io/neutron)
+- [Axelar Scan](https://axelarscan.io/)
+- [Bridge Status Dashboard](https://bridge.neutron.org/status) 

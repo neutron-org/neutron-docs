@@ -1,0 +1,145 @@
+---
+title: "Frequently Asked Questions"
+description: "Answers to common technical questions about Neutron development"
+icon: "circle-question"
+---
+
+## Developer Resources
+
+<CardGroup cols={3}>
+  <Card title="Community Channels" icon="users" iconType="duotone">
+    <ul className="mt-2 space-y-1">
+      <li><a href="https://t.me/+Q6C_kb0xLaoxYzE1" target="_blank" className="text-primary hover:underline">Neutron Builders Announcements</a></li>
+      <li><a href="https://t.me/+b9f8m8iybLdhYjE9" target="_blank" className="text-primary hover:underline">Neutron Builders Chat</a></li>
+      <li><a href="https://t.me/+GK5KVutIvQhhNmNi" target="_blank" className="text-primary hover:underline">Neutron Dev Blog</a></li>
+    </ul>
+  </Card>
+  
+  <Card title="Technical Support" icon="headset" iconType="duotone" href="https://discord.com/invite/bzPBzbDvWC" target="_blank">
+    Join our Discord for technical help and discussions in the #developers channel.
+  </Card>
+  
+  <Card title="Bug Bounty" icon="bug" iconType="duotone" href="https://immunefi.com/bug-bounty/neutron" target="_blank">
+    Found a security vulnerability? Report it through our Immunefi bug bounty program.
+  </Card>
+</CardGroup>
+
+## Technical Questions
+
+### I am a developer who builds on Neutron. How can I get in touch with the dev team?
+
+There are three official channels for technical communication:
+
+- <a href="https://t.me/+Q6C_kb0xLaoxYzE1" target="_blank" className="text-primary hover:underline">Neutron Builders Announcements</a>: Official announcements channel
+- <a href="https://discord.com/invite/bzPBzbDvWC" target="_blank" className="text-primary hover:underline">Neutron Builders Chat</a>: Join our Discord server for real-time technical discussion
+- <a href="https://t.me/+GK5KVutIvQhhNmNi" target="_blank" className="text-primary hover:underline">Neutron Dev Blog</a>: Technical notes from the development team
+
+### I think I've found a vulnerability, what should I do?
+
+Check out our bug bounty program on <a href="https://immunefi.com/bug-bounty/neutron" target="_blank" className="text-primary hover:underline">Immunefi</a>.
+
+### Where is the block explorer?
+
+We recommend using the following block explorers:
+
+- **Mintscan Explorer**:
+  - <a href="https://mintscan.io/neutron" target="_blank" className="text-primary hover:underline">Mainnet (neutron-1)</a>
+  - <a href="https://mintscan.io/neutron-testnet" target="_blank" className="text-primary hover:underline">Testnet (pion-1)</a>
+- **Celatone Smart Contract Explorer**: Provides a great UI to upload, query and execute contracts.
+
+### Where can I download the latest snapshots?
+
+If you're looking to spin up your own archive node, our <a href="https://cosmos-snapshots.neutron.org/" target="_blank" className="text-primary hover:underline">snapshot service</a> provides a convenient solution, enabling you to skip syncing from scratch. We also offer small pruned snapshots for quick server bootstrapping.
+
+### Where can I get the public REST and RPC nodes?
+
+You can check the Cosmos Chain Registry for public endpoints:
+
+- <a href="https://github.com/cosmos/chain-registry/tree/master/neutron" target="_blank" className="text-primary hover:underline">Mainnet (neutron-1)</a>
+- <a href="https://github.com/cosmos/chain-registry/tree/master/testnets/neutrontestnet" target="_blank" className="text-primary hover:underline">Testnet (pion-1)</a>
+
+For a list of available endpoints, see our <a href="/resources/endpoints" className="text-primary hover:underline">Endpoints Reference</a>.
+
+### How can I check the current status of Neutron's RPCs?
+
+For the most current information on the status of our RPCs and any scheduled maintenance, please visit our <a href="https://status.neutron.org/" target="_blank" className="text-primary hover:underline">Neutron Status</a> page. This page provides real-time updates and alerts regarding the operational status of all Neutron services.
+
+### What CosmWasm version is used?
+
+We are using a patched 0.51.0 version of wasmd.
+
+### I'm getting "out of gas" errors when querying smart contracts. How do I fix this?
+
+If you encounter errors like:
+
+```
+out of gas in location: Wasm engine function execution; gasWanted: 3000000, gasUsed: 3000000: out of gas: unknown request
+```
+
+This indicates that smart contract queries are hitting the gas limit. There are **two different** gas limit configurations that are often confused:
+
+1. **General Cosmos SDK Query Gas Limit** (`query-gas-limit` in root of app.toml):
+   ```toml
+   # The maximum gas a query coming over rest/grpc may consume.
+   # If this is set to zero, the query can consume an unbounded amount of gas.
+   query-gas-limit = "0"
+   ```
+
+2. **CosmWasm Specific Query Gas Limit** (`wasm.query_gas_limit` in [wasm] section):
+   ```toml
+   ###############################################################################
+   ###                                   WASM                                  ###
+   ###############################################################################
+   [wasm]
+   # This is the maximum sdk gas (wasm and storage) that we allow for any x/wasm "smart" queries
+   query_gas_limit = 100000000
+   ```
+
+**Solution**: If you control the node, add or increase the `wasm.query_gas_limit` setting in your `app.toml`:
+
+```toml
+[wasm]
+query_gas_limit = 100000000
+```
+
+**Key differences to remember:**
+- Use underscores (`query_gas_limit`) for wasm configuration, not dashes (`query-gas-limit`)
+- The wasm setting is in the `[wasm]` section, not at the root level
+- This setting can also be configured as a command line flag: `--wasm.query_gas_limit=100000000`
+
+This is particularly important for applications making complex or paginated smart contract queries. If you're using a public RPC endpoint, you'll need to either optimize your queries to use less gas or find an RPC provider with higher gas limits.
+
+### Where is the testnet faucet?
+
+You can request tokens from the Testnet (pion-1) Faucet through two channels:
+
+1. **Discord**: Post in the #testnet-faucet channel on <a href="https://discord.com/invite/bzPBzbDvWC" target="_blank" className="text-primary hover:underline">Neutron's Discord server</a> with the command: `$request <NEUTRON-ADDRESS>`
+2. **Telegram**: Use the <a href="https://t.me/NeutronTestnetFaucet_bot" target="_blank" className="text-primary hover:underline">Telegram Faucet Bot</a> with the command: `/request <NEUTRON-ADDRESS>`
+
+Where `<NEUTRON-ADDRESS>` is a `neutron1******` generated address.
+
+## Network Resources
+
+<CardGroup cols={3}>
+  <Card title="Chain Parameters" icon="sliders" iconType="duotone" href="/resources/chain-parameters">
+    Reference for Neutron network parameters and configurations
+  </Card>
+  
+  <Card title="Network Endpoints" icon="network-wired" iconType="duotone" href="/resources/endpoints">
+    Public API, RPC, and gRPC endpoints for mainnet and testnet
+  </Card>
+  
+  <Card title="Peer Nodes" icon="server" iconType="duotone" href="/resources/peers">
+    Persistent peers and seed nodes for connecting to the network
+  </Card>
+</CardGroup>
+
+<CardGroup cols={2}>
+  <Card title="IBC Denoms" icon="coins" iconType="duotone" href="/resources/ibc-denoms">
+    Information about IBC denominations on Neutron
+  </Card>
+  
+  <Card title="TokenFactory Denoms" icon="money-bill" iconType="duotone" href="/resources/tokenfactory-denoms">
+    Details on TokenFactory denominations and their creation
+  </Card>
+</CardGroup> 

@@ -1,0 +1,401 @@
+---
+title: "How-to Guide"
+description: "Step-by-step instructions for using Interchain Queries in your contracts"
+---
+
+# Using Interchain Queries
+
+This document provides step-by-step instructions for using the Interchain Queries module in your applications.
+
+## Registering Interchain Queries
+
+### Register a KV Query
+
+KV queries allow you to read values from a remote chain's state.
+
+1. **Define what you want to query**
+
+   Identify the module, store, and key you need to query. For example, to query an account balance:
+   
+   ```
+   Path: "store/bank/key"
+   Key: "balances/cosmos1abc..."
+   ```
+
+2. **Prepare the message**
+
+   ```rust
+   // In a CosmWasm contract
+   pub fn register_bank_balance_query(
+       deps: DepsMut,
+       env: Env,
+       connection_id: String,
+       update_period: u64,
+       addr: String,
+   ) -> Result<Response, ContractError> {
+       // Convert the address to proper key format (depends on the chain)
+       let addr_bytes = deps.api.addr_validate(&addr)?.as_bytes().to_vec();
+       let key = [b"balances/", addr_bytes.as_slice()].concat();
+       
+       let register_msg = NeutronMsg::RegisterInterchainQuery {
+           query_type: QueryType::KV,
+           keys: vec![
+               KVKey {
+                   path: "store/bank/key".to_string(),
+                   key: Binary::from(key),
+               },
+           ],
+           transactions_filter: String::new(),
+           connection_id,
+           update_period,
+       };
+       
+       Ok(Response::new()
+           .add_message(register_msg)
+           .add_attribute("action", "register_icq")
+           .add_attribute("query_type", "kv"))
+   }
+   ```
+
+3. **Execute the registration**
+
+   ```rust
+   // Call the function with appropriate parameters
+   let msg = ExecuteMsg::RegisterBankQuery {
+       connection_id: "connection-0".to_string(),
+       update_period: 100,  // Update every 100 blocks
+       address: "cosmos1abc...".to_string(),
+   };
+   ```
+
+4. **Store the query ID**
+
+   The registration response will include a query ID. Store this ID to handle results later.
+   
+   ```rust
+   pub fn handle_query_registration_reply(
+       deps: DepsMut,
+       _env: Env,
+       msg: Reply,
+   ) -> Result<Response, ContractError> {
+       let reply = parse_reply_register_icq_id(msg)?;
+       let icq_id = reply.register_icq_id;
+       
+       // Store the ID for later use
+       QUERY_IDS.save(deps.storage, BANK_QUERY_KEY, &icq_id)?;
+       
+       Ok(Response::new()
+           .add_attribute("action", "handle_query_registration")
+           .add_attribute("icq_id", icq_id.to_string()))
+   }
+   ```
+
+### Register a TX Query
+
+TX queries allow you to search for transactions on a remote chain.
+
+1. **Define your transaction filter**
+
+   ```rust
+   // Create a filter for transactions with a specific recipient
+   let tx_filter = json!({
+       "transfer.recipient": "cosmos1abc...",
+   }).to_string();
+   ```
+
+2. **Prepare the message**
+
+   ```rust
+   pub fn register_tx_query(
+       deps: DepsMut,
+       env: Env,
+       connection_id: String,
+       update_period: u64,
+       recipient: String,
+   ) -> Result<Response, ContractError> {
+       // Create the transaction filter
+       let tx_filter = format!(r#"{{"transfer.recipient":"{}"}}"#, recipient);
+       
+       let register_msg = NeutronMsg::RegisterInterchainQuery {
+           query_type: QueryType::TX,
+           keys: vec![],  // Empty for TX queries
+           transactions_filter: tx_filter,
+           connection_id,
+           update_period,
+       };
+       
+       Ok(Response::new()
+           .add_message(register_msg)
+           .add_attribute("action", "register_icq")
+           .add_attribute("query_type", "tx"))
+   }
+   ```
+
+3. **Handle the registration response** (same as for KV queries)
+
+## Handling Query Results
+
+### Handle KV Query Results
+
+When a KV query result is submitted, the contract receives a sudo callback:
+
+```rust
+pub fn sudo_kv_query_result(
+    deps: DepsMut,
+    env: Env,
+    query_id: u64,
+) -> Result<Response, ContractError> {
+    // Retrieve the stored query results
+    let query_result = deps.querier.query::<QueryRegisteredQueryResultResponse>(
+        &QueryRegisteredQueryResultRequest { query_id }.into(),
+    )?;
+
+    // Process the results
+    for result in query_result.result {
+        if result.success {
+            // Extract and process the value
+            let value = result.value;
+            // ... process the value ...
+        }
+    }
+
+    Ok(Response::new()
+        .add_attribute("action", "process_kv_query_result")
+        .add_attribute("query_id", query_id.to_string()))
+}
+```
+
+### Handle TX Query Results
+
+For TX queries, the module passes the full result to the contract:
+
+```rust
+pub fn sudo_tx_query_result(
+    deps: DepsMut,
+    env: Env,
+    query_id: u64,
+    height: u64,
+    data: Vec<TxResult>,
+) -> Result<Response, ContractError> {
+    // Validate that this is a query we registered
+    let stored_id = QUERY_IDS.load(deps.storage, TX_QUERY_KEY)?;
+    if stored_id != query_id {
+        return Err(ContractError::UnknownQueryId {});
+    }
+    
+    // Process each transaction
+    for tx in data {
+        // Validate the transaction meets your criteria
+        // This is important as the relayer could submit any valid transaction
+        if !validate_transaction(&tx) {
+            continue;
+        }
+        
+        // Process the transaction
+        process_transaction(deps.storage, &tx)?;
+    }
+    
+    Ok(Response::new()
+        .add_attribute("action", "process_tx_query_result")
+        .add_attribute("query_id", query_id.to_string())
+        .add_attribute("tx_count", data.len().to_string()))
+}
+
+fn validate_transaction(tx: &TxResult) -> bool {
+    // Example: Check that the transaction has the expected events
+    // This is crucial for security!
+    for event in &tx.result.events {
+        if event.type_str == "transfer" {
+            for attr in &event.attributes {
+                if attr.key == "recipient" && attr.value == "cosmos1abc..." {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+```
+
+## Updating Interchain Queries
+
+To modify an existing query:
+
+```rust
+pub fn update_query(
+    deps: DepsMut,
+    env: Env,
+    query_id: u64,
+    new_update_period: Option<u64>,
+    new_filter: Option<String>,
+) -> Result<Response, ContractError> {
+    let update_msg = NeutronMsg::UpdateInterchainQuery {
+        query_id,
+        new_keys: None,  // Keep existing keys
+        new_update_period,
+        new_transactions_filter: new_filter,
+    };
+    
+    Ok(Response::new()
+        .add_message(update_msg)
+        .add_attribute("action", "update_icq")
+        .add_attribute("query_id", query_id.to_string()))
+}
+```
+
+## Removing Interchain Queries
+
+When a query is no longer needed:
+
+```rust
+pub fn remove_query(
+    deps: DepsMut,
+    env: Env,
+    query_id: u64,
+) -> Result<Response, ContractError> {
+    let remove_msg = NeutronMsg::RemoveInterchainQuery {
+        query_id,
+    };
+    
+    // Clean up storage
+    QUERY_IDS.remove(deps.storage, get_query_key(query_id)?);
+    
+    Ok(Response::new()
+        .add_message(remove_msg)
+        .add_attribute("action", "remove_icq")
+        .add_attribute("query_id", query_id.to_string()))
+}
+```
+
+## Common Query Examples
+
+### Query Account Balance
+
+```rust
+// Define the key for a bank module balance query
+let address_bytes = deps.api.addr_validate(&address)?.as_bytes().to_vec();
+let key = [b"balances/", address_bytes.as_slice()].concat();
+
+let kv_key = KVKey {
+    path: "store/bank/key".to_string(),
+    key: Binary::from(key),
+};
+```
+
+### Query Staking Delegations
+
+```rust
+// Query delegations for a validator
+let validator_addr_bytes = deps.api.addr_validate(&validator_addr)?.as_bytes().to_vec();
+let key = [b"delegations/", validator_addr_bytes.as_slice()].concat();
+
+let kv_key = KVKey {
+    path: "store/staking/key".to_string(),
+    key: Binary::from(key),
+};
+```
+
+### Query Governance Proposals
+
+```rust
+// Query an active proposal
+let proposal_id_bytes = proposal_id.to_be_bytes();
+let key = [b"proposals/", proposal_id_bytes.as_slice()].concat();
+
+let kv_key = KVKey {
+    path: "store/gov/key".to_string(),
+    key: Binary::from(key),
+};
+```
+
+### Monitor IBC Transfers
+
+```rust
+// Create a filter for IBC transfers
+let tx_filter = json!({
+    "message.module": "ibc",
+    "transfer.recipient": recipient_address,
+}).to_string();
+```
+
+## Best Practices
+
+### Security Considerations
+
+1. **Always validate TX query results**
+
+   The module does not enforce that returned transactions match your filter criteria. You must validate in your contract.
+
+2. **Handle empty results gracefully**
+
+   Query results may be empty if no matching data exists.
+
+3. **Set appropriate update periods**
+
+   Balance between freshness and resource usage.
+
+### Gas Optimization
+
+1. **Batch related queries**
+
+   Combine related keys into a single query when possible.
+
+2. **Clean up unused queries**
+
+   Remove queries when no longer needed to reclaim deposits.
+
+3. **Cache results when appropriate**
+
+   For data that changes infrequently, store and reuse results.
+
+### Error Handling
+
+1. **Handle temporary failures**
+
+   Chain upgrades or IBC issues may cause temporary failures.
+
+2. **Check for the empty/nil value issue**
+
+   Remember you cannot query empty values due to the ICS23 bug.
+
+3. **Check for the appropriate permissions**
+
+   Only query owners can update queries.
+
+## Troubleshooting
+
+### Query Registration Fails
+
+1. Check that your connection ID exists and is active
+2. Ensure you have sufficient funds for the deposit
+3. Verify the key format is correct for the target module
+
+### Result Verification Errors
+
+If result verification fails:
+
+1. Make sure you're not querying empty or nil values (current limitation)
+2. Verify the store prefix and key format are correct
+3. Ensure the remote chain has the expected module and state structure
+
+### Missing or Delayed Updates
+
+If query results aren't updating as expected:
+
+1. Check that relayers are operational
+2. Verify the update period is appropriate for your use case
+3. Ensure the query hasn't been removed due to timeout
+
+## Next Steps
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/tutorials/cosmwasm_icq">
+    <h4 className="font-semibold mb-2">Complete ICQ Tutorial</h4>
+    <p className="text-sm">Build a complete cross-chain monitoring application with Interchain Queries</p>
+  </a>
+  
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/interchain-queries/reference">
+    <h4 className="font-semibold mb-2">ICQ API Reference</h4>
+    <p className="text-sm">Complete technical details of all ICQ module interfaces and parameters</p>
+  </a>
+</div> 

@@ -1,0 +1,137 @@
+---
+title: "Validators Overview"
+description: "Guide for Neutron validators"
+icon: "server"
+---
+
+Neutron validators secure the network by operating nodes that participate in consensus, validate transactions, and provide critical oracle data. Following the Mercury upgrade in April 2025, Neutron transitioned to a fully sovereign network with a unique validator model.
+
+<CardGroup cols={2}>
+  <Card title="High Performance" icon="bolt" iconType="duotone">
+    The Mercury upgrade significantly improved network performance, reducing latency to ~100ms and increasing throughput by 11x.
+  </Card>
+  <Card title="DAO-Driven Rewards" icon="money-bill-trend-up" iconType="duotone">
+    Unlike traditional networks, Neutron rewards validators directly from the DAO treasury rather than through inflation.
+  </Card>
+  <Card title="DAO-Curated Validator Set" icon="users-gear" iconType="duotone">
+    The Neutron DAO maintains a curated set of 20 validators, selected based on performance metrics and technical capabilities.
+  </Card>
+  <Card title="Performance-Based Compensation" icon="chart-line" iconType="duotone">
+    Validators receive stable monthly compensation based on their performance in block signing and oracle services.
+  </Card>
+</CardGroup>
+
+## Neutron's Validator Model
+
+Neutron's validator model differs fundamentally from traditional Proof of Stake networks:
+
+<CardGroup cols={4}>
+  <Card title="Fixed Supply" icon="coins">
+    No inflation-based block rewards, preserving NTRN's fixed supply economics
+  </Card>
+  <Card title="DAO Treasury" icon="building-columns">
+    All rewards paid directly from the DAO treasury instead of inflation
+  </Card>
+  <Card title="No Slashing" icon="shield-check">
+    Uses jailing and rotation instead of traditional slashing mechanisms
+  </Card>
+  <Card title="Base Compensation" icon="money-bill">
+    $3,000/month for validators meeting performance requirements
+  </Card>
+</CardGroup>
+
+## Performance Requirements
+
+Validators operate under strict performance criteria, with rewards tied directly to maintaining high-quality service:
+
+| Performance Criterion | Minimum Threshold | Full Reward Threshold |
+|-----------------------|-------------------|----------------------|
+| Block Signing         | 95%               | 99.5%                |
+| Oracle Price Updates  | 95%               | 98%                  |
+
+Validators who fail to meet minimum thresholds for two consecutive months or three months in a six-month period may be rotated out of the active set by the Neutron DAO.
+
+## Technical Requirements
+
+### Hardware Specifications
+
+<CardGroup cols={2}>
+  <Card title="CPU" icon="microchip" iconType="duotone">
+    <strong>Minimum:</strong> 4+ cores<br />
+    <strong>Recommended:</strong> 8+ cores, AMD Ryzen 9 7950X3D or EPYC 4584PX for optimal single-thread performance
+  </Card>
+  <Card title="RAM" icon="memory" iconType="duotone">
+    <strong>Minimum:</strong> 64 GB<br />
+    <strong>Recommended:</strong> 128 GB+ for optimal performance
+  </Card>
+  <Card title="Storage" icon="hard-drive" iconType="duotone">
+    <strong>Minimum:</strong> 2 TB NVMe SSD<br />
+    <strong>Recommended:</strong> 4 TB+ with ≥10,000 IOPS and ≥500 MB/s sustained read/write
+  </Card>
+  <Card title="Network" icon="network-wired" iconType="duotone">
+    <strong>Minimum:</strong> 1 Gbps dedicated connection<br />
+    <strong>Recommended:</strong> Less than 50ms latency to major peers with DDoS protection
+  </Card>
+</CardGroup>
+
+### Infrastructure Requirements
+
+<CardGroup cols={3}>
+  <Card title="Dual Network Operation" icon="network-wired">
+    Must run both mainnet and testnet nodes with proven reliability
+  </Card>
+  <Card title="Security Architecture" icon="shield-halved">
+    Sentry node architecture with HSM key management and comprehensive monitoring
+  </Card>
+  <Card title="Operational Excellence" icon="gear">
+    24/7 monitoring, automated alerting, and documented disaster recovery procedures
+  </Card>
+</CardGroup>
+
+## Validator Selection & Rotation
+
+### Selection Process
+
+When validator slots become available:
+
+1. **Eligibility**: Must operate both mainnet and testnet nodes
+2. **Prioritization**: Operators prioritized by reverse order of voting power (encouraging decentralization)
+3. **Probation**: 3-month trial period with limited delegation
+4. **Full Status**: Receive full DAO delegation after successful probation
+
+### Rotation Framework
+
+Validators may be rotated out for:
+
+- **Performance Issues**: No rewards for 2 consecutive months or 3 months in 6-month period
+- **Upgrade Delays**: Failure to resume signing within 60 minutes of upgrade or begin precommitting within 2 hours of instructions
+- **Tombstoning**: Double-signing or critical security issues
+
+## Mercury Upgrade
+
+The Mercury upgrade in April 2025 marked a pivotal transition for Neutron, moving from Interchain Security (ICS) to a fully sovereign network. This enabled:
+
+- Native NTRN staking with fixed supply tokenomics
+- Performance improvements with reduced latency (~100ms) and increased throughput
+- Better stability for the High Frequency Oracle and other infrastructure
+- Faster upgrades and incident response capabilities
+
+## Documentation Sections
+
+<CardGroup cols={3}>
+  <Card title="Running a Node" icon="server" href="/validators/running-a-node">
+    Complete setup instructions for running a Neutron validator node
+  </Card>
+  <Card title="Oracle Setup" icon="chart-line" href="/validators/oracle-setup">
+    Configure the Slinky price oracle service for your validator
+  </Card>
+  <Card title="Becoming a Validator" icon="user-plus" href="/validators/becoming-a-validator">
+    Steps to join the Neutron validator set with performance requirements
+  </Card>
+  <Card title="Validator Economics" icon="coins" href="/validators/economics/validator-incentives">
+    Learn about the unique economic model and incentives
+  </Card>
+  <Card title="Network Resources" icon="network-wired" href="/resources/peers">
+    Access peers, endpoints and other network resources
+  </Card>
+</CardGroup> 

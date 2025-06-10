@@ -1,0 +1,441 @@
+---
+title: "Messages"
+---
+
+The Dex module exposes several message types for interacting with the decentralized exchange. Here's a detailed documentation of each message and its expected behavior.
+
+## MsgDeposit
+
+`MsgDeposit` allows users to add liquidity to concentrated liquidity pools.
+
+```protobuf
+message MsgDeposit {
+  option (amino.name) = "dex/MsgDeposit";
+  option (cosmos.msg.v1.signer) = "creator";
+
+  string creator = 1;
+  string receiver = 2;
+  string token_a = 3;
+  string token_b = 4;
+  repeated string amounts_a = 5 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  repeated string amounts_b = 6 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  repeated int64 tick_indexes_a_to_b = 7;
+  repeated uint64 fees = 8;
+  repeated DepositOptions options = 9;
+}
+
+message DepositOptions {
+  bool disable_autoswap = 1;
+  bool fail_tx_on_bel = 2;
+  bool swap_on_deposit = 3;
+  uint64 swap_on_deposit_slop_tolerance_bps = 4;
+}
+```
+
+### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `creator` | string | Address of the message sender |
+| `receiver` | string | Address to receive the liquidity position (if different from creator) |
+| `token_a` | string | First token denomination in the pair |
+| `token_b` | string | Second token denomination in the pair |
+| `amounts_a` | []string | Amounts of token A to deposit for each tick index |
+| `amounts_b` | []string | Amounts of token B to deposit for each tick index |
+| `tick_indexes_a_to_b` | []int64 | Tick indexes at which to provide liquidity |
+| `fees` | []uint64 | Fee tiers for each deposit (in basis points) |
+| `options` | []DepositOptions | Deposit options for each position |
+
+### Deposit Options
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `disable_autoswap` | bool | If true, prevents automatic balancing of tokens to match pool ratio |
+| `fail_tx_on_bel` | bool | If true, fails the transaction on bad exchange limit instead of partial fill |
+| `swap_on_deposit` | bool | If true, allows excess tokens to be swapped to achieve desired ratio |
+| `swap_on_deposit_slop_tolerance_bps` | uint64 | Maximum acceptable slippage for swap during deposit (basis points) |
+
+### Response
+
+```protobuf
+message MsgDepositResponse {
+  repeated string reserve0_deposited = 1 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  repeated string reserve1_deposited = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  repeated FailedDeposit failed_deposits = 3;
+  repeated cosmos.base.v1beta1.Coin shares_issued = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message FailedDeposit {
+  uint64 deposit_idx = 1;
+  string error = 2;
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `reserve0_deposited` | []string | Amounts of token0 successfully deposited for each position |
+| `reserve1_deposited` | []string | Amounts of token1 successfully deposited for each position |
+| `failed_deposits` | []FailedDeposit | Information about any failed deposits and the reasons |
+| `shares_issued` | []Coin | Share tokens issued to represent the liquidity positions |
+
+## MsgWithdrawal
+
+`MsgWithdrawal` allows users to remove liquidity from concentrated liquidity pools.
+
+```protobuf
+message MsgWithdrawal {
+  option (amino.name) = "dex/MsgWithdrawal";
+  option (cosmos.msg.v1.signer) = "creator";
+
+  string creator = 1;
+  string receiver = 2;
+  string token_a = 3;
+  string token_b = 4;
+  repeated string shares_to_remove = 5 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  repeated int64 tick_indexes_a_to_b = 6;
+  repeated uint64 fees = 7;
+}
+```
+
+### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `creator` | string | Address of the message sender |
+| `receiver` | string | Address to receive the withdrawn tokens |
+| `token_a` | string | First token denomination in the pair |
+| `token_b` | string | Second token denomination in the pair |
+| `shares_to_remove` | []string | Amount of share tokens to burn for each position |
+| `tick_indexes_a_to_b` | []int64 | Tick indexes from which to withdraw liquidity |
+| `fees` | []uint64 | Fee tiers of the pools from which to withdraw |
+
+### Response
+
+```protobuf
+message MsgWithdrawalResponse {
+  string reserve0_withdrawn = 1 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string reserve1_withdrawn = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  repeated cosmos.base.v1beta1.Coin shares_burned = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.nullable) = false
+  ];
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `reserve0_withdrawn` | string | Total amount of token0 withdrawn |
+| `reserve1_withdrawn` | string | Total amount of token1 withdrawn |
+| `shares_burned` | []Coin | Share tokens burned during the withdrawal |
+
+## MsgPlaceLimitOrder
+
+`MsgPlaceLimitOrder` allows users to place limit orders to buy or sell tokens at a specific price.
+
+```protobuf
+message MsgPlaceLimitOrder {
+  option (amino.name) = "dex/MsgPlaceLimitOrder";
+  option (cosmos.msg.v1.signer) = "creator";
+
+  string creator = 1;
+  string receiver = 2;
+  string token_in = 3;
+  string token_out = 4;
+  int64 tick_index_in_to_out = 5 [deprecated = true];
+  string amount_in = 7 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  LimitOrderType order_type = 8;
+  google.protobuf.Timestamp expiration_time = 9 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = true
+  ];
+  string max_amount_out = 10 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = true
+  ];
+  string limit_sell_price = 11 [
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = true
+  ];
+  string min_average_sell_price = 12 [
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = true
+  ];
+}
+
+enum LimitOrderType {
+  GOOD_TIL_CANCELLED = 0;
+  FILL_OR_KILL = 1;
+  IMMEDIATE_OR_CANCEL = 2;
+  JUST_IN_TIME = 3;
+  GOOD_TIL_TIME = 4;
+}
+```
+
+### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `creator` | string | Address of the message sender |
+| `receiver` | string | Address to receive the filled order proceeds |
+| `token_in` | string | Token denomination being sold |
+| `token_out` | string | Token denomination being bought |
+| `amount_in` | string | Amount of input token to sell |
+| `order_type` | LimitOrderType | Type of limit order |
+| `expiration_time` | Timestamp | Expiration time for GOOD_TIL_TIME orders |
+| `max_amount_out` | string | Maximum amount of output token to receive (optional) |
+| `limit_sell_price` | string | Minimum price at which to sell (token_out per token_in) |
+| `min_average_sell_price` | string | Minimum average price for the entire trade (optional) |
+
+### Order Types
+
+| Type | Description |
+| --- | --- |
+| `GOOD_TIL_CANCELLED` | Remains active until explicitly cancelled |
+| `FILL_OR_KILL` | Must be fully filled immediately or rejected entirely |
+| `IMMEDIATE_OR_CANCEL` | Matches against the order book immediately, unfilled portion is cancelled |
+| `JUST_IN_TIME` | Special maker order that can only be filled by taker orders |
+| `GOOD_TIL_TIME` | Remains active until expiration time |
+
+### Response
+
+```protobuf
+message MsgPlaceLimitOrderResponse {
+  string trancheKey = 1;
+  cosmos.base.v1beta1.Coin coin_in = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+  cosmos.base.v1beta1.Coin taker_coin_out = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+  cosmos.base.v1beta1.Coin taker_coin_in = 4 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `trancheKey` | string | Unique identifier for the limit order |
+| `coin_in` | Coin | Total amount of input token used for the limit order |
+| `taker_coin_out` | Coin | Amount of output token received from immediate fills (taker portion) |
+| `taker_coin_in` | Coin | Amount of input token used for immediate fills (taker portion) |
+
+## MsgWithdrawFilledLimitOrder
+
+`MsgWithdrawFilledLimitOrder` allows users to withdraw proceeds from a filled or partially filled limit order.
+
+```protobuf
+message MsgWithdrawFilledLimitOrder {
+  option (amino.name) = "dex/MsgWithdrawFilledLimitOrder";
+  option (cosmos.msg.v1.signer) = "creator";
+
+  string creator = 1;
+  string tranche_key = 2;
+}
+```
+
+### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `creator` | string | Address of the message sender |
+| `tranche_key` | string | Unique identifier of the limit order tranche |
+
+### Response
+
+```protobuf
+message MsgWithdrawFilledLimitOrderResponse {
+  cosmos.base.v1beta1.Coin taker_coin_out = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+  cosmos.base.v1beta1.Coin maker_coin_out = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `taker_coin_out` | Coin | Amount of tokens received from the taker portion |
+| `maker_coin_out` | Coin | Amount of tokens received from the maker portion |
+
+## MsgCancelLimitOrder
+
+`MsgCancelLimitOrder` allows users to cancel an active limit order.
+
+```protobuf
+message MsgCancelLimitOrder {
+  option (amino.name) = "dex/MsgCancelLimitOrder";
+  option (cosmos.msg.v1.signer) = "creator";
+
+  string creator = 1;
+  string tranche_key = 2;
+}
+```
+
+### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `creator` | string | Address of the message sender |
+| `tranche_key` | string | Unique identifier of the limit order tranche |
+
+### Response
+
+```protobuf
+message MsgCancelLimitOrderResponse {
+  cosmos.base.v1beta1.Coin taker_coin_out = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+  cosmos.base.v1beta1.Coin maker_coin_out = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `taker_coin_out` | Coin | Amount of tokens received from the taker portion that was already filled |
+| `maker_coin_out` | Coin | Amount of input tokens returned from the cancelled maker portion |
+
+## MsgMultiHopSwap
+
+`MsgMultiHopSwap` allows users to execute a market swap through multiple pools for optimal routing.
+
+```protobuf
+message MsgMultiHopSwap {
+  option (amino.name) = "dex/MsgMultiHopSwap";
+  option (cosmos.msg.v1.signer) = "creator";
+
+  string creator = 1;
+  string receiver = 2;
+  repeated MultiHopRoute routes = 3;
+  string amount_in = 4 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string exit_limit_price = 5 [
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false
+  ];
+  bool pick_best_route = 6;
+}
+
+message MultiHopRoute {
+  repeated string hops = 1;
+}
+```
+
+### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `creator` | string | Address of the message sender |
+| `receiver` | string | Address to receive the swap output |
+| `routes` | []MultiHopRoute | Possible routes to execute the swap |
+| `amount_in` | string | Amount of input token to swap |
+| `exit_limit_price` | string | Minimum acceptable output price |
+| `pick_best_route` | bool | If true, the best route is chosen; otherwise, the first successful route is used |
+
+### Route Structure
+
+Each `MultiHopRoute` contains:
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `hops` | []string | Sequence of token denominations that define the swap path |
+
+### Response
+
+```protobuf
+message MsgMultiHopSwapResponse {
+  cosmos.base.v1beta1.Coin coin_out = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+  MultiHopRoute route = 2;
+  repeated cosmos.base.v1beta1.Coin dust = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `coin_out` | Coin | Amount of output token received from the swap |
+| `route` | MultiHopRoute | The route that was used for the swap |
+| `dust` | []Coin | Small residual amounts from intermediate hops |
+
+## MsgUpdateParams
+
+`MsgUpdateParams` allows the governance account to update the module parameters.
+
+```protobuf
+message MsgUpdateParams {
+  option (amino.name) = "dex/MsgUpdateParams";
+  option (cosmos.msg.v1.signer) = "authority";
+
+  string authority = 1;
+  Params params = 2 [(gogoproto.nullable) = false];
+}
+
+message Params {
+  uint64 max_pool_spread_bps = 1;
+  int64 min_tick_spacing = 2;
+}
+```
+
+### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `authority` | string | Address of the governance account |
+| `params` | Params | New parameter values |
+
+### Params Structure
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `max_pool_spread_bps` | uint64 | Maximum allowed spread in a pool (in basis points) |
+| `min_tick_spacing` | int64 | Minimum allowed spacing between ticks |
+
+### Response
+
+```protobuf
+message MsgUpdateParamsResponse {}
+``` 

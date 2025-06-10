@@ -1,0 +1,317 @@
+---
+title: "Client"
+---
+
+This document details how to interact with the IBC Rate Limit module using the Command Line Interface (CLI) and gRPC.
+
+## CLI Commands
+
+The IBC Rate Limit module provides commands for querying module parameters. Most rate limit management is done through contract interactions.
+
+### Queries
+
+#### Query Module Parameters
+
+```bash
+neutron query ibcratelimit params [flags]
+```
+
+Example:
+```bash
+neutron query ibcratelimit params --output json
+```
+
+Sample output:
+```json
+{
+  "params": {
+    "contract_address": "neutron1abcdef..."
+  }
+}
+```
+
+## gRPC Queries
+
+The IBC Rate Limit module exposes gRPC endpoints for querying state.
+
+### Params
+
+Query the current parameters of the module.
+
+```bash
+grpcurl -plaintext \
+    localhost:9090 \
+    neutron.ibcratelimit.v1beta1.Query/Params
+```
+
+Example Response:
+```json
+{
+  "params": {
+    "contractAddress": "neutron1abcdef..."
+  }
+}
+```
+
+## Contract Client Interactions
+
+Since most of the rate limiting functionality is implemented in a CosmWasm contract, you'll need to interact with the contract directly for most operations.
+
+### Querying Contract State
+
+#### Get Quotas for a Path
+
+```bash
+neutron query wasm contract-state smart <contract-address> '{"get_quotas":{"channel_id":"channel-0","denom":"untrn"}}'
+```
+
+Example Response:
+```json
+{
+  "data": {
+    "quotas": [
+      {
+        "name": "daily-outflow",
+        "duration_seconds": 86400,
+        "percentage": "0.300000000000000000",
+        "channel_value": "1000000000",
+        "max_percentage_reset_time": "2023-07-01T00:00:00Z",
+        "flow": {
+          "amount": "50000000",
+          "period_end": "2023-07-01T00:00:00Z"
+        }
+      }
+    ]
+  }
+}
+```
+
+### Contract Transactions
+
+#### Add a Path with Quotas
+
+```bash
+neutron tx wasm execute <contract-address> \
+  '{
+    "add_path": {
+      "channel_id": "channel-0",
+      "denom": "untrn",
+      "quotas": [
+        {
+          "name": "daily-outflow",
+          "duration_seconds": 86400,
+          "percentage": "0.30",
+          "flow_direction": "out"
+        },
+        {
+          "name": "weekly-outflow",
+          "duration_seconds": 604800,
+          "percentage": "0.50",
+          "flow_direction": "out"
+        }
+      ]
+    }
+  }' \
+  --from=<key-name> \
+  --chain-id=<chain-id> \
+  --gas=auto \
+  --gas-adjustment=1.3
+```
+
+#### Remove a Path
+
+```bash
+neutron tx wasm execute <contract-address> \
+  '{
+    "remove_path": {
+      "channel_id": "channel-0",
+      "denom": "untrn"
+    }
+  }' \
+  --from=<key-name> \
+  --chain-id=<chain-id> \
+  --gas=auto \
+  --gas-adjustment=1.3
+```
+
+#### Reset a Quota
+
+```bash
+neutron tx wasm execute <contract-address> \
+  '{
+    "reset_path_quota": {
+      "channel_id": "channel-0",
+      "denom": "untrn",
+      "quota": "daily-outflow"
+    }
+  }' \
+  --from=<key-name> \
+  --chain-id=<chain-id> \
+  --gas=auto \
+  --gas-adjustment=1.3
+```
+
+## Parameter Governance
+
+The IBC Rate Limit module's parameters can be updated through the governance module. Here's how to propose a parameter change:
+
+### Create a Parameter Change Proposal
+
+First, create a JSON file for the proposal:
+
+```json
+{
+  "title": "IBC Rate Limit Contract Address Update",
+  "description": "Update the contract address for the IBC Rate Limit module",
+  "changes": [
+    {
+      "subspace": "ibcratelimit",
+      "key": "ContractAddress",
+      "value": "neutron1newaddress..."
+    }
+  ],
+  "deposit": [
+    {
+      "denom": "untrn", 
+      "amount": "10000000"
+    }
+  ]
+}
+```
+
+Then submit the proposal:
+
+```bash
+neutron tx gov submit-proposal param-change proposal.json \
+  --from=<key-name> \
+  --chain-id=<chain-id> \
+  --gas=auto \
+  --gas-adjustment=1.3
+```
+
+### Vote on the Proposal
+
+Once the proposal is submitted, validators and delegators can vote on it:
+
+```bash
+neutron tx gov vote <proposal-id> yes \
+  --from=<key-name> \
+  --chain-id=<chain-id> \
+  --gas=auto \
+  --gas-adjustment=1.3
+```
+
+## REST API
+
+The IBC Rate Limit module exposes REST endpoints via the gRPC-Gateway. The base URL is typically `http://localhost:1317`.
+
+### Query Parameters
+
+```
+GET /neutron/ibc-rate-limit/v1beta1/params
+```
+
+Example Response:
+```json
+{
+  "params": {
+    "contract_address": "neutron1abcdef..."
+  }
+}
+```
+
+## JavaScript Client Example
+
+Here's an example of how to interact with the IBC Rate Limit module and its contract using JavaScript:
+
+```javascript
+import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
+import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
+
+// Configuration
+const mnemonic = 'your mnemonic here';
+const rpcEndpoint = 'https://rpc.neutron.org';
+const contractAddress = 'neutron1abcdef...';
+const moduleParamsUrl = 'https://rest.neutron.org/neutron/ibc-rate-limit/v1beta1/params';
+
+// Query module parameters
+async function queryModuleParams() {
+  const response = await fetch(moduleParamsUrl);
+  const data = await response.json();
+  return data.params;
+}
+
+// Query quotas for a path
+async function queryQuotas(channelId, denom) {
+  const client = await SigningCosmWasmClient.connect(rpcEndpoint);
+  
+  const queryResult = await client.queryContractSmart(contractAddress, {
+    get_quotas: {
+      channel_id: channelId,
+      denom: denom
+    }
+  });
+  
+  return queryResult;
+}
+
+// Add a path with quotas
+async function addPath(channelId, denom, quotas) {
+  // Create wallet and client
+  const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
+    prefix: 'neutron'
+  });
+  const accounts = await wallet.getAccounts();
+  const senderAddress = accounts[0].address;
+  
+  const client = await SigningCosmWasmClient.connectWithSigner(
+    rpcEndpoint,
+    wallet
+  );
+  
+  // Execute contract
+  const result = await client.execute(
+    senderAddress,
+    contractAddress,
+    {
+      add_path: {
+        channel_id: channelId,
+        denom: denom,
+        quotas: quotas
+      }
+    },
+    'auto'
+  );
+  
+  return result;
+}
+
+// Example usage
+queryModuleParams()
+  .then(params => console.log('Module params:', params))
+  .catch(err => console.error('Error querying module params:', err));
+
+queryQuotas('channel-0', 'untrn')
+  .then(quotas => console.log('Quotas:', quotas))
+  .catch(err => console.error('Error querying quotas:', err));
+
+// Example of adding quotas
+const quotas = [
+  {
+    name: 'daily-outflow',
+    duration_seconds: 86400,
+    percentage: '0.30',
+    flow_direction: 'out'
+  },
+  {
+    name: 'weekly-outflow',
+    duration_seconds: 604800,
+    percentage: '0.50',
+    flow_direction: 'out'
+  }
+];
+
+addPath('channel-0', 'untrn', quotas)
+  .then(result => console.log('Transaction result:', result))
+  .catch(err => console.error('Error adding path:', err));
+``` 

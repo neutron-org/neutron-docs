@@ -1,0 +1,492 @@
+---
+title: "Using Interchain Transactions"
+---
+
+This guide provides practical examples for interacting with the Interchain Transactions module, focusing on registering interchain accounts and executing remote transactions.
+
+## Registering an Interchain Account
+
+### Using CLI
+
+```bash
+neutron tx interchaintxs register \
+  --from=<your-key> \
+  --connection-id=<connection-id> \
+  --interchain-account-id=<account-id> \
+  --register-fee=<register-fee> \
+  --chain-id=neutron-1
+```
+
+Example:
+```bash
+neutron tx interchaintxs register \
+  --from=mykey \
+  --connection-id=connection-0 \
+  --interchain-account-id=myaccount \
+  --register-fee=1000untrn \
+  --chain-id=neutron-1
+```
+
+### Using CosmWasm
+
+In your CosmWasm contract, implement the registration as follows:
+
+```rust
+// Define the message
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ExecuteMsg {
+    RegisterAccount {
+        connection_id: String,
+        interchain_account_id: String,
+    },
+    // Other messages...
+}
+
+// Implementation in the contract execute function
+pub fn execute(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: ExecuteMsg,
+) -> Result<Response, ContractError> {
+    match msg {
+        ExecuteMsg::RegisterAccount {
+            connection_id,
+            interchain_account_id,
+        } => register_account(deps, env, info, connection_id, interchain_account_id),
+        // Other message handlers...
+    }
+}
+
+fn register_account(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    connection_id: String,
+    interchain_account_id: String,
+) -> Result<Response, ContractError> {
+    // Create the register message
+    let register_msg = MsgRegisterInterchainAccount {
+        from_address: env.contract.address.to_string(),
+        connection_id,
+        interchain_account_id,
+        register_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(1000u128),
+        }],
+        ordering: 1, // 1 corresponds to ORDERED in protobuf enum
+    };
+
+    // Create CosmosMsg
+    let cosmos_msg = register_msg.into_cosmos_msg()?;
+
+    // Return response with the message
+    Ok(Response::new()
+        .add_message(cosmos_msg)
+        .add_attribute("action", "register_account")
+        .add_attribute("connection_id", connection_id)
+        .add_attribute("interchain_account_id", interchain_account_id))
+}
+```
+
+### Handling the Registration Callback
+
+Implement the Sudo handler to process callbacks from the registration:
+
+```rust
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum SudoMsg {
+    OpenAck {
+        port_id: String,
+        channel_id: String,
+        counterparty_channel_id: String,
+        counterparty_version: String,
+    },
+    // Other sudo message variants...
+}
+
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+    match msg {
+        SudoMsg::OpenAck {
+            port_id,
+            channel_id,
+            counterparty_channel_id,
+            counterparty_version,
+        } => handle_open_ack(
+            deps,
+            env,
+            port_id,
+            channel_id,
+            counterparty_channel_id,
+            counterparty_version,
+        ),
+        // Other sudo message handlers...
+    }
+}
+
+fn handle_open_ack(
+    deps: DepsMut,
+    _env: Env,
+    port_id: String,
+    channel_id: String,
+    counterparty_channel_id: String,
+    _counterparty_version: String,
+) -> Result<Response, ContractError> {
+    // Extract account ID from port_id
+    let account_id = extract_account_id(&port_id)?;
+    
+    // Store the channel information
+    let channel_info = ChannelInfo {
+        port_id: port_id.clone(),
+        channel_id: channel_id.clone(),
+        counterparty_channel_id,
+    };
+    
+    CHANNELS.save(deps.storage, account_id, &channel_info)?;
+    
+    Ok(Response::new()
+        .add_attribute("action", "handle_open_ack")
+        .add_attribute("port_id", port_id)
+        .add_attribute("channel_id", channel_id))
+}
+
+// Helper function to extract account ID from port ID
+fn extract_account_id(port_id: &str) -> Result<String, ContractError> {
+    // Port ID format: icacontroller-{contract_address}.{interchain_account_id}
+    let parts: Vec<&str> = port_id.split('.').collect();
+    if parts.len() != 2 {
+        return Err(ContractError::InvalidPortId {});
+    }
+    
+    Ok(parts[1].to_string())
+}
+```
+
+## Querying an Interchain Account Address
+
+### Using CLI
+
+```bash
+neutron query interchaintxs interchain-account-address \
+  <owner-address> \
+  <interchain-account-id> \
+  <connection-id>
+```
+
+Example:
+```bash
+neutron query interchaintxs interchain-account-address \
+  neutron1abcdef... \
+  myaccount \
+  connection-0
+```
+
+### Using CosmWasm
+
+```rust
+// Query to get the interchain account address
+pub fn query_interchain_account(
+    deps: Deps,
+    owner_address: String,
+    interchain_account_id: String,
+    connection_id: String,
+) -> Result<QueryInterchainAccountAddressResponse, ContractError> {
+    let query = QueryInterchainAccountAddressRequest {
+        owner_address,
+        interchain_account_id,
+        connection_id,
+    };
+    
+    let res: QueryInterchainAccountAddressResponse = 
+        deps.querier.query(&QueryRequest::Custom(
+            InterchainTxsQuery::InterchainAccountAddress(query)
+        ))?;
+    
+    Ok(res)
+}
+```
+
+## Executing Remote Transactions
+
+### Using CLI
+
+```bash
+neutron tx interchaintxs submit \
+  --from=<your-key> \
+  --interchain-account-id=<account-id> \
+  --connection-id=<connection-id> \
+  --msg='<json-encoded-messages>' \
+  --timeout=<timeout-seconds> \
+  --memo=<memo> \
+  --fee-amount=<fee-amount> \
+  --chain-id=neutron-1
+```
+
+Example:
+```bash
+neutron tx interchaintxs submit \
+  --from=mykey \
+  --interchain-account-id=myaccount \
+  --connection-id=connection-0 \
+  --msg='[{"@type":"/cosmos.bank.v1beta1.MsgSend","from_address":"cosmos1...","to_address":"cosmos1...","amount":[{"denom":"uatom","amount":"1000"}]}]' \
+  --timeout=600 \
+  --memo="Transfer from Neutron" \
+  --fee-amount="2000untrn,1000untrn,1000untrn" \
+  --chain-id=neutron-1
+```
+
+### Using CosmWasm
+
+Implement the transaction submission in your contract:
+
+```rust
+// Define the message
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ExecuteMsg {
+    // Other messages...
+    SubmitTx {
+        interchain_account_id: String,
+        connection_id: String,
+        msgs: Vec<Any>,
+        memo: Option<String>,
+        timeout: u64,
+    },
+}
+
+// Implementation in the contract execute function
+fn submit_tx(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    interchain_account_id: String,
+    connection_id: String,
+    msgs: Vec<Any>,
+    memo: Option<String>,
+    timeout: u64,
+) -> Result<Response, ContractError> {
+    // Check if the channel exists for this account
+    let _channel_info = CHANNELS.load(deps.storage, interchain_account_id.clone())?;
+    
+    // Create the fee for the IBC packet
+    let fee = Fee {
+        recv_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(2000u128),
+        }],
+        ack_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(1000u128),
+        }],
+        timeout_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(1000u128),
+        }],
+    };
+    
+    // Create the submit transaction message
+    let submit_msg = MsgSubmitTx {
+        from_address: env.contract.address.to_string(),
+        interchain_account_id,
+        connection_id,
+        msgs,
+        memo: memo.unwrap_or_default(),
+        timeout,
+        fee,
+    };
+    
+    // Create CosmosMsg
+    let cosmos_msg = submit_msg.into_cosmos_msg()?;
+    
+    // Return response with the message
+    Ok(Response::new()
+        .add_message(cosmos_msg)
+        .add_attribute("action", "submit_tx"))
+}
+```
+
+### Handling Transaction Callbacks
+
+Implement the Sudo handler for transaction acknowledgements:
+
+```rust
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum SudoMsg {
+    // Other sudo message variants...
+    Response {
+        request_id: String,
+        data: Binary,
+    },
+    Error {
+        request_id: String,
+        error: String,
+    },
+    Timeout {
+        request_id: String,
+    },
+}
+
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+    match msg {
+        // Other sudo message handlers...
+        SudoMsg::Response { request_id, data } => {
+            handle_response(deps, env, request_id, data)
+        },
+        SudoMsg::Error { request_id, error } => {
+            handle_error(deps, env, request_id, error)
+        },
+        SudoMsg::Timeout { request_id } => {
+            handle_timeout(deps, env, request_id)
+        },
+    }
+}
+
+fn handle_response(
+    deps: DepsMut,
+    _env: Env,
+    request_id: String,
+    data: Binary,
+) -> Result<Response, ContractError> {
+    // Process successful transaction response
+    // The data field contains the serialized acknowledgement data from the remote chain
+    
+    // Extract the transaction hash or other relevant information
+    let response_data: AcknowledgementData = from_binary(&data)?;
+    
+    // Update contract state based on the successful transaction
+    // ...
+    
+    Ok(Response::new()
+        .add_attribute("action", "handle_response")
+        .add_attribute("request_id", request_id))
+}
+
+fn handle_error(
+    deps: DepsMut,
+    _env: Env,
+    request_id: String,
+    error: String,
+) -> Result<Response, ContractError> {
+    // Process transaction error
+    // Log the error and potentially retry or take corrective action
+    
+    Ok(Response::new()
+        .add_attribute("action", "handle_error")
+        .add_attribute("request_id", request_id)
+        .add_attribute("error", error))
+}
+
+fn handle_timeout(
+    deps: DepsMut,
+    _env: Env,
+    request_id: String,
+) -> Result<Response, ContractError> {
+    // Process transaction timeout
+    // Typically, you would retry the transaction or mark it as failed
+    
+    Ok(Response::new()
+        .add_attribute("action", "handle_timeout")
+        .add_attribute("request_id", request_id))
+}
+```
+
+## Creating Cosmos Messages for Remote Chains
+
+Here are examples of creating different Cosmos SDK messages for execution on remote chains:
+
+### Bank Send Message
+
+```rust
+use cosmwasm_std::{Coin, Uint128};
+use neutron_sdk::bindings::types::cosmos::bank::v1beta1::MsgSend;
+
+fn create_bank_send_msg(
+    from_address: String,
+    to_address: String,
+    amount: Vec<Coin>,
+) -> Result<Any, ContractError> {
+    let bank_send_msg = MsgSend {
+        from_address,
+        to_address,
+        amount,
+    };
+    
+    // Convert to Any
+    let any_msg = Any {
+        type_url: "/cosmos.bank.v1beta1.MsgSend".to_string(),
+        value: to_binary(&bank_send_msg)?.to_vec(),
+    };
+    
+    Ok(any_msg)
+}
+```
+
+### Staking Delegate Message
+
+```rust
+use neutron_sdk::bindings::types::cosmos::staking::v1beta1::MsgDelegate;
+
+fn create_staking_delegate_msg(
+    delegator_address: String,
+    validator_address: String,
+    amount: Coin,
+) -> Result<Any, ContractError> {
+    let delegate_msg = MsgDelegate {
+        delegator_address,
+        validator_address,
+        amount: Some(amount),
+    };
+    
+    // Convert to Any
+    let any_msg = Any {
+        type_url: "/cosmos.staking.v1beta1.MsgDelegate".to_string(),
+        value: to_binary(&delegate_msg)?.to_vec(),
+    };
+    
+    Ok(any_msg)
+}
+```
+
+### Governance Vote Message
+
+```rust
+use neutron_sdk::bindings::types::cosmos::gov::v1beta1::{MsgVote, VoteOption};
+
+fn create_governance_vote_msg(
+    proposal_id: u64,
+    voter: String,
+    option: VoteOption,
+) -> Result<Any, ContractError> {
+    let vote_msg = MsgVote {
+        proposal_id,
+        voter,
+        option: option as i32,
+    };
+    
+    // Convert to Any
+    let any_msg = Any {
+        type_url: "/cosmos.gov.v1beta1.MsgVote".to_string(),
+        value: to_binary(&vote_msg)?.to_vec(),
+    };
+    
+    Ok(any_msg)
+}
+```
+
+## Debugging Failed Remote Transactions
+
+When a transaction fails on the remote chain, you can use the following command to get detailed error information:
+
+```bash
+<remote-chain-binary> q interchain-accounts host packet-events <channel-id> <seq-id>
+```
+
+Example:
+```bash
+gaiad q interchain-accounts host packet-events channel-42 15
+```
+
+This will return detailed event information, including the specific error that occurred during transaction execution. 
