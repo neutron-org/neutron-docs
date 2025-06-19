@@ -58,10 +58,6 @@ A schedule is the core data structure in the Cron module that represents a time-
 | `last_execute_height` | Block height when the schedule was last executed |
 | `execution_stage` | When in the block to execute (BEGIN_BLOCKER or END_BLOCKER) |
 
-Schedules can be:
-- **Periodic**: Executing at regular intervals (when `period > 0`)
-- **One-time**: Executing once at a specified future block (when `period = 0`)
-
 ### Execution Stages
 
 The Cron module supports two execution stages:
@@ -197,17 +193,3 @@ The Cron module supports a wide range of time-based tasks:
 - **Auction endings**: Automatic settlement at deadline
 - **Governance execution**: Implementing approved proposals after timelock
 - **Emergency procedures**: Scheduled failsafes or circuit breakers
-
-## Limitations and Future Improvements
-
-### Current Limitations
-
-- **Block Height Dependency**: Schedule timing is sensitive to block time variations
-- **Governance-Only Access**: Only governance or the security address can manage schedules
-- **No Conditional Execution**: Schedules execute regardless of external conditions
-
-### Planned Enhancements
-
-- **Conditional Schedules**: Allow schedules to execute only if certain conditions are met
-- **Schedule Dependencies**: Define explicit dependencies between schedules
-- **Improved Monitoring**: Better tools for tracking and managing schedules 

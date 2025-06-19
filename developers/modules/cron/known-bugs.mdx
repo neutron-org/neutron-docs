@@ -3,86 +3,81 @@ title: "Known Bugs"
 description: "Current known issues and limitations of the Cron module"
 ---
 
-### Execution delay during high network congestion
+### Schedule execution limits per block
 
-During periods of high network congestion, the Cron module's execution might be delayed. This is because the module has a per-block gas limit (`max_gas_per_block`) that restricts how many scheduled tasks can execute in a single block. If there are more due schedules than can fit within this gas limit, some will be postponed to subsequent blocks.
+The Cron module has a built-in limitation on how many schedules can be executed in a single block. When there are many schedules due for execution at the same block height, only a limited number will be processed in that block, with the remaining schedules deferred to subsequent blocks.
 
-Applications requiring precise timing should implement additional verification mechanisms:
+This is by design to prevent block congestion, but it means that during periods with many concurrent schedules, some executions may be delayed by one or more blocks:
 
 ```rust
-// Check if execution happened within acceptable time window
-let current_height = deps.env.block.height;
-let expected_execution_height = last_execution_height + period;
-let delay = current_height - expected_execution_height;
+// In your contract, you can add checks for execution timing if needed
+let current_height = env.block.height;
+let expected_height = last_execution + period;
+let delay_blocks = current_height.saturating_sub(expected_height);
 
-if delay > MAX_ACCEPTABLE_DELAY {
-    // Log warning or take corrective action
-    return Err(StdError::generic_err(format!(
-        "Schedule execution delayed by {} blocks",
-        delay
-    )));
+if delay_blocks > 0 {
+    // Log the delay for monitoring
+    deps.api.debug(&format!(
+        "Schedule execution delayed by {} blocks", 
+        delay_blocks
+    ));
 }
 ```
 
-### Message gas estimation issues
+### Block-based execution timing
 
-When specifying gas limits for scheduled messages, the module relies on the user-provided estimates. If these estimates are too low, schedule execution may fail with out-of-gas errors.
+The Cron module operates on block heights, not precise timestamps. This means:
 
-To mitigate this issue, always add a safety buffer to your gas estimates:
+- Execution timing depends on block production rate
+- Network upgrades or changes in validator behavior can affect timing
+- There is no "precise timing" by design - schedules execute at block intervals
 
-```rust
-// Example of setting a conservative gas limit with a buffer
-let estimated_gas = 50_000;
-let safety_buffer = 20_000; // 40% buffer
-let gas_limit = estimated_gas + safety_buffer;
-```
-
-### Boundary parameter behavior
-
-The `boundary` parameter in schedules is designed to specify a starting height for execution. However, there's a known issue where if a schedule with a `boundary` is created and the current height is already past that boundary, the schedule will execute immediately in the next block rather than waiting for the next period.
-
-This can lead to unexpected immediate executions when setting up schedules intended for future use. To avoid this, always ensure your boundary is set to a future block height:
+Applications should be designed with this block-based execution in mind:
 
 ```rust
-// Ensure boundary is in the future
-let current_height = env.block.height;
-let boundary = current_height + 100; // At least 100 blocks in the future
-```
-
-### Schedule name conflicts
-
-The module identifies schedules by their name, which must be unique. If a contract attempts to create a schedule with a name that already exists (even if owned by a different contract), the creation will fail.
-
-To avoid naming conflicts, especially in public environments where multiple contracts might create schedules:
-
-```rust
-// Use a prefix specific to your contract
-let unique_prefix = env.contract.address.to_string();
-let schedule_name = format!("{}_daily_rewards", unique_prefix);
-```
-
-### Long-running schedules with changing block times
-
-For schedules intended to run over long periods (weeks, months), be aware that the block time can change due to network upgrades or other factors. Since the module uses block heights for scheduling, a change in block time will affect the real-world timing of scheduled executions.
-
-For applications where precise timing is critical, consider:
-
-```rust
-// Adjust period based on current block time
-let target_seconds = 86400; // 1 day in seconds
-let block_time_seconds = 12; // Current block time
-let period = target_seconds / block_time_seconds;
-
-// Or dynamically adjust in your contract
-pub fn update_schedule_period(
+// Design your scheduled tasks to be tolerant of block-based timing
+fn handle_scheduled_execution(
     deps: DepsMut,
     env: Env,
-    current_block_time: u64,
+    info: MessageInfo,
 ) -> StdResult<Response> {
-    let schedule = SCHEDULES.load(deps.storage, "my_schedule")?;
-    let target_seconds = 86400; // 1 day in seconds
-    let new_period = target_seconds / current_block_time;
+    // Don't rely on precise timing - design for block-based execution
+    let current_block = env.block.height;
     
-    // Update schedule with new period...
+    // Perform the scheduled task
+    execute_periodic_task(deps, current_block)?;
+    
+    Ok(Response::new()
+        .add_attribute("action", "scheduled_execution")
+        .add_attribute("block", current_block.to_string()))
 }
-``` 
+```
+
+### Schedule name uniqueness
+
+Schedule names must be unique across the entire network. If a schedule with the same name already exists, attempts to create a new schedule with that name will fail.
+
+To avoid conflicts:
+
+```rust
+// Use descriptive, unique names that include context
+let schedule_name = format!("protocol_v2_daily_maintenance_{}", unique_id);
+
+// Or include contract address for uniqueness
+let schedule_name = format!("{}_reward_distribution", env.contract.address);
+```
+
+### Governance-only schedule management
+
+All schedule operations (create, update, remove) are governance-gated. This means:
+
+- Individual users cannot create schedules directly
+- All schedule changes require governance proposals
+- Emergency schedule removal requires governance action
+
+Plan accordingly for:
+- Lead time needed for governance proposals
+- Community consensus building
+- Emergency procedures through governance
+
+This design prevents spam and ensures only approved schedules run on the network, but requires advance planning for schedule management. 
