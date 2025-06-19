@@ -17,8 +17,8 @@ The Transfer module in Neutron is an enhanced wrapper around the standard IBC Tr
   <Card title="Fee Management" icon="money-bill-transfer">
     Integrates with the Fee Refunder module to distribute fees for IBC packet acknowledgements and timeouts.
   </Card>
-  <Card title="TokenFactory Integration" icon="industry">
-    Coordinates with the TokenFactory module to register IBC escrow addresses for proper token management.
+  <Card title="IBC Compatibility" icon="link">
+    Maintains full compatibility with standard IBC Transfer functionality while adding smart contract enhancements.
   </Card>
 </CardGroup>
 
@@ -29,7 +29,6 @@ The Transfer module interacts with several other modules in the Neutron ecosyste
 - **IBC Core**: Routes packets between chains using the IBC protocol
 - **Contract Manager**: Provides Sudo capability for contract callbacks with gas limitation and error handling
 - **Fee Refunder**: Manages fee distribution for IBC packet processing
-- **TokenFactory**: Coordinates escrow address registration for proper token custody
 
 ## Architecture
 
@@ -42,7 +41,6 @@ graph TD
     C -->|Process Results| B
     B -->|Sudo Callback| A
     B -->|Fee Distribution| E[Fee Refunder]
-    B -->|Register Escrow| F[TokenFactory]
 ```
 
 The Transfer module encapsulates the standard IBC transfer functionality while adding contract-friendly features. It extends the base IBC Transfer module to enable smart contracts to reliably work with cross-chain token transfers.

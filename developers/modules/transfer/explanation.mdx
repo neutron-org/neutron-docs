@@ -109,14 +109,6 @@ flowchart TD
 
 2. **Automatic Distribution**: The Transfer module automatically coordinates with the Fee Refunder module to distribute fees to relayers based on the packet's outcome.
 
-## TokenFactory Integration
-
-To ensure proper token management, Neutron's Transfer module registers IBC escrow addresses with the TokenFactory module when channels are created:
-
-1. **Escrow Address Registration**: During channel creation (`OnChanOpenAck` and `OnChanOpenConfirm`), the escrow address for the channel is registered with the TokenFactory module.
-
-2. **Purpose**: This integration ensures that TokenFactory correctly tracks and manages tokens that have entered or left Neutron via IBC channels.
-
 ## Contract Callback Processing
 
 When the Transfer module calls back to a sending contract:

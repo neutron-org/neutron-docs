@@ -6,59 +6,178 @@ This guide provides practical instructions for developers who want to use the Ha
 
 ## Implementing a Contract to Receive Staking Hooks
 
-### Step 1: Define the Hook Message Structure
+### Step 1: Define the Sudo Message Structures
 
-Create a structure in your contract to receive hook messages from the Harpoon module:
+Based on the actual Harpoon implementation, define the sudo message structures in your contract to match the exact format sent by the module:
 
 ```rust
+use cosmwasm_std::{Decimal, Uint128};
+
+// Validator-related sudo messages
 #[cw_serde]
-pub enum HookType {
-    #[serde(rename = "HOOK_TYPE_AFTER_VALIDATOR_CREATED")]
-    AfterValidatorCreated,
-    #[serde(rename = "HOOK_TYPE_BEFORE_VALIDATOR_MODIFIED")]
-    BeforeValidatorModified,
-    #[serde(rename = "HOOK_TYPE_AFTER_VALIDATOR_REMOVED")]
-    AfterValidatorRemoved,
-    #[serde(rename = "HOOK_TYPE_AFTER_VALIDATOR_BONDED")]
-    AfterValidatorBonded,
-    #[serde(rename = "HOOK_TYPE_AFTER_VALIDATOR_BEGIN_UNBONDING")]
-    AfterValidatorBeginUnbonding,
-    #[serde(rename = "HOOK_TYPE_BEFORE_DELEGATION_CREATED")]
-    BeforeDelegationCreated,
-    #[serde(rename = "HOOK_TYPE_BEFORE_DELEGATION_SHARES_MODIFIED")]
-    BeforeDelegationSharesModified,
-    #[serde(rename = "HOOK_TYPE_BEFORE_DELEGATION_REMOVED")]
-    BeforeDelegationRemoved,
-    #[serde(rename = "HOOK_TYPE_AFTER_DELEGATION_MODIFIED")]
-    AfterDelegationModified,
-    #[serde(rename = "HOOK_TYPE_BEFORE_VALIDATOR_SLASHED")]
-    BeforeValidatorSlashed,
-    #[serde(rename = "HOOK_TYPE_AFTER_UNBONDING_INITIATED")]
-    AfterUnbondingInitiated,
+pub struct AfterValidatorCreatedSudoMsg {
+    pub after_validator_created: AfterValidatorCreatedMsg,
 }
 
 #[cw_serde]
-pub struct HookMessage<T> {
-    pub hook_type: HookType,
-    pub payload: T,
+pub struct AfterValidatorCreatedMsg {
+    pub val_addr: String,
+}
+
+#[cw_serde]
+pub struct AfterValidatorBondedSudoMsg {
+    pub after_validator_bonded: AfterValidatorBondedMsg,
+}
+
+#[cw_serde]
+pub struct AfterValidatorBondedMsg {
+    pub cons_addr: String,
+    pub val_addr: String,
+}
+
+#[cw_serde]
+pub struct AfterValidatorRemovedSudoMsg {
+    pub after_validator_removed: AfterValidatorRemovedMsg,
+}
+
+#[cw_serde]
+pub struct AfterValidatorRemovedMsg {
+    pub cons_addr: String,
+    pub val_addr: String,
+}
+
+#[cw_serde]
+pub struct AfterValidatorBeginUnbondingSudoMsg {
+    pub after_validator_begin_unbonding: AfterValidatorBeginUnbondingMsg,
+}
+
+#[cw_serde]
+pub struct AfterValidatorBeginUnbondingMsg {
+    pub cons_addr: String,
+    pub val_addr: String,
+}
+
+#[cw_serde]
+pub struct BeforeValidatorModifiedSudoMsg {
+    pub before_validator_modified: BeforeValidatorModifiedMsg,
+}
+
+#[cw_serde]
+pub struct BeforeValidatorModifiedMsg {
+    pub val_addr: String,
+}
+
+#[cw_serde]
+pub struct BeforeValidatorSlashedSudoMsg {
+    pub before_validator_slashed: BeforeValidatorSlashedMsg,
+}
+
+#[cw_serde]
+pub struct BeforeValidatorSlashedMsg {
+    pub val_addr: String,
+    pub fraction: Decimal,
+    pub tokens_to_burn: Uint128,
+}
+
+// Delegation-related sudo messages
+#[cw_serde]
+pub struct BeforeDelegationCreatedSudoMsg {
+    pub before_delegation_created: BeforeDelegationCreatedMsg,
+}
+
+#[cw_serde]
+pub struct BeforeDelegationCreatedMsg {
+    pub del_addr: String,
+    pub val_addr: String,
+}
+
+#[cw_serde]
+pub struct BeforeDelegationSharesModifiedSudoMsg {
+    pub before_delegation_shares_modified: BeforeDelegationSharesModifiedMsg,
+}
+
+#[cw_serde]
+pub struct BeforeDelegationSharesModifiedMsg {
+    pub del_addr: String,
+    pub val_addr: String,
+}
+
+#[cw_serde]
+pub struct BeforeDelegationRemovedSudoMsg {
+    pub before_delegation_removed: BeforeDelegationRemovedMsg,
+}
+
+#[cw_serde]
+pub struct BeforeDelegationRemovedMsg {
+    pub del_addr: String,
+    pub val_addr: String,
+}
+
+#[cw_serde]
+pub struct AfterDelegationModifiedSudoMsg {
+    pub after_delegation_modified: AfterDelegationModifiedMsg,
+}
+
+#[cw_serde]
+pub struct AfterDelegationModifiedMsg {
+    pub del_addr: String,
+    pub val_addr: String,
+}
+
+// Unbonding-related sudo messages
+#[cw_serde]
+pub struct AfterUnbondingInitiatedSudoMsg {
+    pub after_unbonding_initiated: AfterUnbondingInitiatedMsg,
+}
+
+#[cw_serde]
+pub struct AfterUnbondingInitiatedMsg {
+    pub id: u64,
+}
+
+// Union type for all possible sudo messages
+#[cw_serde]
+pub enum HarpoonSudoMsg {
+    AfterValidatorCreated(AfterValidatorCreatedMsg),
+    AfterValidatorBonded(AfterValidatorBondedMsg),
+    AfterValidatorRemoved(AfterValidatorRemovedMsg),
+    AfterValidatorBeginUnbonding(AfterValidatorBeginUnbondingMsg),
+    BeforeValidatorModified(BeforeValidatorModifiedMsg),
+    BeforeValidatorSlashed(BeforeValidatorSlashedMsg),
+    BeforeDelegationCreated(BeforeDelegationCreatedMsg),
+    BeforeDelegationSharesModified(BeforeDelegationSharesModifiedMsg),
+    BeforeDelegationRemoved(BeforeDelegationRemovedMsg),
+    AfterDelegationModified(AfterDelegationModifiedMsg),
+    AfterUnbondingInitiated(AfterUnbondingInitiatedMsg),
 }
 ```
 
 ### Step 2: Implement Sudo Handler
 
-Implement the `sudo` entry point in your contract to handle hook messages:
+Implement the `sudo` entry point in your contract to handle the specific message types:
 
 ```rust
+use cosmwasm_std::{from_binary, Binary, DepsMut, Env, Response, StdResult};
+
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn sudo(deps: DepsMut, env: Env, msg: Binary) -> Result<Response, ContractError> {
-    let hook_msg: HookMessage<Binary> = from_binary(&msg)?;
-    
-    match hook_msg.hook_type {
-        HookType::AfterValidatorCreated => handle_validator_created(deps, env, hook_msg.payload),
-        HookType::BeforeDelegationCreated => handle_delegation_created(deps, env, hook_msg.payload),
-        // Implement handlers for other hook types as needed
-        _ => Ok(Response::new().add_attribute("action", "hook_ignored")),
+pub fn sudo(deps: DepsMut, env: Env, msg: Binary) -> StdResult<Response> {
+    // Try to parse each possible sudo message type
+    if let Ok(msg) = from_binary::<AfterValidatorCreatedSudoMsg>(&msg) {
+        return handle_after_validator_created(deps, env, msg.after_validator_created);
     }
+    
+    if let Ok(msg) = from_binary::<BeforeDelegationCreatedSudoMsg>(&msg) {
+        return handle_before_delegation_created(deps, env, msg.before_delegation_created);
+    }
+    
+    if let Ok(msg) = from_binary::<AfterDelegationModifiedSudoMsg>(&msg) {
+        return handle_after_delegation_modified(deps, env, msg.after_delegation_modified);
+    }
+    
+    // Add handlers for other message types as needed
+    
+    // If none of the expected messages match, just ignore
+    Ok(Response::new().add_attribute("action", "sudo_ignored"))
 }
 ```
 
@@ -67,32 +186,45 @@ pub fn sudo(deps: DepsMut, env: Env, msg: Binary) -> Result<Response, ContractEr
 Create handlers for each hook type your contract needs to process:
 
 ```rust
-fn handle_validator_created(
+fn handle_after_validator_created(
     deps: DepsMut,
     _env: Env,
-    payload: Binary,
-) -> Result<Response, ContractError> {
-    // Parse the payload according to the hook type
-    let validator_info: ValidatorInfo = from_binary(&payload)?;
-    
+    msg: AfterValidatorCreatedMsg,
+) -> StdResult<Response> {
     // Process the validator creation event
-    // For example, store the validator in your contract's state
+    // Access validator address with msg.val_addr
     
-    Ok(Response::new().add_attribute("action", "validator_created_processed"))
+    Ok(Response::new()
+        .add_attribute("action", "validator_created_processed")
+        .add_attribute("validator", msg.val_addr))
 }
 
-fn handle_delegation_created(
+fn handle_before_delegation_created(
     deps: DepsMut,
     _env: Env,
-    payload: Binary,
-) -> Result<Response, ContractError> {
-    // Parse the delegation information from the payload
-    let delegation_info: DelegationInfo = from_binary(&payload)?;
+    msg: BeforeDelegationCreatedMsg,
+) -> StdResult<Response> {
+    // Process the delegation creation event
+    // Access delegator with msg.del_addr and validator with msg.val_addr
     
-    // Update your contract's state to track this delegation
-    // For example, update a user's voting power
+    Ok(Response::new()
+        .add_attribute("action", "delegation_created_processed")
+        .add_attribute("delegator", msg.del_addr)
+        .add_attribute("validator", msg.val_addr))
+}
+
+fn handle_after_delegation_modified(
+    deps: DepsMut,
+    _env: Env,
+    msg: AfterDelegationModifiedMsg,
+) -> StdResult<Response> {
+    // Process the delegation modification event
+    // Access delegator with msg.del_addr and validator with msg.val_addr
     
-    Ok(Response::new().add_attribute("action", "delegation_created_processed"))
+    Ok(Response::new()
+        .add_attribute("action", "delegation_modified_processed")
+        .add_attribute("delegator", msg.del_addr)
+        .add_attribute("validator", msg.val_addr))
 }
 ```
 
@@ -102,78 +234,112 @@ Since hook errors can potentially abort transactions or halt the chain, your con
 
 ```rust
 // Example of a robust handler that never fails
-fn handle_delegation_modified(
+fn handle_before_delegation_shares_modified(
     deps: DepsMut,
     _env: Env,
-    payload: Binary,
-) -> Result<Response, ContractError> {
-    // Try to parse the payload, but don't fail if it's invalid
-    let delegation_result = from_binary::<DelegationInfo>(&payload);
-    
-    match delegation_result {
-        Ok(delegation_info) => {
-            // Process the delegation modification
-            // ...
-            
-            Ok(Response::new().add_attribute("action", "delegation_modified_processed"))
+    msg: BeforeDelegationSharesModifiedMsg,
+) -> StdResult<Response> {
+    // Always return success, even if processing fails
+    match process_delegation_shares_change(&msg) {
+        Ok(_) => {
+            Ok(Response::new()
+                .add_attribute("action", "delegation_shares_modified_processed")
+                .add_attribute("delegator", msg.del_addr)
+                .add_attribute("validator", msg.val_addr))
         },
         Err(_) => {
             // Log the error but don't fail
-            deps.api.debug("Failed to parse delegation info");
-            Ok(Response::new().add_attribute("action", "delegation_modified_skipped"))
+            deps.api.debug("Failed to process delegation shares modification");
+            Ok(Response::new()
+                .add_attribute("action", "delegation_shares_modified_skipped")
+                .add_attribute("delegator", msg.del_addr)
+                .add_attribute("validator", msg.val_addr))
         }
     }
 }
+
+fn process_delegation_shares_change(msg: &BeforeDelegationSharesModifiedMsg) -> StdResult<()> {
+    // Your processing logic here
+    Ok(())
+}
 ```
 
-## Submitting a Governance Proposal for Hook Subscription
+## Managing Hook Subscriptions Through Governance
 
-Since hook subscriptions can only be managed through governance, you'll need to create and submit a governance proposal.
+Hook subscriptions can only be managed through governance. The approach differs depending on your environment:
 
-### Step 1: Prepare the Proposal
+### For Mainnet/Testnet Deployment
+
+When deploying on Neutron mainnet or testnet, you need to go through the standard governance process:
+
+1. **Community Discussion**: Engage with the Neutron community to discuss your hook subscription needs
+2. **Governance Proposal**: Submit a formal governance proposal through the DAO
+3. **Community Voting**: Wait for the community to vote on your proposal
+
+<Info>
+For mainnet and testnet deployments, contact the Neutron team or engage with the community on Discord to discuss your hook subscription requirements before submitting a governance proposal.
+</Info>
+
+### For Local Development
+
+When working on a local Neutron instance, you have more direct control and can submit governance proposals directly:
+
+#### Step 1: Prepare the Governance Proposal
 
 Create a JSON file with the proposal content:
 
 ```json
 {
   "title": "Subscribe Contract to Staking Hooks",
-  "description": "This proposal subscribes the contract at neutron1... to specific staking hooks for tracking historical voting power",
+  "description": "This proposal subscribes the contract to specific staking hooks for tracking delegation events",
   "messages": [
     {
       "@type": "/neutron.harpoon.MsgManageHookSubscription",
-      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6z2zm3",  // Gov module account
+      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6z2zm3",
       "hook_subscription": {
-        "contract_address": "neutron1...",  // Your contract address
-        "hooks": [  // List of hooks to subscribe to
+        "contract_address": "neutron1...",
+        "hooks": [
           "HOOK_TYPE_BEFORE_DELEGATION_CREATED",
-          "HOOK_TYPE_BEFORE_DELEGATION_SHARES_MODIFIED",
+          "HOOK_TYPE_BEFORE_DELEGATION_SHARES_MODIFIED", 
           "HOOK_TYPE_BEFORE_DELEGATION_REMOVED",
           "HOOK_TYPE_AFTER_DELEGATION_MODIFIED"
         ]
       }
     }
   ],
-  "deposit": "1000000000untrn"  // Minimum deposit required by governance
+  "deposit": "1000000000untrn"
 }
 ```
 
-### Step 2: Submit the Proposal
+#### Step 2: Submit the Proposal (Local Development)
 
 Use the CLI to submit the governance proposal:
 
 ```bash
-neutrond tx gov submit-proposal /path/to/proposal.json --from <your-key> --chain-id neutron-1 --gas-prices 0.025untrn --gas auto --gas-adjustment 1.3
+neutrond tx gov submit-proposal /path/to/proposal.json \
+  --from <your-key> \
+  --chain-id <your-chain-id> \
+  --gas-prices 0.025untrn \
+  --gas auto \
+  --gas-adjustment 1.3
 ```
 
-### Step 3: Vote on the Proposal
+#### Step 3: Vote on the Proposal (Local Development)
 
-Once the proposal is submitted, validators and delegators will need to vote on it:
+On your local network, vote on the proposal:
 
 ```bash
-neutrond tx gov vote <proposal-id> yes --from <your-key> --chain-id neutron-1 --gas-prices 0.025untrn --gas auto --gas-adjustment 1.3
+neutrond tx gov vote <proposal-id> yes \
+  --from <your-key> \
+  --chain-id <your-chain-id> \
+  --gas-prices 0.025untrn \
+  --gas auto \
+  --gas-adjustment 1.3
 ```
 
-If the proposal passes, your contract will be subscribed to the specified hooks.
+<Warning>
+The commands above are only for local development environments. Production deployments require community governance participation.
+</Warning>
 
 ## Querying Hook Subscriptions
 
@@ -210,71 +376,95 @@ pub struct SubscribedContractsResponse {
 }
 ```
 
-## Example: Tracking Historical Voting Power
+## Example: Tracking Delegation Events
 
-Here's a simplified example of using the Harpoon module to track historical voting power:
+Here's a simplified example of using the Harpoon module to track delegation events:
 
 ```rust
-#[cw_serde]
-pub struct HistoricalVotingPower {
-    pub height: u64,
-    pub voting_power: Uint128,
-}
+use cw_storage_plus::Map;
 
 #[cw_serde]
-pub struct DelegationInfo {
+pub struct DelegationRecord {
     pub delegator: String,
     pub validator: String,
-    pub shares: Uint128,
+    pub height: u64,
+    pub event_type: String,
 }
 
-// Store voting power at each height for each user
-pub fn update_voting_power(
+// Storage for delegation events
+const DELEGATION_EVENTS: Map<u64, Vec<DelegationRecord>> = Map::new("delegation_events");
+
+// Handler for delegation creation events
+fn handle_before_delegation_created(
     deps: DepsMut,
     env: Env,
-    delegator: String,
-    shares_change: Uint128,
-) -> StdResult<()> {
-    let mut voting_power = VOTING_POWER
-        .may_load(deps.storage, &delegator)?
-        .unwrap_or_default();
-    
-    // Add the current height and updated voting power
-    let new_entry = HistoricalVotingPower {
+    msg: BeforeDelegationCreatedMsg,
+) -> StdResult<Response> {
+    let record = DelegationRecord {
+        delegator: msg.del_addr.clone(),
+        validator: msg.val_addr.clone(),
         height: env.block.height,
-        voting_power: voting_power.voting_power.checked_add(shares_change)?,
+        event_type: "delegation_created".to_string(),
     };
     
-    VOTING_POWER.save(deps.storage, &delegator, &new_entry)?;
+    // Store the event
+    store_delegation_event(deps.storage, env.block.height, record)?;
+    
+    Ok(Response::new()
+        .add_attribute("action", "delegation_created_tracked")
+        .add_attribute("delegator", msg.del_addr)
+        .add_attribute("validator", msg.val_addr)
+        .add_attribute("height", env.block.height.to_string()))
+}
+
+// Handler for delegation modification events
+fn handle_after_delegation_modified(
+    deps: DepsMut,
+    env: Env,
+    msg: AfterDelegationModifiedMsg,
+) -> StdResult<Response> {
+    let record = DelegationRecord {
+        delegator: msg.del_addr.clone(),
+        validator: msg.val_addr.clone(),
+        height: env.block.height,
+        event_type: "delegation_modified".to_string(),
+    };
+    
+    // Store the event
+    store_delegation_event(deps.storage, env.block.height, record)?;
+    
+    Ok(Response::new()
+        .add_attribute("action", "delegation_modified_tracked")
+        .add_attribute("delegator", msg.del_addr)
+        .add_attribute("validator", msg.val_addr)
+        .add_attribute("height", env.block.height.to_string()))
+}
+
+// Helper function to store delegation events
+fn store_delegation_event(
+    storage: &mut dyn Storage,
+    height: u64,
+    record: DelegationRecord,
+) -> StdResult<()> {
+    let mut events = DELEGATION_EVENTS
+        .may_load(storage, height)?
+        .unwrap_or_default();
+    
+    events.push(record);
+    DELEGATION_EVENTS.save(storage, height, &events)?;
     Ok(())
 }
 
-// Handler for delegation events
-pub fn handle_delegation_modified(
-    deps: DepsMut,
-    env: Env,
-    payload: Binary,
-) -> Result<Response, ContractError> {
-    let delegation_info: DelegationInfo = from_binary(&payload)?;
-    
-    // Update the delegator's voting power
-    update_voting_power(deps, env, delegation_info.delegator, delegation_info.shares)?;
-    
-    Ok(Response::new().add_attribute("action", "voting_power_updated"))
-}
-
-// Query voting power at a specific height
-pub fn query_voting_power_at_height(
+// Query delegation events at a specific height
+pub fn query_delegation_events_at_height(
     deps: Deps,
-    delegator: String,
     height: u64,
-) -> StdResult<Uint128> {
-    let voting_power = VOTING_POWER.load(deps.storage, &delegator)?;
+) -> StdResult<Vec<DelegationRecord>> {
+    let events = DELEGATION_EVENTS
+        .may_load(deps.storage, height)?
+        .unwrap_or_default();
     
-    // In a real implementation, you'd search through a history of entries
-    // to find the voting power at the specific height
-    
-    Ok(voting_power.voting_power)
+    Ok(events)
 }
 ```
 
