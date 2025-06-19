@@ -2,7 +2,7 @@
 title: "Fee Burner Overview"
 ---
 
-The Fee Burner module is a core component of Neutron's tokenomics design. It manages the consumer part of transaction fees by implementing a deflationary mechanism that burns NTRN tokens and redistributes other token denominations to the Treasury.
+The Fee Burner module is a core component of Neutron's tokenomics design. It manages transaction fees by implementing a deflationary mechanism that burns NTRN tokens and redistributes other token denominations to the Treasury.
 
 ## Key Features
 
@@ -18,9 +18,9 @@ The Fee Burner module is a core component of Neutron's tokenomics design. It man
 
 The Fee Burner module operates through the following workflow:
 
-1. **Fee Collection**: Interchain Security collects transaction fees and splits them between the provider chain (25%) and consumer chain (75%)
+1. **Fee Collection**: Transaction fees are collected in the fee collector account during block execution
    
-2. **Fee Processing**: At the end of each block, the module processes all fees in the redistribution account:
+2. **Fee Processing**: At the end of each block, the module processes all fees in the fee collector account:
    - NTRN tokens are burned, permanently removing them from circulation
    - Non-NTRN tokens are sent to the Treasury address for further ecosystem management
 

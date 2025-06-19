@@ -6,14 +6,11 @@ This document explains the principles, architecture, and internal mechanisms of 
 
 ## Core Concepts
 
-### Fee Distribution in Interchain Security
+### Fee Collection in Sovereign Neutron
 
-Neutron operates as a consumer chain within the Interchain Security model. Transaction fees collected on Neutron are split between:
+Following the Mercury upgrade in April 2025, Neutron operates as a fully sovereign network with its own validator set and native NTRN staking. Transaction fees collected on Neutron are processed entirely within the network through the Fee Burner module.
 
-1. **Provider Chain (25%)**: A quarter of all fees are directed to the provider chain's fee pool
-2. **Consumer Chain (75%)**: The remaining three-quarters go to the `cons_redistribute` module account on Neutron
-
-The Fee Burner module is responsible for managing the consumer chain's portion of these fees.
+All transaction fees are initially collected in the fee collector account during block execution, and the Fee Burner module processes these fees at the end of each block.
 
 ### Deflationary Mechanism
 
@@ -22,13 +19,13 @@ The primary function of the Fee Burner is to implement a deflationary tokenomics
 - **Systematic Burning**: By destroying NTRN tokens collected as fees, the module reduces the total supply over time
 - **Supply Contraction**: As usage of the network increases, more fees are collected and burned, creating stronger deflationary pressure
 
-This mechanism helps maintain long-term value for NTRN token holders while counterbalancing any inflationary pressures from staking rewards.
+This mechanism helps maintain long-term value for NTRN token holders while supporting Neutron's fixed supply tokenomics model introduced with the Mercury upgrade.
 
 ### Treasury Funding
 
 For fees collected in non-NTRN denominations (such as IBC tokens), the module:
 
-1. Identifies all non-NTRN tokens in the redistribution account
+1. Identifies all non-NTRN tokens in the fee collector account
 2. Transfers these tokens to the Treasury address specified in the module parameters
 3. Enables ecosystem funding without creating additional NTRN tokens
 
@@ -38,14 +35,12 @@ The Treasury can then use these funds for ecosystem development, grants, and oth
 
 ```mermaid
 graph TD
-    A[Transaction Fees] --> B[Fee Splitting]
-    B --> C[Provider Chain 25%]
-    B --> D[Consumer Chain 75%]
-    D --> E[Fee Burner Module]
-    E --> F{Token Type?}
-    F -->|NTRN| G[Burn Tokens]
-    F -->|Non-NTRN| H[Send to Treasury]
-    G --> I[Record Total Burned]
+    A[Transaction Fees] --> B[Fee Collector Account]
+    B --> C[Fee Burner Module]
+    C --> D{Token Type?}
+    D -->|NTRN| E[Burn Tokens]
+    D -->|Non-NTRN| F[Send to Treasury]
+    E --> G[Record Total Burned]
 ```
 
 ## Implementation Details
@@ -54,7 +49,7 @@ graph TD
 
 The Fee Burner module's core functionality executes at the end of every block through the `EndBlock` handler. During this process:
 
-1. The module accesses the `cons_redistribute` module account
+1. The module accesses the fee collector account
 2. Retrieves all token balances from this account
 3. Processes each token denomination according to the module's rules
 
@@ -91,10 +86,11 @@ This state is accessible through the module's query endpoints, allowing transpar
 
 ## Economic Implications
 
-The Fee Burner module plays a crucial role in Neutron's economic model:
+The Fee Burner module plays a crucial role in Neutron's sovereign economic model:
 
 1. **Supply Control**: By continuously reducing the circulating supply of NTRN, the module helps maintain token value
 2. **Usage-Based Deflation**: The more the network is used, the more tokens are burned, creating a positive feedback loop
 3. **Ecosystem Sustainability**: Non-NTRN fees provide funding for ecosystem development without diluting token value
+4. **Fixed Supply Preservation**: Supports Neutron's fixed supply tokenomics introduced with the Mercury upgrade
 
-This balanced approach ensures that both token holders and the broader ecosystem benefit from network growth. 
+This balanced approach ensures that both token holders and the broader ecosystem benefit from network growth while maintaining the deflationary characteristics essential to Neutron's sovereign tokenomics model. 

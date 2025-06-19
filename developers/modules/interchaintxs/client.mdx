@@ -2,65 +2,70 @@
 title: "Client"
 ---
 
-This document details how to interact with the Interchain Transactions module using the Command Line Interface (CLI) and gRPC.
+This document details how to interact with the Interchain Transactions module. Unlike other Neutron modules, the Interchain Transactions module is designed exclusively for CosmWasm smart contracts and cannot be used directly through CLI commands or individual user transactions.
 
-## CLI Commands
+<Warning>
+The Interchain Transactions module does not support direct CLI transactions. All interactions must be implemented within CosmWasm smart contracts. Users cannot register interchain accounts or submit transactions directly.
+</Warning>
 
-The Interchain Transactions module provides commands for registering interchain accounts, submitting transactions, and querying state.
+## Contract Integration
 
-### Transactions
+The Interchain Transactions module provides CosmWasm contracts with the ability to:
 
-#### Register an Interchain Account
+- Register interchain accounts on remote chains
+- Submit transactions to be executed on remote chains
+- Receive callbacks from IBC acknowledgments and timeouts
 
-```bash
-neutron tx interchaintxs register \
-  --from=<key-name> \
-  --connection-id=<connection-id> \
-  --interchain-account-id=<account-id> \
-  --register-fee=<register-fee> \
-  --chain-id=<chain-id>
+### Message Types for Contracts
+
+Contracts can send the following messages to the module:
+
+#### RegisterInterchainAccount
+
+```rust
+use neutron_sdk::bindings::msg::NeutronMsg;
+
+let register_msg = NeutronMsg::RegisterInterchainAccount {
+    connection_id: "connection-0".to_string(),
+    interchain_account_id: "my-account".to_string(),
+    register_fee: vec![Coin {
+        denom: "untrn".to_string(),
+        amount: Uint128::from(1000u128),
+    }],
+};
 ```
 
-Example:
-```bash
-neutron tx interchaintxs register \
-  --from=mykey \
-  --connection-id=connection-0 \
-  --interchain-account-id=myaccount \
-  --register-fee=1000untrn \
-  --chain-id=neutron-1
+#### SubmitTx
+
+```rust
+let submit_msg = NeutronMsg::SubmitTx {
+    connection_id: "connection-0".to_string(),
+    interchain_account_id: "my-account".to_string(),
+    msgs: vec![/* your cosmos messages */],
+    memo: "".to_string(),
+    timeout: 3600,
+    fee: Fee {
+        recv_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(2000u128),
+        }],
+        ack_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(1000u128),
+        }],
+        timeout_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(1000u128),
+        }],
+    },
+};
 ```
 
-#### Submit a Transaction
+## Query Endpoints
 
-```bash
-neutron tx interchaintxs submit \
-  --from=<key-name> \
-  --interchain-account-id=<account-id> \
-  --connection-id=<connection-id> \
-  --msg='<json-encoded-messages>' \
-  --timeout=<timeout-seconds> \
-  --memo=<memo> \
-  --fee-amount=<fee-amount> \
-  --chain-id=<chain-id>
-```
+While transaction submission is restricted to contracts, query endpoints can be accessed through CLI for debugging and monitoring purposes.
 
-Example:
-```bash
-neutron tx interchaintxs submit \
-  --from=mykey \
-  --interchain-account-id=myaccount \
-  --connection-id=connection-0 \
-  --msg='[{"@type":"/cosmos.bank.v1beta1.MsgSend","from_address":"cosmos1...","to_address":"cosmos1...","amount":[{"denom":"uatom","amount":"1000"}]}]' \
-  --timeout=600 \
-  --memo="Transfer from Neutron" \
-  --fee-amount="2000untrn,1000untrn,1000untrn" \
-  --chain-id=neutron-1
-```
-
-### Queries
-
-#### Query Module Parameters
+### Query Module Parameters
 
 ```bash
 neutron query interchaintxs params
@@ -83,7 +88,7 @@ Example Response:
 }
 ```
 
-#### Query Interchain Account Address
+### Query Interchain Account Address
 
 ```bash
 neutron query interchaintxs interchain-account-address \
@@ -156,123 +161,14 @@ Example Response:
 }
 ```
 
-## gRPC Transactions
+## Contract Implementation
 
-The Interchain Transactions module supports the following transactions via gRPC.
+For complete examples of how to implement interchain transactions in your smart contracts, refer to:
 
-### RegisterInterchainAccount
+- [How-to Guide](/developers/modules/interchaintxs/how-to) - Detailed implementation examples
+- [API Reference](/developers/modules/interchaintxs/api) - Message and query specifications
+- [Event Handling](/developers/modules/interchaintxs/events) - Processing IBC callbacks
 
-Register an interchain account on a remote chain.
-
-```bash
-grpcurl -plaintext \
-    -d '{
-      "from_address": "neutron1...",
-      "connection_id": "connection-0",
-      "interchain_account_id": "myaccount",
-      "register_fee": [
-        {
-          "denom": "untrn",
-          "amount": "1000"
-        }
-      ],
-      "ordering": 1
-    }' \
-    localhost:9090 \
-    neutron.interchaintxs.v1.Msg/RegisterInterchainAccount
-```
-
-### SubmitTx
-
-Submit a transaction to be executed on a remote chain.
-
-```bash
-grpcurl -plaintext \
-    -d '{
-      "from_address": "neutron1...",
-      "interchain_account_id": "myaccount",
-      "connection_id": "connection-0",
-      "msgs": [
-        {
-          "@type": "/cosmos.bank.v1beta1.MsgSend",
-          "from_address": "cosmos1...",
-          "to_address": "cosmos1...",
-          "amount": [
-            {
-              "denom": "uatom",
-              "amount": "1000"
-            }
-          ]
-        }
-      ],
-      "memo": "Transfer from Neutron",
-      "timeout": 600,
-      "fee": {
-        "recv_fee": [
-          {
-            "denom": "untrn",
-            "amount": "2000"
-          }
-        ],
-        "ack_fee": [
-          {
-            "denom": "untrn",
-            "amount": "1000"
-          }
-        ],
-        "timeout_fee": [
-          {
-            "denom": "untrn",
-            "amount": "1000"
-          }
-        ]
-      }
-    }' \
-    localhost:9090 \
-    neutron.interchaintxs.v1.Msg/SubmitTx
-```
-
-## REST API
-
-The Interchain Transactions module exposes REST endpoints via the gRPC-Gateway. The base URL is typically `http://localhost:1317`.
-
-### Query Parameters
-
-```
-GET /neutron/interchaintxs/params
-```
-
-Example Response:
-```json
-{
-  "params": {
-    "host_enabled": true,
-    "allow_messages": [
-      "/cosmos.bank.v1beta1.MsgSend",
-      "/cosmos.staking.v1beta1.MsgDelegate",
-      "/cosmos.staking.v1beta1.MsgUndelegate",
-      "/cosmos.staking.v1beta1.MsgBeginRedelegate",
-      "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
-      "/cosmos.gov.v1beta1.MsgVote"
-    ]
-  }
-}
-```
-
-### Query Interchain Account Address
-
-```
-GET /neutron/interchaintxs/{owner_address}/{interchain_account_id}/{connection_id}/interchain_account_address
-```
-
-Example:
-```
-GET /neutron/interchaintxs/neutron1abcdef.../myaccount/connection-0/interchain_account_address
-```
-
-Example Response:
-```json
-{
-  "interchain_account_address": "cosmos1xyz..."
-}
-``` 
+<Note>
+Remember that interchain transactions are asynchronous. Your contract must implement proper callback handling to process acknowledgments, errors, and timeouts from remote chains.
+</Note> 

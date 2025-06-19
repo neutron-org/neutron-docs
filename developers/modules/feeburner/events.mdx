@@ -106,7 +106,7 @@ Emitted by the Bank module when coins are burned.
 
 | Attribute Key | Description |
 | --- | --- |
-| `burner` | Address of the module burning the tokens ("cons_redistribute") |
+| `burner` | Address of the fee burner module account |
 | `amount` | Amount and denomination of tokens burned |
 
 ```json
@@ -115,7 +115,7 @@ Emitted by the Bank module when coins are burned.
   "attributes": [
     {
       "key": "burner",
-      "value": "neutron1..." // cons_redistribute module address
+      "value": "neutron1..." // feeburner module address
     },
     {
       "key": "amount",
@@ -131,7 +131,7 @@ Emitted by the Bank module when tokens are transferred to the Treasury.
 
 | Attribute Key | Description |
 | --- | --- |
-| `sender` | Address of the module sending the tokens ("cons_redistribute") |
+| `sender` | Address of the fee burner module |
 | `recipient` | Address of the Treasury |
 | `amount` | Amount and denomination of tokens transferred |
 
@@ -141,7 +141,7 @@ Emitted by the Bank module when tokens are transferred to the Treasury.
   "attributes": [
     {
       "key": "sender",
-      "value": "neutron1..." // cons_redistribute module address
+      "value": "neutron1..." // feeburner module address
     },
     {
       "key": "recipient",
