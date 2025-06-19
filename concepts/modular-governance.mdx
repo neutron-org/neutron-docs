@@ -126,6 +126,12 @@ Neutron uses dedicated smart contracts called **Voting Vaults** to calculate gov
 
 The Agora can create specialized Committees with specific powers and resources for day-to-day operations. These subDAOs are customizable in terms of **membership** (defining who can participate), **voting weight** (configuring how votes are weighted), and **execution rights** (setting specific parameters and permissions).
 
+### Active SubDAOs
+
+**Cron SubDAO**: Manages scheduling proposals for the [Cron module](/developers/modules/cron/overview), enabling automated contract executions through governance oversight. This subDAO handles routine scheduling decisions while remaining accountable to the main DAO through the overrule mechanism.
+
+**Security SubDAO**: A specialized subDAO that can only execute `pause()` methods on certain contracts, enabling rapid response to security incidents. This subDAO can pause other subDAOs, the Reserve contract, and the Distribution contract.
+
 ### Timelocks & Overrules
 
 <div className="p-4 border-l-4 border-primary bg-primary/5 rounded my-6">
@@ -137,10 +143,6 @@ The Agora can create specialized Committees with specific powers and resources f
     <li>If no overrule occurs, the subDAO proposal executes after the timelock period</li>
   </ol>
 </div>
-
-### Security SubDAO
-
-A specialized subDAO that can only execute `pause()` methods on certain contracts, enabling rapid response to security incidents. This subDAO can pause other subDAOs, the Reserve contract, and the Distribution contract.
 
 ## Benefits and Parameters
 
