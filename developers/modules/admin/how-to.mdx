@@ -1,392 +1,168 @@
 ---
 title: "How-to Guide"
-description: "Step-by-step instructions for using the admin module in governance and administrative operations"
+description: "Understanding how the Main DAO interacts with the admin module"
 ---
 
-This guide provides practical instructions for interacting with the admin module, creating governance proposals, and executing administrative operations on the Neutron network.
+This guide explains how the admin module works within Neutron's governance system. Unlike other modules that users can interact with directly, the admin module is exclusively accessible by the **Main DAO contract**.
 
-## Prerequisites
+<Warning>
+The admin module cannot be used directly by individual users or external contracts. All interactions must go through Neutron's DAO governance process.
+</Warning>
 
-Before working with the admin module, ensure you have:
+## Understanding Admin Module Access
 
-- A Neutron node or access to a Neutron RPC endpoint
-- The `neutrond` CLI tool installed and configured
-- Appropriate permissions (typically DAO membership or governance authority)
-- Understanding of Cosmos SDK message formats
+The admin module operates under a strict access control model:
 
-## Basic Operations
+- **Only the Main DAO contract** can send messages to the admin module
+- Messages are sent using WebAssembly bindings from the Main DAO
+- Individual users cannot directly submit proposals or interact with the module
+- All administrative operations require DAO governance approval
 
-### Checking Admin Module Status
+## How It Works
 
-First, verify that the admin module is properly configured and operational:
+### 1. DAO Governance Process
 
-```bash
-# Query module parameters
-neutrond query adminmodule params
+When the Neutron community wants to execute administrative operations:
 
-# Check current admins (if applicable)
-neutrond query adminmodule admins
+1. **Proposal Creation**: Community members create proposals through the DAO interface
+2. **Community Voting**: NTRN token holders vote on the proposal
+3. **Proposal Execution**: If approved, the Main DAO contract sends messages to the admin module
+4. **Admin Module Processing**: The admin module validates and executes the whitelisted operations
+
+### 2. Message Flow
+
+```
+Community Proposal → DAO Voting → Main DAO Contract → Admin Module → Network Changes
 ```
 
-### Viewing Whitelisted Messages
+The admin module receives `ProposalExecuteMessage` bindings from the Main DAO contract and processes them according to its whitelisting rules.
 
-To see which message types are currently whitelisted for execution:
+## Supported Operations
 
-```bash
-# Query the current whitelist configuration
-neutrond query adminmodule whitelist
-```
+The admin module can process two types of proposals:
 
-## Creating Governance Proposals
+### Legacy Proposals
 
-### Legacy Proposal Creation
+Traditional Cosmos SDK governance proposals that are still supported for backward compatibility:
 
-For traditional governance proposals using the legacy format:
-
-#### Parameter Change Proposal
-
-```bash
-# Create a parameter change proposal
-neutrond tx gov submit-proposal param-change proposal.json \
-  --from=<your-key> \
-  --chain-id=neutron-1 \
-  --gas=auto \
-  --gas-adjustment=1.5
-```
-
-Where `proposal.json` contains:
-
-```json
-{
-  "title": "Update Module Parameters",
-  "description": "Proposal to update specific module parameters",
-  "changes": [
-    {
-      "subspace": "targetmodule",
-      "key": "parameter_key",
-      "value": "new_value"
-    }
-  ],
-  "deposit": "1000000untrn"
-}
-```
-
-#### Community Pool Spend Proposal
-
-```bash
-# Submit a community pool spend proposal
-neutrond tx gov submit-proposal community-pool-spend proposal.json \
-  --from=<your-key> \
-  --chain-id=neutron-1
-```
-
-With proposal JSON:
-
-```json
-{
-  "title": "Community Fund Allocation",
-  "description": "Allocate funds for development initiatives",
-  "recipient": "neutron1...",
-  "amount": [
-    {
-      "denom": "untrn",
-      "amount": "1000000"
-    }
-  ],
-  "deposit": "1000000untrn"
-}
-```
+- **Parameter Changes**: Updating module parameters using the legacy params system
+- **WASM Proposals**: Contract instantiation, migration, and administration
+- **IBC Proposals**: Operations for modules that haven't migrated to SDK 0.47 patterns
 
 ### Message-Based Proposals
 
-For modern SDK 0.47+ message-based proposals:
+Modern proposals that can execute any whitelisted `sdk.Msg`:
 
-#### Direct Message Execution
+- **Module Parameter Updates**: Using new-style `MsgUpdateParams` messages
+- **Contract Operations**: WASM contract management through direct messages
+- **Multi-Module Coordination**: Batch operations across different modules
 
-```bash
-# Submit a message-based proposal
-neutrond tx adminmodule submit-proposal messages.json \
-  --from=<your-key> \
-  --chain-id=neutron-1
-```
+## Message Types
 
-Where `messages.json` contains:
+Based on the old documentation, the admin module supports these message types:
 
-```json
-{
-  "messages": [
-    {
-      "@type": "/cosmos.bank.v1beta1.MsgSend",
-      "from_address": "neutron1...",
-      "to_address": "neutron1...",
-      "amount": [
-        {
-          "denom": "untrn",
-          "amount": "1000000"
-        }
-      ]
-    }
-  ],
-  "proposer": "neutron1..."
+### MsgSubmitProposalLegacy
+
+For backward compatibility with legacy proposal formats:
+
+```go
+type MsgSubmitProposalLegacy struct {
+    Content  *types.Any  `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
+    Proposer string      `protobuf:"bytes,2,opt,name=proposer,proto3" json:"proposer,omitempty"`
 }
 ```
 
-## Smart Contract Integration
+### MsgSubmitProposal  
 
-### Using WASM Bindings
+For modern message-based proposals:
 
-When integrating with smart contracts, use the ProposalExecuteMessage binding:
+```go
+type MsgSubmitProposal struct {
+    Messages []types.Any `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
+    Proposer string      `protobuf:"bytes,2,opt,name=proposer,proto3" json:"proposer,omitempty"`
+}
+```
+
+### Admin Management Messages
+
+The module also supports admin management operations:
+
+- **MsgAddAdmin**: Add new admin addresses (if applicable)
+- **MsgDeleteAdmin**: Remove admin addresses (if applicable)
+
+<Note>
+The specific admin management functionality depends on the current network configuration and may not be actively used in Neutron's current governance model.
+</Note>
+
+## Security Features
+
+### Whitelisting
+
+The admin module implements strict whitelisting to ensure only approved operations can be executed:
+
+- Message types must be explicitly whitelisted
+- Operations are validated before execution
+- Unauthorized message types are rejected
+
+### Authority Verification
+
+The module includes signer verification to ensure that only the authorized Main DAO contract can submit proposals:
+
+- Sender address must match the expected DAO contract address
+- Messages are cryptographically verified
+- Unauthorized senders are rejected
+
+## Querying the Admin Module
+
+While you cannot submit proposals directly, you can query the admin module's state:
+
+```bash
+# Query module parameters (if available)
+neutrond query adminmodule params
+
+# Query proposal by ID (if the query exists)
+neutrond query adminmodule proposal <proposal-id>
+```
+
+<Note>
+The specific query commands available depend on the module's implementation. Some queries may not be available or may have different names.
+</Note>
+
+## For DAO Developers
+
+If you're working on DAO governance contracts that need to interact with the admin module, you would use the `ProposalExecuteMessage` binding:
 
 ```rust
 use neutron_sdk::bindings::msg::NeutronMsg;
 
-// Create a proposal execution message
-let proposal_msg = NeutronMsg::SubmitProposal {
-    messages: vec![
-        CosmosMsg::Bank(BankMsg::Send {
-            to_address: recipient.to_string(),
-            amount: coins(amount, "untrn"),
-        })
-    ],
+// This would be called from within the Main DAO contract
+let admin_msg = NeutronMsg::SubmitProposal {
+    messages: vec![/* your whitelisted messages */],
 };
-
-// Execute through contract
-let response = Response::new()
-    .add_message(proposal_msg)
-    .add_attribute("action", "submit_proposal");
 ```
 
-### Contract-Based Proposal Creation
+However, this is only relevant if you're developing the core DAO infrastructure itself.
 
-From a CosmWasm contract:
+## Understanding the Governance Flow
 
-```rust
-#[execute]
-pub fn submit_governance_proposal(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    proposal: ProposalExecuteMsg,
-) -> Result<Response<NeutronMsg>, ContractError> {
-    // Validate proposer authority
-    if !is_authorized(&deps, &info.sender)? {
-        return Err(ContractError::Unauthorized {});
-    }
+For regular users and developers, here's how to participate in admin operations:
 
-    // Create the admin module message
-    let admin_msg = NeutronMsg::SubmitProposal {
-        messages: proposal.messages,
-    };
+1. **Community Discussion**: Discuss proposed changes in Neutron forums and Discord
+2. **Proposal Creation**: Work with the community to create formal DAO proposals
+3. **Voting**: Participate in DAO voting using your NTRN tokens
+4. **Implementation**: If approved, the DAO automatically triggers the admin module
 
-    Ok(Response::new()
-        .add_message(admin_msg)
-        .add_attribute("action", "governance_proposal")
-        .add_attribute("proposer", info.sender))
-}
-```
+## Limitations and Considerations
 
-## Administrative Operations
+- **No Direct Access**: Individual users cannot interact with the admin module directly
+- **DAO Dependency**: All operations must go through the governance process
+- **Whitelisting Constraints**: Only pre-approved message types can be executed
+- **Network-Wide Impact**: Admin operations affect the entire network
 
-### Managing Module Parameters
+This architecture ensures that critical network operations maintain democratic oversight while providing the technical capability for complex administrative tasks.
 
-#### Updating Oracle Parameters
+## Related Documentation
 
-```bash
-# Create parameter update proposal for oracle module
-neutrond tx adminmodule submit-proposal \
-  --messages='[{
-    "@type": "/neutron.oracle.MsgUpdateParams",
-    "authority": "neutron1...",
-    "params": {
-      "vote_period": "10",
-      "vote_threshold": "0.5"
-    }
-  }]' \
-  --from=<your-key>
-```
-
-#### Updating Fee Parameters
-
-```bash
-# Update fee-related parameters
-neutrond tx adminmodule submit-proposal \
-  --messages='[{
-    "@type": "/neutron.feeburner.MsgUpdateParams",
-    "authority": "neutron1...",
-    "params": {
-      "treasury_address": "neutron1...",
-      "burn_rate": "0.1"
-    }
-  }]' \
-  --from=<your-key>
-```
-
-### Smart Contract Administration
-
-#### Instantiating Contracts
-
-```bash
-# Submit proposal to instantiate a new contract
-neutrond tx adminmodule submit-proposal \
-  --messages='[{
-    "@type": "/cosmwasm.wasm.v1.MsgInstantiateContract",
-    "sender": "neutron1...",
-    "admin": "neutron1...",
-    "code_id": "1",
-    "label": "governance-contract",
-    "msg": "{\"owner\":\"neutron1...\"}"
-  }]' \
-  --from=<your-key>
-```
-
-#### Migrating Contracts
-
-```bash
-# Submit contract migration proposal
-neutrond tx adminmodule submit-proposal \
-  --messages='[{
-    "@type": "/cosmwasm.wasm.v1.MsgMigrateContract",
-    "sender": "neutron1...",
-    "contract": "neutron1...",
-    "code_id": "2",
-    "msg": "{\"migrate\":{}}"
-  }]' \
-  --from=<your-key>
-```
-
-## Monitoring and Verification
-
-### Tracking Proposal Status
-
-```bash
-# Query proposal by ID
-neutrond query gov proposal <proposal-id>
-
-# Check voting status
-neutrond query gov votes <proposal-id>
-
-# Monitor proposal tally
-neutrond query gov tally <proposal-id>
-```
-
-### Verifying Execution
-
-```bash
-# Check transaction hash for proposal execution
-neutrond query tx <tx-hash>
-
-# Verify state changes
-neutrond query <module> <state-query>
-```
-
-### Event Monitoring
-
-Monitor admin module events to track governance activities:
-
-```bash
-# Subscribe to admin module events
-neutrond query txs --events='message.module=adminmodule'
-
-# Filter by message type
-neutrond query txs --events='message.action=submit_proposal'
-```
-
-## Advanced Use Cases
-
-### Batch Operations
-
-Execute multiple operations in a single proposal:
-
-```json
-{
-  "messages": [
-    {
-      "@type": "/cosmos.bank.v1beta1.MsgSend",
-      "from_address": "neutron1...",
-      "to_address": "neutron1...",
-      "amount": [{"denom": "untrn", "amount": "1000000"}]
-    },
-    {
-      "@type": "/neutron.cron.MsgAddSchedule",
-      "authority": "neutron1...",
-      "name": "weekly_task",
-      "period": "604800",
-      "msgs": ["..."]
-    }
-  ]
-}
-```
-
-### Multi-Module Coordination
-
-Coordinate changes across multiple modules:
-
-```json
-{
-  "messages": [
-    {
-      "@type": "/neutron.oracle.MsgUpdateParams",
-      "authority": "neutron1...",
-      "params": {"vote_period": "10"}
-    },
-    {
-      "@type": "/neutron.cron.MsgUpdateParams", 
-      "authority": "neutron1...",
-      "params": {"security_address": "neutron1..."}
-    }
-  ]
-}
-```
-
-## Error Handling
-
-### Common Error Messages
-
-- **Unauthorized**: The proposer doesn't have the required authority
-- **Message not whitelisted**: The proposed message type is not in the whitelist
-- **Invalid message format**: The message doesn't conform to expected format
-- **Insufficient permissions**: The operation requires higher-level permissions
-
-### Debugging Failed Proposals
-
-```bash
-# Check proposal failure reasons
-neutrond query gov proposal <proposal-id> --output json | jq '.final_tally_result'
-
-# Examine transaction logs
-neutrond query tx <tx-hash> --output json | jq '.logs'
-```
-
-### Recovery Procedures
-
-If a proposal fails:
-
-1. **Analyze Error**: Examine the error message and logs
-2. **Correct Issues**: Fix message format, permissions, or parameters
-3. **Resubmit**: Create a new proposal with corrected parameters
-4. **Monitor**: Track the new proposal through the voting process
-
-## Best Practices
-
-### Security Considerations
-
-- Always validate message parameters before submission
-- Use test networks for complex proposals before mainnet
-- Implement proper access controls in smart contracts
-- Monitor proposal execution for unexpected results
-
-### Efficiency Tips
-
-- Batch related operations in single proposals
-- Use appropriate gas limits for complex operations
-- Test message formats using local development environments
-- Prepare contingency plans for failed proposals
-
-### Governance Participation
-
-- Engage with the community before submitting proposals
-- Provide clear documentation for proposal rationale
-- Allow sufficient time for community review
-- Respond to community feedback and concerns
-
-This guide provides the foundation for effective use of the admin module in Neutron governance operations. For specific use cases or advanced scenarios, consult the detailed API reference documentation. 
+- [Neutron DAO Overview](/concepts/modular-governance) - Learn about Neutron's governance system
+- [Admin Module Reference](/developers/modules/admin/reference) - Technical implementation details
+- [Admin Module API](/developers/modules/admin/api) - API documentation and message formats 

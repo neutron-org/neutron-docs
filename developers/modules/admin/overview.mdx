@@ -3,7 +3,11 @@ title: "Admin Module"
 description: "Central governance module enabling DAO-driven network administration and proposal execution"
 ---
 
-The admin module serves as Neutron's central governance mechanism, empowering the DAO to propose and execute critical network operations. Built with Cosmos SDK compatibility and upgraded for SDK 0.50, this module enables secure, controlled administration of the entire Neutron network.
+The admin module serves as Neutron's central governance mechanism, empowering the **Main DAO contract** to propose and execute critical network operations. Built with Cosmos SDK compatibility and upgraded for SDK 0.50, this module enables secure, controlled administration of the entire Neutron network.
+
+<Info>
+The admin module can **only** be accessed by the Main DAO contract through WebAssembly bindings. Individual users cannot directly interact with this module - all operations must go through Neutron's governance process.
+</Info>
 
 The admin module provides a unified interface for governance operations, supporting both legacy proposal mechanisms and modern message-based execution. Through careful whitelisting and permission controls, it ensures that only authorized operations can be performed while maintaining the flexibility needed for network evolution.
 
@@ -12,12 +16,17 @@ The admin module provides a unified interface for governance operations, support
 - [Overview](/developers/modules/admin/overview) — a high-level description of the module.
 - [Explanation](/developers/modules/admin/explanation) — an explanation of the module's concepts and the reasoning behind its design choices.
 - [How To](/developers/modules/admin/how-to) — short guides on performing basic operations with the module.
-- [Known Bugs](/developers/modules/admin/known-bugs) — a list of known issues in the module.
-- [API](/developers/modules/admin/api) — details about the module's interface, including endpoints, message models, and emitted events.
+- **Reference**:
+  - [Reference](/developers/modules/admin/reference) — comprehensive technical details.
+  - [API](/developers/modules/admin/api) — details about the module's interface, including endpoints, message models, and emitted events.
+  - [Messages](/developers/modules/admin/messages) — message format specifications.
+  - [Events](/developers/modules/admin/events) — events emitted by the module.
+  - [State](/developers/modules/admin/state) — state management details.
+  - [Client](/developers/modules/admin/client) — CLI and query client details.
 
 ## Concepts
 
-The admin module operates on the principle of controlled delegation, where the Neutron DAO acts as the network's administrator with the authority to execute proposals that can significantly change the network state. This includes:
+The admin module operates on the principle of controlled delegation, where the **Neutron Main DAO contract** acts as the network's administrator with the authority to execute proposals that can significantly change the network state. This includes:
 
 - **Parameter Modifications**: Adjusting module parameters such as transaction fees, validator incentives, and governance thresholds
 - **Smart Contract Management**: Executing WebAssembly (WASM) proposals for contract instantiation, migration, and administration
@@ -28,32 +37,28 @@ The admin module operates on the principle of controlled delegation, where the N
 
 The admin module supports two distinct proposal execution paths:
 
-1. **Legacy Proposals**: Traditional governance proposals rooted in the Cosmos SDK's `x/gov` module, supporting predefined proposal types like `MigrateContract`, `InstantiateContract`, and parameter changes. These proposals are processed through dedicated handlers and remain supported for backward compatibility.
+1. **Legacy Proposals**: Traditional governance proposals rooted in the Cosmos SDK's `x/gov` module, supporting predefined proposals like `MigrateContract`, `InstantiateContract`, and parameter changes. These proposals are processed through dedicated handlers and remain supported for backward compatibility with modules like IBC that haven't fully transitioned to SDK 0.47 patterns.
 
-2. **Message-Based Proposals**: Modern proposal execution introduced with SDK 0.47+, allowing any valid `sdk.Msg` to be executed through governance. This approach provides greater flexibility and aligns with the evolving Cosmos SDK architecture.
+2. **Message-Based Proposals**: Modern proposal execution introduced with SDK 0.47+, allowing any valid `sdk.Msg` to be executed through governance. This approach provides greater flexibility using the versatile `sdk.Msg` format and requires modules to implement an `authority` field specifying permitted addresses.
 
 ### Security Through Whitelisting
 
 To maintain network security while enabling governance flexibility, the admin module implements a comprehensive whitelisting system. Only pre-approved message types and operations can be executed through the governance process, preventing potential security vulnerabilities while allowing legitimate administrative functions.
 
-## Authority and Permissions
+## Main DAO Integration
 
-The admin module operates under a clear authority model where specific addresses (typically the DAO's governance module) are granted permission to execute administrative operations. Each module in the Neutron network maintains an `authority` field that specifies which addresses can send critical messages like parameter updates.
+The admin module is exclusively accessible through Neutron's Main DAO contract via WebAssembly bindings. This tight integration ensures that all network administration flows through the democratic governance process while maintaining the technical capability to execute complex administrative operations.
+
+The module processes `ProposalExecuteMessage` bindings from the Main DAO, enabling the governance system to trigger administrative actions. Signer verification ensures that only the authorized DAO contract can initiate these operations.
 
 ### Administration Workflow
 
-1. **Proposal Creation**: Governance proposals are created through the DAO's smart contracts or governance module
+1. **DAO Proposal Creation**: Governance proposals are created and voted on through the Neutron DAO
 2. **Message Validation**: The admin module validates that proposed messages are whitelisted and properly formatted
-3. **Authority Verification**: The module confirms that the sender has the required authority to execute the proposed operation
+3. **Authority Verification**: The module confirms that the sender is the authorized Main DAO contract
 4. **Execution**: Approved proposals are executed immediately within the message server context
 
-## Integration with Neutron DAO
-
-The admin module is tightly integrated with Neutron's DAO infrastructure, receiving governance instructions through WebAssembly bindings. This integration ensures that all network administration flows through the democratic governance process while maintaining the technical capability to execute complex administrative operations.
-
-The module processes `ProposalExecuteMessage` bindings from the Main DAO, enabling smart contracts to trigger administrative actions through the governance framework. Signer verification ensures that only authorized entities can initiate these operations.
-
-## Migration from Legacy Systems
+## Evolution from Legacy Systems
 
 The admin module represents an evolution from earlier administrative systems, incorporating lessons learned from SDK transitions and governance best practices. It maintains backward compatibility with legacy proposal types while providing a path forward for modern governance mechanisms.
 
@@ -62,6 +67,7 @@ Key improvements include:
 - Streamlined message processing without cache contexts
 - Enhanced security through comprehensive whitelisting
 - Support for both legacy and modern proposal formats
+- Direct integration with DAO governance contracts
 
 ## Documentation Sections
 
@@ -73,7 +79,7 @@ Key improvements include:
   
   <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/admin/how-to">
     <h4 className="font-semibold mb-2">How-to Guide</h4>
-    <p className="text-sm">Step-by-step instructions for creating and executing governance proposals</p>
+    <p className="text-sm">Understanding how the Main DAO interacts with the admin module</p>
   </a>
   
   <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/admin/api">
@@ -81,8 +87,8 @@ Key improvements include:
     <p className="text-sm">Complete API documentation for the admin module</p>
   </a>
   
-  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/admin/known-bugs">
-    <h4 className="font-semibold mb-2">Known Bugs</h4>
-    <p className="text-sm">Known issues and limitations of the admin module</p>
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/admin/reference">
+    <h4 className="font-semibold mb-2">Reference</h4>
+    <p className="text-sm">Comprehensive technical reference for the admin module</p>
   </a>
 </div> 

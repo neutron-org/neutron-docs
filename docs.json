@@ -430,7 +430,6 @@
                   "developers/modules/admin/overview",
                   "developers/modules/admin/explanation",
                   "developers/modules/admin/how-to",
-                  "developers/modules/admin/known-bugs",
                   {
                     "group": "Reference",
                     "icon": "book",
