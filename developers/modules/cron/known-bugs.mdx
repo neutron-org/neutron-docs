@@ -18,7 +18,7 @@ let delay_blocks = current_height.saturating_sub(expected_height);
 if delay_blocks > 0 {
     // Log the delay for monitoring
     deps.api.debug(&format!(
-        "Schedule execution delayed by {} blocks", 
+        "Schedule execution delayed by {} blocks",
         delay_blocks
     ));
 }

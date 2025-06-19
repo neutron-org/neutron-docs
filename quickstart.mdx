@@ -6,25 +6,26 @@ description: "Get started with Neutron in under 5 minutes"
 ## For Users
 
 <Steps>
-  <Step title="Access the Neutron App">
-    Visit [app.neutron.org](https://app.neutron.org/) to access the Neutron DeFi ecosystem.
-  </Step>
-  <Step title="Connect Your Wallet">
-    Connect a compatible wallet to the Neutron app by clicking "Connect Wallet" and selecting your preferred wallet provider.
+  <Step title="Get a Compatible Wallet">
+    Download and set up a compatible wallet like [Keplr](https://www.keplr.app/get) or [Leap](https://www.leapwallet.io/download).
     <Note>
-      We recommend checking out wallets like [Keplr](https://www.keplr.app/get) and [Leap](https://www.leapwallet.io/download) for the best experience.
+      Create your seed phrase and back it up safely. Never share your seed phrase with anyone.
     </Note>
   </Step>
+  <Step title="Go to the Neutron App">
+    Visit [app.neutron.org](https://app.neutron.org/) and connect your wallet by clicking "Connect Wallet" and selecting your wallet provider.
+  </Step>
+  <Step title="Fund Your Account">
+    Transfer assets to your Neutron wallet. For amounts over $50, consider using fast bridging options for quicker transfers.
+  </Step>
   <Step title="Explore Neutron's DeFi Ecosystem">
-    Neutron offers a comprehensive DeFi ecosystem with multiple ways to participate:
+    Start discovering opportunities across Neutron:
     
-    - **Supervaults**: Automatically compound your yields across multiple strategies
-    - **Liquid Staking**: Stake NTRN and receive liquid staking tokens you can use throughout the ecosystem
-    - **Lending & Borrowing**: Access capital markets for a variety of assets
-    - **Trading**: Swap assets easily with minimal slippage 
-    - **Governance**: Participate in shaping Neutron's future
+    - **Earn**: Discover yield opportunities and staking rewards
+    - **Order Book**: Explore trading markets and liquidity
+    - **Superbolt**: Visit [superbolt.wtf](https://superbolt.wtf/) to mint, trade, and fractionalize NFTs where NFTs meet DeFi
     
-    For more information on Neutron's DeFi features, check out our [DeFi Guide](/defi/overview).
+    For more applications and protocols, check out our [Ecosystem page](https://app.neutron.org/ecosystem).
   </Step>
 </Steps>
 
@@ -35,28 +36,8 @@ For a comprehensive developer setup guide, visit the [Developer Quickstart](/dev
 </Note>
 
 <Steps>
-  <Step title="Quick Setup">
-    Install Rust and the WebAssembly target:
-    
-    ```bash
-    # Install Rust
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-    rustup default stable
-    rustup target add wasm32-unknown-unknown
-    ```
-  </Step>
-  
-  <Step title="Create Your First Contract">
-    ```bash
-    # Generate a CosmWasm project
-    cargo generate --git https://github.com/CosmWasm/cw-template.git --name my-contract
-    cd my-contract
-    cargo wasm
-    ```
-  </Step>
-  
-  <Step title="Follow the Onboarding Tutorials">
-    Get started with our comprehensive tutorial series:
+  <Step title="Start with the Onboarding Tutorials">
+    Begin your Neutron development journey with our step-by-step tutorial series:
     
     <CardGroup cols={3}>
       <Card title="Part 1: Minimal Contract" icon="file-code" href="/developers/tutorials/onboarding/part-1-minimal-application">
@@ -69,6 +50,30 @@ For a comprehensive developer setup guide, visit the [Developer Quickstart](/dev
         Build a frontend for your contracts
       </Card>
     </CardGroup>
+    
+    <Info>
+      The tutorials will guide you through installing dependencies, setting up your environment, and building your first application step by step.
+    </Info>
+  </Step>
+  
+  <Step title="Quick Setup (Alternative)">
+    If you prefer to set up dependencies first, install Rust and the WebAssembly target:
+    
+    ```bash
+    # Install Rust
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    rustup default stable
+    rustup target add wasm32-unknown-unknown
+    ```
+  </Step>
+  
+  <Step title="Create Your First Contract (Alternative)">
+    ```bash
+    # Generate a CosmWasm project
+    cargo generate --git https://github.com/CosmWasm/cw-template.git --name my-contract
+    cd my-contract
+    cargo wasm
+    ```
   </Step>
 </Steps>
 

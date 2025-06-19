@@ -65,6 +65,7 @@
             "group": "Introduction",
             "icon": "book-open",
             "pages": [
+              "index",
               "home",
               "quickstart"
             ]
@@ -121,9 +122,6 @@
             "icon": "graduation-cap",
             "pages": [
               "developers/tutorials/overview",
-              "developers/tutorials/introduction_to_cosmwasm",
-              "developers/tutorials/cosmwasm_ica",
-              "developers/tutorials/cosmwasm_icq",
               {
                 "group": "Onboarding",
                 "icon": "user-plus",
@@ -135,14 +133,7 @@
                   "developers/tutorials/onboarding/part-3-web-app"
                 ]
               },
-              {
-                "group": "3rd Party Tools",
-                "icon": "toolbox",
-                "pages": [
-                  "developers/tutorials/cosmwasm_remix",
-                  "developers/tutorials/cosmwasm_wasmkit"
-                ]
-              },
+              "developers/tutorials/introduction_to_cosmwasm",
               {
                 "group": "Integration tests",
                 "icon": "vial",
@@ -159,6 +150,14 @@
                   "developers/tutorials/indexers/overview",
                   "developers/tutorials/indexers/intro",
                   "developers/tutorials/indexers/subquery"
+                ]
+              },
+              {
+                "group": "Advanced Tutorials",
+                "icon": "graduation-cap",
+                "pages": [
+                  "developers/tutorials/cosmwasm_ica",
+                  "developers/tutorials/cosmwasm_icq"
                 ]
               }
             ]
@@ -212,24 +211,7 @@
                   }
                 ]
               },
-              {
-                "group": "Oracle",
-                "icon": "database",
-                "pages": [
-                  "developers/modules/oracle/overview",
-                  "developers/modules/oracle/explanation",
-                  "developers/modules/oracle/how-to",
-                  "developers/modules/oracle/known-bugs",
-                  {
-                    "group": "Reference",
-                    "icon": "book",
-                    "pages": [
-                      "developers/modules/oracle/reference",
-                      "developers/modules/oracle/api"
-                    ]
-                  }
-                ]
-              },
+
               {
                 "group": "Harpoon",
                 "icon": "anchor",
