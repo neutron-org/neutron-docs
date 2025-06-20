@@ -1,0 +1,296 @@
+---
+title: "How-to Guide"
+description: "Step-by-step instructions for using the Cron module through governance"
+---
+
+This guide provides practical instructions for working with the Cron module, including creating governance proposals for schedules and handling scheduled executions in smart contracts.
+
+## Prerequisites
+
+- Understanding of Neutron governance processes
+- Familiarity with CosmWasm contract development
+- Access to governance proposal submission (for schedule creation)
+
+## Understanding Cron Module Access
+
+The Cron module is **governance-gated**, meaning:
+
+- Only governance can create, update, or remove schedules
+- Contracts cannot directly create schedules
+- Schedule creation requires proposals to either:
+  - **Main DAO**: For general protocol schedules
+  - **Cron SubDAO**: For application-specific schedules
+
+<Note>
+Neutron uses a [modular governance system](/concepts/modular-governance) with specialized subDAOs that handle different aspects of network management. The Cron SubDAO is specifically designed to manage scheduling proposals, allowing for more efficient governance of routine scheduling tasks while maintaining community oversight.
+</Note>
+
+## Creating Schedules Through Governance
+
+### Step 1: Prepare Your Governance Proposal
+
+To create a schedule, you need to submit a governance proposal with the appropriate message format:
+
+```json
+{
+  "messages": [
+    {
+      "@type": "/neutron.cron.MsgAddSchedule",
+      "authority": "neutron1...",
+      "name": "my_periodic_task",
+      "period": "100",
+      "msgs": [
+        {
+          "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+          "sender": "neutron1...",
+          "contract": "neutron1...",
+          "msg": "eyJwZXJmb3JtX3Rhc2siOnt9fQ==",
+          "funds": []
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Step 2: Submit the Governance Proposal
+
+#### For Main DAO (General Protocol Use)
+
+```bash
+# Submit proposal to Main DAO
+neutrond tx gov submit-proposal proposal.json \
+  --from=<your-key> \
+  --chain-id=neutron-1 \
+  --gas=auto \
+  --gas-adjustment=1.5
+```
+
+#### For Cron SubDAO (Application-Specific)
+
+Contact the Neutron team to submit a proposal through the Cron SubDAO for your specific application needs.
+
+### Step 3: Governance Voting Process
+
+Once submitted, the proposal goes through the standard governance process:
+
+1. **Deposit Period**: Ensure minimum deposit is met
+2. **Voting Period**: Community votes on the proposal
+3. **Execution**: If passed, the schedule is automatically created
+
+## Preparing Your Contract for Scheduled Execution
+
+### Handle Scheduled Messages
+
+Your contract must be prepared to receive messages from the Cron module:
+
+```rust
+use cosmwasm_std::{
+    entry_point, DepsMut, Env, MessageInfo, Response, StdResult,
+};
+
+#[entry_point]
+pub fn execute(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: ExecuteMsg,
+) -> StdResult<Response> {
+    match msg {
+        ExecuteMsg::PerformScheduledTask { } => {
+            handle_scheduled_execution(deps, env, info)
+        },
+        // Other handlers...
+    }
+}
+
+fn handle_scheduled_execution(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> StdResult<Response> {
+    // Verify the sender is the Cron module
+    // (Optional: Add validation if needed)
+    
+    // Perform your scheduled task
+    // This could be:
+    // - Updating state
+    // - Distributing rewards
+    // - Triggering other contract calls
+    // - Protocol maintenance tasks
+    
+    Ok(Response::new()
+        .add_attribute("action", "scheduled_task_executed")
+        .add_attribute("block_height", env.block.height.to_string()))
+}
+```
+
+### Design Considerations
+
+When designing your contract for scheduled execution:
+
+```rust
+// Example: Periodic reward distribution
+fn handle_scheduled_execution(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+) -> StdResult<Response> {
+    // Check if execution is due (additional safety check)
+    let last_execution = LAST_EXECUTION.load(deps.storage)?;
+    let blocks_since_last = env.block.height - last_execution;
+    
+    if blocks_since_last < MIN_BLOCKS_BETWEEN_EXECUTIONS {
+        return Ok(Response::new()
+            .add_attribute("action", "execution_skipped")
+            .add_attribute("reason", "too_early"));
+    }
+    
+    // Perform the actual task
+    distribute_rewards(deps, env)?;
+    
+    // Update last execution height
+    LAST_EXECUTION.save(deps.storage, &env.block.height)?;
+    
+    Ok(Response::new()
+        .add_attribute("action", "rewards_distributed")
+        .add_attribute("height", env.block.height.to_string()))
+}
+```
+
+## Common Use Cases
+
+### Protocol Maintenance
+
+For regular protocol maintenance tasks:
+
+```json
+{
+  "name": "daily_protocol_maintenance",
+  "period": "7200",
+  "msgs": [
+    {
+      "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+      "sender": "neutron1...",
+      "contract": "neutron1protocol_contract...",
+      "msg": "eyJtYWludGVuYW5jZSI6e319",
+      "funds": []
+    }
+  ]
+}
+```
+
+### Reward Distribution
+
+For periodic reward distribution:
+
+```json
+{
+  "name": "weekly_reward_distribution",
+  "period": "50400",
+  "msgs": [
+    {
+      "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+      "sender": "neutron1...",
+      "contract": "neutron1rewards_contract...",
+      "msg": "eyJkaXN0cmlidXRlX3Jld2FyZHMiOnt9fQ==",
+      "funds": []
+    }
+  ]
+}
+```
+
+## Managing Existing Schedules
+
+### Updating a Schedule
+
+To update an existing schedule, submit a governance proposal with `MsgUpdateSchedule`:
+
+```json
+{
+  "messages": [
+    {
+      "@type": "/neutron.cron.MsgUpdateSchedule",
+      "authority": "neutron1...",
+      "name": "my_periodic_task",
+      "period": "200",
+      "msgs": [
+        {
+          "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+          "sender": "neutron1...",
+          "contract": "neutron1...",
+          "msg": "eyJ1cGRhdGVkX3Rhc2siOnt9fQ==",
+          "funds": []
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Removing a Schedule
+
+To remove a schedule, submit a governance proposal with `MsgRemoveSchedule`:
+
+```json
+{
+  "messages": [
+    {
+      "@type": "/neutron.cron.MsgRemoveSchedule",
+      "authority": "neutron1...",
+      "name": "my_periodic_task"
+    }
+  ]
+}
+```
+
+## Best Practices
+
+### Governance Proposal Strategy
+
+1. **Clear Documentation**: Include detailed rationale for the schedule
+2. **Community Engagement**: Discuss the proposal with the community first
+3. **Testing**: Test your contract's scheduled execution on testnet
+4. **Monitoring**: Plan for monitoring and maintenance of the schedule
+
+### Contract Design
+
+1. **Idempotent Operations**: Design scheduled tasks to be safely re-runnable
+2. **Error Handling**: Implement robust error handling for scheduled executions
+3. **State Validation**: Add checks to prevent unexpected state changes
+4. **Logging**: Include comprehensive logging for debugging
+
+### Schedule Parameters
+
+1. **Appropriate Periods**: Choose block intervals that match your use case
+2. **Unique Names**: Use descriptive, unique names for schedules
+3. **Message Encoding**: Ensure messages are properly base64-encoded JSON
+
+## Troubleshooting
+
+### Common Issues
+
+- **Proposal Rejected**: Review governance requirements and community feedback
+- **Execution Failures**: Check contract logic and message formatting
+- **Schedule Not Executing**: Verify the schedule was created successfully through governance
+
+### Debugging Steps
+
+1. Check if the governance proposal passed
+2. Query the schedule to confirm it exists
+3. Monitor blockchain logs for execution attempts
+4. Test the scheduled message manually
+
+## Querying Schedules
+
+To check existing schedules:
+
+```bash
+# List all schedules
+neutrond query cron list-schedules
+
+# Get specific schedule
+neutrond query cron get-schedule <schedule-name>
+```
+
+This governance-gated approach ensures that only approved schedules run on the network, maintaining security and preventing spam while enabling powerful automation capabilities. 

@@ -1,0 +1,296 @@
+---
+title: "Events"
+---
+
+The IBC Rate Limit module emits events during its operation to provide information about rate limit enforcement and errors. These events can be used for monitoring and integration purposes.
+
+## Module Events
+
+### EventBadRevert
+
+Emitted when there is an error while trying to revert a sent packet due to an error acknowledgement or timeout.
+
+**Type**: `bad_revert`
+
+### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `module` | string | Always "ibcratelimit" |
+| `failure_type` | string | Either "acknowledgment" or "timeout" depending on the type of failure |
+| `packet` | string | The serialized packet data that failed |
+| `ack` | string | (Only for acknowledgements) The acknowledgement data |
+
+### Example
+
+```json
+{
+  "type": "bad_revert",
+  "attributes": [
+    {
+      "key": "module",
+      "value": "ibcratelimit",
+      "index": true
+    },
+    {
+      "key": "failure_type",
+      "value": "acknowledgment",
+      "index": true
+    },
+    {
+      "key": "packet",
+      "value": "{\"denom\":\"untrn\",\"amount\":\"1000\",\"sender\":\"neutron1...\",\"receiver\":\"cosmos1...\"}",
+      "index": true
+    },
+    {
+      "key": "ack",
+      "value": "{\"error\":\"rate limit exceeded\"}",
+      "index": true
+    }
+  ]
+}
+```
+
+### ParamsUpdated
+
+Emitted when the module's parameters are updated through governance.
+
+**Type**: `params_updated`
+
+### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `module` | string | Always "ibcratelimit" |
+| `authority` | string | The address of the account that authorized the update |
+
+### Example
+
+```json
+{
+  "type": "params_updated",
+  "attributes": [
+    {
+      "key": "module",
+      "value": "ibcratelimit",
+      "index": true
+    },
+    {
+      "key": "authority",
+      "value": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6z2zm3",
+      "index": true
+    }
+  ]
+}
+```
+
+## Contract Events
+
+Since most of the rate limiting logic is delegated to a CosmWasm contract, the contract also emits events that provide information about rate limit operations.
+
+### QuotaAdded
+
+Emitted when a new quota is added for a channel and denomination.
+
+**Type**: `wasm-quota_added`
+
+### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `channel_id` | string | The channel ID for which the quota was added |
+| `denom` | string | The token denomination for which the quota was added |
+| `quota_name` | string | The name of the added quota |
+| `duration_seconds` | string | The duration of the quota period in seconds |
+| `percentage` | string | The percentage limit of the quota |
+| `flow_direction` | string | Either "in" or "out" |
+
+### Example
+
+```json
+{
+  "type": "wasm-quota_added",
+  "attributes": [
+    {
+      "key": "channel_id",
+      "value": "channel-0",
+      "index": true
+    },
+    {
+      "key": "denom",
+      "value": "untrn",
+      "index": true
+    },
+    {
+      "key": "quota_name",
+      "value": "daily-outflow",
+      "index": true
+    },
+    {
+      "key": "duration_seconds",
+      "value": "86400",
+      "index": true
+    },
+    {
+      "key": "percentage",
+      "value": "0.30",
+      "index": true
+    },
+    {
+      "key": "flow_direction",
+      "value": "out",
+      "index": true
+    }
+  ]
+}
+```
+
+### QuotaRemoved
+
+Emitted when quotas are removed for a channel and denomination.
+
+**Type**: `wasm-quota_removed`
+
+### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `channel_id` | string | The channel ID for which quotas were removed |
+| `denom` | string | The token denomination for which quotas were removed |
+
+### Example
+
+```json
+{
+  "type": "wasm-quota_removed",
+  "attributes": [
+    {
+      "key": "channel_id",
+      "value": "channel-0",
+      "index": true
+    },
+    {
+      "key": "denom",
+      "value": "untrn",
+      "index": true
+    }
+  ]
+}
+```
+
+### QuotaReset
+
+Emitted when a specific quota is reset.
+
+**Type**: `wasm-quota_reset`
+
+### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `channel_id` | string | The channel ID for which the quota was reset |
+| `denom` | string | The token denomination for which the quota was reset |
+| `quota_name` | string | The name of the reset quota |
+
+### Example
+
+```json
+{
+  "type": "wasm-quota_reset",
+  "attributes": [
+    {
+      "key": "channel_id",
+      "value": "channel-0",
+      "index": true
+    },
+    {
+      "key": "denom",
+      "value": "untrn",
+      "index": true
+    },
+    {
+      "key": "quota_name",
+      "value": "daily-outflow",
+      "index": true
+    }
+  ]
+}
+```
+
+### RateLimitExceeded
+
+Emitted when a transfer is rejected due to exceeding a rate limit quota.
+
+**Type**: `wasm-rate_limit_exceeded`
+
+### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `channel_id` | string | The channel ID for which the rate limit was exceeded |
+| `denom` | string | The token denomination for which the rate limit was exceeded |
+| `quota_name` | string | The name of the exceeded quota |
+| `current_usage` | string | The current usage amount of the quota |
+| `quota_limit` | string | The maximum allowed amount for the quota |
+| `flow_direction` | string | Either "in" or "out" depending on the direction of the transfer |
+
+### Example
+
+```json
+{
+  "type": "wasm-rate_limit_exceeded",
+  "attributes": [
+    {
+      "key": "channel_id",
+      "value": "channel-0",
+      "index": true
+    },
+    {
+      "key": "denom",
+      "value": "untrn",
+      "index": true
+    },
+    {
+      "key": "quota_name",
+      "value": "daily-outflow",
+      "index": true
+    },
+    {
+      "key": "current_usage",
+      "value": "350000000",
+      "index": true
+    },
+    {
+      "key": "quota_limit",
+      "value": "300000000",
+      "index": true
+    },
+    {
+      "key": "flow_direction",
+      "value": "out",
+      "index": true
+    }
+  ]
+}
+```
+
+## Usage Example
+
+To monitor events from the IBC Rate Limit module, you can subscribe to these events using a Tendermint WebSocket subscription:
+
+```javascript
+// Subscribe to all bad revert events
+client.subscribe('tm.event=\'Tx\' AND bad_revert.module=\'ibcratelimit\'', function(event) {
+  console.log('Bad revert event:', event);
+});
+
+// Subscribe to all rate limit exceeded events
+client.subscribe('tm.event=\'Tx\' AND wasm-rate_limit_exceeded.channel_id=\'channel-0\'', function(event) {
+  console.log('Rate limit exceeded for channel-0:', event);
+});
+
+// Subscribe to all quota reset events
+client.subscribe('tm.event=\'Tx\' AND wasm-quota_reset.denom=\'untrn\'', function(event) {
+  console.log('Quota reset for NTRN:', event);
+});
+``` 

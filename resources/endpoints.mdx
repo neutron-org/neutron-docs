@@ -1,0 +1,75 @@
+---
+title: "Network Endpoints"
+description: "Public RPC, REST, and GRPC endpoints for Neutron networks"
+icon: "network-wired"
+---
+
+This page lists public endpoints for interacting with Neutron networks, including RPC, REST API, and GRPC services.
+
+## Mainnet (neutron-1)
+
+### RPC Endpoints
+
+| Provider | Endpoint | Status |
+|----------|----------|--------|
+| Neutron | https://rpc-vertexa.neutron-1.neutron.org | Available |
+| Neutron | https://rpc-solara.neutron-1.neutron.org | Available |
+| Cosmos Directory | https://rpc.cosmos.directory/neutron | Available |
+
+### REST API Endpoints
+
+| Provider | Endpoint | Status |
+|----------|----------|--------|
+| Neutron | https://rest-solara.neutron-1.neutron.org | Available |
+| Neutron | https://rest-vertexa.neutron-1.neutron.org | Available |
+| Cosmos Directory | https://rest.cosmos.directory/neutron | Available |
+
+### GRPC Endpoints
+
+| Provider | Endpoint | Status |
+|----------|----------|--------|
+| Neutron | grpc-lb.neutron.org:80 | Available |
+| Neutron | grpc-kralum.neutron-1.neutron.org:80 | Available |
+
+### Public State Sync Nodes
+
+The following state sync node serves snapshots every 2000 blocks:
+
+```
+http://rpc-kralum.neutron-1.neutron.org:26657
+```
+
+## Testnet (pion-1)
+
+### RPC Endpoints
+
+| Provider | Endpoint |
+|----------|----------|
+| Neutron | https://rpc-palvus.pion-1.neutron.org |
+| Neutron | https://rpc-t.neutron.nodestake.top |
+
+### REST API Endpoints
+
+| Provider | Endpoint |
+|----------|----------|
+| Neutron | https://rest-palvus.pion-1.neutron.org |
+| Neutron | https://api-t.neutron.nodestake.top |
+
+## Explorers
+
+| Chain | Explorer | URL |
+|-------|----------|-----|
+| neutron-1 | Mintscan | https://www.mintscan.io/neutron |
+| neutron-1 | EZ Staking | https://ezstaking.app/neutron |
+| neutron-1 | Whispernode | https://mainnet.whispernode.com/neutron |
+
+## Status
+
+You can check the current status of Neutron endpoints at [status.cosmos.directory/neutron](https://status.cosmos.directory/neutron).
+
+## Cosmos Directory
+
+The Cosmos Directory provides API proxies for Neutron that automatically route to available RPC and REST endpoints:
+
+- RPC: [rpc.cosmos.directory/neutron](https://rpc.cosmos.directory/neutron)
+- REST: [rest.cosmos.directory/neutron](https://rest.cosmos.directory/neutron) 

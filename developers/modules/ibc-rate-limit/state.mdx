@@ -1,0 +1,180 @@
+---
+title: "State"
+---
+
+The IBC Rate Limit module maintains minimal state itself, as most of the rate limiting state is delegated to a CosmWasm contract. This design choice provides flexibility for updating rate limiting logic without chain upgrades.
+
+## Module State
+
+### Parameters
+
+The module stores the following parameters:
+
+```protobuf
+message Params {
+  string contract_address = 1;
+}
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `contract_address` | string | The address of the CosmWasm contract that implements the rate limiting logic |
+
+### Storage Layout
+
+The module parameters are stored in the params subspace under the module name:
+
+```go
+// StoreKey defines the store key for the IBC Rate Limit module
+const StoreKey = "ibcratelimit"
+```
+
+## Contract State
+
+The CosmWasm contract that implements the rate limiting logic maintains its own state. While this is technically separate from the module state, it's important to understand how this state is organized.
+
+### Path Information
+
+The contract stores rate limit information for each path, where a path is a combination of a channel ID and a token denomination:
+
+```rust
+struct PathInfo {
+    channel_id: String,
+    denom: String,
+    quotas: Vec<QuotaInfo>,
+}
+```
+
+### Quota Information
+
+Each path can have multiple quotas with different time periods and directions:
+
+```rust
+struct QuotaInfo {
+    name: String,
+    duration_seconds: u64,
+    percentage: Decimal,
+    channel_value: Uint128,
+    flow: Flow,
+    flow_direction: FlowDirection,
+    max_percentage_reset_time: Option<Timestamp>,
+}
+```
+
+### Flow Tracking
+
+The contract tracks the current flow for each quota:
+
+```rust
+struct Flow {
+    amount: Uint128,
+    period_end: Timestamp,
+}
+```
+
+### Storage Keys
+
+The contract organizes its state using the following storage keys:
+
+#### Quotas Map
+
+Stores quota information for each path:
+
+```rust
+const QUOTAS: Map<(String, String), Vec<QuotaInfo>> = Map::new("quotas");
+```
+
+Key: `(channel_id, denom)`  
+Value: Vector of `QuotaInfo` objects
+
+#### Global "Any" Channel
+
+To support global rate limits that apply across all channels, the contract uses a special channel ID "any":
+
+```rust
+const ANY_CHANNEL: &str = "any";
+```
+
+When processing a token transfer, the contract checks both the specific channel quota and the "any" channel quota if it exists.
+
+## State Transitions
+
+### Module State Transitions
+
+The module state only changes when the contract address parameter is updated:
+
+1. **MsgUpdateParams**: Updates the contract address parameter, typically through a governance proposal
+
+### Contract State Transitions
+
+The contract state undergoes transitions during the following operations:
+
+#### Adding or Updating a Path
+
+When a path is added or updated:
+
+1. The contract checks if the path (channel_id, denom) already exists
+2. If it exists, it merges the new quotas with existing ones or updates them
+3. If it doesn't exist, it creates a new entry with the provided quotas
+4. For each quota, it initializes:
+   - The starting channel value (total supply for the denomination)
+   - The flow amount (starting at 0)
+   - The period end timestamp (based on the current time plus duration)
+
+#### Removing a Path
+
+When a path is removed:
+
+1. The contract deletes the entry for the path (channel_id, denom) from the quotas map
+
+#### Resetting a Quota
+
+When a quota is reset:
+
+1. The contract locates the specific quota by path and name
+2. It resets the flow amount to 0
+3. It updates the period end timestamp based on the current time plus duration
+
+#### Processing Token Transfers
+
+When a token is sent or received:
+
+1. The contract identifies the relevant path(s)
+2. For each quota on the path:
+   - If the period has ended, it resets the flow and starts a new period
+   - It calculates the maximum allowed transfer based on:
+     - The channel value
+     - The quota percentage
+     - The current flow
+   - It updates the flow amount based on the net change
+   - It verifies that the flow amount doesn't exceed the quota limit
+
+#### Handling Failed Transfers
+
+When a send operation fails (timeout or error acknowledgement):
+
+1. The contract identifies the relevant path(s)
+2. For each quota on the path:
+   - It reduces the flow amount by the token amount that failed to transfer
+
+## Querying State
+
+### Module State Queries
+
+The module provides a query endpoint to retrieve the current module parameters:
+
+```go
+// Params returns the current module parameters
+rpc Params(QueryParamsRequest) returns (QueryParamsResponse);
+```
+
+### Contract State Queries
+
+The contract provides a query endpoint to retrieve quota information for a path:
+
+```rust
+// GetQuotas returns the quotas for a specific path
+fn get_quotas(channel_id: String, denom: String) -> Vec<QuotaInfo>;
+```
+
+This query returns the current state of all quotas for the specified channel and denomination. 

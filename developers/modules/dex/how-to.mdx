@@ -1,0 +1,245 @@
+---
+title: "Dex How-To"
+---
+
+This guide provides practical examples for interacting with Neutron's Dex module, including providing liquidity, placing trades, managing limit orders, and more.
+
+## Adding Liquidity
+
+Liquidity providers can add tokens to specific price ticks to earn fees.
+
+### Using CLI
+
+```bash
+neutrond tx dex deposit \
+  --token-a untrn \
+  --token-b ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  --amounts-a 1000000 \
+  --amounts-b 1000000 \
+  --tick-indexes-a-to-b 0 \
+  --fees 3000 \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+### Parameters Explained
+
+- `--token-a`, `--token-b`: The token denominations for the pair
+- `--amounts-a`, `--amounts-b`: Amount of each token to deposit
+- `--tick-indexes-a-to-b`: Price tick(s) at which to provide liquidity
+- `--fees`: Fee tier in basis points (e.g., 3000 = 0.3%)
+
+### Adding Liquidity to Multiple Ticks
+
+To provide liquidity across a range of prices:
+
+```bash
+neutrond tx dex deposit \
+  --token-a untrn \
+  --token-b ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  --amounts-a 1000000,1000000,1000000 \
+  --amounts-b 1000000,1000000,1000000 \
+  --tick-indexes-a-to-b -100,0,100 \
+  --fees 3000,3000,3000 \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+## Removing Liquidity
+
+To withdraw liquidity from pools:
+
+```bash
+neutrond tx dex withdrawal \
+  --token-a untrn \
+  --token-b ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  --shares-to-remove 500000 \
+  --tick-indexes-a-to-b 0 \
+  --fees 3000 \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+### Parameters Explained
+
+- `--shares-to-remove`: Amount of share tokens to burn (withdraw)
+- Other parameters are similar to deposit
+
+## Trading Tokens (Market Swap)
+
+To execute a market swap through the most efficient path:
+
+```bash
+neutrond tx dex multi-hop-swap \
+  --routes untrn,ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  --amount-in 1000000 \
+  --exit-limit-price 0.95 \
+  --pick-best-route \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+### Parameters Explained
+
+- `--routes`: Comma-separated list of tokens defining the swap path
+- `--amount-in`: Amount of the input token to swap
+- `--exit-limit-price`: Minimum acceptable output price
+- `--pick-best-route`: Automatically select optimal route if multiple are provided
+
+### Multi-Hop Swaps
+
+For swaps through multiple token pairs:
+
+```bash
+neutrond tx dex multi-hop-swap \
+  --routes untrn,ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2,ibc/5751B8BCDA688FD0A8EC0B292EEF1CDEAB4B766B63EC632778B196D317C40C3A \
+  --amount-in 1000000 \
+  --exit-limit-price 0.9 \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+## Placing Limit Orders
+
+Limit orders allow buying or selling at specific price points:
+
+```bash
+neutrond tx dex place-limit-order \
+  --token-in untrn \
+  --token-out ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  --amount-in 1000000 \
+  --limit-sell-price 1.05 \
+  --order-type GOOD_TIL_CANCELLED \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+### Parameters Explained
+
+- `--token-in`, `--token-out`: The tokens to swap between
+- `--amount-in`: Amount of input token to sell
+- `--limit-sell-price`: Minimum price at which to sell
+- `--order-type`: Type of limit order (GOOD_TIL_CANCELLED, FILL_OR_KILL, etc.)
+
+### Limit Order with Expiration
+
+For an order that expires after a specific time:
+
+```bash
+neutrond tx dex place-limit-order \
+  --token-in untrn \
+  --token-out ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  --amount-in 1000000 \
+  --limit-sell-price 1.05 \
+  --order-type GOOD_TIL_TIME \
+  --expiration-time 2023-12-31T23:59:59Z \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+## Cancelling Limit Orders
+
+To cancel an active limit order:
+
+```bash
+neutrond tx dex cancel-limit-order \
+  --tranche-key <tranche-key> \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+Where `<tranche-key>` is the unique identifier returned when placing the limit order.
+
+## Withdrawing Filled Limit Orders
+
+To withdraw proceeds from a filled or partially filled limit order:
+
+```bash
+neutrond tx dex withdraw-filled-limit-order \
+  --tranche-key <tranche-key> \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+## Querying DEX Information
+
+### Check Available Pools
+
+```bash
+neutrond query dex pool-metadata-all
+```
+
+### Check Pool Details
+
+```bash
+neutrond query dex pool-by-id --pool-id 1
+```
+
+### Check Pool Reserves
+
+```bash
+neutrond query dex pool-reserves \
+  --pair-id untrn:ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  --token-in untrn \
+  --tick-index 0 \
+  --fee 3000
+```
+
+### Check User Deposits
+
+```bash
+neutrond query dex user-deposits-all --address neutron1...
+```
+
+### Check User Limit Orders
+
+```bash
+neutrond query dex limit-order-tranche-user-all-by-address --address neutron1...
+```
+
+## Simulating Operations
+
+The Dex module allows simulating operations before execution.
+
+### Simulate Swap
+
+```bash
+neutrond query dex simulate-multi-hop-swap \
+  '{
+    "creator":"neutron1...",
+    "routes":[{"hops":["untrn","ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"]}],
+    "amount_in":"1000000",
+    "exit_limit_price":"0.9",
+    "pick_best_route":true
+  }'
+```
+
+### Simulate Limit Order
+
+```bash
+neutrond query dex simulate-place-limit-order \
+  '{
+    "creator":"neutron1...",
+    "token_in":"untrn",
+    "token_out":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+    "amount_in":"1000000",
+    "limit_sell_price":"1.05",
+    "order_type":"GOOD_TIL_CANCELLED"
+  }'
+```
+
+## Best Practices
+
+1. **Start with Small Amounts**: When first using the DEX, start with small amounts to understand how it works.
+
+2. **Use Simulation Queries**: Always simulate operations before executing them to understand expected outcomes.
+
+3. **Setting Reasonable Prices**: For limit orders, set prices that are reasonable for the market conditions.
+
+4. **Multiple Routes**: For complex swaps, provide multiple route options and use `--pick-best-route` to get the best execution.
+
+5. **Monitor Your Positions**: Regularly check your liquidity positions and limit orders to ensure they're performing as expected.
+
+6. **Withdrawing Unused Liquidity**: If your liquidity isn't being utilized (no fees earned), consider repositioning to more active price ranges.
+
+7. **Setting Slippage Appropriately**: Use appropriate exit limit prices based on the volatility of the tokens being traded. 

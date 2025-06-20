@@ -1,0 +1,398 @@
+---
+title: "Client"
+---
+
+This document describes the CLI commands and gRPC queries for the Fee Refunder module.
+
+## CLI Commands
+
+The `neutrond` command-line interface provides several commands to interact with the Fee Refunder module.
+
+### Queries
+
+#### Query Module Parameters
+
+The `params` command queries the current module parameters.
+
+```bash
+neutrond query feerefunder params
+```
+
+Example output:
+```json
+{
+  "params": {
+    "min_fee": {
+      "recv_fee": [],
+      "ack_fee": [
+        {
+          "denom": "untrn",
+          "amount": "1000"
+        }
+      ],
+      "timeout_fee": [
+        {
+          "denom": "untrn",
+          "amount": "1000"
+        }
+      ]
+    }
+  }
+}
+```
+
+#### Query Minimum Fee
+
+The `min-fee` command queries the minimum required fees for IBC operations.
+
+```bash
+neutrond query feerefunder min-fee
+```
+
+Example output:
+```json
+{
+  "min_fee": {
+    "recv_fee": [],
+    "ack_fee": [
+      {
+        "denom": "untrn",
+        "amount": "1000"
+      }
+    ],
+    "timeout_fee": [
+      {
+        "denom": "untrn",
+        "amount": "1000"
+      }
+    ]
+  }
+}
+```
+
+#### Query Fee Information for a Packet
+
+The `fee-info` command queries fee information for a specific IBC packet.
+
+```bash
+neutrond query feerefunder fee-info <port-id> <channel-id> <sequence>
+```
+
+Example:
+```bash
+neutrond query feerefunder fee-info transfer channel-0 123
+```
+
+Example output:
+```json
+{
+  "fee_info": {
+    "payer": "neutron1...",
+    "fee": {
+      "recv_fee": [],
+      "ack_fee": [
+        {
+          "denom": "untrn",
+          "amount": "1500"
+        }
+      ],
+      "timeout_fee": [
+        {
+          "denom": "untrn",
+          "amount": "1200"
+        }
+      ]
+    },
+    "packet_id": {
+      "port_id": "transfer",
+      "channel_id": "channel-0",
+      "sequence": "123"
+    }
+  }
+}
+```
+
+#### Query All Fee Information
+
+The `all-fee-info` command queries all fee information entries stored in the module.
+
+```bash
+neutrond query feerefunder all-fee-info
+```
+
+Example output:
+```json
+{
+  "fee_infos": [
+    {
+      "payer": "neutron1...",
+      "fee": {
+        "recv_fee": [],
+        "ack_fee": [
+          {
+            "denom": "untrn",
+            "amount": "1500"
+          }
+        ],
+        "timeout_fee": [
+          {
+            "denom": "untrn",
+            "amount": "1200"
+          }
+        ]
+      },
+      "packet_id": {
+        "port_id": "transfer",
+        "channel_id": "channel-0",
+        "sequence": "123"
+      }
+    },
+    {
+      "payer": "neutron1...",
+      "fee": {
+        "recv_fee": [],
+        "ack_fee": [
+          {
+            "denom": "untrn",
+            "amount": "2000"
+          }
+        ],
+        "timeout_fee": [
+          {
+            "denom": "untrn",
+            "amount": "1800"
+          }
+        ]
+      },
+      "packet_id": {
+        "port_id": "transfer",
+        "channel_id": "channel-1",
+        "sequence": "456"
+      }
+    }
+  ]
+}
+```
+
+## gRPC Usage
+
+The Fee Refunder module exposes gRPC endpoints that can be accessed programmatically:
+
+### Querying Module Parameters
+
+```bash
+grpcurl -plaintext \
+  -d '{}' \
+  localhost:9090 \
+  neutron.feerefunder.Query/Params
+```
+
+Example output:
+```json
+{
+  "params": {
+    "minFee": {
+      "recvFee": [],
+      "ackFee": [
+        {
+          "denom": "untrn",
+          "amount": "1000"
+        }
+      ],
+      "timeoutFee": [
+        {
+          "denom": "untrn",
+          "amount": "1000"
+        }
+      ]
+    }
+  }
+}
+```
+
+### Querying Minimum Fee
+
+```bash
+grpcurl -plaintext \
+  -d '{}' \
+  localhost:9090 \
+  neutron.feerefunder.Query/MinFee
+```
+
+Example output:
+```json
+{
+  "minFee": {
+    "recvFee": [],
+    "ackFee": [
+      {
+        "denom": "untrn",
+        "amount": "1000"
+      }
+    ],
+    "timeoutFee": [
+      {
+        "denom": "untrn",
+        "amount": "1000"
+      }
+    ]
+  }
+}
+```
+
+### Querying Fee Information for a Packet
+
+```bash
+grpcurl -plaintext \
+  -d '{
+    "port_id": "transfer",
+    "channel_id": "channel-0",
+    "sequence": "123"
+  }' \
+  localhost:9090 \
+  neutron.feerefunder.Query/FeeInfo
+```
+
+Example output:
+```json
+{
+  "feeInfo": {
+    "payer": "neutron1...",
+    "fee": {
+      "recvFee": [],
+      "ackFee": [
+        {
+          "denom": "untrn",
+          "amount": "1500"
+        }
+      ],
+      "timeoutFee": [
+        {
+          "denom": "untrn",
+          "amount": "1200"
+        }
+      ]
+    },
+    "packetId": {
+      "channelId": "channel-0",
+      "portId": "transfer",
+      "sequence": "123"
+    }
+  }
+}
+```
+
+### Querying All Fee Information
+
+```bash
+grpcurl -plaintext \
+  -d '{}' \
+  localhost:9090 \
+  neutron.feerefunder.Query/AllFeeInfo
+```
+
+Example output:
+```json
+{
+  "feeInfos": [
+    {
+      "payer": "neutron1...",
+      "fee": {
+        "recvFee": [],
+        "ackFee": [
+          {
+            "denom": "untrn",
+            "amount": "1500"
+          }
+        ],
+        "timeoutFee": [
+          {
+            "denom": "untrn",
+            "amount": "1200"
+          }
+        ]
+      },
+      "packetId": {
+        "channelId": "channel-0",
+        "portId": "transfer",
+        "sequence": "123"
+      }
+    }
+  ]
+}
+```
+
+## REST API Usage
+
+The Fee Refunder module also exposes REST endpoints:
+
+### Querying Module Parameters
+
+```bash
+curl -X GET "http://localhost:1317/neutron/feerefunder/params"
+```
+
+### Querying Minimum Fee
+
+```bash
+curl -X GET "http://localhost:1317/neutron/feerefunder/min_fee"
+```
+
+### Querying Fee Information for a Packet
+
+```bash
+curl -X GET "http://localhost:1317/neutron/feerefunder/fee_info/transfer/channel-0/123"
+```
+
+### Querying All Fee Information
+
+```bash
+curl -X GET "http://localhost:1317/neutron/feerefunder/all_fee_info"
+```
+
+## JavaScript/TypeScript Client Usage
+
+Example of querying the Fee Refunder module using CosmJS:
+
+```typescript
+import { QueryClient, createProtobufRpcClient } from "@cosmjs/stargate";
+import { Tendermint34Client } from "@cosmjs/tendermint-rpc";
+import { Query } from "neutron-typegen/neutron/feerefunder/query";
+
+// Connect to a Tendermint RPC endpoint
+const tendermintClient = await Tendermint34Client.connect("http://localhost:26657");
+const queryClient = QueryClient.withExtensions(tendermintClient);
+
+// Create a Fee Refunder module query client
+const rpcClient = createProtobufRpcClient(queryClient);
+const feerefunderQueryClient = {
+  params: () => {
+    return Query.params({});
+  },
+  minFee: () => {
+    return Query.minFee({});
+  },
+  feeInfo: (portId: string, channelId: string, sequence: number) => {
+    return Query.feeInfo({
+      portId,
+      channelId,
+      sequence,
+    });
+  },
+  allFeeInfo: () => {
+    return Query.allFeeInfo({});
+  },
+};
+
+// Query module parameters
+const params = await feerefunderQueryClient.params();
+console.log("Fee Refunder Parameters:", params);
+
+// Query minimum fee
+const minFee = await feerefunderQueryClient.minFee();
+console.log("Minimum Fee:", minFee.minFee);
+
+// Query fee information for a specific packet
+const feeInfo = await feerefunderQueryClient.feeInfo("transfer", "channel-0", 123);
+console.log("Fee Info:", feeInfo.feeInfo);
+``` 

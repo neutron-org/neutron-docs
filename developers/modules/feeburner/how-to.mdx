@@ -1,0 +1,170 @@
+---
+title: "Fee Burner How-To"
+---
+
+This guide provides practical instructions for interacting with the Fee Burner module, primarily for operators, validators, and users who need to query information about burned fees.
+
+## Querying Module Parameters
+
+You can query the current parameters of the Fee Burner module using the CLI:
+
+```bash
+neutrond query feeburner params
+```
+
+Example output:
+```json
+{
+  "params": {
+    "neutron_denom": "untrn",
+    "reserve_address": "", // Deprecated in v0.4.4
+    "treasury_address": "neutron1..."
+  }
+}
+```
+
+Or via the REST API:
+```bash
+curl -X GET "http://localhost:1317/neutron/feeburner/params"
+```
+
+## Checking Total Burned NTRN Amount
+
+To query the total amount of NTRN tokens that have been burned since genesis:
+
+```bash
+neutrond query feeburner total-burned-neutrons-amount
+```
+
+Example output:
+```json
+{
+  "total_burned_neutrons_amount": {
+    "coin": {
+      "denom": "untrn",
+      "amount": "1532687456789"
+    }
+  }
+}
+```
+
+Or via the REST API:
+```bash
+curl -X GET "http://localhost:1317/neutron/feeburner/total_burned_neutrons_amount"
+```
+
+## For Chain Governance
+
+### Updating Module Parameters
+
+The module parameters can be updated through governance proposals. Here's how to submit a parameter change proposal:
+
+```bash
+neutrond tx gov submit-proposal param-change proposal.json --from=<key> --chain-id=<chain-id>
+```
+
+Where `proposal.json` would contain:
+
+```json
+{
+  "title": "Fee Burner Parameter Change",
+  "description": "Update the treasury address for non-NTRN fee distribution",
+  "changes": [
+    {
+      "subspace": "feeburner",
+      "key": "TreasuryAddress",
+      "value": "neutron1..."
+    }
+  ],
+  "deposit": "1000000untrn"
+}
+```
+
+Alternatively, you can use the direct message type to update parameters (requires authority):
+
+```bash
+neutrond tx feeburner update-params --neutron-denom=untrn --treasury-address=neutron1... --from=<authority-key> --chain-id=<chain-id>
+```
+
+## For Developers
+
+### Programmatic Queries
+
+#### Using gRPC
+
+You can query the module's parameters using gRPC:
+
+```bash
+grpcurl -plaintext \
+  -d '{}' \
+  localhost:9090 \
+  neutron.feeburner.Query/Params
+```
+
+To query the total burned NTRN amount:
+
+```bash
+grpcurl -plaintext \
+  -d '{}' \
+  localhost:9090 \
+  neutron.feeburner.Query/TotalBurnedNeutronsAmount
+```
+
+#### Using CosmJS
+
+```javascript
+// Query Fee Burner module parameters
+const queryClient = await cosmwasm.SigningCosmWasmClient.connect(rpcEndpoint);
+const params = await queryClient.queryContractSmart(
+  "neutron/feeburner/params",
+  {}
+);
+console.log(params);
+
+// Query total burned NTRN amount
+const burnedAmount = await queryClient.queryContractSmart(
+  "neutron/feeburner/total_burned_neutrons_amount",
+  {}
+);
+console.log(burnedAmount);
+```
+
+## Monitoring Fee Burning
+
+To monitor fee burning activities, you can:
+
+1. Set up an indexer to track and aggregate burned fee amounts over time
+2. Create visualizations that show the deflationary impact on NTRN supply
+3. Build alerts for significant burning events
+
+### Example Monitoring Query
+
+Using an indexed database like PostgreSQL with a Cosmos SDK indexer:
+
+```sql
+SELECT 
+  DATE_TRUNC('day', block_timestamp) AS day,
+  SUM(amount) AS burned_amount
+FROM events
+WHERE 
+  event_type = 'burn' AND
+  attributes->>'denom' = 'untrn' AND
+  module = 'feeburner'
+GROUP BY DATE_TRUNC('day', block_timestamp)
+ORDER BY day;
+```
+
+## Understanding Fee Impact
+
+The Fee Burner module has a direct impact on NTRN tokenomics. To understand this impact:
+
+1. **Monitor Burn Rate**: Track the amount of NTRN burned over time relative to network usage
+2. **Calculate Deflationary Pressure**: Compare the burn rate to any inflationary mechanisms
+3. **Analyze Supply Changes**: Observe how the circulating supply changes in response to network activity
+
+You can calculate the annualized burn rate using:
+```
+Annual Burn Rate = (Daily Burned Amount * 365) / Total Supply
+```
+
+This provides insight into the long-term deflationary effects of the Fee Burner module. 

@@ -1,0 +1,272 @@
+---
+title: "Events"
+---
+
+The Dex module emits various events during operation that can be used for tracking interactions with the module. This document details the events and their attributes.
+
+## Deposit Events
+
+### `dex_deposit`
+
+Emitted when a user deposits liquidity into a pool.
+
+| Attribute Key | Description |
+| --- | --- |
+| `creator` | Address of the user who initiated the deposit |
+| `receiver` | Address that received the liquidity position |
+| `pair_id` | The trading pair identifier (e.g., "untrn:uatom") |
+| `tick_indexes` | The tick indexes where liquidity was added |
+| `fees` | The fee tiers (in basis points) of the pools |
+| `token0_denom` | The denomination of token0 in the pool |
+| `token1_denom` | The denomination of token1 in the pool |
+| `amount0_deposited` | The amount of token0 that was deposited |
+| `amount1_deposited` | The amount of token1 that was deposited |
+| `shares_issued` | The amount of share tokens issued |
+
+```go
+sdk.Event{
+    Type: "dex_deposit",
+    Attributes: []sdk.Attribute{
+        {Key: "creator", Value: "neutron1..."},
+        {Key: "receiver", Value: "neutron1..."},
+        {Key: "pair_id", Value: "untrn:uatom"},
+        {Key: "tick_indexes", Value: "0"},
+        {Key: "fees", Value: "3000"},
+        {Key: "token0_denom", Value: "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"},
+        {Key: "token1_denom", Value: "untrn"},
+        {Key: "amount0_deposited", Value: "1000000"},
+        {Key: "amount1_deposited", Value: "1000000"},
+        {Key: "shares_issued", Value: "1000000neutron/pool/1"},
+    },
+}
+```
+
+### `failed_deposit`
+
+Emitted when a deposit fails for a specific tick/fee combination.
+
+| Attribute Key | Description |
+| --- | --- |
+| `deposit_idx` | The index of the failed deposit in the array of deposits |
+| `error` | The error message explaining why the deposit failed |
+
+## Withdrawal Events
+
+### `dex_withdrawal`
+
+Emitted when a user withdraws liquidity from a pool.
+
+| Attribute Key | Description |
+| --- | --- |
+| `creator` | Address of the user who initiated the withdrawal |
+| `receiver` | Address that received the withdrawn tokens |
+| `pair_id` | The trading pair identifier |
+| `tick_indexes` | The tick indexes from which liquidity was withdrawn |
+| `fees` | The fee tiers of the pools |
+| `amount0_withdrawn` | The amount of token0 that was withdrawn |
+| `amount1_withdrawn` | The amount of token1 that was withdrawn |
+| `shares_burned` | The amount of share tokens burned |
+
+```go
+sdk.Event{
+    Type: "dex_withdrawal",
+    Attributes: []sdk.Attribute{
+        {Key: "creator", Value: "neutron1..."},
+        {Key: "receiver", Value: "neutron1..."},
+        {Key: "pair_id", Value: "untrn:uatom"},
+        {Key: "tick_indexes", Value: "0"},
+        {Key: "fees", Value: "3000"},
+        {Key: "amount0_withdrawn", Value: "1000000"},
+        {Key: "amount1_withdrawn", Value: "1000000"},
+        {Key: "shares_burned", Value: "1000000neutron/pool/1"},
+    },
+}
+```
+
+## Limit Order Events
+
+### `limit_order_placed`
+
+Emitted when a limit order is placed.
+
+| Attribute Key | Description |
+| --- | --- |
+| `creator` | Address of the user who placed the limit order |
+| `receiver` | Address that will receive the proceeds |
+| `pair_id` | The trading pair identifier |
+| `token_in` | The token being sold |
+| `token_out` | The token being bought |
+| `tick_index` | The tick index of the limit order |
+| `amount_in` | The amount of input token offered |
+| `amount_in_filled` | The amount of input token immediately filled |
+| `amount_out` | The amount of output token received |
+| `tranche_key` | The unique identifier for the limit order |
+| `expiration_time` | The expiration time (if applicable) |
+| `order_type` | The type of limit order (GTC, FOK, IOC, JIT, or GTT) |
+
+```go
+sdk.Event{
+    Type: "limit_order_placed",
+    Attributes: []sdk.Attribute{
+        {Key: "creator", Value: "neutron1..."},
+        {Key: "receiver", Value: "neutron1..."},
+        {Key: "pair_id", Value: "untrn:uatom"},
+        {Key: "token_in", Value: "untrn"},
+        {Key: "token_out", Value: "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"},
+        {Key: "tick_index", Value: "100"},
+        {Key: "amount_in", Value: "1000000"},
+        {Key: "amount_in_filled", Value: "500000"},
+        {Key: "amount_out", Value: "50000"},
+        {Key: "tranche_key", Value: "tranche123"},
+        {Key: "expiration_time", Value: "0001-01-01T00:00:00Z"},
+        {Key: "order_type", Value: "GOOD_TIL_CANCELLED"},
+    },
+}
+```
+
+### `limit_order_cancelled`
+
+Emitted when a limit order is cancelled.
+
+| Attribute Key | Description |
+| --- | --- |
+| `creator` | Address of the user who cancelled the limit order |
+| `tranche_key` | The unique identifier for the limit order |
+| `unfilled_amount` | The amount of input token that was not filled |
+| `taker_coin_out` | The amount of output token received from already filled portions |
+| `maker_coin_out` | The amount of input token returned from the unfilled portion |
+
+```go
+sdk.Event{
+    Type: "limit_order_cancelled",
+    Attributes: []sdk.Attribute{
+        {Key: "creator", Value: "neutron1..."},
+        {Key: "tranche_key", Value: "tranche123"},
+        {Key: "unfilled_amount", Value: "500000"},
+        {Key: "taker_coin_out", Value: "50000ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"},
+        {Key: "maker_coin_out", Value: "500000untrn"},
+    },
+}
+```
+
+### `limit_order_filled`
+
+Emitted when a limit order is filled by a taker.
+
+| Attribute Key | Description |
+| --- | --- |
+| `tranche_key` | The unique identifier for the limit order |
+| `pair_id` | The trading pair identifier |
+| `token_in` | The token being sold |
+| `token_out` | The token being bought |
+| `tick_index` | The tick index of the limit order |
+| `amount_in_filled` | The amount of input token filled |
+| `amount_out` | The amount of output token received |
+| `fill_status` | The fill status ("partially_filled" or "fully_filled") |
+
+### `limit_order_withdrawn`
+
+Emitted when proceeds are withdrawn from a limit order.
+
+| Attribute Key | Description |
+| --- | --- |
+| `creator` | Address of the user who withdrew from the limit order |
+| `tranche_key` | The unique identifier for the limit order |
+| `taker_coin_out` | The amount of output token received from filled portions |
+| `maker_coin_out` | The amount of input token returned from any unfilled portion |
+
+```go
+sdk.Event{
+    Type: "limit_order_withdrawn",
+    Attributes: []sdk.Attribute{
+        {Key: "creator", Value: "neutron1..."},
+        {Key: "tranche_key", Value: "tranche123"},
+        {Key: "taker_coin_out", Value: "100000ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"},
+        {Key: "maker_coin_out", Value: "0untrn"},
+    },
+}
+```
+
+## Swap Events
+
+### `multi_hop_swap`
+
+Emitted when a multi-hop swap is executed.
+
+| Attribute Key | Description |
+| --- | --- |
+| `creator` | Address of the user who initiated the swap |
+| `receiver` | Address that received the output tokens |
+| `routes` | The routes that were attempted |
+| `chosen_route` | The route that was chosen for execution |
+| `amount_in` | The amount of input token swapped |
+| `amount_out` | The amount of output token received |
+| `exit_limit_price` | The minimum acceptable output price |
+| `effective_price` | The actual price obtained |
+
+```go
+sdk.Event{
+    Type: "multi_hop_swap",
+    Attributes: []sdk.Attribute{
+        {Key: "creator", Value: "neutron1..."},
+        {Key: "receiver", Value: "neutron1..."},
+        {Key: "routes", Value: "[\"untrn,ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2\"]"},
+        {Key: "chosen_route", Value: "untrn,ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"},
+        {Key: "amount_in", Value: "1000000untrn"},
+        {Key: "amount_out", Value: "100000ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"},
+        {Key: "exit_limit_price", Value: "0.09"},
+        {Key: "effective_price", Value: "0.1"},
+    },
+}
+```
+
+### `swap_fail_below_exit_limit_price`
+
+Emitted when a swap fails because the obtainable price is below the exit limit price.
+
+| Attribute Key | Description |
+| --- | --- |
+| `exit_limit_price` | The minimum acceptable output price |
+| `obtainable_price` | The price that would have been obtained |
+
+## Other Events
+
+### `purge_expired_limit_orders`
+
+Emitted when expired limit orders are purged during `BeginBlock`.
+
+| Attribute Key | Description |
+| --- | --- |
+| `count` | The number of expired limit orders that were purged |
+| `block_time` | The current block time |
+
+```go
+sdk.Event{
+    Type: "purge_expired_limit_orders",
+    Attributes: []sdk.Attribute{
+        {Key: "count", Value: "3"},
+        {Key: "block_time", Value: "2023-04-01T12:00:00Z"},
+    },
+}
+```
+
+### `module_params_updated`
+
+Emitted when the module parameters are updated.
+
+| Attribute Key | Description |
+| --- | --- |
+| `authority` | Address of the governance account that updated the parameters |
+| `max_pool_spread_bps` | The new maximum pool spread in basis points |
+| `min_tick_spacing` | The new minimum tick spacing |
+
+```go
+sdk.Event{
+    Type: "module_params_updated",
+    Attributes: []sdk.Attribute{
+        {Key: "authority", Value: "neutron1..."},
+        {Key: "max_pool_spread_bps", Value: "100"},
+        {Key: "min_tick_spacing", Value: "1"},
+    },
+}
+``` 

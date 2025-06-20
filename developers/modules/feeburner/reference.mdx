@@ -1,0 +1,235 @@
+---
+title: "Technical Reference"
+---
+
+This document provides detailed reference information for developers working with the Fee Burner module.
+
+## Module Parameters
+
+The Fee Burner module has the following parameters:
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `neutron_denom` | string | Denom of the Neutron token which will be burned during fee processing |
+| `treasury_address` | string | Address to which non-Neutron fees will be sent |
+| `reserve_address` | string | Deprecated in v0.4.4. No longer used. |
+
+## Data Structures
+
+### TotalBurnedNeutronsAmount
+
+The `TotalBurnedNeutronsAmount` struct stores the total amount of NTRN tokens that have been burned.
+
+```protobuf
+message TotalBurnedNeutronsAmount {
+  cosmos.base.v1beta1.Coin coin = 1 [(gogoproto.nullable) = false];
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `coin` | The amount and denomination of Neutron tokens burned |
+
+## Key Space
+
+The Fee Burner module uses the following key in the KVStore:
+
+| Key | Purpose |
+| --- | --- |
+| `BurnedFees` | Stores the total amount of NTRN tokens burned |
+
+## Message Service
+
+### MsgUpdateParams
+
+`MsgUpdateParams` allows the governance account to update the module's parameters.
+
+```protobuf
+message MsgUpdateParams {
+  option (amino.name) = "feeburner/MsgUpdateParams";
+  option (cosmos.msg.v1.signer) = "authority";
+
+  // Authority is the address of the governance account.
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // params defines the x/feeburner parameters to update.
+  //
+  // NOTE: All parameters must be supplied.
+  feeburner.Params params = 2 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `authority` | string | Address of the governance account (must be the signer) |
+| `params` | Params | New parameters for the module |
+
+### MsgUpdateParamsResponse
+
+```protobuf
+message MsgUpdateParamsResponse {}
+```
+
+The response is empty if the operation succeeds.
+
+## Query Service
+
+The Fee Burner module exposes the following query endpoints:
+
+### Params
+
+`Params` queries the module parameters.
+
+Request:
+```protobuf
+message QueryParamsRequest {}
+```
+
+Response:
+```protobuf
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+```
+
+### TotalBurnedNeutronsAmount
+
+`TotalBurnedNeutronsAmount` queries the total amount of burned NTRN tokens.
+
+Request:
+```protobuf
+message QueryTotalBurnedNeutronsAmountRequest {}
+```
+
+Response:
+```protobuf
+message QueryTotalBurnedNeutronsAmountResponse {
+  TotalBurnedNeutronsAmount total_burned_neutrons_amount = 1 [(gogoproto.nullable) = false];
+}
+```
+
+## REST Endpoints
+
+The Fee Burner module exposes several REST endpoints:
+
+### GET: Query Module Parameters
+
+```
+GET /neutron/feeburner/params
+```
+
+Returns the current parameters of the Fee Burner module.
+
+#### Response Structure
+
+```json
+{
+  "params": {
+    "neutron_denom": "untrn",
+    "reserve_address": "",
+    "treasury_address": "neutron1..."
+  }
+}
+```
+
+### GET: Query Total Burned NTRN Amount
+
+```
+GET /neutron/feeburner/total_burned_neutrons_amount
+```
+
+Returns the total amount of NTRN tokens burned since genesis.
+
+#### Response Structure
+
+```json
+{
+  "total_burned_neutrons_amount": {
+    "coin": {
+      "denom": "untrn",
+      "amount": "1532687456789"
+    }
+  }
+}
+```
+
+## Command Line Interface
+
+### Queries
+
+#### Module Parameters
+
+```bash
+neutrond query feeburner params
+```
+
+Returns the current module parameters.
+
+#### Total Burned NTRN Amount
+
+```bash
+neutrond query feeburner total-burned-neutrons-amount
+```
+
+Returns the total amount of NTRN tokens burned since genesis.
+
+### Transactions
+
+#### Update Parameters
+
+```bash
+neutrond tx feeburner update-params [flags]
+```
+
+Updates the module parameters. This command can only be executed by the governance account.
+
+Flags:
+- `--neutron-denom`: The new denom for the Neutron token
+- `--treasury-address`: The new address for the Treasury
+- `--from`: The governance account that signs the transaction
+- `--chain-id`: The chain ID
+
+## Module Functions
+
+The Fee Burner module provides the following key functions:
+
+### BurnAndDistribute
+
+```go
+func (k Keeper) BurnAndDistribute(ctx sdk.Context)
+```
+
+This function is called in the `EndBlock` handler and performs the core functionality of the module:
+
+1. Gets the balances of the fee redistribution module account
+2. Burns all NTRN tokens (identified by the `neutron_denom` parameter)
+3. Updates the total burned amount
+4. Sends all non-NTRN tokens to the Treasury address
+
+### RecordBurnedFees
+
+```go
+func (k Keeper) RecordBurnedFees(ctx sdk.Context, amount sdk.Coin)
+```
+
+Updates the total amount of burned NTRN tokens by adding the specified amount.
+
+### GetTotalBurnedNeutronsAmount
+
+```go
+func (k Keeper) GetTotalBurnedNeutronsAmount(ctx sdk.Context) types.TotalBurnedNeutronsAmount
+```
+
+Returns the total amount of NTRN tokens burned since genesis.
+
+### FundCommunityPool
+
+```go
+func (k Keeper) FundCommunityPool(ctx context.Context, amount sdk.Coins, sender sdk.AccAddress) error
+```
+
+This method satisfies the DistributionKeeper interface for packet-forward-middleware Keeper. It sends coins to the Fee Collector module instead of a community pool. 

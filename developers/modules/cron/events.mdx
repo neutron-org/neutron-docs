@@ -1,0 +1,263 @@
+---
+title: "Events"
+description: "Events emitted by the Cron module for tracking and indexing"
+---
+
+# Events
+
+This document details the events emitted by the Cron module, which are useful for tracking module activity, debugging, and building external integrations.
+
+## Event Types Overview
+
+The Cron module emits the following event types:
+
+| Event Type | Description |
+|------------|-------------|
+| `create_schedule` | Emitted when a new schedule is created |
+| `update_schedule` | Emitted when an existing schedule is updated |
+| `remove_schedule` | Emitted when a schedule is removed |
+| `execute_schedule` | Emitted when a schedule is executed |
+
+## Event Details
+
+### EventCreateSchedule
+
+Emitted when a new schedule is created using the `MsgCreateSchedule` message.
+
+#### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `name` | string | Name of the created schedule |
+| `owner` | string | Address of the schedule creator |
+| `period` | string | Execution period in blocks |
+| `msgs_count` | string | Number of messages in the schedule |
+| `boundary` | string | Starting block height (if set, otherwise empty) |
+
+#### Example
+
+```json
+{
+  "type": "create_schedule",
+  "attributes": [
+    {
+      "key": "name",
+      "value": "daily_reward_distribution"
+    },
+    {
+      "key": "owner",
+      "value": "neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq"
+    },
+    {
+      "key": "period",
+      "value": "7200"
+    },
+    {
+      "key": "msgs_count",
+      "value": "1"
+    }
+  ]
+}
+```
+
+### EventUpdateSchedule
+
+Emitted when an existing schedule is updated using the `MsgUpdateSchedule` message.
+
+#### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `name` | string | Name of the updated schedule |
+| `owner` | string | Address of the schedule owner |
+| `period` | string | New execution period in blocks |
+| `msgs_count` | string | New number of messages in the schedule |
+| `boundary` | string | New starting block height (if set, otherwise empty) |
+
+#### Example
+
+```json
+{
+  "type": "update_schedule",
+  "attributes": [
+    {
+      "key": "name",
+      "value": "daily_reward_distribution"
+    },
+    {
+      "key": "owner",
+      "value": "neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq"
+    },
+    {
+      "key": "period",
+      "value": "14400"
+    },
+    {
+      "key": "msgs_count",
+      "value": "1"
+    }
+  ]
+}
+```
+
+### EventRemoveSchedule
+
+Emitted when a schedule is removed using the `MsgRemoveSchedule` message.
+
+#### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `name` | string | Name of the removed schedule |
+| `owner` | string | Address of the schedule owner |
+
+#### Example
+
+```json
+{
+  "type": "remove_schedule",
+  "attributes": [
+    {
+      "key": "name",
+      "value": "daily_reward_distribution"
+    },
+    {
+      "key": "owner",
+      "value": "neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq"
+    }
+  ]
+}
+```
+
+### EventExecuteSchedule
+
+Emitted when a schedule is executed during the `EndBlock` phase.
+
+#### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `name` | string | Name of the executed schedule |
+| `height` | string | Block height of execution |
+| `success` | string | Whether execution was successful ("true" or "false") |
+| `error` | string | Error message if execution failed (empty if successful) |
+
+#### Example: Successful Execution
+
+```json
+{
+  "type": "execute_schedule",
+  "attributes": [
+    {
+      "key": "name",
+      "value": "daily_reward_distribution"
+    },
+    {
+      "key": "height",
+      "value": "8764230"
+    },
+    {
+      "key": "success",
+      "value": "true"
+    }
+  ]
+}
+```
+
+#### Example: Failed Execution
+
+```json
+{
+  "type": "execute_schedule",
+  "attributes": [
+    {
+      "key": "name",
+      "value": "daily_reward_distribution"
+    },
+    {
+      "key": "height",
+      "value": "8764230"
+    },
+    {
+      "key": "success",
+      "value": "false"
+    },
+    {
+      "key": "error",
+      "value": "out of gas: exceeded limit of 200000"
+    }
+  ]
+}
+```
+
+## Using Events
+
+### Monitoring Schedule Executions
+
+Events provide a reliable way to monitor schedule executions. To track all executions of a specific schedule, you can query for events with:
+
+```
+tx.events.execute_schedule.name='your_schedule_name'
+```
+
+### Debugging Execution Failures
+
+When schedule executions fail, the `execute_schedule` event includes an error attribute that can help identify the issue:
+
+```
+tx.events.execute_schedule.success='false'
+```
+
+This will return all failed schedule executions, which can be useful for debugging.
+
+### Integration with External Systems
+
+Events enable integration with external monitoring and automation systems:
+
+1. **Monitoring Services**: Set up alerts for failed schedule executions
+2. **Analytics Platforms**: Track execution patterns and performance
+3. **Dashboards**: Visualize schedule activity and health
+
+### Schedule Lifecycle Tracking
+
+By monitoring all events related to a specific schedule name, you can trace the complete lifecycle of a schedule:
+
+1. Creation: `create_schedule` event
+2. Updates: `update_schedule` events
+3. Executions: `execute_schedule` events
+4. Removal: `remove_schedule` event
+
+## Event Emission in the Code
+
+The Cron module emits events at specific points in its execution flow:
+
+### In Message Handlers
+
+- `MsgCreateSchedule`: Emits `create_schedule` event after successfully storing the schedule
+- `MsgUpdateSchedule`: Emits `update_schedule` event after successfully updating the schedule
+- `MsgRemoveSchedule`: Emits `remove_schedule` event after successfully removing the schedule
+
+### In EndBlock
+
+- Schedule Execution: Emits `execute_schedule` event for each schedule that is due for execution, indicating success or failure
+
+## Event Subscriptions
+
+To subscribe to Cron module events using the Tendermint WebSocket API:
+
+```javascript
+// Subscribe to all create_schedule events
+tm.subscribe({
+  query: "tm.event='Tx' AND create_schedule.name CONTAINS ''"
+});
+
+// Subscribe to all execute_schedule events for a specific schedule
+tm.subscribe({
+  query: "tm.event='Tx' AND execute_schedule.name='daily_reward_distribution'"
+});
+
+// Subscribe to all failed schedule executions
+tm.subscribe({
+  query: "tm.event='Tx' AND execute_schedule.success='false'"
+});
+``` 

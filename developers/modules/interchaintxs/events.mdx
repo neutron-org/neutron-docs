@@ -1,0 +1,291 @@
+---
+title: "Events"
+---
+
+The Interchain Transactions module emits various events during its operation that can be used for monitoring and integration purposes.
+
+## RegisteredInterchainAccount
+
+Emitted when an interchain account is successfully registered on a remote chain.
+
+**Type**: `register_interchain_account`
+
+### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `connection_id` | string | The ID of the IBC connection used |
+| `port_id` | string | The port ID for the interchain account |
+| `channel_id` | string | The channel ID created for the interchain account |
+| `interchain_account_id` | string | The ID of the registered interchain account |
+| `from_address` | string | The address that initiated the registration |
+
+### Example
+
+```json
+{
+  "type": "register_interchain_account",
+  "attributes": [
+    {
+      "key": "connection_id",
+      "value": "connection-0",
+      "index": true
+    },
+    {
+      "key": "port_id",
+      "value": "icacontroller-neutron1abc...def.myaccount",
+      "index": true
+    },
+    {
+      "key": "channel_id",
+      "value": "channel-123",
+      "index": true
+    },
+    {
+      "key": "interchain_account_id",
+      "value": "myaccount",
+      "index": true
+    },
+    {
+      "key": "from_address",
+      "value": "neutron1abc...def",
+      "index": true
+    }
+  ]
+}
+```
+
+## SubmittedTx
+
+Emitted when a transaction is submitted to be executed on a remote chain.
+
+**Type**: `submit_tx`
+
+### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `connection_id` | string | The ID of the IBC connection used |
+| `interchain_account_id` | string | The ID of the interchain account |
+| `channel_id` | string | The ID of the channel used for the interchain account |
+| `sequence_id` | string | The sequence ID of the IBC packet |
+| `from_address` | string | The address that submitted the transaction |
+| `timeout` | string | The timeout value in seconds |
+
+### Example
+
+```json
+{
+  "type": "submit_tx",
+  "attributes": [
+    {
+      "key": "connection_id",
+      "value": "connection-0",
+      "index": true
+    },
+    {
+      "key": "interchain_account_id",
+      "value": "myaccount",
+      "index": true
+    },
+    {
+      "key": "channel_id",
+      "value": "channel-123",
+      "index": true
+    },
+    {
+      "key": "sequence_id",
+      "value": "42",
+      "index": true
+    },
+    {
+      "key": "from_address",
+      "value": "neutron1abc...def",
+      "index": true
+    },
+    {
+      "key": "timeout",
+      "value": "600",
+      "index": true
+    }
+  ]
+}
+```
+
+## AcknowledgementReceived
+
+Emitted when an acknowledgement is received from a remote chain.
+
+**Type**: `acknowledgement`
+
+### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `channel_id` | string | The ID of the channel that received the acknowledgement |
+| `port_id` | string | The port ID associated with the channel |
+| `sequence_id` | string | The sequence ID of the acknowledged IBC packet |
+| `success` | string | "true" if the acknowledgement indicates success, "false" otherwise |
+| `ack_type` | string | The type of acknowledgement ("success", "error", or "timeout") |
+
+### Example (Success)
+
+```json
+{
+  "type": "acknowledgement",
+  "attributes": [
+    {
+      "key": "channel_id",
+      "value": "channel-123",
+      "index": true
+    },
+    {
+      "key": "port_id",
+      "value": "icacontroller-neutron1abc...def.myaccount",
+      "index": true
+    },
+    {
+      "key": "sequence_id",
+      "value": "42",
+      "index": true
+    },
+    {
+      "key": "success",
+      "value": "true",
+      "index": true
+    },
+    {
+      "key": "ack_type",
+      "value": "success",
+      "index": true
+    }
+  ]
+}
+```
+
+### Example (Error)
+
+```json
+{
+  "type": "acknowledgement",
+  "attributes": [
+    {
+      "key": "channel_id",
+      "value": "channel-123",
+      "index": true
+    },
+    {
+      "key": "port_id",
+      "value": "icacontroller-neutron1abc...def.myaccount",
+      "index": true
+    },
+    {
+      "key": "sequence_id",
+      "value": "42",
+      "index": true
+    },
+    {
+      "key": "success",
+      "value": "false",
+      "index": true
+    },
+    {
+      "key": "ack_type",
+      "value": "error",
+      "index": true
+    },
+    {
+      "key": "error",
+      "value": "codespace: sdk, code: 5",
+      "index": true
+    }
+  ]
+}
+```
+
+## TimeoutPacket
+
+Emitted when an IBC packet times out.
+
+**Type**: `timeout_packet`
+
+### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `channel_id` | string | The ID of the channel that timed out |
+| `port_id` | string | The port ID associated with the channel |
+| `sequence_id` | string | The sequence ID of the timed-out IBC packet |
+
+### Example
+
+```json
+{
+  "type": "timeout_packet",
+  "attributes": [
+    {
+      "key": "channel_id",
+      "value": "channel-123",
+      "index": true
+    },
+    {
+      "key": "port_id",
+      "value": "icacontroller-neutron1abc...def.myaccount",
+      "index": true
+    },
+    {
+      "key": "sequence_id",
+      "value": "42",
+      "index": true
+    }
+  ]
+}
+```
+
+## ParamsUpdated
+
+Emitted when the module parameters are updated.
+
+**Type**: `params_updated`
+
+### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `authority` | string | The address of the account that authorized the update |
+
+### Example
+
+```json
+{
+  "type": "params_updated",
+  "attributes": [
+    {
+      "key": "authority",
+      "value": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6z2zm3",
+      "index": true
+    }
+  ]
+}
+```
+
+## Usage Example
+
+To monitor events from the Interchain Transactions module, you can subscribe to these events using a Tendermint WebSocket subscription:
+
+```javascript
+// Subscribe to all register_interchain_account events
+client.subscribe('tm.event=\'Tx\' AND register_interchain_account.from_address=\'neutron1...\'', function(event) {
+  console.log('Interchain account registered:', event);
+});
+
+// Subscribe to all submit_tx events for a specific interchain account
+client.subscribe('tm.event=\'Tx\' AND submit_tx.interchain_account_id=\'myaccount\'', function(event) {
+  console.log('Transaction submitted:', event);
+});
+
+// Subscribe to all acknowledgement events
+client.subscribe('tm.event=\'Tx\' AND acknowledgement.success=\'true\'', function(event) {
+  console.log('Successful transaction acknowledgement:', event);
+});
+``` 

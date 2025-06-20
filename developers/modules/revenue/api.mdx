@@ -1,0 +1,287 @@
+---
+title: "API"
+---
+
+This document details the API endpoints provided by the Revenue module for blockchain integration.
+
+## REST Endpoints
+
+All REST routes are defined in the module's `client/rest` package. The base URL is typically `http://localhost:1317`.
+
+### GET: Query Parameters
+
+```
+GET /neutron/revenue/params
+```
+
+Returns the current parameters of the Revenue module.
+
+#### Response Structure
+
+```json
+{
+  "params": {
+    "base_compensation": "2000",
+    "denom_compensation": "untrn",
+    "twap_window_size": 30,
+    "performance_requirements": {
+      "required_at_least": "0.800000000000000000",
+      "allowed_to_miss": "0.050000000000000000"
+    },
+    "payment_schedule_type": "PAYMENT_SCHEDULE_TYPE_MONTHLY"
+  }
+}
+```
+
+### GET: Query Validator Info
+
+```
+GET /neutron/revenue/validator_info/{validatorAddr}
+```
+
+Returns performance metrics for a specific validator.
+
+#### Request Parameters
+
+- `validatorAddr` (path): The address of the validator to query (e.g., `neutronvaloper1...`)
+
+#### Response Structure
+
+```json
+{
+  "validator_info": {
+    "address": "neutronvaloper1...",
+    "signed_blocks": 980,
+    "blocks_in_window": 1000,
+    "provided_oracle_votes": 950,
+    "oracle_votes_in_window": 1000
+  }
+}
+```
+
+### GET: Query Payment Schedule
+
+```
+GET /neutron/revenue/payment_schedule
+```
+
+Returns information about the current payment schedule.
+
+#### Response Structure
+
+```json
+{
+  "payment_schedule": {
+    "type": "PAYMENT_SCHEDULE_TYPE_MONTHLY",
+    "periods_passed": 5,
+    "periods_count": 0,
+    "month_end_time": "2023-11-01T00:00:00Z"
+  }
+}
+```
+
+## gRPC Endpoints
+
+The Revenue module provides gRPC query and transaction endpoints.
+
+### Query Service
+
+#### Params
+
+Query the current parameters of the module:
+
+```protobuf
+rpc Params(QueryParamsRequest) returns (QueryParamsResponse)
+```
+
+##### Request
+
+```protobuf
+message QueryParamsRequest {}
+```
+
+##### Response
+
+```protobuf
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+```
+
+#### ValidatorInfo
+
+Query a validator's performance metrics:
+
+```protobuf
+rpc ValidatorInfo(QueryValidatorInfoRequest) returns (QueryValidatorInfoResponse)
+```
+
+##### Request
+
+```protobuf
+message QueryValidatorInfoRequest {
+  string validator_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+```
+
+##### Response
+
+```protobuf
+message QueryValidatorInfoResponse {
+  ValidatorInfo validator_info = 1 [(gogoproto.nullable) = false];
+}
+```
+
+#### PaymentSchedule
+
+Query the current payment schedule:
+
+```protobuf
+rpc PaymentSchedule(QueryPaymentScheduleRequest) returns (QueryPaymentScheduleResponse)
+```
+
+##### Request
+
+```protobuf
+message QueryPaymentScheduleRequest {}
+```
+
+##### Response
+
+```protobuf
+message QueryPaymentScheduleResponse {
+  PaymentSchedule payment_schedule = 1 [(gogoproto.nullable) = false];
+}
+```
+
+### Msg Service
+
+#### UpdateParams
+
+Update the module's parameters (admin/governance only):
+
+```protobuf
+rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse)
+```
+
+##### Message
+```protobuf
+message MsgUpdateParams {
+  option (amino.name) = "revenue/MsgUpdateParams";
+  option (cosmos.msg.v1.signer) = "authority";
+
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  Params params = 2 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+}
+```
+
+##### Response
+```protobuf
+message MsgUpdateParamsResponse {}
+```
+
+#### FundTreasury
+
+Add funds to the revenue treasury:
+
+```protobuf
+rpc FundTreasury(MsgFundTreasury) returns (MsgFundTreasuryResponse)
+```
+
+##### Message
+```protobuf
+message MsgFundTreasury {
+  option (amino.name) = "revenue/MsgFundTreasury";
+  option (cosmos.msg.v1.signer) = "sender";
+
+  string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  repeated cosmos.base.v1beta1.Coin amount = 2 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+```
+
+##### Response
+```protobuf
+message MsgFundTreasuryResponse {}
+```
+
+## JavaScript/TypeScript Integration
+
+Here's an example of how to interact with the Revenue module using JavaScript:
+
+### Querying Validator Performance
+
+```typescript
+import { QueryClient } from '@cosmjs/stargate';
+import { Tendermint34Client } from '@cosmjs/tendermint-rpc';
+
+async function queryValidatorInfo(validatorAddress: string) {
+  // Connect to the node
+  const tmClient = await Tendermint34Client.connect("http://localhost:26657");
+  const queryClient = new QueryClient(tmClient);
+  
+  // Craft the query path
+  const path = `/neutron.revenue.Query/ValidatorInfo`;
+  
+  // Encode the request
+  const request = {
+    validator_addr: validatorAddress
+  };
+  const requestBytes = new TextEncoder().encode(JSON.stringify(request));
+  
+  // Send the query
+  const responseBytes = await queryClient.queryAbci(path, requestBytes);
+  
+  // Decode the response
+  const response = JSON.parse(new TextDecoder().decode(responseBytes));
+  
+  return response.validator_info;
+}
+
+// Usage example
+queryValidatorInfo("neutronvaloper1...")
+  .then(info => console.log("Validator performance:", info))
+  .catch(err => console.error("Query failed:", err));
+```
+
+## CosmWasm Integration
+
+Smart contracts can interact with the Revenue module through custom queries. Here's an example:
+
+### Querying Validator Info from a CosmWasm Contract
+
+```rust
+use cosmwasm_std::{CustomQuery, Deps, QueryRequest, StdResult};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
+// Define the custom query
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum RevenueQuery {
+    ValidatorInfo { validator_addr: String },
+}
+
+// Implement CustomQuery trait
+impl CustomQuery for RevenueQuery {}
+
+// Define the response structure
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ValidatorInfoResponse {
+    pub address: String,
+    pub signed_blocks: u64,
+    pub blocks_in_window: u64,
+    pub provided_oracle_votes: u64,
+    pub oracle_votes_in_window: u64,
+}
+
+// Function to query validator info
+pub fn query_validator_info(deps: Deps, validator_addr: String) -> StdResult<ValidatorInfoResponse> {
+    let request = QueryRequest::Custom(RevenueQuery::ValidatorInfo { validator_addr });
+    let response: ValidatorInfoResponse = deps.querier.query(&request)?;
+    Ok(response)
+}
+``` 
