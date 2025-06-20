@@ -1,10 +1,10 @@
 ---
-title: "Validators Overview"
-description: "Guide for Neutron validators"
+title: "Operators Overview"
+description: "Guide for Neutron network operators"
 icon: "server"
 ---
 
-Neutron validators secure the network by operating nodes that participate in consensus, validate transactions, and provide critical oracle data. Following the Mercury upgrade in April 2025, Neutron transitioned to a fully sovereign network with a unique validator model.
+Neutron network operators maintain critical infrastructure including validators, oracles, relayers, and API/RPC nodes. Following the Mercury upgrade in April 2025, Neutron transitioned to a fully sovereign network with expanded opportunities for network participation.
 
 <CardGroup cols={2}>
   <Card title="High Performance" icon="bolt" iconType="duotone">
@@ -116,22 +116,44 @@ The Mercury upgrade in April 2025 marked a pivotal transition for Neutron, movin
 - Better stability for the High Frequency Oracle and other infrastructure
 - Faster upgrades and incident response capabilities
 
+## Operator Types
+
+Neutron supports various types of network operators:
+
+<CardGroup cols={2}>
+  <Card title="Validators" icon="shield-check" iconType="duotone">
+    Secure the network through consensus participation and block validation
+  </Card>
+  <Card title="Oracles" icon="chart-line" iconType="duotone">
+    Provide critical price feed data for DeFi protocols
+  </Card>
+  <Card title="IBC Relayers" icon="arrow-right-arrow-left" iconType="duotone">
+    Enable cross-chain communication and asset transfers
+  </Card>
+  <Card title="ICQ Relayers" icon="link" iconType="duotone">
+    Facilitate interchain queries for smart contracts
+  </Card>
+</CardGroup>
+
 ## Documentation Sections
 
 <CardGroup cols={3}>
-  <Card title="Running a Node" icon="server" href="/validators/running-a-node">
-    Complete setup instructions for running a Neutron validator node
+  <Card title="Running a Node" icon="server" href="/operators/running-a-node">
+    Complete setup instructions for running a Neutron node
   </Card>
-  <Card title="Oracle Setup" icon="chart-line" href="/validators/oracle-setup">
-    Configure the Slinky price oracle service for your validator
+  <Card title="Oracle Setup" icon="chart-line" href="/operators/oracle-setup">
+    Configure the Slinky price oracle service
   </Card>
-  <Card title="Becoming a Validator" icon="user-plus" href="/validators/becoming-a-validator">
-    Steps to join the Neutron validator set with performance requirements
+  <Card title="Becoming a Validator" icon="user-plus" href="/operators/becoming-a-validator">
+    Steps to join the Neutron validator set
   </Card>
-  <Card title="Validator Economics" icon="coins" href="/validators/economics/validator-incentives">
+  <Card title="IBC Relayer" icon="arrow-right-arrow-left" href="/operators/ibc-relayer">
+    Set up IBC relaying between Neutron and other chains
+  </Card>
+  <Card title="ICQ Relayer" icon="link" href="/operators/icq-relayer">
+    Run interchain query relayer infrastructure
+  </Card>
+  <Card title="Operator Economics" icon="coins" href="/operators/economics/validator-incentives">
     Learn about the unique economic model and incentives
-  </Card>
-  <Card title="Network Resources" icon="network-wired" href="/resources/peers">
-    Access peers, endpoints and other network resources
   </Card>
 </CardGroup> 

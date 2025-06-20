@@ -1,6 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="900" height="180" viewBox="0 0 900 180" role="img" aria-label="Neutron Docs logo">
-  <!-- white backdrop -->
-  <rect width="100%" height="100%" fill="#fff"/>
+
 
   <!-- Neutron Logo -->
   <g transform="translate(20, 50) scale(10)">
@@ -13,8 +12,8 @@
         font-family="ChakraPetch-Bold, 'Chakra Petch', sans-serif" font-size="110"
         font-weight="700" fill="#000" letter-spacing="2">NEUTRON</text>
 
-  <!-- DOCS text in green -->
+  <!-- DOCS text in blue -->
   <text x="190" y="175"
         font-family="ChakraPetch-Bold, 'Chakra Petch', sans-serif" font-size="65"
-        font-weight="700" fill="#31D99C" letter-spacing="1.5">DOCS</text>
+        font-weight="700" fill="#5BA8F5" letter-spacing="1.5">DOCS</text>
 </svg>

@@ -37,6 +37,54 @@ Community Proposal → DAO Voting → Main DAO Contract → Admin Module → Net
 
 The admin module receives `ProposalExecuteMessage` bindings from the Main DAO contract and processes them according to its whitelisting rules.
 
+## Submitting Proposals to the Main DAO
+
+<Warning>
+Neutron does **not** use the standard Cosmos SDK `gov` module for proposals. All governance goes through the Main DAO contract via WASM execution.
+</Warning>
+
+### Method 1: Using Governance Interfaces (Recommended)
+
+The easiest way to submit proposals is through web interfaces:
+
+- **[governance.neutron.org](https://governance.neutron.org)** - Official governance interface
+- **[daodao.zone](https://daodao.zone)** - Alternative DAO interface
+
+These interfaces handle the complexity of WASM message formatting and provide user-friendly proposal creation workflows.
+
+### Method 2: Direct WASM Execute
+
+For programmatic proposal submission, use WASM execute messages to the Main DAO contract:
+
+```bash
+# Execute a propose message on the Main DAO contract
+neutrond tx wasm execute neutron1436kxs0w2es6xlqpp9rd35e3d0cjnw4sv8j3a7483sgks29jqwgshlt6zh \
+  '{"propose": {"msg": {"propose_single": {"title": "Your Proposal Title", "description": "Your proposal description", "msgs": [/* your admin module messages */]}}}}' \
+  --from=<your-key> \
+  --chain-id=neutron-1 \
+  --gas=auto \
+  --gas-adjustment=1.5
+```
+
+### Method 3: WASM Submit Proposal (CLI)
+
+Alternative CLI method using the WASM submit-proposal command:
+
+```bash
+# Submit proposal via WASM module
+neutrond tx wasm submit-proposal proposal.json \
+  --from=<your-key> \
+  --chain-id=neutron-1 \
+  --gas=auto \
+  --gas-adjustment=1.5
+```
+
+Where `proposal.json` contains the properly formatted WASM proposal for the Main DAO contract.
+
+<Note>
+The Main DAO contract address is: `neutron1436kxs0w2es6xlqpp9rd35e3d0cjnw4sv8j3a7483sgks29jqwgshlt6zh`
+</Note>
+
 ## Supported Operations
 
 The admin module can process two types of proposals:

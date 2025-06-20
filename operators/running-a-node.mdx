@@ -75,13 +75,13 @@ This guide will walk you through the process of setting up and running a Neutron
         ```bash
         git clone https://github.com/neutron-org/neutron.git
         cd neutron
-        git checkout v6.0.1 # replace with the current version
+        git checkout v6.0.2 # replace with the current version
         make install
         ```
       </Tab>
       <Tab title="Download Binary">
         ```bash
-        wget https://github.com/neutron-org/neutron/releases/download/v6.0.1/neutrond-linux-amd64
+        wget https://github.com/neutron-org/neutron/releases/download/v6.0.2/neutrond-linux-amd64
         chmod +x neutrond-linux-amd64
         sudo mv neutrond-linux-amd64 /usr/local/bin/neutrond
         ```
@@ -106,6 +106,26 @@ wget -O $HOME/.neutrond/config/genesis.json https://snapshots.kjnodes.com/neutro
 # Download address book
 wget -O $HOME/.neutrond/config/addrbook.json https://snapshots.kjnodes.com/neutron/addrbook.json
 ```
+
+## RPC and API Endpoints
+
+For connecting to the Neutron network, you can use the following official endpoints:
+
+<CardGroup cols={2}>
+  <Card title="Official Neutron RPC" icon="server" iconType="duotone">
+    **RPC:** https://rpc-lb.neutron.org<br />
+    Load-balanced RPC endpoint maintained by Neutron
+  </Card>
+  <Card title="Official Neutron REST APIs" icon="cloud" iconType="duotone">
+    **Solara:** https://rest-solara.neutron-1.neutron.org<br />
+    **Vertexa:** https://rest-vertexa.neutron-1.neutron.org<br />
+    High-availability REST API endpoints
+  </Card>
+</CardGroup>
+
+<Tip>
+  For a comprehensive list of community-maintained endpoints, visit [Cosmos Directory](https://cosmos.directory/neutron) which provides real-time status and performance metrics for various RPC and API providers.
+</Tip>
 
 ### Configure Your Node
 
@@ -139,14 +159,14 @@ To speed up the initial sync process, you can use state sync or a snapshot.
   <Tab title="State Sync">
     ```bash
     # Get latest block height and hash
-    LATEST_HEIGHT=$(curl -s https://rpc.neutron.nodestake.top/status | jq -r .result.sync_info.latest_block_height)
+    LATEST_HEIGHT=$(curl -s https://rpc-lb.neutron.org/status | jq -r .result.sync_info.latest_block_height)
     BLOCK_HEIGHT=$((LATEST_HEIGHT - 2000))
-    TRUST_HASH=$(curl -s "https://rpc.neutron.nodestake.top/block?height=$BLOCK_HEIGHT" | jq -r .result.block_id.hash)
+    TRUST_HASH=$(curl -s "https://rpc-lb.neutron.org/block?height=$BLOCK_HEIGHT" | jq -r .result.block_id.hash)
 
     # Configure state sync in config.toml
     sed -i \
     -e "s|^enable *=.*|enable = true|" \
-    -e "s|^rpc_servers *=.*|rpc_servers = \"https://rpc.neutron.nodestake.top:443,https://rpc-kralum.neutron-1.neutron.org:26657\"|" \
+    -e "s|^rpc_servers *=.*|rpc_servers = \"https://rpc-lb.neutron.org:443,https://rest-solara.neutron-1.neutron.org:443\"|" \
     -e "s|^trust_height *=.*|trust_height = $BLOCK_HEIGHT|" \
     -e "s|^trust_hash *=.*|trust_hash = \"$TRUST_HASH\"|" \
     $HOME/.neutrond/config/config.toml

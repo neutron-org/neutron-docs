@@ -7,15 +7,15 @@
   },
   "favicon": "/favicon.svg",
   "colors": {
-    "primary": "#31D99C",
-    "light": "#AFF0D0",
-    "dark": "#101A15"
+    "primary": "#5BA8F5",
+    "light": "#B8D4F5",
+    "dark": "#5BA8F5"
   },
   "background": {
     "decoration": "grid",
     "color": {
-      "light": "#EDEDED",
-      "dark": "#000000"
+      "light": "#F0F7FF",
+      "dark": "#0A1420"
     }
   },
   "theme": "mint",
@@ -33,7 +33,8 @@
     "primary": {
       "type": "button",
       "label": "Launch App",
-      "href": "https://app.neutron.org"
+      "href": "https://app.neutron.org",
+      "color": "#B8E6FF"
     }
   },
   "navigation": {
@@ -438,17 +439,27 @@
             "group": "Getting Started",
             "icon": "flag",
             "pages": [
-              "validators/overview",
-              "validators/running-a-node",
-              "validators/oracle-setup",
-              "validators/becoming-a-validator"
+              "operators/overview",
+              "operators/running-a-node",
+              "operators/oracle-setup",
+              "operators/becoming-a-validator"
             ]
           },
           {
             "group": "Economics",
             "icon": "coins",
             "pages": [
-              "validators/economics/validator-incentives"
+              "operators/economics/validator-incentives",
+              "operators/economics/curation-policy",
+              "operators/economics/slashing"
+            ]
+          },
+          {
+            "group": "Relayers",
+            "icon": "arrow-right-arrow-left",
+            "pages": [
+              "operators/ibc-relayer",
+              "operators/icq-relayer"
             ]
           }
         ]
@@ -471,6 +482,7 @@
             "group": "Upgrades",
             "icon": "arrow-up-right-dots",
             "pages": [
+              "resources/upgrades/v6.0.2",
               "resources/upgrades/v6.0.1",
               "resources/upgrades/v7.0.0-rc0"
             ]
@@ -509,8 +521,8 @@
   },
   "hero": {
     "image": {
-      "light": "/images/hero-light.png",
-      "dark": "/images/hero-dark.png"
+      "light": "/images/blue-blueprint.png",
+      "dark": "/images/blue-blueprint.png"
     },
     "title": "Neutron: The Integrated DeFi Blockchain",
     "subtitle": "Build, stake, and govern the next generation of decentralized finance"
