@@ -5,6 +5,10 @@ description: "Deep dive into admin module architecture, governance mechanisms, a
 
 This document provides an in-depth technical explanation of the admin module's architecture, governance mechanisms, and implementation details.
 
+<Warning>
+**Main DAO Exclusive Access**: The admin module can only be accessed by the Main DAO contract through WebAssembly bindings. Individual users, external contracts, and CLI commands cannot directly interact with this module. All operations must go through Neutron's DAO governance process.
+</Warning>
+
 ## Admin Module Architecture
 
 The admin module serves as the central governance hub for the Neutron network, designed to handle administrative operations through a secure, controlled framework. The module architecture consists of several key components working together to ensure safe and effective network governance.

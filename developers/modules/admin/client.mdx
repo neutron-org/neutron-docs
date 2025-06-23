@@ -1,38 +1,19 @@
 ---
 title: "Client"
-description: "CLI commands and client library usage for the admin module"
+description: "Query client details for the admin module"
 ---
 
-This document provides comprehensive information on interacting with the admin module through various client interfaces including CLI, gRPC, and REST.
+This document describes how to interact with the admin module using various client interfaces. 
 
-## CLI Commands
+<Warning>
+**Query-Only Access**: The admin module only provides query functionality to external clients. All transaction operations must go through the Main DAO contract using WebAssembly bindings. Individual users cannot submit transactions to this module.
+</Warning>
 
-The Neutron CLI provides commands for interacting with the admin module through the `neutrond` binary.
+## CLI Client
+
+The admin module provides query commands for inspecting module state, but no transaction commands for individual users.
 
 ### Query Commands
-
-#### List Admins
-
-Query the current list of network administrators.
-
-```bash
-neutrond query adminmodule admins [flags]
-```
-
-**Example:**
-```bash
-neutrond query adminmodule admins --node https://rpc-falcron.pion-1.ntrn.tech:443
-```
-
-**Output:**
-```json
-{
-  "admins": [
-    "neutron1qzxcseq9e0jhcpj2ht7j9lqkhp0q5vrzhctlud",
-    "neutron1h5lmx8gndrh0x0qlqhp2hxhf0v5u9hfpexkq5q"
-  ]
-}
-```
 
 #### Query Parameters
 
@@ -44,12 +25,29 @@ neutrond query adminmodule params [flags]
 
 **Example:**
 ```bash
-neutrond query adminmodule params --output json
+neutrond query adminmodule params \
+  --node https://rpc.neutron.org:443 \
+  --chain-id neutron-1
+```
+
+#### Query Admins
+
+List all current administrators (if admin management is enabled).
+
+```bash
+neutrond query adminmodule admins [flags]
+```
+
+**Example:**
+```bash
+neutrond query adminmodule admins \
+  --output json \
+  --node https://rpc.neutron.org:443
 ```
 
 #### Query Whitelist
 
-List all whitelisted message types.
+Get the list of whitelisted message types that can be executed through governance.
 
 ```bash
 neutrond query adminmodule whitelist [flags]
@@ -57,12 +55,14 @@ neutrond query adminmodule whitelist [flags]
 
 **Example:**
 ```bash
-neutrond query adminmodule whitelist --chain-id neutron-1
+neutrond query adminmodule whitelist \
+  --chain-id neutron-1 \
+  --output json
 ```
 
 #### Query Proposal
 
-Get details of a specific proposal by ID.
+Get details of a specific proposal by ID (if proposal storage is enabled).
 
 ```bash
 neutrond query adminmodule proposal [proposal-id] [flags]
@@ -70,10 +70,11 @@ neutrond query adminmodule proposal [proposal-id] [flags]
 
 **Example:**
 ```bash
-neutrond query adminmodule proposal 1 --output json
+neutrond query adminmodule proposal 1 \
+  --output json
 ```
 
-#### Query All Proposals
+#### Query Proposals
 
 List all proposals with optional pagination.
 
@@ -83,93 +84,26 @@ neutrond query adminmodule proposals [flags]
 
 **Example:**
 ```bash
-neutrond query adminmodule proposals --limit 10 --offset 0
+neutrond query adminmodule proposals \
+  --limit 10 \
+  --offset 0 \
+  --output json
 ```
 
-### Transaction Commands
+<Note>
+**No Transaction Commands**: Unlike other Cosmos SDK modules, the admin module does not provide CLI transaction commands. All state changes must go through the Main DAO contract.
+</Note>
 
-#### Submit Proposal
+### Common Query Flags
 
-Submit a new governance proposal with message-based execution.
-
-```bash
-neutrond tx adminmodule submit-proposal [messages-json] [flags]
-```
-
-**Example:**
-```bash
-neutrond tx adminmodule submit-proposal \
-  --messages='[{
-    "@type": "/cosmos.bank.v1beta1.MsgSend",
-    "from_address": "neutron1...",
-    "to_address": "neutron1...",
-    "amount": [{"denom": "untrn", "amount": "1000000"}]
-  }]' \
-  --from governance-key \
-  --chain-id neutron-1 \
-  --gas auto \
-  --gas-adjustment 1.5
-```
-
-#### Submit Legacy Proposal
-
-Submit a proposal using the legacy governance format.
-
-```bash
-neutrond tx adminmodule submit-proposal-legacy [proposal-file] [flags]
-```
-
-**Example:**
-```bash
-neutrond tx adminmodule submit-proposal-legacy proposal.json \
-  --from governance-key \
-  --chain-id neutron-1
-```
-
-#### Add Admin
-
-Add a new administrator to the network.
-
-```bash
-neutrond tx adminmodule add-admin [admin-address] [flags]
-```
-
-**Example:**
-```bash
-neutrond tx adminmodule add-admin neutron1newadmin... \
-  --from admin-manager \
-  --chain-id neutron-1 \
-  --fees 5000untrn
-```
-
-#### Delete Admin
-
-Remove an existing administrator from the network.
-
-```bash
-neutrond tx adminmodule delete-admin [admin-address] [flags]
-```
-
-**Example:**
-```bash
-neutrond tx adminmodule delete-admin neutron1oldadmin... \
-  --from admin-manager \
-  --chain-id neutron-1
-```
-
-### Common Flags
-
-All commands support standard Cosmos SDK flags:
+All query commands support standard Cosmos SDK flags:
 
 | Flag | Description | Example |
 |------|-------------|---------|
 | `--node` | RPC endpoint | `--node https://rpc.neutron.org:443` |
 | `--chain-id` | Chain identifier | `--chain-id neutron-1` |
 | `--output` | Output format | `--output json` |
-| `--fees` | Transaction fees | `--fees 5000untrn` |
-| `--gas` | Gas limit | `--gas 200000` |
-| `--gas-adjustment` | Gas adjustment factor | `--gas-adjustment 1.5` |
-| `--from` | Signing key name | `--from my-key` |
+| `--height` | Query at specific height | `--height 1000000` |
 
 ## gRPC Client
 
@@ -211,6 +145,14 @@ func main() {
     }
     
     fmt.Printf("Whitelisted messages: %v\n", whitelistResp.WhitelistedMessages)
+
+    // Query parameters
+    paramsResp, err := client.Params(context.Background(), &adminmoduletypes.QueryParamsRequest{})
+    if err != nil {
+        panic(err)
+    }
+    
+    fmt.Printf("Module parameters: %v\n", paramsResp.Params)
 }
 ```
 
@@ -225,21 +167,34 @@ async function queryAdminModule() {
   const tmClient = await Tendermint34Client.connect('https://rpc.neutron.org:443')
   const queryClient = new QueryClient(tmClient)
 
-  // Query admins
-  const adminsResponse = await queryClient.queryUnverified(
-    '/cosmos.adminmodule.adminmodule.Query/Admins',
-    new Uint8Array()
-  )
-  
-  console.log('Admins:', adminsResponse)
+  try {
+    // Query admins
+    const adminsResponse = await queryClient.queryUnverified(
+      '/cosmos.adminmodule.adminmodule.Query/Admins',
+      new Uint8Array()
+    )
+    
+    console.log('Admins:', adminsResponse)
 
-  // Query whitelist
-  const whitelistResponse = await queryClient.queryUnverified(
-    '/cosmos.adminmodule.adminmodule.Query/Whitelist',
-    new Uint8Array()
-  )
-  
-  console.log('Whitelist:', whitelistResponse)
+    // Query whitelist
+    const whitelistResponse = await queryClient.queryUnverified(
+      '/cosmos.adminmodule.adminmodule.Query/Whitelist',
+      new Uint8Array()
+    )
+    
+    console.log('Whitelist:', whitelistResponse)
+
+    // Query parameters
+    const paramsResponse = await queryClient.queryUnverified(
+      '/cosmos.adminmodule.adminmodule.Query/Params',
+      new Uint8Array()
+    )
+    
+    console.log('Parameters:', paramsResponse)
+
+  } catch (error) {
+    console.error('Query error:', error)
+  }
 }
 ```
 
@@ -266,7 +221,7 @@ async function queryAdminModule() {
     const whitelistResponse = await axios.get(`${BASE_URL}/cosmos/adminmodule/adminmodule/whitelist`)
     console.log('Whitelist:', whitelistResponse.data.whitelisted_messages)
 
-    // Query specific proposal
+    // Query specific proposal (if available)
     const proposalResponse = await axios.get(`${BASE_URL}/cosmos/adminmodule/adminmodule/proposal/1`)
     console.log('Proposal 1:', proposalResponse.data.proposal)
 
@@ -289,19 +244,19 @@ BASE_URL = 'https://rest.neutron.org'
 def query_admin_module():
     try:
         # Query admins
-        response = requests.get(f'{BASE_URL}/cosmos/adminmodule/adminmodule/admins')
-        admins = response.json()['admins']
-        print(f'Admins: {admins}')
+        admins_response = requests.get(f'{BASE_URL}/cosmos/adminmodule/adminmodule/admins')
+        admins_response.raise_for_status()
+        print('Admins:', admins_response.json()['admins'])
 
         # Query parameters
-        response = requests.get(f'{BASE_URL}/cosmos/adminmodule/adminmodule/params')
-        params = response.json()['params']
-        print(f'Parameters: {json.dumps(params, indent=2)}')
+        params_response = requests.get(f'{BASE_URL}/cosmos/adminmodule/adminmodule/params')
+        params_response.raise_for_status()
+        print('Parameters:', params_response.json()['params'])
 
         # Query whitelist
-        response = requests.get(f'{BASE_URL}/cosmos/adminmodule/adminmodule/whitelist')
-        whitelist = response.json()['whitelisted_messages']
-        print(f'Whitelisted messages: {whitelist}')
+        whitelist_response = requests.get(f'{BASE_URL}/cosmos/adminmodule/adminmodule/whitelist')
+        whitelist_response.raise_for_status()
+        print('Whitelist:', whitelist_response.json()['whitelisted_messages'])
 
     except requests.exceptions.RequestException as e:
         print(f'Error querying admin module: {e}')
@@ -310,146 +265,93 @@ if __name__ == '__main__':
     query_admin_module()
 ```
 
-## Transaction Broadcasting
+## DAO Integration for Developers
 
-### Using CosmJS
+While individual users cannot submit transactions to the admin module, developers working on DAO governance contracts can use WebAssembly bindings:
 
-```typescript
-import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing'
-import { SigningStargateClient } from '@cosmjs/stargate'
-
-async function submitProposal() {
-  // Create wallet from mnemonic
-  const mnemonic = 'your mnemonic here'
-  const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: 'neutron' })
-  
-  // Get first account
-  const [firstAccount] = await wallet.getAccounts()
-  
-  // Connect to signing client
-  const client = await SigningStargateClient.connectWithSigner(
-    'https://rpc.neutron.org:443',
-    wallet
-  )
-
-  // Prepare proposal message
-  const proposalMsg = {
-    typeUrl: '/cosmos.adminmodule.adminmodule.MsgSubmitProposal',
-    value: {
-      messages: [
-        {
-          typeUrl: '/cosmos.bank.v1beta1.MsgSend',
-          value: {
-            fromAddress: firstAccount.address,
-            toAddress: 'neutron1recipient...',
-            amount: [{ denom: 'untrn', amount: '1000000' }]
-          }
-        }
-      ],
-      proposer: firstAccount.address
-    }
-  }
-
-  // Sign and broadcast transaction
-  const result = await client.signAndBroadcast(
-    firstAccount.address,
-    [proposalMsg],
-    'auto',
-    'Submit governance proposal'
-  )
-  
-  console.log('Transaction hash:', result.transactionHash)
-  console.log('Result:', result)
-}
-```
-
-## CosmWasm Integration
-
-### Calling Admin Module from Smart Contracts
+### Rust/CosmWasm Example
 
 ```rust
-use cosmwasm_std::{CosmosMsg, Response, to_binary};
 use neutron_sdk::bindings::msg::NeutronMsg;
+use cosmwasm_std::{Response, CosmosMsg};
 
-pub fn execute_governance_proposal(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    messages: Vec<CosmosMsg>,
-) -> Result<Response<NeutronMsg>, ContractError> {
-    // Validate caller authority
-    if !is_governance_authority(&deps, &info.sender)? {
-        return Err(ContractError::Unauthorized {});
-    }
-
-    // Create admin module proposal message
-    let proposal_msg = NeutronMsg::SubmitProposal {
-        messages,
+// This would only work within the Main DAO contract
+pub fn submit_admin_proposal(messages: Vec<CosmosMsg>) -> Result<Response, ContractError> {
+    // Create admin module message
+    let admin_msg = NeutronMsg::SubmitProposal {
+        messages: messages,
     };
 
     Ok(Response::new()
-        .add_message(proposal_msg)
-        .add_attribute("action", "submit_proposal")
-        .add_attribute("proposer", info.sender))
+        .add_message(admin_msg)
+        .add_attribute("action", "submit_admin_proposal"))
+}
+```
+
+<Warning>
+The above code example is only relevant for developers working on the core DAO infrastructure. Regular smart contracts and users cannot use these bindings to interact with the admin module.
+</Warning>
+
+## Query Response Examples
+
+### Admins Query Response
+
+```json
+{
+  "admins": [
+    "neutron1436kxs0w2es6xlqpp9rd35e3d0cjnw4sv8j3a7483sgks29jqwgshlt6zh"
+  ]
+}
+```
+
+### Parameters Query Response
+
+```json
+{
+  "params": {
+    "admin_authority": "neutron1436kxs0w2es6xlqpp9rd35e3d0cjnw4sv8j3a7483sgks29jqwgshlt6zh",
+    "whitelist_enabled": true,
+    "max_proposal_size": "100",
+    "proposal_authority": "neutron1436kxs0w2es6xlqpp9rd35e3d0cjnw4sv8j3a7483sgks29jqwgshlt6zh"
+  }
+}
+```
+
+### Whitelist Query Response
+
+```json
+{
+  "whitelisted_messages": [
+    "/cosmos.bank.v1beta1.MsgSend",
+    "/cosmwasm.wasm.v1.MsgInstantiateContract",
+    "/cosmwasm.wasm.v1.MsgExecuteContract",
+    "/neutron.cron.MsgUpdateParams",
+    "/neutron.feeburner.MsgUpdateParams"
+  ]
 }
 ```
 
 ## Error Handling
 
-### Common Error Patterns
+When querying the admin module, you may encounter these common errors:
 
-```typescript
-// TypeScript error handling example
-async function handleAdminModuleErrors() {
-  try {
-    const result = await submitProposal()
-    console.log('Success:', result)
-  } catch (error) {
-    if (error.code === 5) {
-      console.error('Unauthorized operation')
-    } else if (error.message.includes('not whitelisted')) {
-      console.error('Message type not whitelisted')
-    } else if (error.message.includes('insufficient funds')) {
-      console.error('Insufficient funds for operation')
-    } else {
-      console.error('Unknown error:', error)
-    }
-  }
+### Common Query Errors
+
+| Error | Description | Solution |
+|-------|-------------|----------|
+| `not found` | Requested resource doesn't exist | Verify the query parameters |
+| `invalid height` | Querying at non-existent block height | Use a valid block height |
+| `connection refused` | Cannot connect to node | Check node endpoint and network connectivity |
+| `unauthorized` | Insufficient permissions | This shouldn't occur for queries |
+
+### Error Response Format
+
+```json
+{
+  "code": 5,
+  "message": "not found: proposal with id 999 not found",
+  "details": []
 }
 ```
 
-### Error Code Reference
-
-| Code | Error Type | Description |
-|------|------------|-------------|
-| 1 | Unauthorized | Insufficient permissions |
-| 2 | InvalidMessage | Invalid message format |
-| 3 | NotWhitelisted | Message type not whitelisted |
-| 4 | InvalidProposal | Malformed proposal |
-| 5 | AdminExists | Admin already exists |
-| 6 | AdminNotFound | Admin not found |
-
-## Best Practices
-
-### Client Configuration
-
-1. **Connection Management**: Use connection pooling for high-throughput applications
-2. **Error Handling**: Implement robust error handling and retry logic
-3. **Rate Limiting**: Respect API rate limits and implement backoff strategies
-4. **Security**: Never expose private keys in client applications
-
-### Transaction Management
-
-1. **Gas Estimation**: Always use gas estimation before broadcasting
-2. **Fee Calculation**: Calculate appropriate fees based on network conditions
-3. **Nonce Management**: Handle sequence numbers properly for multiple transactions
-4. **Confirmation**: Wait for transaction confirmation before proceeding
-
-### Query Optimization
-
-1. **Pagination**: Use pagination for large result sets
-2. **Caching**: Cache frequently accessed data appropriately
-3. **Filtering**: Use specific queries rather than fetching all data
-4. **Timing**: Consider block time when polling for updates
-
-This client documentation provides comprehensive guidance for integrating with the admin module across all supported client interfaces. 
+This query-only access model ensures that while users can inspect the admin module's state, all modifications must go through the democratic governance process via the Main DAO contract. 

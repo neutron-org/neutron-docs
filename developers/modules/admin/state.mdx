@@ -5,6 +5,10 @@ description: "State structure and data models for the admin module"
 
 The admin module maintains minimal state to ensure optimal performance while providing necessary governance functionality.
 
+<Warning>
+**DAO-Only State Changes**: All state modifications in the admin module can only be performed by the Main DAO contract through WebAssembly bindings. Individual users cannot directly modify the module's state.
+</Warning>
+
 ## State Overview
 
 The admin module stores only essential information required for governance operations:

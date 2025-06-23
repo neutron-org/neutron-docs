@@ -5,6 +5,10 @@ description: "Comprehensive technical reference for the admin module"
 
 This document provides a complete technical reference for the admin module, including protobuf definitions, constants, and implementation details.
 
+<Warning>
+**DAO-Only Access**: All admin module message types can only be executed by the Main DAO contract through WebAssembly bindings. Individual users cannot directly submit these messages via CLI or other transaction methods.
+</Warning>
+
 ## Protobuf Definitions
 
 ### Messages

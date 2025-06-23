@@ -1,227 +1,113 @@
 ---
-title: "API Reference"
-description: "Complete API documentation for the admin module including queries, transactions, and events"
+title: "API"
+description: "Complete API documentation for the admin module"
 ---
 
-This document provides comprehensive API reference for the admin module, including query endpoints, transaction messages, and emitted events.
+This document provides comprehensive API documentation for the admin module, including query endpoints, message types, events, and error codes.
 
-## gRPC Queries
+<Warning>
+**DAO-Only Access**: The admin module transaction operations can only be executed by the Main DAO contract through WebAssembly bindings. Individual users cannot directly submit these transactions via CLI or other means.
+</Warning>
 
-The admin module provides several query endpoints for retrieving governance and administrative information.
+<Warning>
+**DAO-Only Access**: The admin module transaction operations can only be executed by the Main DAO contract through WebAssembly bindings. Individual users cannot directly submit these transactions via CLI or other means.
+</Warning>
 
-### Admins
+## Query Endpoints
 
-Query the current list of admin addresses.
+### Parameters
 
-**Endpoint:** `/cosmos.adminmodule.adminmodule.Query/Admins`
+Get the current module parameters.
 
-**Request:**
-```protobuf
-message QueryAdminsRequest {}
-```
+**Endpoint:** `GET /cosmos/adminmodule/adminmodule/params`
 
 **Response:**
-```protobuf
-message QueryAdminsResponse {
-  repeated string admins = 1;
+```json
+{
+  "params": {
+    "admin_authority": "neutron1436kxs0w2es6xlqpp9rd35e3d0cjnw4sv8j3a7483sgks29jqwgshlt6zh",
+    "whitelist_enabled": true,
+    "max_proposal_size": "100",
+    "proposal_authority": "neutron1436kxs0w2es6xlqpp9rd35e3d0cjnw4sv8j3a7483sgks29jqwgshlt6zh"
+  }
 }
 ```
 
-**CLI Usage:**
-```bash
-neutrond query adminmodule admins
-```
+### Admins
 
-**Example Response:**
+List all current administrators.
+
+**Endpoint:** `GET /cosmos/adminmodule/adminmodule/admins`
+
+**Response:**
 ```json
 {
   "admins": [
-    "neutron1qzxcseq9e0jhcpj2ht7j9lqkhp0q5vrzhctlud",
-    "neutron1h5lmx8gndrh0x0qlqhp2hxhf0v5u9hfpexkq5q"
+    "neutron1436kxs0w2es6xlqpp9rd35e3d0cjnw4sv8j3a7483sgks29jqwgshlt6zh"
   ]
 }
 ```
 
-### Params
-
-Query the current module parameters.
-
-**Endpoint:** `/cosmos.adminmodule.adminmodule.Query/Params`
-
-**Request:**
-```protobuf
-message QueryParamsRequest {}
-```
-
-**Response:**
-```protobuf
-message QueryParamsResponse {
-  Params params = 1;
-}
-```
-
-**CLI Usage:**
-```bash
-neutrond query adminmodule params
-```
-
 ### Whitelist
 
-Query the current message whitelist configuration.
+Get the list of whitelisted message types.
 
-**Endpoint:** `/cosmos.adminmodule.adminmodule.Query/Whitelist`
-
-**Request:**
-```protobuf
-message QueryWhitelistRequest {}
-```
+**Endpoint:** `GET /cosmos/adminmodule/adminmodule/whitelist`
 
 **Response:**
-```protobuf
-message QueryWhitelistResponse {
-  repeated string whitelisted_messages = 1;
-}
-```
-
-**CLI Usage:**
-```bash
-neutrond query adminmodule whitelist
-```
-
-**Example Response:**
 ```json
 {
   "whitelisted_messages": [
     "/cosmos.bank.v1beta1.MsgSend",
-    "/cosmos.distribution.v1beta1.MsgCommunityPoolSpend",
     "/cosmwasm.wasm.v1.MsgInstantiateContract",
-    "/neutron.cron.MsgUpdateParams"
+    "/cosmwasm.wasm.v1.MsgExecuteContract",
+    "/neutron.cron.MsgUpdateParams",
+    "/neutron.feeburner.MsgUpdateParams"
   ]
 }
 ```
 
 ### Proposal
 
-Query details of a specific proposal by ID.
+Get details of a specific proposal by ID.
 
-**Endpoint:** `/cosmos.adminmodule.adminmodule.Query/Proposal`
-
-**Request:**
-```protobuf
-message QueryProposalRequest {
-  uint64 proposal_id = 1;
-}
-```
-
-**Response:**
-```protobuf
-message QueryProposalResponse {
-  Proposal proposal = 1;
-}
-```
-
-**CLI Usage:**
-```bash
-neutrond query adminmodule proposal <proposal-id>
-```
-
-### Proposals
-
-Query all proposals with optional pagination.
-
-**Endpoint:** `/cosmos.adminmodule.adminmodule.Query/Proposals`
-
-**Request:**
-```protobuf
-message QueryProposalsRequest {
-  cosmos.base.query.v1beta1.PageRequest pagination = 1;
-}
-```
-
-**Response:**
-```protobuf
-message QueryProposalsResponse {
-  repeated Proposal proposals = 1;
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
-}
-```
-
-**CLI Usage:**
-```bash
-neutrond query adminmodule proposals
-```
-
-## REST Endpoints
-
-The admin module provides REST endpoints for HTTP-based access.
-
-### GET /cosmos/adminmodule/adminmodule/admins
-
-Retrieve the list of current admins.
-
-**Response:**
-```json
-{
-  "admins": ["neutron1...", "neutron1..."]
-}
-```
-
-### GET /cosmos/adminmodule/adminmodule/params
-
-Retrieve module parameters.
-
-**Response:**
-```json
-{
-  "params": {
-    "admin_authority": "neutron1...",
-    "whitelist_enabled": true
-  }
-}
-```
-
-### GET /cosmos/adminmodule/adminmodule/whitelist
-
-Retrieve the message whitelist.
-
-**Response:**
-```json
-{
-  "whitelisted_messages": [
-    "/cosmos.bank.v1beta1.MsgSend",
-    "/neutron.cron.MsgUpdateParams"
-  ]
-}
-```
-
-### GET /cosmos/adminmodule/adminmodule/proposal/{proposal_id}
-
-Retrieve details of a specific proposal.
+**Endpoint:** `GET /cosmos/adminmodule/adminmodule/proposal/{proposal_id}`
 
 **Parameters:**
-- `proposal_id`: The unique proposal identifier
+- `proposal_id`: Unique identifier of the proposal
 
 **Response:**
 ```json
 {
   "proposal": {
     "id": "1",
-    "messages": [...],
-    "proposer": "neutron1...",
+    "messages": [
+      {
+        "@type": "/cosmos.bank.v1beta1.MsgSend",
+        "from_address": "neutron1...",
+        "to_address": "neutron1...",
+        "amount": [{"denom": "untrn", "amount": "1000000"}]
+      }
+    ],
+    "proposer": "neutron1436kxs0w2es6xlqpp9rd35e3d0cjnw4sv8j3a7483sgks29jqwgshlt6zh",
     "status": "executed",
-    "created_at": "2023-06-01T12:00:00Z"
+    "submit_time": "2023-06-01T10:00:00Z",
+    "execution_time": "2023-06-01T10:05:00Z"
   }
 }
 ```
 
-### GET /cosmos/adminmodule/adminmodule/proposals
+### Proposals
 
-Retrieve all proposals with optional pagination.
+List all proposals with pagination support.
 
-**Query Parameters:**
-- `pagination.limit`: Maximum number of results
-- `pagination.offset`: Number of results to skip
-- `pagination.key`: Pagination key for next page
+**Endpoint:** `GET /cosmos/adminmodule/adminmodule/proposals`
+
+**Parameters:**
+- `pagination.key` (optional): Pagination key for next page
+- `pagination.offset` (optional): Number of items to skip
+- `pagination.limit` (optional): Maximum number of items to return
+- `pagination.count_total` (optional): Include total count in response
 
 **Response:**
 ```json
@@ -232,62 +118,90 @@ Retrieve all proposals with optional pagination.
       "messages": [...],
       "proposer": "neutron1...",
       "status": "executed"
+    },
+    {
+      "id": "2", 
+      "messages": [...],
+      "proposer": "neutron1...",
+      "status": "pending"
     }
   ],
   "pagination": {
     "next_key": null,
-    "total": "1"
+    "total": "2"
   }
 }
 ```
 
-## Transaction Messages
+## Message Types (DAO-Only)
 
-### submit-proposal
+<Note>
+The following message types can only be executed by the Main DAO contract through WebAssembly bindings. They are not available as CLI commands for individual users.
+</Note>
 
-Submit a new proposal using the modern message-based format.
+### MsgSubmitProposal
 
-**Command:**
-```bash
-neutrond tx adminmodule submit-proposal \
-  --messages='[{...}]' \
-  --from=<key> \
-  --chain-id=neutron-1
+Submit a proposal using the modern message-based format.
+
+**Type:** `/cosmos.adminmodule.adminmodule.MsgSubmitProposal`
+
+**Structure:**
+```protobuf
+message MsgSubmitProposal {
+  repeated google.protobuf.Any messages = 1;
+  string proposer = 2;
+}
 ```
 
-**Parameters:**
-- `messages`: JSON array of messages to execute
-- `from`: Account submitting the proposal
+**WebAssembly Binding Usage:**
+```rust
+use neutron_sdk::bindings::msg::NeutronMsg;
 
-### submit-proposal-legacy
+let admin_msg = NeutronMsg::SubmitProposal {
+    messages: vec![/* whitelisted sdk.Msg messages */],
+};
+```
+
+### MsgSubmitProposalLegacy
 
 Submit a legacy format proposal for backward compatibility.
 
-**Command:**
-```bash
-neutrond tx adminmodule submit-proposal-legacy \
-  --content='<proposal-content>' \
-  --from=<key>
+**Type:** `/cosmos.adminmodule.adminmodule.MsgSubmitProposalLegacy`
+
+**Structure:**
+```protobuf
+message MsgSubmitProposalLegacy {
+  google.protobuf.Any content = 1;
+  string proposer = 2;
+}
 ```
 
-### add-admin
+### MsgAddAdmin
 
-Add a new admin to the network.
+Add a new admin to the network (if admin management is enabled).
 
-**Command:**
-```bash
-neutrond tx adminmodule add-admin <admin-address> \
-  --from=<key>
+**Type:** `/cosmos.adminmodule.adminmodule.MsgAddAdmin`
+
+**Structure:**
+```protobuf
+message MsgAddAdmin {
+  string creator = 1;
+  string admin = 2;
+}
 ```
 
-### delete-admin
+### MsgDeleteAdmin
 
 Remove an existing admin from the network.
 
-**Command:**
-```bash
-neutrond tx adminmodule delete-admin <admin-address> \
-  --from=<key>
+**Type:** `/cosmos.adminmodule.adminmodule.MsgDeleteAdmin`
+
+**Structure:**
+```protobuf
+message MsgDeleteAdmin {
+  string creator = 1;
+  string admin = 2;
+}
 ```
 
 ## Events
@@ -296,13 +210,13 @@ The admin module emits various events during operation for monitoring and audit 
 
 ### ProposalSubmitted
 
-Emitted when a new proposal is submitted.
+Emitted when a new proposal is submitted by the Main DAO contract.
 
 **Type:** `adminmodule.proposal_submitted`
 
 **Attributes:**
 - `proposal_id`: Unique identifier for the proposal
-- `proposer`: Address of the proposal submitter
+- `proposer`: Address of the proposal submitter (Main DAO contract)
 - `message_count`: Number of messages in the proposal
 
 **Example:**
@@ -311,7 +225,7 @@ Emitted when a new proposal is submitted.
   "type": "adminmodule.proposal_submitted",
   "attributes": [
     {"key": "proposal_id", "value": "1"},
-    {"key": "proposer", "value": "neutron1..."},
+    {"key": "proposer", "value": "neutron1436kxs0w2es6xlqpp9rd35e3d0cjnw4sv8j3a7483sgks29jqwgshlt6zh"},
     {"key": "message_count", "value": "2"}
   ]
 }
@@ -325,7 +239,7 @@ Emitted when a proposal is successfully executed.
 
 **Attributes:**
 - `proposal_id`: The executed proposal identifier
-- `executor`: Address that executed the proposal
+- `executor`: Address that executed the proposal (Main DAO contract)
 - `execution_time`: Timestamp of execution
 - `gas_used`: Gas consumed during execution
 
@@ -335,7 +249,7 @@ Emitted when a proposal is successfully executed.
   "type": "adminmodule.proposal_executed",
   "attributes": [
     {"key": "proposal_id", "value": "1"},
-    {"key": "executor", "value": "neutron1..."},
+    {"key": "executor", "value": "neutron1436kxs0w2es6xlqpp9rd35e3d0cjnw4sv8j3a7483sgks29jqwgshlt6zh"},
     {"key": "execution_time", "value": "2023-06-01T12:00:00Z"},
     {"key": "gas_used", "value": "150000"}
   ]
@@ -367,21 +281,21 @@ Emitted when a proposal execution fails.
 
 ### AdminAdded
 
-Emitted when a new admin is added.
+Emitted when a new admin is added (if admin management is enabled).
 
 **Type:** `adminmodule.admin_added`
 
 **Attributes:**
 - `admin`: Address of the newly added admin
-- `added_by`: Address that added the admin
+- `added_by`: Address that added the admin (Main DAO contract)
 
 **Example:**
 ```json
 {
   "type": "adminmodule.admin_added",
   "attributes": [
-    {"key": "admin", "value": "neutron1..."},
-    {"key": "added_by", "value": "neutron1..."}
+    {"key": "admin", "value": "neutron1newadmin..."},
+    {"key": "added_by", "value": "neutron1436kxs0w2es6xlqpp9rd35e3d0cjnw4sv8j3a7483sgks29jqwgshlt6zh"}
   ]
 }
 ```
@@ -394,15 +308,15 @@ Emitted when an admin is removed.
 
 **Attributes:**
 - `admin`: Address of the removed admin
-- `removed_by`: Address that removed the admin
+- `removed_by`: Address that removed the admin (Main DAO contract)
 
 **Example:**
 ```json
 {
   "type": "adminmodule.admin_removed",
   "attributes": [
-    {"key": "admin", "value": "neutron1..."},
-    {"key": "removed_by", "value": "neutron1..."}
+    {"key": "admin", "value": "neutron1oldadmin..."},
+    {"key": "removed_by", "value": "neutron1436kxs0w2es6xlqpp9rd35e3d0cjnw4sv8j3a7483sgks29jqwgshlt6zh"}
   ]
 }
 ```
@@ -414,7 +328,7 @@ Emitted when the message whitelist is updated.
 **Type:** `adminmodule.whitelist_updated`
 
 **Attributes:**
-- `updated_by`: Address that updated the whitelist
+- `updated_by`: Address that updated the whitelist (Main DAO contract)
 - `added_messages`: Messages added to whitelist
 - `removed_messages`: Messages removed from whitelist
 
@@ -423,7 +337,7 @@ Emitted when the message whitelist is updated.
 {
   "type": "adminmodule.whitelist_updated",
   "attributes": [
-    {"key": "updated_by", "value": "neutron1..."},
+    {"key": "updated_by", "value": "neutron1436kxs0w2es6xlqpp9rd35e3d0cjnw4sv8j3a7483sgks29jqwgshlt6zh"},
     {"key": "added_messages", "value": "/cosmos.bank.v1beta1.MsgSend"},
     {"key": "removed_messages", "value": ""}
   ]
@@ -437,63 +351,51 @@ The admin module uses specific error codes for different failure scenarios:
 | Code | Name | Description |
 |------|------|-------------|
 | 1 | `ErrUnauthorized` | Insufficient permissions for operation |
-| 2 | `ErrInvalidMessage` | Invalid message format or content |
+| 2 | `ErrInvalidMessage` | Message format or content is invalid |
 | 3 | `ErrNotWhitelisted` | Message type not in whitelist |
-| 4 | `ErrInvalidProposal` | Malformed proposal structure |
-| 5 | `ErrAdminExists` | Admin already exists |
-| 6 | `ErrAdminNotFound` | Admin not found |
-| 7 | `ErrWhitelistDisabled` | Whitelist functionality disabled |
-| 8 | `ErrExecutionFailed` | Proposal execution failed |
+| 4 | `ErrInvalidProposal` | Proposal structure is malformed |
+| 5 | `ErrAdminExists` | Admin already exists (for add operations) |
+| 6 | `ErrAdminNotFound` | Admin doesn't exist (for delete operations) |
+| 7 | `ErrProposalNotFound` | Proposal with given ID not found |
+| 8 | `ErrMaxProposalSize` | Proposal exceeds maximum allowed size |
 
-## Rate Limiting
+## WebAssembly Integration
 
-The admin module implements rate limiting to prevent spam and abuse:
+### DAO Contract Integration
 
-### Proposal Submission Limits
+The Main DAO contract integrates with the admin module using Neutron's WebAssembly bindings:
 
-- Maximum 10 proposals per block per proposer
-- Minimum 1-block delay between proposals from same address
-- Gas-based throttling for complex proposals
+```rust
+use neutron_sdk::bindings::msg::NeutronMsg;
+use cosmwasm_std::{Response, CosmosMsg};
 
-### Query Rate Limits
+// Example: Submit a governance proposal from the Main DAO contract
+pub fn submit_governance_proposal(
+    messages: Vec<CosmosMsg>
+) -> Result<Response, ContractError> {
+    let admin_msg = NeutronMsg::SubmitProposal {
+        messages: messages,
+    };
 
-- No specific limits on read-only queries
-- Standard network rate limiting applies
-- Pagination recommended for large result sets
+    Ok(Response::new()
+        .add_message(admin_msg)
+        .add_attribute("action", "submit_governance_proposal"))
+}
+```
 
-## Authentication
+### Authority Verification
 
-All write operations require proper authentication:
+The admin module performs strict authority verification:
 
-### Required Authorities
+1. **Signer Verification**: Ensures messages come from the authorized Main DAO contract
+2. **Message Validation**: Confirms all messages are properly formatted and whitelisted
+3. **Permission Checking**: Verifies the sender has the required permissions
 
-- **Proposal Submission**: DAO governance authority
-- **Admin Management**: Admin management authority  
-- **Whitelist Updates**: Governance authority
+### Security Features
 
-### Signature Requirements
+- **Whitelisting**: Only pre-approved message types can be executed
+- **Access Control**: Strict authorization checks prevent unauthorized access
+- **Audit Trail**: All operations are logged with comprehensive event emission
+- **Atomic Execution**: Multi-message proposals execute atomically (all or nothing)
 
-- Valid cryptographic signatures
-- Matching authority addresses
-- Current sequence numbers
-- Proper fee payment
-
-## Monitoring and Observability
-
-### Metrics
-
-The admin module exposes metrics for monitoring:
-
-- `adminmodule_proposals_total`: Total number of proposals
-- `adminmodule_proposals_executed`: Number of executed proposals
-- `adminmodule_proposals_failed`: Number of failed proposals
-- `adminmodule_admins_count`: Current number of admins
-
-### Health Checks
-
-- Module initialization status
-- Whitelist configuration validity
-- Authority address verification
-- State consistency checks
-
-This comprehensive API reference provides all necessary information for integrating with and monitoring the admin module. 
+This API documentation provides complete coverage of the admin module's interface while emphasizing that all transaction operations must go through the democratic governance process via the Main DAO contract. 

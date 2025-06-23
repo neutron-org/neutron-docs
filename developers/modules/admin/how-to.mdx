@@ -162,18 +162,18 @@ The module includes signer verification to ensure that only the authorized Main 
 
 ## Querying the Admin Module
 
-While you cannot submit proposals directly, you can query the admin module's state:
+While you cannot submit proposals directly, you can query the admin module's state using standard query commands:
 
 ```bash
 # Query module parameters (if available)
 neutrond query adminmodule params
 
-# Query proposal by ID (if the query exists)
-neutrond query adminmodule proposal <proposal-id>
+# Query admins list (if available)
+neutrond query adminmodule admins
 ```
 
 <Note>
-The specific query commands available depend on the module's implementation. Some queries may not be available or may have different names.
+The admin module provides query functionality but no transaction commands. All state changes must go through the Main DAO contract.
 </Note>
 
 ## For DAO Developers

@@ -5,6 +5,10 @@ description: "Message types and transaction structures for the admin module"
 
 This document describes the message types available in the admin module for governance and administrative operations.
 
+<Warning>
+**DAO-Only Access**: All admin module messages can only be executed by the Main DAO contract through WebAssembly bindings. Individual users cannot directly submit these messages via CLI or other means.
+</Warning>
+
 ## Message Types
 
 The admin module supports several message types for different governance operations, divided into legacy proposals and modern message-based proposals.
@@ -22,19 +26,11 @@ message MsgSubmitProposal {
 
 **Fields:**
 - `messages` - Array of messages to be executed if the proposal is approved
-- `proposer` - Address of the entity submitting the proposal
+- `proposer` - Address of the entity submitting the proposal (must be Main DAO contract)
 
-**Usage:**
-```bash
-neutrond tx adminmodule submit-proposal \
-  --messages='[{
-    "@type": "/cosmos.bank.v1beta1.MsgSend",
-    "from_address": "neutron1...",
-    "to_address": "neutron1...",
-    "amount": [{"denom": "untrn", "amount": "1000000"}]
-  }]' \
-  --from=<proposer-key>
-```
+<Note>
+This message can only be sent by the Main DAO contract using the `ProposalExecuteMessage` WebAssembly binding. It is not available as a CLI command.
+</Note>
 
 ### MsgSubmitProposalResponse
 
@@ -62,7 +58,7 @@ message MsgSubmitProposalLegacy {
 
 **Fields:**
 - `content` - The proposal content following legacy format specifications
-- `proposer` - Address of the entity submitting the proposal
+- `proposer` - Address of the entity submitting the proposal (must be Main DAO contract)
 
 **Supported Legacy Proposal Types:**
 - `ParameterChangeProposal`
@@ -71,6 +67,10 @@ message MsgSubmitProposalLegacy {
 - `SoftwareUpgradeProposal`
 - `CancelSoftwareUpgradeProposal`
 - Various module-specific proposals
+
+<Note>
+Legacy proposals are maintained for backward compatibility with modules that haven't migrated to SDK 0.47+ patterns, such as IBC-related operations.
+</Note>
 
 ### MsgSubmitProposalLegacyResponse
 
@@ -97,13 +97,12 @@ message MsgAddAdmin {
 ```
 
 **Fields:**
-- `creator` - Address of the entity adding the admin (must have appropriate authority)
+- `creator` - Address of the entity adding the admin (must be Main DAO contract)
 - `admin` - Address of the new admin to be added
 
-**Usage:**
-```bash
-neutrond tx adminmodule add-admin neutron1... --from=<creator-key>
-```
+<Note>
+Admin management functionality depends on the current network configuration and may not be actively used in Neutron's current governance model. This message can only be executed through DAO governance.
+</Note>
 
 ### MsgAddAdminResponse
 
@@ -125,13 +124,8 @@ message MsgDeleteAdmin {
 ```
 
 **Fields:**
-- `creator` - Address of the entity removing the admin (must have appropriate authority)
+- `creator` - Address of the entity removing the admin (must be Main DAO contract)
 - `admin` - Address of the admin to be removed
-
-**Usage:**
-```bash
-neutrond tx adminmodule delete-admin neutron1... --from=<creator-key>
-```
 
 ### MsgDeleteAdminResponse
 
@@ -150,7 +144,7 @@ All messages undergo comprehensive validation before execution:
 For `MsgSubmitProposal`:
 - All messages must be valid `sdk.Msg` types
 - Messages must be whitelisted for execution
-- Proposer must have appropriate authority
+- Proposer must be the authorized Main DAO contract
 - Message parameters must pass format validation
 
 ### Legacy Proposal Validation
@@ -159,14 +153,36 @@ For `MsgSubmitProposalLegacy`:
 - Content must match expected legacy proposal format
 - Proposal type must be supported and whitelisted
 - All parameters must pass legacy validation rules
-- Proposer must have governance authority
+- Proposer must be the authorized Main DAO contract
 
 ### Admin Management Validation
 
 For admin management messages:
-- Creator must have admin management authority
+- Creator must be the authorized Main DAO contract
 - Target admin address must be valid
 - Operation must not conflict with existing admin state
+
+## DAO Integration
+
+### WebAssembly Binding Usage
+
+The Main DAO contract uses the `ProposalExecuteMessage` binding to interact with the admin module:
+
+```rust
+use neutron_sdk::bindings::msg::NeutronMsg;
+
+// This would be executed within the Main DAO contract
+let admin_msg = NeutronMsg::SubmitProposal {
+    messages: vec![/* whitelisted sdk.Msg messages */],
+};
+```
+
+### Authority Verification
+
+The admin module includes comprehensive authority verification:
+- **Signer Verification**: Ensures messages come from the authorized DAO contract
+- **Message Validation**: Confirms all messages are properly formatted
+- **Whitelist Checking**: Verifies that message types are approved for execution
 
 ## Common Message Patterns
 
@@ -200,22 +216,9 @@ Managing smart contracts through governance:
 }
 ```
 
-### Treasury Operations
+### Multi-Message Proposals
 
-Managing network treasury through governance:
-
-```json
-{
-  "@type": "/cosmos.distribution.v1beta1.MsgCommunityPoolSpend",
-  "authority": "neutron1...",
-  "recipient": "neutron1...",
-  "amount": [{"denom": "untrn", "amount": "1000000"}]
-}
-```
-
-## Batch Operations
-
-Multiple messages can be included in a single proposal for atomic execution:
+Executing multiple operations atomically:
 
 ```json
 {
@@ -227,141 +230,28 @@ Multiple messages can be included in a single proposal for atomic execution:
       "amount": [{"denom": "untrn", "amount": "1000000"}]
     },
     {
-      "@type": "/neutron.cron.MsgAddSchedule",
+      "@type": "/neutron.cron.MsgUpdateParams",
       "authority": "neutron1...",
-      "name": "weekly_task",
-      "period": "604800",
-      "msgs": [],
-      "execution_stage": "END_BLOCKER"
+      "params": {"limit": "50"}
     }
   ]
 }
 ```
 
-## Error Handling
+## Security Considerations
 
-### Common Error Types
+### Whitelisting
 
-- **ErrUnauthorized**: Proposer lacks required authority
-- **ErrInvalidMessage**: Message format or content is invalid
-- **ErrNotWhitelisted**: Message type not in whitelist
-- **ErrInvalidProposal**: Proposal structure is malformed
-- **ErrAdminExists**: Admin already exists (for add operations)
-- **ErrAdminNotFound**: Admin doesn't exist (for delete operations)
+The admin module implements strict whitelisting to ensure only approved operations can be executed:
+- Message types must be explicitly whitelisted
+- Operations are validated before execution
+- Unauthorized message types are rejected
 
-### Error Response Format
+### Access Control
 
-Failed messages return detailed error information:
+All operations are subject to strict access control:
+- Only the Main DAO contract can submit messages
+- All operations require community governance approval
+- Unauthorized access attempts are logged and rejected
 
-```json
-{
-  "code": 5,
-  "log": "unauthorized: invalid authority; expected neutron1..., got neutron1...",
-  "info": "",
-  "gas_wanted": "200000",
-  "gas_used": "45123",
-  "events": [],
-  "codespace": "adminmodule"
-}
-```
-
-## Message Signing
-
-All messages must be properly signed by authorized accounts:
-
-### Required Signatures
-
-- **Governance Proposals**: Must be signed by governance authority (typically DAO)
-- **Admin Management**: Must be signed by admin management authority
-- **Legacy Proposals**: Must be signed by legacy proposal authority
-
-### Signature Verification
-
-The module performs comprehensive signature verification:
-1. Cryptographic signature validation
-2. Signer authority verification  
-3. Message content integrity checking
-4. Replay attack prevention
-
-## CLI Usage Examples
-
-### Submit Modern Proposal
-
-```bash
-# Single message proposal
-neutrond tx adminmodule submit-proposal \
-  --messages='[{
-    "@type": "/cosmos.bank.v1beta1.MsgSend",
-    "from_address": "neutron1...",
-    "to_address": "neutron1...",
-    "amount": [{"denom": "untrn", "amount": "1000000"}]
-  }]' \
-  --from=governance-key \
-  --chain-id=neutron-1
-
-# Multi-message proposal
-neutrond tx adminmodule submit-proposal \
-  --messages='[
-    {
-      "@type": "/neutron.oracle.MsgUpdateParams",
-      "authority": "neutron1...",
-      "params": {"vote_period": "10"}
-    },
-    {
-      "@type": "/neutron.feeburner.MsgUpdateParams",
-      "authority": "neutron1...", 
-      "params": {"treasury_address": "neutron1..."}
-    }
-  ]' \
-  --from=governance-key
-```
-
-### Submit Legacy Proposal
-
-```bash
-# Parameter change proposal
-neutrond tx gov submit-proposal param-change proposal.json \
-  --from=governance-key \
-  --chain-id=neutron-1
-
-# Text proposal
-neutrond tx gov submit-proposal text proposal.json \
-  --from=governance-key \
-  --chain-id=neutron-1
-```
-
-### Admin Management
-
-```bash
-# Add admin
-neutrond tx adminmodule add-admin neutron1newadmin... \
-  --from=admin-manager-key \
-  --chain-id=neutron-1
-
-# Remove admin  
-neutrond tx adminmodule delete-admin neutron1oldadmin... \
-  --from=admin-manager-key \
-  --chain-id=neutron-1
-```
-
-## Integration with Smart Contracts
-
-Smart contracts can interact with the admin module through WASM bindings:
-
-```rust
-use neutron_sdk::bindings::msg::NeutronMsg;
-
-// Submit proposal from contract
-let msg = NeutronMsg::SubmitProposal {
-    messages: vec![
-        CosmosMsg::Bank(BankMsg::Send {
-            to_address: recipient.to_string(),
-            amount: coins(1000000, "untrn"),
-        })
-    ],
-};
-
-Response::new().add_message(msg)
-```
-
-This comprehensive message documentation provides the foundation for interacting with the admin module's governance functionality. 
+This architecture ensures that critical network operations maintain democratic oversight while providing the technical capability for complex administrative tasks. 

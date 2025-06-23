@@ -5,9 +5,9 @@ description: "Central governance module enabling DAO-driven network administrati
 
 The admin module serves as Neutron's central governance mechanism, empowering the **Main DAO contract** to propose and execute critical network operations. Built with Cosmos SDK compatibility and upgraded for SDK 0.50, this module enables secure, controlled administration of the entire Neutron network.
 
-<Info>
-The admin module can **only** be accessed by the Main DAO contract through WebAssembly bindings. Individual users cannot directly interact with this module - all operations must go through Neutron's governance process.
-</Info>
+<Warning>
+**Main DAO Exclusive Access**: The admin module can **only** be accessed by the Main DAO contract through WebAssembly bindings. Individual users, external contracts, and CLI commands cannot directly interact with this module. All operations must go through Neutron's DAO governance process.
+</Warning>
 
 The admin module provides a unified interface for governance operations, supporting both legacy proposal mechanisms and modern message-based execution. Through careful whitelisting and permission controls, it ensures that only authorized operations can be performed while maintaining the flexibility needed for network evolution.
 
@@ -15,14 +15,14 @@ The admin module provides a unified interface for governance operations, support
 
 - [Overview](/developers/modules/admin/overview) — a high-level description of the module.
 - [Explanation](/developers/modules/admin/explanation) — an explanation of the module's concepts and the reasoning behind its design choices.
-- [How To](/developers/modules/admin/how-to) — short guides on performing basic operations with the module.
+- [How To](/developers/modules/admin/how-to) — understanding how the Main DAO interacts with the module.
 - **Reference**:
   - [Reference](/developers/modules/admin/reference) — comprehensive technical details.
 - [API](/developers/modules/admin/api) — details about the module's interface, including endpoints, message models, and emitted events.
   - [Messages](/developers/modules/admin/messages) — message format specifications.
   - [Events](/developers/modules/admin/events) — events emitted by the module.
   - [State](/developers/modules/admin/state) — state management details.
-  - [Client](/developers/modules/admin/client) — CLI and query client details.
+  - [Client](/developers/modules/admin/client) — query client details (no transaction commands available).
 
 ## Concepts
 
@@ -68,6 +68,18 @@ Key improvements include:
 - Enhanced security through comprehensive whitelisting
 - Support for both legacy and modern proposal formats
 - Direct integration with DAO governance contracts
+
+## Access Restrictions
+
+<Warning>
+**No Direct CLI Access**: Unlike other Cosmos SDK modules, the admin module does not provide CLI transaction commands. All interactions must go through the Main DAO contract using WebAssembly bindings.
+</Warning>
+
+The admin module's restricted access model ensures:
+- **Democratic Governance**: All network changes require community approval
+- **Security**: Prevents unauthorized access to critical network functions
+- **Auditability**: All operations are traceable through DAO governance records
+- **Consistency**: Unified governance process for all administrative operations
 
 ## Documentation Sections
 
