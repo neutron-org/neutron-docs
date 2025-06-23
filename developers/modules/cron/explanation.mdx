@@ -16,19 +16,23 @@ The Cron module enables on-chain time-based automation by maintaining a registry
 
 The Cron module solves these problems by moving time-based automation directly onto the blockchain, ensuring deterministic, reliable, and decentralized execution of scheduled operations.
 
+<Warning>
+**Governance-Only Access**: The Cron module is governance-gated. Only the Main DAO or Security SubDAO can create, modify, or remove schedules. Individual users and contracts cannot directly interact with this module.
+</Warning>
+
 ## How does the Cron module work?
 
 The Cron module enables on-chain time-based automation through several components working together:
 
 ### Schedule Registration
 
-When a governance action creates a schedule, it specifies:
+When a governance proposal creates a schedule, it specifies:
 - A unique name for identification
 - The execution period (in blocks)
-- One or more messages to execute
+- One or more CosmWasm contract messages to execute
 - The execution stage (BEGIN_BLOCKER or END_BLOCKER)
 
-The module stores this schedule in its state.
+The module stores this schedule in its state and begins executing it according to the specified period.
 
 ### Execution Mechanism
 
@@ -39,24 +43,34 @@ The module hooks into Neutron's block production process to check for schedules 
    current_block_height ≥ (last_execution_height + period)
    ```
 
-2. For each schedule that meets this condition, the module:
-   - Constructs the message(s) specified in the schedule
-   - Executes them
-   - Updates the schedule's `last_execution_height` to the current block height
+2. The module processes up to the configured `limit` of schedules per block to prevent resource exhaustion.
 
-3. If a schedule has a non-zero period, it remains in the state for future executions. If the period is zero (one-time execution), it is removed after execution.
+3. For each schedule that meets the execution condition:
+   - The module constructs `wasmtypes.MsgExecuteContract` messages from the stored schedule data
+   - Sets the sender as the Cron module account
+   - Sets funds to empty (no tokens are sent)
+   - Executes the messages using the WASM message server
+   - Updates the schedule's `last_execute_height` to the current block height
+
+4. **Atomicity**: All messages within a single schedule must succeed, or the entire schedule execution is rolled back.
 
 ### Schedule Structure
 
-A schedule is the core data structure in the Cron module that represents a time-based task:
+A schedule is the core data structure in the Cron module:
 
-| Property | Description |
-|----------|-------------|
-| `name` | Unique identifier for the schedule |
-| `period` | Number of blocks between executions |
-| `msgs` | Messages to execute when the schedule is triggered |
-| `last_execute_height` | Block height when the schedule was last executed |
-| `execution_stage` | When in the block to execute (BEGIN_BLOCKER or END_BLOCKER) |
+```protobuf
+message Schedule {
+  string name = 1;                           // Unique identifier
+  uint64 period = 2;                         // Blocks between executions  
+  repeated MsgExecuteContract msgs = 3;      // Messages to execute
+  uint64 last_execute_height = 4;           // Last execution block height
+}
+
+message MsgExecuteContract {
+  string contract = 1;                       // Contract address
+  string msg = 2;                           // JSON-encoded message
+}
+```
 
 ### Execution Stages
 
@@ -68,9 +82,15 @@ The Cron module supports two execution stages:
 
 The choice of execution stage is important for dependencies between operations. For example, if a scheduled operation depends on the state resulting from regular transactions, it should use the END_BLOCKER stage.
 
-### Schedule Management
+### Governance-Based Management
 
-Schedules can only be created, modified, or removed through governance or by an authorized security address. This ensures that critical automated processes cannot be tampered with by unauthorized parties.
+Schedules can only be managed through governance mechanisms:
+
+- **Main DAO**: Can create and remove any schedule
+- **Security SubDAO**: Can remove schedules (emergency situations)
+- **Individual users/contracts**: Cannot directly interact with the module
+
+This governance-gated approach ensures that critical automated processes cannot be tampered with by unauthorized parties and maintains the security and integrity of the network.
 
 ## Security Model
 
@@ -79,22 +99,23 @@ The Cron module implements several mechanisms to ensure security and prevent abu
 ### Execution Limits
 
 To prevent DoS attacks and excessive resource consumption:
-- There's a network-wide `limit` parameter that restricts the number of schedules processed in a single block
+- There's a network-wide `limit` parameter (default: configurable) that restricts the number of schedules processed in a single block
 - If more schedules are due than the limit allows, some are delayed until subsequent blocks
+- Schedules are processed in deterministic order (by last execution height, then alphabetically by name)
 
 ### Message Validation
 
 The module validates messages before execution:
-- Messages must be properly formatted and valid according to their respective handlers
+- Messages must be properly formatted JSON for CosmWasm contracts
 - Invalid messages are rejected during schedule creation
 - Execution failures are logged but don't stop other schedules from executing
 
 ### Protected State Access
 
-The module's state can only be modified through its exposed message handlers:
+The module's state can only be modified through governance:
 - Direct state manipulation is not possible
 - All state changes follow proper authorization checks
-- Only governance or the designated security address can manage schedules
+- Only governance proposals can manage schedules
 
 ## Design Decisions
 
@@ -112,9 +133,9 @@ However, this approach means that schedules are sensitive to changes in average 
 
 Supporting multiple messages in a single schedule enables more complex workflows:
 
-1. **Atomicity**: Related operations can be grouped together
+1. **Atomicity**: Related operations can be grouped together and either all succeed or all fail
 2. **Efficiency**: Reduces the number of separate schedules needed
-3. **Sequence**: Actions can be executed in a specific order
+3. **Sequence**: Actions can be executed in a specific order within the same block
 
 This approach simplifies common patterns like "update state, then transfer funds" or "check condition, then execute action."
 
@@ -128,33 +149,66 @@ Having both BEGIN_BLOCKER and END_BLOCKER execution stages provides flexibility 
 
 This design allows for more complex automation workflows that respect the natural ordering of blockchain operations.
 
+### Why governance-gate the module?
+
+The governance-only access pattern serves several important purposes:
+
+1. **Security**: Prevents malicious actors from creating disruptive schedules
+2. **Resource Management**: Ensures only necessary automation is added to the network
+3. **Quality Control**: Community review process for all automated tasks
+4. **Accountability**: Clear ownership and responsibility for scheduled operations
+
 ## Implementation Considerations
 
 ### Schedule Execution Order
 
-When multiple schedules are due for execution in the same block, they are processed in a deterministic order based on:
-1. First by `last_execution_height` (older executions first)
-2. Then by name (alphabetical order)
+When multiple schedules are due for execution in the same block, they are processed in a deterministic order:
+1. First by `last_execution_height` (schedules that haven't run in longer get priority)
+2. Then by name (alphabetical order for ties)
 
-This ordering ensures fairness and prevents starvation of older schedules.
+This ordering ensures fairness and prevents starvation of schedules.
 
 ### Failure Handling
 
 If a scheduled message fails during execution:
-1. The failure is logged
-2. The schedule's `last_execution_height` is still updated
-3. The schedule continues to be processed in future blocks if it's periodic
+1. The entire schedule's execution is rolled back (atomicity)
+2. The failure is logged with details
+3. The schedule's `last_execution_height` is still updated to prevent retry loops
+4. The schedule continues to be processed in future blocks if it's periodic
 
-This approach ensures that temporary failures don't permanently break scheduling logic.
+This approach ensures that temporary failures don't permanently break scheduling logic while maintaining transaction atomicity.
+
+### Message Construction
+
+When executing schedules, the module constructs `wasmtypes.MsgExecuteContract` messages:
+
+```go
+msg := wasmtypes.MsgExecuteContract{
+    Sender:   cronModuleAccount,  // Cron module account
+    Contract: scheduleMsg.Contract, // From schedule definition
+    Msg:      scheduleMsg.Msg,     // From schedule definition  
+    Funds:    sdk.Coins{},        // Always empty
+}
+```
 
 ## Module Parameters
 
 Network-wide parameters that can be adjusted through governance:
 
-| Parameter | Description | Default |
+| Parameter | Description | Purpose |
 |-----------|-------------|---------|
-| `security_address` | Address authorized to manage schedules | (governance-set address) |
-| `limit` | Maximum number of schedules executed in one block | 20 |
+| `security_address` | Address authorized to remove schedules | Emergency schedule removal |
+| `limit` | Maximum schedules executed per block | Resource management and DoS prevention |
+
+## Metrics and Monitoring
+
+The Cron module collects several metrics for monitoring and observability:
+
+- **`execute_ready_schedules`** (histogram): Time taken to execute all ready schedules in EndBlocker
+- **`schedule_count`** (gauge): Current number of active schedules
+- **`schedule_executions_count`** (counter): Total schedule executions, labeled by success/failure and schedule name
+
+These metrics help operators monitor the health and performance of the Cron module.
 
 ## Best Practices for Integration
 
@@ -164,13 +218,15 @@ Since schedules might fail for various reasons, contracts should:
 - Make scheduled operations idempotent (safe to execute multiple times)
 - Include validation within scheduled messages
 - Implement fallback mechanisms for critical operations
+- Design messages to be robust against temporary failures
 
 ### Schedule Organization
 
 For complex applications:
-- Use a consistent naming scheme for schedules
+- Use descriptive, consistent naming schemes for schedules
 - Create separate schedules for independent operations
-- Consider execution stages in your design to manage dependencies
+- Consider execution stages carefully to manage dependencies
+- Group related operations into single schedules for atomicity
 
 ## Typical Use Cases
 
@@ -179,17 +235,22 @@ The Cron module supports a wide range of time-based tasks:
 ### Financial Operations
 
 - **Interest accrual**: Regular updates to lending/borrowing rates
-- **Vesting schedules**: Gradual token unlocking
+- **Vesting schedules**: Gradual token unlocking over time
 - **Reward distribution**: Periodic rewards to stakers or liquidity providers
+- **Fee collection**: Regular harvesting of accumulated fees
 
 ### Protocol Maintenance
 
 - **State cleanup**: Removing expired or obsolete data
 - **Parameter updates**: Scheduled changes to protocol parameters
 - **Rebalancing**: Periodic adjustments to maintain target ratios
+- **Health checks**: Regular validation of system state
 
 ### Time-Sensitive Events
 
 - **Auction endings**: Automatic settlement at deadline
 - **Governance execution**: Implementing approved proposals after timelock
 - **Emergency procedures**: Scheduled failsafes or circuit breakers
+- **Market operations**: Regular price updates or arbitrage opportunities
+
+All of these use cases require governance approval to implement, ensuring that only legitimate and beneficial automation is added to the network.

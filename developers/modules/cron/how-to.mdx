@@ -15,74 +15,96 @@ This guide provides practical instructions for working with the Cron module, inc
 
 The Cron module is **governance-gated**, meaning:
 
-- Only governance can create, update, or remove schedules
-- Contracts cannot directly create schedules
-- Schedule creation requires proposals to either:
-  - **Main DAO**: For general protocol schedules
-  - **Cron SubDAO**: For application-specific schedules
+- Only governance can create or remove schedules
+- Individual users and contracts cannot directly interact with this module
+- Schedule management requires proposals to either:
+  - **Main DAO**: Can create and remove any schedule
+  - **Security SubDAO**: Can remove schedules (emergency situations)
+
+<Warning>
+**No Individual Access**: Unlike other modules, the Cron module does not accept direct user transactions. All schedule management must go through governance proposals.
+</Warning>
 
 <Note>
-Neutron uses a [modular governance system](/concepts/modular-governance) with specialized subDAOs that handle different aspects of network management. The Cron SubDAO is specifically designed to manage scheduling proposals, allowing for more efficient governance of routine scheduling tasks while maintaining community oversight.
+Neutron uses a [modular governance system](/concepts/modular-governance) with specialized subDAOs that handle different aspects of network management. The Security SubDAO can remove schedules in emergency situations, providing a safety mechanism for the network.
 </Note>
 
 ## Creating Schedules Through Governance
 
 ### Step 1: Prepare Your Governance Proposal
 
-To create a schedule, you need to submit a governance proposal with the appropriate message format:
+To create a schedule, you need to submit a governance proposal using the DAO contract format. Here's the structure for adding a schedule:
 
 ```json
 {
-  "messages": [
-    {
-      "@type": "/neutron.cron.MsgAddSchedule",
-      "authority": "neutron1...",
-      "name": "my_periodic_task",
-      "period": "100",
-      "msgs": [
-        {
-          "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
-          "sender": "neutron1...",
-          "contract": "neutron1...",
-          "msg": "eyJwZXJmb3JtX3Rhc2siOnt9fQ==",
-          "funds": []
-        }
-      ]
+  "propose": {
+    "msg": {
+      "propose": {
+        "title": "Add Daily Reward Distribution Schedule",
+        "description": "Creates a schedule to distribute rewards every 7200 blocks (approximately daily)",
+        "msgs": [
+          {
+            "custom": {
+              "add_schedule": {
+                "name": "daily_rewards",
+                "period": 7200,
+                "msgs": [
+                  {
+                    "contract": "neutron1contract...",
+                    "msg": "{\"distribute_rewards\": {\"amount\": \"1000\"}}"
+                  }
+                ],
+                "execution_stage": "EXECUTION_STAGE_END_BLOCKER"
+              }
+            }
+          }
+        ]
+      }
     }
-  ]
+  }
 }
 ```
 
-### Step 2: Submit the Governance Proposal
+### Step 2: Understanding the Message Structure
 
-#### For Main DAO (General Protocol Use)
+The `add_schedule` message contains:
+
+- **`name`**: Unique identifier for the schedule
+- **`period`**: Number of blocks between executions
+- **`msgs`**: Array of contract messages to execute
+  - **`contract`**: Address of the contract to call
+  - **`msg`**: JSON string of the message to send
+- **`execution_stage`**: When to execute (`EXECUTION_STAGE_BEGIN_BLOCKER` or `EXECUTION_STAGE_END_BLOCKER`)
+
+### Step 3: Submit the Governance Proposal
+
+#### For Main DAO
+
+Submit the proposal to the Main DAO using the prePropose contract address:
 
 ```bash
-# Submit proposal to Main DAO
-neutrond tx gov submit-proposal proposal.json \
+# Submit proposal to Main DAO prePropose contract
+neutrond tx wasm execute <main-dao-prepropose-address> \
+  '{"propose": {"msg": {"propose": {...}}}}' \
   --from=<your-key> \
   --chain-id=neutron-1 \
   --gas=auto \
   --gas-adjustment=1.5
 ```
 
-#### For Cron SubDAO (Application-Specific)
+### Step 4: Governance Voting Process
 
-Contact the Neutron team to submit a proposal through the Cron SubDAO for your specific application needs.
+Once submitted, the proposal goes through the standard DAO governance process:
 
-### Step 3: Governance Voting Process
-
-Once submitted, the proposal goes through the standard governance process:
-
-1. **Deposit Period**: Ensure minimum deposit is met
-2. **Voting Period**: Community votes on the proposal
+1. **Proposal Period**: Community can review the proposal
+2. **Voting Period**: DAO members vote on the proposal
 3. **Execution**: If passed, the schedule is automatically created
 
 ## Preparing Your Contract for Scheduled Execution
 
 ### Handle Scheduled Messages
 
-Your contract must be prepared to receive messages from the Cron module:
+Your contract must be prepared to receive messages from the Cron module account:
 
 ```rust
 use cosmwasm_std::{
@@ -97,8 +119,8 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> StdResult<Response> {
     match msg {
-        ExecuteMsg::PerformScheduledTask { } => {
-            handle_scheduled_execution(deps, env, info)
+        ExecuteMsg::DistributeRewards { amount } => {
+            handle_scheduled_execution(deps, env, info, amount)
         },
         // Other handlers...
     }
@@ -108,9 +130,10 @@ fn handle_scheduled_execution(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
+    amount: String,
 ) -> StdResult<Response> {
-    // Verify the sender is the Cron module
-    // (Optional: Add validation if needed)
+    // Note: The sender will be the Cron module account
+    // You can optionally validate this if needed
     
     // Perform your scheduled task
     // This could be:
@@ -121,7 +144,9 @@ fn handle_scheduled_execution(
     
     Ok(Response::new()
         .add_attribute("action", "scheduled_task_executed")
-        .add_attribute("block_height", env.block.height.to_string()))
+        .add_attribute("sender", info.sender.to_string())
+        .add_attribute("block_height", env.block.height.to_string())
+        .add_attribute("amount", amount))
 }
 ```
 
@@ -130,14 +155,21 @@ fn handle_scheduled_execution(
 When designing your contract for scheduled execution:
 
 ```rust
-// Example: Periodic reward distribution
+// Example: Periodic reward distribution with safety checks
 fn handle_scheduled_execution(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
+    amount: String,
 ) -> StdResult<Response> {
-    // Check if execution is due (additional safety check)
-    let last_execution = LAST_EXECUTION.load(deps.storage)?;
+    // Optional: Verify sender is Cron module (for extra security)
+    let cron_module_addr = "neutron1..."; // Known Cron module address
+    if info.sender != cron_module_addr {
+        return Err(StdError::generic_err("Unauthorized: not from Cron module"));
+    }
+    
+    // Check if execution is appropriate (additional safety check)
+    let last_execution = LAST_EXECUTION.may_load(deps.storage)?.unwrap_or(0);
     let blocks_since_last = env.block.height - last_execution;
     
     if blocks_since_last < MIN_BLOCKS_BETWEEN_EXECUTIONS {
@@ -147,18 +179,19 @@ fn handle_scheduled_execution(
     }
     
     // Perform the actual task
-    distribute_rewards(deps, env)?;
+    distribute_rewards(deps, env, amount)?;
     
     // Update last execution height
     LAST_EXECUTION.save(deps.storage, &env.block.height)?;
     
     Ok(Response::new()
         .add_attribute("action", "rewards_distributed")
-        .add_attribute("height", env.block.height.to_string()))
+        .add_attribute("height", env.block.height.to_string())
+        .add_attribute("amount", amount))
 }
 ```
 
-## Common Use Cases
+## Common Use Cases and Examples
 
 ### Protocol Maintenance
 
@@ -166,17 +199,31 @@ For regular protocol maintenance tasks:
 
 ```json
 {
-  "name": "daily_protocol_maintenance",
-  "period": "7200",
-  "msgs": [
-    {
-      "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
-      "sender": "neutron1...",
-      "contract": "neutron1protocol_contract...",
-      "msg": "eyJtYWludGVuYW5jZSI6e319",
-      "funds": []
+  "propose": {
+    "msg": {
+      "propose": {
+        "title": "Add Daily Protocol Maintenance Schedule",
+        "description": "Performs daily maintenance tasks every 7200 blocks",
+        "msgs": [
+          {
+            "custom": {
+              "add_schedule": {
+                "name": "daily_maintenance",
+                "period": 7200,
+                "msgs": [
+                  {
+                    "contract": "neutron1protocol_contract...",
+                    "msg": "{\"perform_maintenance\": {}}"
+                  }
+                ],
+                "execution_stage": "EXECUTION_STAGE_END_BLOCKER"
+              }
+            }
+          }
+        ]
+      }
     }
-  ]
+  }
 }
 ```
 
@@ -186,61 +233,127 @@ For periodic reward distribution:
 
 ```json
 {
-  "name": "weekly_reward_distribution",
-  "period": "50400",
-  "msgs": [
-    {
-      "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
-      "sender": "neutron1...",
-      "contract": "neutron1rewards_contract...",
-      "msg": "eyJkaXN0cmlidXRlX3Jld2FyZHMiOnt9fQ==",
-      "funds": []
+  "propose": {
+    "msg": {
+      "propose": {
+        "title": "Add Weekly Reward Distribution Schedule",
+        "description": "Distributes rewards every 50400 blocks (approximately weekly)",
+        "msgs": [
+          {
+            "custom": {
+              "add_schedule": {
+                "name": "weekly_rewards",
+                "period": 50400,
+                "msgs": [
+                  {
+                    "contract": "neutron1rewards_contract...",
+                    "msg": "{\"distribute_rewards\": {\"validator\": \"channel-52\", \"recipient\": \"neutron123...\"}}"
+                  }
+                ],
+                "execution_stage": "EXECUTION_STAGE_END_BLOCKER"
+              }
+            }
+          }
+        ]
+      }
     }
-  ]
+  }
 }
 ```
 
-## Managing Existing Schedules
+### Multi-Message Schedule
 
-### Updating a Schedule
-
-To update an existing schedule, submit a governance proposal with `MsgUpdateSchedule`:
+For complex operations requiring multiple contract calls:
 
 ```json
 {
-  "messages": [
-    {
-      "@type": "/neutron.cron.MsgUpdateSchedule",
-      "authority": "neutron1...",
-      "name": "my_periodic_task",
-      "period": "200",
-      "msgs": [
-        {
-          "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
-          "sender": "neutron1...",
-          "contract": "neutron1...",
-          "msg": "eyJ1cGRhdGVkX3Rhc2siOnt9fQ==",
-          "funds": []
-        }
-      ]
+  "propose": {
+    "msg": {
+      "propose": {
+        "title": "Add Multi-Step Protocol Update Schedule",
+        "description": "Performs multi-step protocol update every 100800 blocks",
+        "msgs": [
+          {
+            "custom": {
+              "add_schedule": {
+                "name": "protocol_update",
+                "period": 100800,
+                "msgs": [
+                  {
+                    "contract": "neutron1contract1...",
+                    "msg": "{\"prepare_update\": {}}"
+                  },
+                  {
+                    "contract": "neutron1contract2...",
+                    "msg": "{\"apply_update\": {\"version\": \"2.0\"}}"
+                  },
+                  {
+                    "contract": "neutron1contract3...",
+                    "msg": "{\"notify_update_complete\": {}}"
+                  }
+                ],
+                "execution_stage": "EXECUTION_STAGE_END_BLOCKER"
+              }
+            }
+          }
+        ]
+      }
     }
-  ]
+  }
 }
 ```
 
-### Removing a Schedule
+## Removing Schedules
 
-To remove a schedule, submit a governance proposal with `MsgRemoveSchedule`:
+### Standard Removal (Main DAO)
+
+To remove a schedule through Main DAO governance:
 
 ```json
 {
-  "messages": [
-    {
-      "@type": "/neutron.cron.MsgRemoveSchedule",
-      "authority": "neutron1...",
-      "name": "my_periodic_task"
+  "propose": {
+    "msg": {
+      "propose": {
+        "title": "Remove Daily Reward Distribution Schedule",
+        "description": "Removes the daily rewards distribution schedule as it's no longer needed",
+        "msgs": [
+          {
+            "custom": {
+              "remove_schedule": {
+                "name": "daily_rewards"
+              }
+            }
+          }
+        ]
+      }
     }
-  ]
+  }
+}
+```
+
+### Emergency Removal (Security SubDAO)
+
+The Security SubDAO can also submit `remove_schedule` proposals for emergency situations:
+
+```json
+{
+  "propose": {
+    "msg": {
+      "propose": {
+        "title": "Emergency Removal of Malfunctioning Schedule",
+        "description": "Emergency removal of schedule causing network issues",
+        "msgs": [
+          {
+            "custom": {
+              "remove_schedule": {
+                "name": "problematic_schedule"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
 }
 ```
 
@@ -258,39 +371,76 @@ To remove a schedule, submit a governance proposal with `MsgRemoveSchedule`:
 1. **Idempotent Operations**: Design scheduled tasks to be safely re-runnable
 2. **Error Handling**: Implement robust error handling for scheduled executions
 3. **State Validation**: Add checks to prevent unexpected state changes
-4. **Logging**: Include comprehensive logging for debugging
+4. **Logging**: Include comprehensive logging with meaningful attributes
+5. **Sender Verification**: Optionally verify the sender is the Cron module account
 
 ### Schedule Parameters
 
 1. **Appropriate Periods**: Choose block intervals that match your use case
-2. **Unique Names**: Use descriptive, unique names for schedules
-3. **Message Encoding**: Ensure messages are properly base64-encoded JSON
+   - Daily: ~7200 blocks (assuming 12-second blocks)
+   - Weekly: ~50400 blocks
+   - Monthly: ~216000 blocks
+2. **Execution Stage**: Choose BEGIN_BLOCKER or END_BLOCKER based on dependencies
+3. **Message Format**: Ensure messages are valid JSON strings for contract execution
+4. **Atomicity**: Group related operations in a single schedule for atomic execution
+5. **Descriptive Names**: Use clear, descriptive names that indicate the schedule's purpose
 
-## Troubleshooting
+## Monitoring and Troubleshooting
 
-### Common Issues
-
-- **Proposal Rejected**: Review governance requirements and community feedback
-- **Execution Failures**: Check contract logic and message formatting
-- **Schedule Not Executing**: Verify the schedule was created successfully through governance
-
-### Debugging Steps
-
-1. Check if the governance proposal passed
-2. Query the schedule to confirm it exists
-3. Monitor blockchain logs for execution attempts
-4. Test the scheduled message manually
-
-## Querying Schedules
+### Querying Schedules
 
 To check existing schedules:
 
 ```bash
 # List all schedules
-neutrond query cron list-schedules
+neutrond query cron schedules
 
 # Get specific schedule
-neutrond query cron get-schedule <schedule-name>
+neutrond query cron schedule <schedule-name>
+
+# Check module parameters
+neutrond query cron params
 ```
 
-This governance-gated approach ensures that only approved schedules run on the network, maintaining security and preventing spam while enabling powerful automation capabilities. 
+### Common Issues and Solutions
+
+| Issue | Possible Cause | Solution |
+|-------|---------------|----------|
+| Proposal rejected | Insufficient community support | Engage with community, revise proposal |
+| Schedule not executing | Execution failures or limit reached | Check contract logic, monitor events |
+| Execution failures | Invalid message format or contract errors | Test messages manually, check contract state |
+| Schedule not found | Governance proposal failed | Verify proposal passed and was executed |
+
+### Debugging Steps
+
+1. **Verify Governance**: Check if the governance proposal passed and was executed
+2. **Query Schedule**: Confirm the schedule exists with correct parameters
+3. **Monitor Events**: Watch for `EventExecuteSchedule` events in block logs
+4. **Test Manually**: Execute the scheduled message manually to verify contract logic
+5. **Check Limits**: Ensure the schedule isn't being skipped due to block limits
+
+### Event Monitoring
+
+Monitor these events for schedule activity:
+
+- **`EventAddSchedule`**: Schedule was created successfully
+- **`EventRemoveSchedule`**: Schedule was removed
+- **`EventExecuteSchedule`**: Schedule execution attempt (check `success` attribute)
+
+## Security Considerations
+
+### Governance Security
+
+1. **Proposal Review**: Thoroughly review all governance proposals
+2. **Community Oversight**: Ensure adequate community review period
+3. **Emergency Procedures**: Understand Security SubDAO removal capabilities
+4. **Testing**: Always test on testnet before mainnet proposals
+
+### Contract Security
+
+1. **Access Control**: Consider implementing additional access controls in your contracts
+2. **Input Validation**: Validate all inputs in scheduled message handlers
+3. **State Protection**: Protect critical state from unauthorized modifications
+4. **Failure Handling**: Handle execution failures gracefully without breaking contract state
+
+This governance-gated approach ensures that only approved schedules run on the network, maintaining security and preventing spam while enabling powerful automation capabilities for the Neutron ecosystem. 
