@@ -10,14 +10,48 @@ This document provides detailed technical information for developers working wit
 
 A pair ID uniquely identifies a token pair and follows the format: `{tokenA}:{tokenB}` where tokens are lexicographically ordered (alphabetically). Example: `untrn:uatom`.
 
+**Implementation:**
+```go
+type PairID struct {
+    Token0 string  // Alphabetically first token
+    Token1 string  // Alphabetically second token
+}
+```
+
+**String Representation:** `Token0<>Token1` (e.g., "ATOM<>USDC")
+
 ### Tick Index
 
 Tick indexes represent discrete price points where:
 
 - Price = 1.0001^tickIndex
 - Each tick represents a 0.01% (1 basis point) price change
+- Valid range: -559,680 to 559,680
 - Positive tick indexes mean token1 is worth more than token0
 - Negative tick indexes mean token0 is worth more than token1
+
+**Price Conversion Formulas:**
+
+**Tick to Price:**
+```
+price = 1.0001^tickIndex
+```
+
+**Price to Tick:**
+```
+tickIndex = log(price) / log(1.0001)
+```
+
+### Trade Pair ID
+
+Identifies the direction of a trade within a pair:
+
+```go
+type TradePairID struct {
+    MakerDenom string  // Token being sold
+    TakerDenom string  // Token being bought
+}
+```
 
 ### Pool ID
 
@@ -47,9 +81,8 @@ A unique identifier for a limit order tranche, typically derived from:
 ```protobuf
 message Pool {
   uint64 id = 1;
-  string pair_id = 2;
-  int64 tick_index = 3;
-  uint64 fee = 4;
+  PoolReserves lower_tick0 = 2;
+  PoolReserves upper_tick1 = 3;
 }
 ```
 
@@ -57,22 +90,25 @@ message Pool {
 
 ```protobuf
 message PoolReserves {
-  uint64 pool_id = 1;
-  string pair_id = 2;
-  string token0 = 3; 
-  string token1 = 4;
-  uint64 fee = 5;
-  int64 tick_index = 6;
-  string token0_reserve = 7 [
+  PoolReservesKey key = 1;
+  string reserves_maker_denom = 2 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
-  string token1_reserve = 8 [
-    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+  string price_taker_to_maker = 3 [
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
     (gogoproto.nullable) = false
   ];
-  string token0_denom = 9;
-  string token1_denom = 10;
+  string price_opposite_taker_to_maker = 4 [
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message PoolReservesKey {
+  TradePairID trade_pair_id = 1;
+  int64 tick_index_taker_to_maker = 2;
+  uint64 fee = 3;
 }
 ```
 
@@ -80,37 +116,66 @@ message PoolReserves {
 
 ```protobuf
 message LimitOrderTranche {
-  string pair_id = 1;
-  string token_in = 2;
-  int64 tick_index = 3;
-  string tranche_key = 4;
-  string reserves_token_in = 5 [
+  LimitOrderTrancheKey key = 1;
+  string reserves_maker_denom = 2 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
-  string reserves_token_out = 6 [
+  string reserves_taker_denom = 3 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
-  string total_token_in = 7 [
+  string total_maker_denom = 4 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
-  string total_token_out = 8 [
+  string total_taker_denom = 5 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
-  string token_in_denom = 9;
-  string token_out_denom = 10;
-  enum TrancheStatus {
-    ACTIVE = 0;
-    INACTIVE = 1;
-  }
-  TrancheStatus status = 11;
-  google.protobuf.Timestamp expiration_time = 12 [
+  google.protobuf.Timestamp expiration_time = 6 [
     (gogoproto.stdtime) = true,
     (gogoproto.nullable) = true
   ];
+  string price_taker_to_maker = 7 [
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false,
+    deprecated = true
+  ];
+  string maker_price = 8 [
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message LimitOrderTrancheKey {
+  TradePairID trade_pair_id = 1;
+  int64 tick_index_taker_to_maker = 2;
+  string tranche_key = 3;
+}
+```
+
+### LimitOrderTrancheUser
+
+```protobuf
+message LimitOrderTrancheUser {
+  TradePairID trade_pair_id = 1;
+  int64 tick_index_taker_to_maker = 2;
+  string tranche_key = 3;
+  string address = 4;
+  string shares_owned = 5 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string shares_withdrawn = 6 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string shares_cancelled = 7 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  LimitOrderType order_type = 8;
 }
 ```
 
@@ -118,32 +183,82 @@ message LimitOrderTranche {
 
 ```protobuf
 message DepositRecord {
-  string pair_id = 1;
-  string share_denom = 2;
-  string shares_owned = 3 [
+  PairID pair_id = 1;
+  string shares_owned = 2 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
-  int64 tick_index = 4;
-  uint64 fee = 5;
-  string token0 = 6;
-  string token1 = 7;
-  string pool_id = 8;
-  string token0_denom = 9;
-  string token1_denom = 10;
+  int64 center_tick_index = 3;
+  int64 lower_tick_index = 4;
+  int64 upper_tick_index = 5;
+  uint64 fee = 6;
+  string total_shares = 7 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = true
+  ];
+  Pool pool = 8 [(gogoproto.nullable) = true];
 }
 ```
+
+### PoolMetadata
+
+```protobuf
+message PoolMetadata {
+  uint64 id = 1;
+  int64 tick = 2;
+  uint64 fee = 3;
+  PairID pair_id = 4;
+}
+```
+
+### TickLiquidity
+
+```protobuf
+message TickLiquidity {
+  oneof liquidity {
+    PoolReserves pool_reserves = 1;
+    LimitOrderTranche limit_order_tranche = 2;
+  }
+}
+```
+
+## Enumerations
+
+### LimitOrderType
+
+```protobuf
+enum LimitOrderType {
+  GOOD_TIL_CANCELLED = 0;
+  FILL_OR_KILL = 1;
+  IMMEDIATE_OR_CANCEL = 2;
+  JUST_IN_TIME = 3;
+  GOOD_TIL_TIME = 4;
+}
+```
+
+**Behavior:**
+- **GOOD_TIL_CANCELLED**: Hybrid maker/taker order, remains active until cancelled
+- **FILL_OR_KILL**: Must fill completely immediately or fail entirely
+- **IMMEDIATE_OR_CANCEL**: Fill what's possible immediately, cancel remainder
+- **JUST_IN_TIME**: Maker order active for exactly one block
+- **GOOD_TIL_TIME**: Like GTC but with automatic expiration
 
 ## Constants and Parameters
 
 ### Fee Tiers
 
 Common fee tiers (in basis points):
-- 1 = 0.01% (low volatility pairs)
+- 1 = 0.01% (ultra-low volatility pairs)
 - 5 = 0.05% (stable pairs)
 - 30 = 0.3% (standard pairs)
 - 100 = 1% (exotic pairs)
 - 300 = 3% (highly volatile pairs)
+
+### Tick Constraints
+
+- **Minimum Tick**: -559,680
+- **Maximum Tick**: 559,680
+- **Tick Spacing**: Configurable via governance (default: 1)
 
 ### Module Parameters
 
@@ -153,14 +268,17 @@ message Params {
   // Value is measured in basis points (1/100 of 1%)
   // Default: 100 (1%)
   uint64 max_pool_spread_bps = 1;
+  
   // The minimum price tick spacing allowed
   int64 min_tick_spacing = 2;
 }
 ```
 
-## Price Calculation
+## Mathematical Formulas
 
-### Tick to Price
+### Price Calculation
+
+#### Tick to Price
 
 To convert a tick index to a price:
 
@@ -168,7 +286,7 @@ To convert a tick index to a price:
 price = 1.0001^tickIndex
 ```
 
-### Price to Tick
+#### Price to Tick
 
 To convert a price to a tick index:
 
@@ -178,11 +296,18 @@ tickIndex = log(price) / log(1.0001)
 
 Rounded to the nearest integer, subject to tick spacing constraints.
 
-## Deposits and Withdrawals
+### Share Token Calculations
 
-### Share Token Calculation
+#### Initial Pool Creation
 
-When depositing to a pool, share tokens are calculated as:
+For a new pool:
+```
+shares = sqrt(amountA * amountB)
+```
+
+#### Adding Liquidity to Existing Pool
+
+When depositing to an existing pool:
 
 ```
 shares = min(
@@ -191,10 +316,147 @@ shares = min(
 )
 ```
 
-For a new pool:
+#### Value-Based Share Calculation
+
 ```
-shares = sqrt(amountA * amountB)
+valueDeposited = amountA + price * amountB
+newShares = (valueDeposited * totalShares) / totalValue
 ```
+
+### Autoswap Calculations
+
+#### Residual Swap Amount
+
+```
+s = (existingReserves0 * amountDeposited1 - existingReserves1 * amountDeposited0) / 
+    (existingReserves1 * price + existingReserves0)
+```
+
+Where `s` is the amount that needs to be swapped to match the existing pool ratio.
+
+#### Autoswap Fee
+
+```
+autoswapFee = (residual0 + residual1 * price1To0) * (1 - (1 - feeRate))
+```
+
+#### Final Share Calculation with Autoswap
+
+```
+newShares = ((valueDeposited - autoswapFee) * totalShares) / (totalValue + autoswapFee)
+```
+
+### Fee Calculations
+
+#### Trading Fee Application
+
+For a swap with fee rate `γ`:
+
+**Token A → Token B:**
+```
+amountOut = price * (1 - γ) * amountIn
+```
+
+**Token B → Token A:**
+```
+amountOut = ((1 - γ) * amountIn) / price
+```
+
+#### Fee Collection
+
+Fees are collected in the output token and added to pool reserves:
+
+```
+feeAmount = amountIn * feeRate
+netAmountIn = amountIn - feeAmount
+```
+
+### Price Impact Calculation
+
+The price impact for a swap:
+```
+priceImpact = 1 - (outputAmount / (inputAmount * initialPrice))
+```
+
+### Route Selection Optimization
+
+When multiple routes are provided with `pick_best_route` enabled:
+1. Simulate execution on all routes
+2. Select the route with the highest output amount
+3. Execute the swap on the selected route
+
+## Deposit and Withdrawal Mechanics
+
+### Behind Enemy Lines (BEL) Validation
+
+Deposits are rejected if they would create liquidity cheaper than the opposing bid price:
+
+```go
+func ValidateBEL(tickIndex int64, fee uint64, oppositeSidePrice PrecDec) bool {
+    depositPrice := TickToPrice(tickIndex)
+    return depositPrice >= oppositeSidePrice
+}
+```
+
+### Withdrawal Proportionality
+
+When withdrawing from a pool:
+
+```
+amountA = (sharesToBurn * reserveA) / totalShares
+amountB = (sharesToBurn * reserveB) / totalShares
+```
+
+## Liquidity Iteration Algorithm
+
+### Iteration Order
+
+1. **Price Priority**: Better prices (from taker perspective) are filled first
+2. **Type Priority**: PoolReserves take priority over LimitOrderTranches at the same tick
+3. **Tranche Priority**: LimitOrderTranches are filled in lexicographic order by TrancheKey
+
+### Swap Execution Algorithm
+
+```go
+func ExecuteSwap(amountIn, tokenIn, tokenOut) {
+    remainingAmount := amountIn
+    currentTick := findBestTick(tokenIn, tokenOut)
+    
+    for remainingAmount > 0 && currentTick != nil {
+        // Fill PoolReserves first
+        if poolReserves := getPoolReserves(currentTick); poolReserves != nil {
+            filled := fillFromPool(poolReserves, remainingAmount)
+            remainingAmount -= filled
+        }
+        
+        // Fill LimitOrderTranches in order
+        tranches := getLimitOrderTranches(currentTick)
+        sort.Strings(tranches) // Lexicographic order
+        
+        for _, tranche := range tranches {
+            if remainingAmount <= 0 { break }
+            filled := fillFromTranche(tranche, remainingAmount)
+            remainingAmount -= filled
+        }
+        
+        currentTick = getNextTick(currentTick)
+    }
+}
+```
+
+## State Storage
+
+### Key Prefixes
+
+The DEX module uses the following key prefixes for state storage:
+
+- `0x00`: Module parameters
+- `0x01`: Pool reserves
+- `0x02`: Limit order tranches
+- `0x03`: Limit order tranche users
+- `0x04`: Pool metadata
+- `0x05`: Deposit records
+- `0x06`: Inactive limit order tranches
 
 ### Share Token Denomination
 
@@ -203,75 +465,118 @@ Share tokens follow the format:
 neutron/pool/{poolID}
 ```
 
-## Swaps and Routing
+Example: `neutron/pool/1`
 
-### Swap Execution
+## Event Types
 
-1. For single-hop swaps (A to B):
-   - Find the optimal path through available liquidity
-   - Execute the swap at each tick price
+### Deposit Events
 
-2. For multi-hop swaps (A to B to C):
-   - Break down into multiple single-hop swaps
-   - Execute each hop sequentially
-
-### Price Impact Calculation
-
-The price impact for a swap is calculated as:
-```
-priceImpact = 1 - (outputAmount / (inputAmount * initialPrice))
+```protobuf
+message EventDeposit {
+  string creator = 1;
+  string receiver = 2;
+  string token0 = 3;
+  string token1 = 4;
+  string shares_issued = 5;
+  repeated string reserves_deposited = 6;
+}
 ```
 
-### Route Selection
+### Withdrawal Events
 
-When multiple routes are provided with `pick_best_route` enabled:
-1. Simulate execution on all routes
-2. Select the route with the highest output amount
-3. Execute the swap on the selected route
-
-## Fees
-
-### Fee Distribution
-
-Trading fees are distributed as follows:
-1. Fees are collected in the output token
-2. Fees are added to the pool reserves
-3. Liquidity providers receive fees proportional to their share of the pool
-
-### Fee Calculation
-
-For a swap amount `x` with fee tier `f` (in basis points):
-```
-fee = x * (f / 10000)
-amountOut = (x - fee) * price
+```protobuf
+message EventWithdrawal {
+  string creator = 1;
+  string receiver = 2;
+  string token0 = 3;
+  string token1 = 4;
+  string shares_burned = 5;
+  repeated string reserves_withdrawn = 6;
+}
 ```
 
-## Limit Orders
+### Limit Order Events
 
-### Order Matching
+```protobuf
+message EventLimitOrder {
+  string creator = 1;
+  string receiver = 2;
+  string token_in = 3;
+  string token_out = 4;
+  string tranche_key = 5;
+  LimitOrderType order_type = 6;
+}
+```
 
-Limit orders are matched in the following priority:
-1. Price (better prices execute first)
-2. Time (older orders at same price execute first)
+### Swap Events
 
-### Order Expiration
+```protobuf
+message EventSwap {
+  string creator = 1;
+  string receiver = 2;
+  string token_in = 3;
+  string token_out = 4;
+  string amount_in = 5;
+  string amount_out = 6;
+  repeated string route = 7;
+}
+```
 
-GTT orders automatically expire based on their expiration time. The module's `BeginBlock` handler purges expired orders.
+## Error Codes
 
-## Pair List
+### Common Error Types
 
-Common built-in pairs:
-- untrn:uatom
-- untrn:uosmo
-- untrn:usdc
-- usdc:uatom
-- usdc:uosmo
+- **ErrInvalidPairID**: Malformed pair identifier
+- **ErrInvalidTickIndex**: Tick index outside valid range
+- **ErrInsufficientLiquidity**: Not enough liquidity for swap
+- **ErrBehindEnemyLines**: Deposit violates BEL constraint
+- **ErrInvalidFee**: Fee tier not supported
+- **ErrOrderNotFound**: Limit order tranche doesn't exist
+- **ErrInvalidOrderType**: Unsupported order type
+- **ErrExpiredOrder**: Order has expired
+- **ErrInsufficientShares**: Not enough shares to withdraw
 
-Custom pairs can be formed by anyone depositing tokens into a new pool.
+## Integration Guidelines
 
-## Module Accounts
+### For DApp Developers
 
-The Dex module uses a dedicated module account to hold pool reserves.
+1. **Always Simulate First**: Use simulation queries before executing transactions
+2. **Handle Partial Fills**: Implement logic for partial order fills
+3. **Monitor Gas Usage**: Complex operations may require higher gas limits
+4. **Implement Slippage Protection**: Use appropriate exit limit prices
+5. **Handle Errors Gracefully**: Implement retry logic for failed transactions
 
-Account name: `neutron_dex`
-Address: Derived from the module name 
+### For Arbitrage Bots
+
+1. **Multi-Route Analysis**: Compare direct vs indirect routes
+2. **Gas Cost Consideration**: Factor gas costs into profit calculations
+3. **MEV Protection**: Use private mempools when available
+4. **Liquidity Monitoring**: Track pool reserves and limit order depth
+
+### For Market Makers
+
+1. **JIT Order Strategy**: Use Just-In-Time orders for capital efficiency
+2. **Dynamic Pricing**: Adjust prices based on market volatility
+3. **Risk Management**: Monitor impermanent loss vs fee earnings
+4. **Position Rebalancing**: Regularly adjust liquidity positions
+
+## Performance Considerations
+
+### Query Optimization
+
+- Use pagination for large result sets
+- Cache frequently accessed data
+- Batch multiple queries when possible
+- Use specific queries rather than broad scans
+
+### Transaction Batching
+
+- Combine multiple operations in single transactions
+- Use multi-hop swaps instead of sequential swaps
+- Batch limit order placements when possible
+
+### Gas Optimization
+
+- Simulate transactions to estimate gas usage
+- Use appropriate gas prices for desired confirmation speed
+- Consider transaction size vs gas cost trade-offs 
