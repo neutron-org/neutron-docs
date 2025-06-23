@@ -4,6 +4,10 @@ title: "API"
 
 This document details the API endpoints provided by the Fee Burner module.
 
+<Warning>
+**Governance-Only Transactions**: The `MsgUpdateParams` message can only be executed through governance proposals. Individual users cannot directly submit this message via CLI or other means.
+</Warning>
+
 ## REST Endpoints
 
 The Fee Burner module exposes several REST endpoints for querying module parameters and the total burned NTRN amount.
@@ -172,17 +176,21 @@ grpcurl -plaintext \
   neutron.feeburner.Query/TotalBurnedNeutronsAmount
 ```
 
-### Updating Parameters Using gRPC
+### Governance Message Example
 
-```bash
-grpcurl -plaintext \
-  -d '{
-    "authority": "neutron1...",
-    "params": {
-      "neutron_denom": "untrn",
-      "treasury_address": "neutron1..."
-    }
-  }' \
-  localhost:9090 \
-  neutron.feeburner.Msg/UpdateParams
-``` 
+For governance proposals that update parameters, the gRPC message structure would be:
+
+```json
+{
+  "authority": "neutron1...", // governance authority address
+  "params": {
+    "neutron_denom": "untrn",
+    "treasury_address": "neutron1...",
+    "reserve_address": ""
+  }
+}
+```
+
+<Note>
+This message can only be executed through governance proposals, not directly by individual users.
+</Note> 

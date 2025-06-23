@@ -80,11 +80,25 @@ Where `proposal.json` would contain:
 }
 ```
 
-Alternatively, you can use the direct message type to update parameters (requires authority):
+### Direct Governance Message
 
-```bash
-neutrond tx feeburner update-params --neutron-denom=untrn --treasury-address=neutron1... --from=<authority-key> --chain-id=<chain-id>
+Parameter updates can also be submitted as direct governance messages in proposals:
+
+```json
+{
+  "@type": "/neutron.feeburner.MsgUpdateParams",
+  "authority": "neutron1...", // governance authority address
+  "params": {
+    "neutron_denom": "untrn",
+    "treasury_address": "neutron1...",
+    "reserve_address": ""
+  }
+}
 ```
+
+<Note>
+This message can only be executed through governance proposals, not directly by individual users.
+</Note>
 
 ## For Developers
 

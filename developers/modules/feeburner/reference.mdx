@@ -177,21 +177,27 @@ neutrond query feeburner total-burned-neutrons-amount
 
 Returns the total amount of NTRN tokens burned since genesis.
 
-### Transactions
+### Governance Messages
 
 #### Update Parameters
 
-```bash
-neutrond tx feeburner update-params [flags]
+Parameter updates can only be executed through governance proposals using the `MsgUpdateParams` message:
+
+```json
+{
+  "@type": "/neutron.feeburner.MsgUpdateParams",
+  "authority": "neutron1...", // governance authority address
+  "params": {
+    "neutron_denom": "untrn",
+    "treasury_address": "neutron1...",
+    "reserve_address": ""
+  }
+}
 ```
 
-Updates the module parameters. This command can only be executed by the governance account.
-
-Flags:
-- `--neutron-denom`: The new denom for the Neutron token
-- `--treasury-address`: The new address for the Treasury
-- `--from`: The governance account that signs the transaction
-- `--chain-id`: The chain ID
+<Note>
+This message can only be executed through governance proposals, not directly by individual users via CLI commands.
+</Note>
 
 ## Module Functions
 

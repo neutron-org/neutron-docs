@@ -2,36 +2,13 @@
 title: "Client"
 ---
 
-This document describes the CLI commands and gRPC queries for the Fee Burner module.
+This document describes the client interface for interacting with the Fee Burner module.
 
-## CLI Commands
+<Warning>
+**Query-Only Access**: The Fee Burner module only provides query functionality to external clients. Transaction operations (`MsgUpdateParams`) can only be executed through governance proposals, not directly by individual users.
+</Warning>
 
 The `neutrond` command-line interface provides several commands to interact with the Fee Burner module.
-
-### Transactions
-
-#### Update Parameters
-
-The `update-params` command allows the governance account to update the module's parameters.
-
-```bash
-neutrond tx feeburner update-params [flags]
-```
-
-Flags:
-- `--neutron-denom`: The new denom for the Neutron token
-- `--treasury-address`: The new address for the Treasury
-- `--from`: The governance account that signs the transaction
-- `--chain-id`: The chain ID
-
-Example:
-```bash
-neutrond tx feeburner update-params \
-  --neutron-denom=untrn \
-  --treasury-address=neutron1... \
-  --from=validator \
-  --chain-id=neutron-1
-```
 
 ### Queries
 
@@ -73,6 +50,10 @@ Example output:
   }
 }
 ```
+
+<Note>
+**No Transaction Commands**: The Fee Burner module does not provide CLI transaction commands for individual users. Parameter updates must be submitted through governance proposals.
+</Note>
 
 ## gRPC Usage
 
@@ -119,20 +100,24 @@ Example output:
 }
 ```
 
-### Updating Parameters
+### Governance Message Example
 
-```bash
-grpcurl -plaintext \
-  -d '{
-    "authority": "neutron1...",
-    "params": {
-      "neutronDenom": "untrn",
-      "treasuryAddress": "neutron1..."
-    }
-  }' \
-  localhost:9090 \
-  neutron.feeburner.Msg/UpdateParams
+For governance proposals that update parameters, the gRPC message structure would be:
+
+```json
+{
+  "authority": "neutron1...", // governance authority address
+  "params": {
+    "neutronDenom": "untrn",
+    "treasuryAddress": "neutron1...",
+    "reserveAddress": ""
+  }
+}
 ```
+
+<Note>
+This message can only be executed through governance proposals, not directly by individual users.
+</Note>
 
 ## REST API Usage
 
@@ -204,4 +189,30 @@ console.log("Fee Burner Parameters:", params);
 // Query total burned NTRN amount
 const burnedAmount = await feeburnerQueryClient.totalBurnedNeutronsAmount();
 console.log("Total Burned NTRN:", burnedAmount.totalBurnedNeutronsAmount.coin);
-``` 
+```
+
+## Governance Integration
+
+For developers working on governance proposals that need to update Fee Burner parameters:
+
+```javascript
+// Example governance proposal message
+const updateParamsMsg = {
+  "@type": "/neutron.feeburner.MsgUpdateParams",
+  "authority": "neutron1...", // governance authority
+  "params": {
+    "neutron_denom": "untrn",
+    "treasury_address": "neutron1...",
+    "reserve_address": ""
+  }
+};
+
+// This would be included in a governance proposal
+const proposal = {
+  "title": "Update Fee Burner Parameters",
+  "description": "Update treasury address for non-NTRN fees",
+  "messages": [updateParamsMsg]
+};
+```
+
+This client interface ensures that users can query Fee Burner module state while parameter updates remain under democratic governance control. 
