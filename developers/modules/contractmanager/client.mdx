@@ -8,28 +8,9 @@ This document describes the CLI commands and gRPC queries for the Contract Manag
 
 The `neutrond` command-line interface provides several commands to interact with the Contract Manager module.
 
-### Transactions
-
-#### Update Parameters
-
-The `update-params` command allows the governance account to update the module's parameters.
-
-```bash
-neutrond tx contractmanager update-params [flags]
-```
-
-Flags:
-- `--sudo-call-gas-limit`: The new gas limit for sudo calls
-- `--from`: The governance account that signs the transaction
-- `--chain-id`: The chain ID
-
-Example:
-```bash
-neutrond tx contractmanager update-params \
-  --sudo-call-gas-limit=1000000 \
-  --from=validator \
-  --chain-id=neutron-1
-```
+<Warning>
+**No Transaction Commands**: The Contract Manager module does not provide CLI transaction commands for individual users. All operations are handled automatically by the module or through CosmWasm contract messages.
+</Warning>
 
 ### Queries
 

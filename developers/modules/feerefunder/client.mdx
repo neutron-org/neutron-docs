@@ -41,34 +41,9 @@ Example output:
 }
 ```
 
-#### Query Minimum Fee
-
-The `min-fee` command queries the minimum required fees for IBC operations.
-
-```bash
-neutrond query feerefunder min-fee
-```
-
-Example output:
-```json
-{
-  "min_fee": {
-    "recv_fee": [],
-    "ack_fee": [
-      {
-        "denom": "untrn",
-        "amount": "1000"
-      }
-    ],
-    "timeout_fee": [
-      {
-        "denom": "untrn",
-        "amount": "1000"
-      }
-    ]
-  }
-}
-```
+<Note>
+**Limited Query Commands**: The Fee Refunder module only provides `params` and individual packet `fee-info` queries. There are no CLI commands for querying minimum fees or listing all fee information.
+</Note>
 
 #### Query Fee Information for a Packet
 
@@ -112,67 +87,7 @@ Example output:
 }
 ```
 
-#### Query All Fee Information
 
-The `all-fee-info` command queries all fee information entries stored in the module.
-
-```bash
-neutrond query feerefunder all-fee-info
-```
-
-Example output:
-```json
-{
-  "fee_infos": [
-    {
-      "payer": "neutron1...",
-      "fee": {
-        "recv_fee": [],
-        "ack_fee": [
-          {
-            "denom": "untrn",
-            "amount": "1500"
-          }
-        ],
-        "timeout_fee": [
-          {
-            "denom": "untrn",
-            "amount": "1200"
-          }
-        ]
-      },
-      "packet_id": {
-        "port_id": "transfer",
-        "channel_id": "channel-0",
-        "sequence": "123"
-      }
-    },
-    {
-      "payer": "neutron1...",
-      "fee": {
-        "recv_fee": [],
-        "ack_fee": [
-          {
-            "denom": "untrn",
-            "amount": "2000"
-          }
-        ],
-        "timeout_fee": [
-          {
-            "denom": "untrn",
-            "amount": "1800"
-          }
-        ]
-      },
-      "packet_id": {
-        "port_id": "transfer",
-        "channel_id": "channel-1",
-        "sequence": "456"
-      }
-    }
-  ]
-}
-```
 
 ## gRPC Usage
 
@@ -210,35 +125,7 @@ Example output:
 }
 ```
 
-### Querying Minimum Fee
 
-```bash
-grpcurl -plaintext \
-  -d '{}' \
-  localhost:9090 \
-  neutron.feerefunder.Query/MinFee
-```
-
-Example output:
-```json
-{
-  "minFee": {
-    "recvFee": [],
-    "ackFee": [
-      {
-        "denom": "untrn",
-        "amount": "1000"
-      }
-    ],
-    "timeoutFee": [
-      {
-        "denom": "untrn",
-        "amount": "1000"
-      }
-    ]
-  }
-}
-```
 
 ### Querying Fee Information for a Packet
 

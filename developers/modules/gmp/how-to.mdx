@@ -1,0 +1,409 @@
+---
+title: "GMP Module How-to Guide"
+description: "Step-by-step instructions for using General Message Passing"
+---
+
+# How-to Guide
+
+This guide provides practical instructions for using the GMP (General Message Passing) module to send cross-chain messages via IBC transfers.
+
+## Basic Usage
+
+The GMP module processes messages embedded in IBC transfer memo fields. To use GMP, you embed a structured JSON message in the memo field of a standard IBC transfer.
+
+### Sending a General Message
+
+To send a general message with an IBC transfer:
+
+#### Step 1: Prepare Your Payload
+
+First, prepare the actual message content you want to send:
+
+```json
+{
+  "action": "execute_contract",
+  "contract_address": "neutron1...",
+  "msg": {
+    "swap": {
+      "amount": "1000"
+    }
+  }
+}
+```
+
+#### Step 2: Encode the Payload
+
+Convert your payload to bytes (base64 encoding is recommended):
+
+```javascript
+const payload = JSON.stringify({
+  "action": "execute_contract",
+  "contract_address": "neutron1...",
+  "msg": {
+    "swap": {
+      "amount": "1000"
+    }
+  }
+});
+
+const encodedPayload = Buffer.from(payload).toString('base64');
+```
+
+#### Step 3: Create GMP Message
+
+Embed your payload in a GMP message structure:
+
+```json
+{
+  "source_chain": "osmosis-1",
+  "source_address": "osmo1...",
+  "payload": "base64-encoded-payload-here",
+  "type": 1
+}
+```
+
+#### Step 4: Send IBC Transfer
+
+Use the GMP message as the memo field in your IBC transfer:
+
+```bash
+# Using CLI
+neutrond tx ibc-transfer transfer \
+  transfer \
+  channel-0 \
+  neutron1recipient... \
+  1000uosmo \
+  --memo '{"source_chain":"osmosis-1","source_address":"osmo1...","payload":"base64-payload","type":1}' \
+  --from sender
+```
+
+### Sending a General Message with Token
+
+For messages that specifically coordinate with token transfers, use type 2:
+
+```json
+{
+  "source_chain": "osmosis-1", 
+  "source_address": "osmo1...",
+  "payload": "base64-encoded-payload",
+  "type": 2
+}
+```
+
+This indicates that the receiving application should process the message in conjunction with the token transfer.
+
+## Programming Examples
+
+### JavaScript/TypeScript
+
+```typescript
+interface GMPMessage {
+  source_chain: string;
+  source_address: string;
+  payload: string; // base64 encoded
+  type: number;
+}
+
+function createGMPMessage(
+  sourceChain: string,
+  sourceAddress: string,
+  payload: object,
+  messageType: number = 1
+): string {
+  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64');
+  
+  const gmpMessage: GMPMessage = {
+    source_chain: sourceChain,
+    source_address: sourceAddress,
+    payload: encodedPayload,
+    type: messageType
+  };
+  
+  return JSON.stringify(gmpMessage);
+}
+
+// Usage
+const payload = {
+  action: "swap",
+  amount: "1000",
+  denom: "uatom"
+};
+
+const memo = createGMPMessage(
+  "cosmoshub-4",
+  "cosmos1sender...",
+  payload,
+  1
+);
+
+// Use memo in IBC transfer
+```
+
+### Python
+
+```python
+import json
+import base64
+
+def create_gmp_message(source_chain, source_address, payload, message_type=1):
+    """Create a GMP message for IBC transfer memo field"""
+    
+    # Encode payload as base64
+    payload_json = json.dumps(payload)
+    encoded_payload = base64.b64encode(payload_json.encode()).decode()
+    
+    gmp_message = {
+        "source_chain": source_chain,
+        "source_address": source_address, 
+        "payload": encoded_payload,
+        "type": message_type
+    }
+    
+    return json.dumps(gmp_message)
+
+# Usage
+payload = {
+    "action": "execute_contract",
+    "contract": "neutron1...",
+    "msg": {"swap": {"amount": "1000"}}
+}
+
+memo = create_gmp_message(
+    source_chain="osmosis-1",
+    source_address="osmo1...",
+    payload=payload,
+    message_type=1
+)
+```
+
+### Go
+
+```go
+package main
+
+import (
+    "encoding/base64"
+    "encoding/json"
+)
+
+type GMPMessage struct {
+    SourceChain   string `json:"source_chain"`
+    SourceAddress string `json:"source_address"`
+    Payload       string `json:"payload"`
+    Type          int64  `json:"type"`
+}
+
+func CreateGMPMessage(sourceChain, sourceAddress string, payload interface{}, msgType int64) (string, error) {
+    // Marshal payload to JSON
+    payloadBytes, err := json.Marshal(payload)
+    if err != nil {
+        return "", err
+    }
+    
+    // Base64 encode the payload
+    encodedPayload := base64.StdEncoding.EncodeToString(payloadBytes)
+    
+    // Create GMP message
+    gmpMsg := GMPMessage{
+        SourceChain:   sourceChain,
+        SourceAddress: sourceAddress,
+        Payload:       encodedPayload,
+        Type:          msgType,
+    }
+    
+    // Marshal to JSON
+    memoBytes, err := json.Marshal(gmpMsg)
+    if err != nil {
+        return "", err
+    }
+    
+    return string(memoBytes), nil
+}
+
+// Usage
+payload := map[string]interface{}{
+    "action": "swap",
+    "amount": "1000",
+}
+
+memo, err := CreateGMPMessage("osmosis-1", "osmo1...", payload, 1)
+```
+
+## Receiving GMP Messages
+
+Applications receiving GMP-processed transfers will see the extracted payload in the memo field, not the original GMP message structure.
+
+### CosmWasm Contract Integration
+
+```rust
+use cosmwasm_std::{IbcPacketReceiveMsg, IbcReceiveResponse};
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize)]
+struct SwapMessage {
+    action: String,
+    amount: String,
+    denom: String,
+}
+
+pub fn ibc_packet_receive(
+    deps: DepsMut,
+    env: Env,
+    msg: IbcPacketReceiveMsg,
+) -> Result<IbcReceiveResponse, ContractError> {
+    // Parse the transfer data
+    let transfer_data: FungibleTokenPacketData = 
+        from_json(&msg.packet.data)?;
+    
+    // The memo field now contains the extracted payload
+    if !transfer_data.memo.is_empty() {
+        let swap_msg: SwapMessage = from_json(&transfer_data.memo)?;
+        
+        // Process the message along with the received tokens
+        handle_swap(deps, env, swap_msg, &transfer_data)?;
+    }
+    
+    Ok(IbcReceiveResponse::default())
+}
+```
+
+## Message Type Guidelines
+
+### When to Use Type 1 (GeneralMessage)
+
+Use `TypeGeneralMessage` (1) for:
+- Informational messages
+- Messages that don't require specific token coordination
+- General cross-chain communication
+
+Example:
+```json
+{
+  "source_chain": "osmosis-1",
+  "source_address": "osmo1...",
+  "payload": "base64-encoded-notification",
+  "type": 1
+}
+```
+
+### When to Use Type 2 (GeneralMessageWithToken)
+
+Use `TypeGeneralMessageWithToken` (2) for:
+- Messages that must be processed atomically with token transfers
+- Swap instructions
+- Contract execution that depends on received tokens
+
+Example:
+```json
+{
+  "source_chain": "osmosis-1", 
+  "source_address": "osmo1...",
+  "payload": "base64-encoded-swap-instruction",
+  "type": 2
+}
+```
+
+## Best Practices
+
+### Payload Design
+
+1. **Keep payloads small**: IBC packets have size limits
+2. **Use efficient encoding**: JSON is human-readable but not space-efficient
+3. **Include version information**: For future compatibility
+4. **Validate on both sides**: Don't trust cross-chain data
+
+### Error Handling
+
+1. **Handle parsing failures**: Invalid GMP messages will cause packet failures
+2. **Validate message types**: Only use supported types (1 and 2)
+3. **Test thoroughly**: Cross-chain debugging is difficult
+
+### Security Considerations
+
+1. **Don't trust source fields**: `source_chain` and `source_address` are informational only
+2. **Validate all payload content**: Treat cross-chain data as untrusted
+3. **Implement proper authentication**: Use IBC's cryptographic guarantees
+
+## Common Patterns
+
+### Cross-chain Swap
+
+```json
+{
+  "source_chain": "osmosis-1",
+  "source_address": "osmo1...",
+  "payload": "eyJhY3Rpb24iOiJzd2FwIiwidG9rZW5fb3V0IjoidWF0b20ifQ==",
+  "type": 2
+}
+```
+
+Where the decoded payload is:
+```json
+{
+  "action": "swap",
+  "token_out": "uatom"
+}
+```
+
+### Cross-chain Governance Vote
+
+```json
+{
+  "source_chain": "cosmoshub-4",
+  "source_address": "cosmos1...", 
+  "payload": "eyJhY3Rpb24iOiJ2b3RlIiwicHJvcG9zYWxfaWQiOjEsIm9wdGlvbiI6InllcyJ9",
+  "type": 1
+}
+```
+
+Where the decoded payload is:
+```json
+{
+  "action": "vote",
+  "proposal_id": 1,
+  "option": "yes"
+}
+```
+
+### Multi-step Transaction
+
+```json
+{
+  "source_chain": "juno-1",
+  "source_address": "juno1...",
+  "payload": "eyJzdGVwcyI6W3siYWN0aW9uIjoic3dhcCJ9LHsiYWN0aW9uIjoic3Rha2UifV19",
+  "type": 2
+}
+```
+
+Where the decoded payload is:
+```json
+{
+  "steps": [
+    {"action": "swap"},
+    {"action": "stake"}
+  ]
+}
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Invalid JSON**: Ensure your GMP message is valid JSON
+2. **Empty payload**: Payloads cannot be empty or the message will be ignored
+3. **Unsupported type**: Only types 1 and 2 are supported
+4. **Size limits**: Large payloads may exceed IBC packet size limits
+
+### Debugging
+
+1. **Check IBC events**: Failed GMP processing will generate error acknowledgements
+2. **Validate JSON**: Use JSON validators before sending
+3. **Test locally**: Use local testnets for development
+4. **Monitor relayers**: Ensure relayers are processing your packets
+
+### Error Messages
+
+- `"cannot unmarshal ICS-20 transfer packet data"`: Malformed IBC transfer packet
+- `"unrecognized message type: X"`: Invalid message type (not 1 or 2)
+- `"cannot marshal ICS-20 post-processed transfer packet data"`: Internal processing error

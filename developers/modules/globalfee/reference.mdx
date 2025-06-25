@@ -1,0 +1,227 @@
+---
+sidebar_position: 5
+---
+
+# Reference
+
+## Parameters
+
+The Global Fee module manages network-wide minimum gas prices and fee bypass mechanisms through the following parameters:
+
+### Params
+
+```protobuf
+message Params {
+  // minimum_gas_prices stores the minimum gas price(s) for all TX on the chain.
+  // When multiple coins are defined then they are accepted alternatively.
+  // The list must be sorted by denoms asc. No duplicate denoms or zero amount
+  // values allowed.
+  repeated cosmos.base.v1beta1.DecCoin minimum_gas_prices = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins"
+  ];
+
+  // bypass_min_fee_msg_types defines a list of message type urls
+  // that are free of fee charge.
+  repeated string bypass_min_fee_msg_types = 2;
+
+  // max_total_bypass_min_fee_msg_gas_usage defines the total maximum gas usage
+  // allowed for a transaction containing only messages of types in bypass_min_fee_msg_types
+  // to bypass fee charge.
+  uint64 max_total_bypass_min_fee_msg_gas_usage = 3;
+}
+```
+
+### Parameter Details
+
+#### minimum_gas_prices
+
+**Type:** `DecCoins`  
+**Description:** Network-wide minimum gas prices that all transactions must meet  
+**Constraints:**
+- Must be sorted by denomination in ascending order
+- No duplicate denominations allowed
+- No zero amounts allowed
+- Multiple denominations are accepted alternatively
+
+**Example:**
+```json
+[
+  {
+    "denom": "untrn",
+    "amount": "0.025"
+  },
+  {
+    "denom": "ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9",
+    "amount": "0.001"
+  }
+]
+```
+
+#### bypass_min_fee_msg_types
+
+**Type:** `[]string`  
+**Description:** List of message type URLs that can bypass minimum fee requirements  
+**Common Values:**
+- `/cosmos.gov.v1beta1.MsgVote` - Governance voting
+- `/cosmos.gov.v1beta1.MsgVoteWeighted` - Weighted governance voting
+- `/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward` - Claim staking rewards
+- `/cosmos.staking.v1beta1.MsgDelegate` - Stake tokens
+
+**Example:**
+```json
+[
+  "/cosmos.gov.v1beta1.MsgVote",
+  "/cosmos.gov.v1beta1.MsgVoteWeighted",
+  "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward"
+]
+```
+
+#### max_total_bypass_min_fee_msg_gas_usage
+
+**Type:** `uint64`  
+**Description:** Maximum total gas usage allowed for transactions containing only bypass message types  
+**Purpose:** Prevents abuse of fee bypass mechanism by limiting gas consumption  
+**Default:** `1000000` (1M gas units)
+
+## Data Structures
+
+### DecCoin
+
+Standard Cosmos SDK decimal coin representation:
+
+```protobuf
+message DecCoin {
+  string denom = 1;
+  string amount = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+}
+```
+
+## Constants
+
+### Default Parameters
+
+```go
+const (
+    // DefaultMinimumGasPrices - empty by default
+    DefaultMinimumGasPrices = ""
+    
+    // DefaultBypassMinFeeMsgTypes - common governance and staking messages
+    DefaultBypassMinFeeMsgTypes = []string{
+        "/cosmos.gov.v1beta1.MsgVote",
+        "/cosmos.gov.v1beta1.MsgVoteWeighted",
+    }
+    
+    // DefaultMaxTotalBypassMinFeeMsgGasUsage - 1M gas units
+    DefaultMaxTotalBypassMinFeeMsgGasUsage = uint64(1000000)
+)
+```
+
+### Message Type URLs
+
+Common message types that may be configured for fee bypass:
+
+#### Governance Messages
+- `/cosmos.gov.v1beta1.MsgVote`
+- `/cosmos.gov.v1beta1.MsgVoteWeighted`
+- `/cosmos.gov.v1beta1.MsgDeposit`
+
+#### Staking Messages
+- `/cosmos.staking.v1beta1.MsgDelegate`
+- `/cosmos.staking.v1beta1.MsgUndelegate`
+- `/cosmos.staking.v1beta1.MsgBeginRedelegate`
+
+#### Distribution Messages
+- `/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward`
+- `/cosmos.distribution.v1beta1.MsgWithdrawValidatorCommission`
+
+#### IBC Messages
+- `/ibc.applications.transfer.v1.MsgTransfer`
+- `/ibc.core.client.v1.MsgUpdateClient`
+
+## Validation Rules
+
+### Parameter Validation
+
+#### minimum_gas_prices
+- Must be valid decimal coins
+- No duplicate denominations
+- No zero or negative amounts
+- Must be sorted by denomination
+
+#### bypass_min_fee_msg_types
+- Must be valid message type URLs
+- Should start with `/` and contain module path
+- No duplicate entries
+
+#### max_total_bypass_min_fee_msg_gas_usage
+- Must be positive integer
+- Should be reasonable to prevent DoS attacks
+- Typical range: 100,000 - 10,000,000 gas units
+
+### Transaction Validation
+
+**Fee Requirement Check:**
+1. Calculate required fees based on gas used and minimum gas prices
+2. Check if transaction fees meet minimum requirements
+3. If transaction contains only bypass message types:
+   - Check total gas usage against bypass limit
+   - Allow bypass if within limit
+4. Reject transaction if fees insufficient and no bypass applies
+
+**Multi-Denomination Logic:**
+- Transaction fees can be paid in any denomination from minimum_gas_prices
+- Only one denomination needs to meet the minimum requirement
+- Fees are calculated independently for each denomination
+
+## Error Codes
+
+### Common Errors
+
+#### ErrInsufficientFee
+**Code:** `sdkerrors.ErrInsufficientFee`  
+**Description:** Transaction fees do not meet minimum requirements  
+**Solution:** Increase transaction fees or use bypass-eligible messages
+
+#### ErrInvalidParams
+**Code:** `sdkerrors.ErrInvalidRequest`  
+**Description:** Invalid parameter values in governance proposal  
+**Solution:** Fix parameter format and validation issues
+
+#### ErrGasLimitExceeded
+**Description:** Bypass transaction exceeds maximum allowed gas usage  
+**Solution:** Reduce transaction complexity or increase bypass gas limit
+
+## Integration Notes
+
+### Fee Calculation
+
+**Required Fee Formula:**
+```
+required_fee = ceil(gas_used * minimum_gas_price)
+```
+
+**Multi-Asset Support:**
+```
+valid_fee = any(transaction_fees[denom] >= required_fees[denom] 
+                for denom in minimum_gas_prices)
+```
+
+### Bypass Logic
+
+**Bypass Eligibility:**
+```
+bypass_eligible = all(msg.type_url in bypass_min_fee_msg_types 
+                     for msg in transaction.messages)
+                 AND total_gas_used <= max_total_bypass_min_fee_msg_gas_usage
+```
+
+### State Management
+
+The Global Fee module stores only parameters in state:
+- **Key:** `ParamsKey = []byte{0x01}`
+- **Value:** Protobuf-encoded `Params` structure
+- **Storage:** Module-specific KV store 

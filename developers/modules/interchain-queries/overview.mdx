@@ -9,6 +9,10 @@ This document explains the `interchainqueries` module for the Neutron network.
 
 Interchain Queries allow developers to get verifiable data from other blockchains. This feature is essential for creating secure cross-chain applications. The module uses Merkle proofs and IBC clients to confirm the accuracy of the data retrieved directly from the storage of the target blockchain. It allows any smart contract to register Interchain Queries without needing any special module on the target blockchain.
 
+<Info>
+While the Interchain Queries module supports both CLI commands and smart contract integration, most practical applications are implemented through CosmWasm smart contracts. Smart contracts provide more sophisticated handling of query results, automatic processing of updates, and integration with complex application logic.
+</Info>
+
 ## Table of contents
 
 - [Overview](/developers/modules/interchain-queries/overview) — a high-level description of the module.

@@ -1,0 +1,114 @@
+---
+title: "GMP Module"
+description: "General Message Passing for cross-chain communication via IBC transfers"
+---
+
+# Overview
+
+This document explains the `gmp` module for the Neutron network.
+
+The General Message Passing (GMP) module is an IBC middleware that enables cross-chain message passing by embedding structured messages within IBC transfer packet memo fields. This module allows developers to send both tokens and arbitrary data in a single IBC transaction, enabling sophisticated cross-chain interactions without requiring additional infrastructure.
+
+<Info>
+The GMP module operates as IBC middleware, intercepting and processing IBC transfer packets that contain structured messages in their memo fields. It works transparently with existing IBC transfer functionality while adding message passing capabilities.
+</Info>
+
+## Table of contents
+
+- [Overview](/developers/modules/gmp/overview) — a high-level description of the module.
+- [Explanation](/developers/modules/gmp/explanation) — an explanation of the module's concepts and the reasoning behind its design choices.
+- [How To](/developers/modules/gmp/how-to) — short guides on performing basic operations with the module.
+- [Known Bugs](/developers/modules/gmp/known-bugs) — a list of known issues in the module.
+- [Reference](/developers/modules/gmp/reference) — details about the module's interface, including message formats and processing logic.
+
+## Concepts
+
+The GMP module processes two types of messages embedded in IBC transfer memo fields:
+
+- **General Message**: Contains arbitrary payload data that is passed through to the receiving application. The token transfer proceeds normally, but the payload is extracted and made available to downstream processing.
+
+- **General Message with Token**: Similar to General Message, but specifically indicates that the message payload should be processed in conjunction with the token transfer. This is useful for applications that need to coordinate token receipt with message execution.
+
+The GMP module acts as middleware in the IBC stack, sitting between the IBC core and the transfer module. When an IBC transfer packet is received, the module:
+
+1. Attempts to parse the memo field as a structured GMP message
+2. If successful, extracts the payload and processes it according to the message type
+3. Modifies the packet data to include the processed payload
+4. Passes the modified packet to the next layer in the IBC stack
+
+If the memo field doesn't contain a valid GMP message, the packet is passed through unchanged, ensuring compatibility with standard IBC transfers.
+
+## Message Format
+
+GMP messages are embedded in the memo field of IBC transfer packets using the following JSON structure:
+
+```json
+{
+  "source_chain": "chain-identifier",
+  "source_address": "sender-address", 
+  "payload": "base64-encoded-payload",
+  "type": 1
+}
+```
+
+### Message Types
+
+The module recognizes the following message types:
+
+1. **TypeGeneralMessage (1)**: Standard message passing without specific token handling requirements
+2. **TypeGeneralMessageWithToken (2)**: Message passing that explicitly coordinates with token transfers
+
+### Processing Logic
+
+When a valid GMP message is detected:
+
+1. The original memo content is replaced with the extracted payload
+2. The modified packet continues through the IBC stack
+3. Receiving applications can access both the transferred tokens and the message payload
+
+## Integration with IBC Stack
+
+The GMP module integrates seamlessly with the existing IBC transfer flow:
+
+- **Sending**: Applications embed GMP messages in transfer memo fields using standard IBC transfer calls
+- **Receiving**: The GMP middleware processes messages transparently, with receiving applications getting both tokens and payload data
+- **Compatibility**: Non-GMP transfers continue to work normally without any changes
+
+## Use Cases
+
+The GMP module enables several cross-chain interaction patterns:
+
+1. **Cross-chain Contract Calls**: Send tokens and execution instructions in a single transaction
+2. **Atomic Swaps**: Coordinate token transfers with swap execution data
+3. **Cross-chain Governance**: Send tokens along with voting or proposal data
+4. **Multi-chain Applications**: Synchronize state and value transfer across chains
+
+## Security Considerations
+
+- **Payload Size**: While the module doesn't enforce payload size limits, IBC packet size limits still apply
+- **Message Validation**: Applications receiving GMP messages should validate payload content
+- **Source Verification**: The source_chain and source_address fields are provided for reference but should not be trusted for security decisions
+
+## Documentation Sections
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 mb-8">
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/gmp/explanation">
+    <h4 className="font-semibold mb-2">Technical Details</h4>
+    <p className="text-sm">Deep dive into GMP message processing and IBC middleware integration</p>
+  </a>
+  
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/gmp/how-to">
+    <h4 className="font-semibold mb-2">How-to Guide</h4>
+    <p className="text-sm">Step-by-step instructions for implementing GMP in your applications</p>
+  </a>
+  
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/gmp/reference">
+    <h4 className="font-semibold mb-2">API Reference</h4>
+    <p className="text-sm">Complete reference for GMP message formats and processing</p>
+  </a>
+  
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/gmp/known-bugs">
+    <h4 className="font-semibold mb-2">Known Bugs</h4>
+    <p className="text-sm">Known issues and limitations of the GMP module</p>
+  </a>
+</div>

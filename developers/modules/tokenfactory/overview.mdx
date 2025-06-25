@@ -1,0 +1,197 @@
+---
+title: "Token Factory Overview"
+---
+
+The Token Factory module enables users to create and manage custom tokens (denominations) on the Neutron network. It provides comprehensive token lifecycle management including creation, minting, burning, and administrative controls.
+
+<Info>
+**Mixed Access Control**: While users can create and manage their own tokens, module parameters (creation fees, whitelisted hooks) can only be updated through governance proposals.
+</Info>
+
+## Key Features
+
+- **Token Creation**: Create custom denominations with unique identifiers
+
+- **Supply Management**: Mint and burn tokens with admin controls
+
+- **Administrative Controls**: Transfer admin rights and manage token permissions
+
+- **Metadata Support**: Set token metadata including name, symbol, and description
+
+- **Before-Send Hooks**: Implement custom logic for token transfers via CosmWasm contracts
+
+- **Force Transfer**: Admin-controlled transfer capabilities for compliance scenarios
+
+- **Fee Protection**: Configurable creation fees to prevent spam
+
+## Module Functionality
+
+The Token Factory module operates through the following workflow:
+
+1. **Token Creation**: Users pay a creation fee to create a new denomination
+
+2. **Admin Management**: Token creators become the initial admin with full control
+
+3. **Supply Operations**: Admins can mint new tokens or burn existing ones
+
+4. **Transfer Controls**: Optional before-send hooks for custom transfer logic
+
+5. **Metadata Management**: Set and update token display information
+
+## Token Denomination Format
+
+Created tokens follow the format: `factory/{creator_address}/{subdenom}`
+
+Example: `factory/neutron1abc123.../mytoken`
+
+## Available Operations
+
+### For Token Creators
+
+#### Create Denomination
+```protobuf
+message MsgCreateDenom {
+  string sender = 1;
+  string subdenom = 2;  // Up to 44 alphanumeric characters
+}
+```
+
+#### Mint Tokens
+```protobuf
+message MsgMint {
+  string sender = 1;
+  cosmos.base.v1beta1.Coin amount = 2;
+  string mint_to_address = 3;
+}
+```
+
+#### Burn Tokens
+```protobuf
+message MsgBurn {
+  string sender = 1;
+  cosmos.base.v1beta1.Coin amount = 2;
+  string burn_from_address = 3;
+}
+```
+
+#### Change Admin
+```protobuf
+message MsgChangeAdmin {
+  string sender = 1;
+  string denom = 2;
+  string new_admin = 3;
+}
+```
+
+#### Set Metadata
+```protobuf
+message MsgSetDenomMetadata {
+  string sender = 1;
+  cosmos.bank.v1beta1.Metadata metadata = 2;
+}
+```
+
+#### Set Before-Send Hook
+```protobuf
+message MsgSetBeforeSendHook {
+  string sender = 1;
+  string denom = 2;
+  string contract_addr = 3;
+}
+```
+
+#### Force Transfer
+```protobuf
+message MsgForceTransfer {
+  string sender = 1;
+  cosmos.base.v1beta1.Coin amount = 2;
+  string transfer_from_address = 3;
+  string transfer_to_address = 4;
+}
+```
+
+## Parameters
+
+The module maintains the following governance-controlled parameters:
+
+```protobuf
+message Params {
+  // Fee charged for creating a new denomination
+  repeated cosmos.base.v1beta1.Coin denom_creation_fee = 1;
+  
+  // Gas consumed for creating a new denomination (spam deterrence)
+  uint64 denom_creation_gas_consume = 2;
+  
+  // Address where creation fees are sent
+  string fee_collector_address = 3;
+  
+  // List of whitelisted hooks allowed for before-send functionality
+  repeated WhitelistedHook whitelisted_hooks = 4;
+}
+
+message WhitelistedHook {
+  uint64 code_id = 1;
+  string denom_creator = 2;
+}
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `denom_creation_fee` | []Coin | Fee required to create a new denomination |
+| `denom_creation_gas_consume` | uint64 | Additional gas cost for denomination creation |
+| `fee_collector_address` | string | Address receiving creation fees |
+| `whitelisted_hooks` | []WhitelistedHook | Approved contracts for before-send hooks |
+
+## Before-Send Hooks
+
+Before-send hooks allow token admins to implement custom logic that executes before token transfers:
+
+### Whitelisting Requirements
+- Hook contracts must be pre-approved through governance
+- Only specific code IDs and denom creators can set hooks
+- Provides security against malicious hook contracts
+
+### Use Cases
+- **Compliance**: Implement KYC/AML checks
+- **Transfer Restrictions**: Limit transfers to specific addresses
+- **Fee Collection**: Charge custom fees on transfers
+- **Pause Functionality**: Temporarily halt token transfers
+
+## Use Cases
+
+### For Token Issuers
+- **Custom Assets**: Create project-specific tokens
+- **Stablecoins**: Issue collateralized stable tokens
+- **Governance Tokens**: Create DAO governance tokens
+- **Reward Tokens**: Issue loyalty or reward tokens
+
+### For DeFi Protocols
+- **Synthetic Assets**: Create derivatives and synthetic tokens
+- **LP Tokens**: Issue liquidity provider tokens
+- **Vault Shares**: Represent shares in DeFi vaults
+- **Index Tokens**: Create basket tokens
+
+### For Enterprises
+- **Digital Assets**: Tokenize real-world assets
+- **Internal Currencies**: Create internal payment systems
+- **Loyalty Programs**: Issue customer reward tokens
+- **Supply Chain**: Track goods through tokenization
+
+## Security Features
+
+### Spam Prevention
+- **Creation Fees**: Economic barrier to token creation
+- **Gas Consumption**: Additional computational cost
+- **Subdenom Limits**: Maximum 44 character alphanumeric subdenoms
+
+### Admin Controls
+- **Exclusive Permissions**: Only token admin can perform privileged operations
+- **Admin Transfer**: Ability to change token administration
+- **Hook Restrictions**: Governance-controlled hook whitelisting
+
+### Network Protection
+- **Fee Collection**: Creation fees support network sustainability
+- **Governance Oversight**: Parameter updates require community approval
+- **Hook Validation**: Prevents malicious contract execution
+
+This module is essential for Neutron's token ecosystem, enabling diverse token creation while maintaining security and governance oversight. 

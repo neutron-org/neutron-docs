@@ -1,0 +1,502 @@
+---
+sidebar_position: 2
+---
+
+# How-To Guide
+
+## Creating Custom Tokens
+
+### Basic Token Creation
+
+**Create a simple token:**
+
+```bash
+neutrond tx tokenfactory create-denom mytoken \
+  --from creator \
+  --chain-id neutron-1 \
+  --gas auto \
+  --gas-adjustment 1.5 \
+  --fees 1000untrn
+```
+
+This creates: `factory/neutron1.../mytoken`
+
+**With custom gas and fees:**
+
+```bash
+neutrond tx tokenfactory create-denom gamecoins \
+  --from creator \
+  --chain-id neutron-1 \
+  --gas 300000 \
+  --fees 2500untrn
+```
+
+### Setting Token Metadata
+
+**Basic metadata:**
+
+```bash
+neutrond tx tokenfactory set-denom-metadata \
+  factory/neutron1abc.../mytoken \
+  --name "My Custom Token" \
+  --symbol "MCT" \
+  --description "A custom token for my application" \
+  --decimals 6 \
+  --from creator \
+  --chain-id neutron-1 \
+  --gas auto \
+  --fees 1000untrn
+```
+
+**Advanced metadata with custom fields:**
+
+```bash
+neutrond tx tokenfactory set-denom-metadata \
+  factory/neutron1abc.../shares \
+  --name "Company Shares" \
+  --symbol "SHARES" \
+  --description "Tokenized company shares" \
+  --decimals 0 \
+  --website "https://company.com" \
+  --logo-url "https://company.com/logo.png" \
+  --from admin \
+  --chain-id neutron-1 \
+  --fees 1000untrn
+```
+
+## Token Supply Management
+
+### Minting Tokens
+
+**Mint to specific address:**
+
+```bash
+neutrond tx tokenfactory mint \
+  1000000factory/neutron1abc.../mytoken \
+  neutron1recipient... \
+  --from admin \
+  --chain-id neutron-1 \
+  --gas auto \
+  --fees 1000untrn
+```
+
+**Mint to multiple addresses (batch):**
+
+```bash
+# Create a batch mint file: mint_batch.json
+{
+  "mint_requests": [
+    {
+      "amount": "1000000",
+      "denom": "factory/neutron1abc.../mytoken",
+      "mint_to": "neutron1recipient1..."
+    },
+    {
+      "amount": "500000", 
+      "denom": "factory/neutron1abc.../mytoken",
+      "mint_to": "neutron1recipient2..."
+    }
+  ]
+}
+
+# Execute batch mint
+neutrond tx tokenfactory batch-mint mint_batch.json \
+  --from admin \
+  --chain-id neutron-1 \
+  --gas auto \
+  --fees 1000untrn
+```
+
+### Burning Tokens
+
+**Burn from specific address:**
+
+```bash
+neutrond tx tokenfactory burn \
+  500000factory/neutron1abc.../mytoken \
+  neutron1holder... \
+  --from admin \
+  --chain-id neutron-1 \
+  --gas auto \
+  --fees 1000untrn
+```
+
+**Burn from admin's own balance:**
+
+```bash
+neutrond tx tokenfactory burn \
+  100000factory/neutron1abc.../mytoken \
+  --from admin \
+  --chain-id neutron-1 \
+  --fees 1000untrn
+```
+
+## Admin Management
+
+### Transferring Admin Rights
+
+**Transfer to another address:**
+
+```bash
+neutrond tx tokenfactory change-admin \
+  factory/neutron1abc.../mytoken \
+  neutron1newadmin... \
+  --from current_admin \
+  --chain-id neutron-1 \
+  --gas auto \
+  --fees 1000untrn
+```
+
+**Transfer to DAO contract:**
+
+```bash
+neutrond tx tokenfactory change-admin \
+  factory/neutron1abc.../mytoken \
+  neutron1dao_contract... \
+  --from current_admin \
+  --chain-id neutron-1 \
+  --fees 1000untrn
+```
+
+### Renouncing Admin Rights
+
+**Permanently remove admin (irreversible):**
+
+```bash
+neutrond tx tokenfactory change-admin \
+  factory/neutron1abc.../mytoken \
+  "" \
+  --from admin \
+  --chain-id neutron-1 \
+  --fees 1000untrn
+```
+
+<Warning>
+Once admin rights are renounced by setting admin to empty string, they cannot be restored. The token becomes permanently immutable.
+</Warning>
+
+## Before-Send Hooks
+
+### Setting Up Hooks
+
+**Deploy hook contract first:**
+
+```bash
+# Store hook contract
+neutrond tx wasm store hook_contract.wasm \
+  --from deployer \
+  --chain-id neutron-1 \
+  --gas auto \
+  --fees 5000untrn
+
+# Instantiate hook contract
+neutrond tx wasm instantiate 1 '{}' \
+  --from deployer \
+  --admin deployer \
+  --label "Token Hook" \
+  --chain-id neutron-1 \
+  --gas auto \
+  --fees 2000untrn
+```
+
+**Set hook for token:**
+
+```bash
+neutrond tx tokenfactory set-before-send-hook \
+  factory/neutron1abc.../mytoken \
+  neutron1hook_contract... \
+  --from admin \
+  --chain-id neutron-1 \
+  --gas auto \
+  --fees 1000untrn
+```
+
+### Removing Hooks
+
+**Remove hook from token:**
+
+```bash
+neutrond tx tokenfactory set-before-send-hook \
+  factory/neutron1abc.../mytoken \
+  "" \
+  --from admin \
+  --chain-id neutron-1 \
+  --fees 1000untrn
+```
+
+### Force Transfers (Bypass Hooks)
+
+**Force transfer bypassing hooks:**
+
+```bash
+neutrond tx tokenfactory force-transfer \
+  1000factory/neutron1abc.../mytoken \
+  neutron1from... \
+  neutron1to... \
+  --from admin \
+  --chain-id neutron-1 \
+  --gas auto \
+  --fees 1000untrn
+```
+
+## Querying Token Information
+
+### Basic Queries
+
+**Get token admin:**
+
+```bash
+neutrond query tokenfactory denom-authority-metadata \
+  factory/neutron1abc.../mytoken
+```
+
+**Get token metadata:**
+
+```bash
+neutrond query tokenfactory denom-metadata \
+  factory/neutron1abc.../mytoken
+```
+
+**Get before-send hook:**
+
+```bash
+neutrond query tokenfactory before-send-hook \
+  factory/neutron1abc.../mytoken
+```
+
+### Advanced Queries
+
+**List all denoms by creator:**
+
+```bash
+neutrond query tokenfactory denoms-from-creator \
+  neutron1creator...
+```
+
+**Get module parameters:**
+
+```bash
+neutrond query tokenfactory params
+```
+
+**Check token supply:**
+
+```bash
+neutrond query bank total --denom factory/neutron1abc.../mytoken
+```
+
+## Integration Examples
+
+### DeFi Liquidity Pool
+
+**Create LP token for ATOM/USDC pool:**
+
+```bash
+# 1. Create LP token
+neutrond tx tokenfactory create-denom lp-atom-usdc \
+  --from pool_contract \
+  --chain-id neutron-1 \
+  --fees 1000untrn
+
+# 2. Set metadata
+neutrond tx tokenfactory set-denom-metadata \
+  factory/neutron1pool.../lp-atom-usdc \
+  --name "ATOM/USDC LP Token" \
+  --symbol "ATOM-USDC-LP" \
+  --description "Liquidity pool token for ATOM/USDC pair" \
+  --decimals 6 \
+  --from pool_contract \
+  --fees 1000untrn
+
+# 3. Mint LP tokens when liquidity provided
+neutrond tx tokenfactory mint \
+  1000000factory/neutron1pool.../lp-atom-usdc \
+  neutron1liquidity_provider... \
+  --from pool_contract \
+  --fees 1000untrn
+```
+
+### DAO Governance Token
+
+**Create and configure governance token:**
+
+```bash
+# 1. Create governance token
+neutrond tx tokenfactory create-denom vote \
+  --from dao_creator \
+  --chain-id neutron-1 \
+  --fees 1000untrn
+
+# 2. Set governance metadata
+neutrond tx tokenfactory set-denom-metadata \
+  factory/neutron1creator.../vote \
+  --name "DAO Governance Token" \
+  --symbol "VOTE" \
+  --description "Governance token for community DAO" \
+  --decimals 6 \
+  --from dao_creator \
+  --fees 1000untrn
+
+# 3. Mint initial supply
+neutrond tx tokenfactory mint \
+  1000000000factory/neutron1creator.../vote \
+  neutron1creator... \
+  --from dao_creator \
+  --fees 1000untrn
+
+# 4. Transfer admin to DAO contract
+neutrond tx tokenfactory change-admin \
+  factory/neutron1creator.../vote \
+  neutron1dao_contract... \
+  --from dao_creator \
+  --fees 1000untrn
+```
+
+### Gaming Token with Restrictions
+
+**Create game token with transfer restrictions:**
+
+```bash
+# 1. Deploy restriction hook contract
+neutrond tx wasm store game_hook.wasm \
+  --from game_dev \
+  --chain-id neutron-1 \
+  --gas auto \
+  --fees 5000untrn
+
+neutrond tx wasm instantiate 1 \
+  '{"game_contract": "neutron1game...", "allowed_transfers": true}' \
+  --from game_dev \
+  --admin game_dev \
+  --label "Game Transfer Hook" \
+  --chain-id neutron-1 \
+  --fees 2000untrn
+
+# 2. Create game token
+neutrond tx tokenfactory create-denom gold \
+  --from game_dev \
+  --chain-id neutron-1 \
+  --fees 1000untrn
+
+# 3. Set hook
+neutrond tx tokenfactory set-before-send-hook \
+  factory/neutron1game.../gold \
+  neutron1hook_contract... \
+  --from game_dev \
+  --fees 1000untrn
+
+# 4. Set metadata
+neutrond tx tokenfactory set-denom-metadata \
+  factory/neutron1game.../gold \
+  --name "Game Gold" \
+  --symbol "GOLD" \
+  --description "In-game currency with transfer restrictions" \
+  --decimals 0 \
+  --from game_dev \
+  --fees 1000untrn
+```
+
+## Governance Operations
+
+### Update Module Parameters
+
+<Warning>
+Only governance can update Token Factory module parameters. Individual users cannot directly modify these settings.
+</Warning>
+
+**Submit parameter change proposal:**
+
+```bash
+neutrond tx gov submit-proposal param-change proposal.json \
+  --from validator \
+  --chain-id neutron-1 \
+  --gas auto \
+  --gas-adjustment 1.5 \
+  --fees 1000untrn
+```
+
+**Example proposal.json:**
+
+```json
+{
+  "title": "Update Token Factory Parameters",
+  "description": "Adjust creation fees and add new whitelisted hooks",
+  "changes": [
+    {
+      "subspace": "tokenfactory",
+      "key": "Params",
+      "value": {
+        "denom_creation_fee": [
+          {
+            "denom": "untrn",
+            "amount": "1000000"
+          }
+        ],
+        "denom_creation_gas_consume": "2000000",
+        "fee_collector_address": "neutron1fee_collector...",
+        "whitelisted_hooks": [
+          {
+            "code_id": "1",
+            "denom_creator": "neutron1creator..."
+          },
+          {
+            "code_id": "5",
+            "denom_creator": "neutron1another_creator..."
+          }
+        ]
+      }
+    }
+  ],
+  "deposit": "10000000untrn"
+}
+```
+
+## Best Practices
+
+### Security
+
+1. **Admin Management**: Use multisig or DAO for valuable tokens
+2. **Hook Validation**: Only use audited, trusted hook contracts
+3. **Metadata Completeness**: Provide comprehensive token information
+4. **Testing**: Test all operations on testnet first
+
+### Performance
+
+1. **Batch Operations**: Use batch minting for multiple recipients
+2. **Gas Optimization**: Monitor gas usage for hook-enabled tokens
+3. **Hook Efficiency**: Keep hook logic simple and fast
+
+### User Experience
+
+1. **Clear Naming**: Use descriptive subdenoms and symbols
+2. **Proper Decimals**: Set appropriate decimal places for use case
+3. **Rich Metadata**: Include logos, websites, and descriptions
+4. **Documentation**: Document token purpose and mechanics
+
+## Troubleshooting
+
+### Common Issues
+
+**Token creation fails:**
+```
+Error: insufficient fee for denom creation
+```
+**Solution**: Ensure sufficient balance for creation fee.
+
+**Hook setting fails:**
+```
+Error: hook contract not whitelisted
+```
+**Solution**: Verify hook contract is in governance whitelist.
+
+**Mint/burn fails:**
+```
+Error: unauthorized: sender is not admin
+```
+**Solution**: Use admin account or transfer admin rights first.
+
+**Force transfer fails:**
+```
+Error: force transfer not allowed
+```
+**Solution**: Only admin can perform force transfers. 

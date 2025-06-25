@@ -1,31 +1,10 @@
 ---
-title: "API"
+title: "Dex API"
 ---
 
-This document details the API endpoints provided by the Dex module for blockchain interaction.
+The Dex module provides a comprehensive REST API for querying pool information, reserves, limit orders, and user positions. All endpoints follow RESTful conventions and return JSON responses.
 
-## REST Endpoints
-
-The Dex module exposes several REST endpoints for querying pool information, limit orders, and more.
-
-### GET: Query Module Parameters
-
-```
-GET /neutron/dex/params
-```
-
-Returns the current parameters of the Dex module.
-
-#### Response Structure
-
-```json
-{
-  "params": {
-    "max_pool_spread_bps": 100,
-    "min_tick_spacing": 1
-  }
-}
-```
+## Pool Queries
 
 ### GET: Query Pool by ID
 
@@ -33,11 +12,11 @@ Returns the current parameters of the Dex module.
 GET /neutron/dex/pool/{pool_id}
 ```
 
-Returns information about a specific pool identified by its unique ID.
+Returns information about a specific pool.
 
 #### Parameters
 
-- `pool_id`: The unique identifier of the pool
+- `pool_id`: The unique pool identifier
 
 #### Response Structure
 
@@ -45,9 +24,15 @@ Returns information about a specific pool identified by its unique ID.
 {
   "pool": {
     "id": "1",
-    "pair_id": "untrn:uatom",
+    "pair_id": "untrn&lt;&gt;uatom",
+    "token0": "uatom",
+    "token1": "untrn",
+    "fee": "3000",
     "tick_index": "0",
-    "fee": "3000"
+    "sqrt_price": "1000000000000000000",
+    "liquidity": "1000000",
+    "token0_locked": "1000000",
+    "token1_locked": "1000000"
   }
 }
 ```
@@ -62,7 +47,7 @@ Returns information about a specific pool identified by its parameters.
 
 #### Parameters
 
-- `pair_id`: The pair identifier (e.g., "untrn:uatom")
+- `pair_id`: The pair identifier (e.g., "untrn&lt;&gt;uatom")
 - `tick_index`: The tick index of the pool
 - `fee`: The fee tier of the pool in basis points
 
@@ -80,7 +65,7 @@ Returns the current reserves of a specific pool.
 
 #### Parameters
 
-- `pair_id`: The pair identifier
+- `pair_id`: The pair identifier (e.g., "untrn&lt;&gt;uatom")
 - `token_in`: One of the tokens in the pair
 - `tick_index`: The tick index of the pool
 - `fee`: The fee tier of the pool in basis points
@@ -91,7 +76,7 @@ Returns the current reserves of a specific pool.
 {
   "pool_reserves": {
     "pool_id": "1",
-    "pair_id": "untrn:uatom",
+    "pair_id": "untrn&lt;&gt;uatom",
     "token0": "uatom",
     "token1": "untrn",
     "fee": "3000",
@@ -114,7 +99,7 @@ Returns reserves for all pools for a specific pair.
 
 #### Parameters
 
-- `pair_id`: The pair identifier
+- `pair_id`: The pair identifier (e.g., "untrn&lt;&gt;uatom")
 - `token_in`: One of the tokens in the pair
 - `pagination`: Optional pagination parameters
 
@@ -125,7 +110,7 @@ Returns reserves for all pools for a specific pair.
   "pool_reserves": [
     {
       "pool_id": "1",
-      "pair_id": "untrn:uatom",
+      "pair_id": "untrn&lt;&gt;uatom",
       "token0": "uatom",
       "token1": "untrn",
       "fee": "3000",
@@ -137,7 +122,7 @@ Returns reserves for all pools for a specific pair.
     },
     {
       "pool_id": "2",
-      "pair_id": "untrn:uatom",
+      "pair_id": "untrn&lt;&gt;uatom",
       "token0": "uatom",
       "token1": "untrn",
       "fee": "3000",
@@ -197,7 +182,7 @@ Returns information about a specific limit order tranche.
 
 #### Parameters
 
-- `pair_id`: The pair identifier
+- `pair_id`: The pair identifier (e.g., "untrn&lt;&gt;uatom")
 - `token_in`: The token being sold
 - `tick_index`: The tick index of the limit order
 - `tranche_key`: The unique tranche key
@@ -207,7 +192,7 @@ Returns information about a specific limit order tranche.
 ```json
 {
   "limit_order_tranche": {
-    "pair_id": "untrn:uatom",
+    "pair_id": "untrn&lt;&gt;uatom",
     "token_in": "untrn",
     "tick_index": "100",
     "tranche_key": "tranche123",
@@ -243,7 +228,7 @@ Returns all deposits for a specific user.
 {
   "deposits": [
     {
-      "pair_id": "untrn:uatom",
+      "pair_id": "untrn&lt;&gt;uatom",
       "share_denom": "neutron/pool/1",
       "shares_owned": "1000000",
       "tick_index": "0",
@@ -281,11 +266,16 @@ Returns all limit orders for a specific user.
 {
   "limit_orders": [
     {
-      "address": "neutron1...",
+      "pair_id": "untrn&lt;&gt;uatom",
+      "token_in": "untrn",
+      "token_out": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+      "tick_index": "100",
       "tranche_key": "tranche123",
+      "address": "neutron1...",
       "shares_owned": "1000000",
       "shares_withdrawn": "0",
-      "shares_cancelled": "0"
+      "shares_cancelled": "0",
+      "order_type": "GOOD_TIL_CANCELLED"
     }
   ],
   "pagination": {
@@ -295,247 +285,213 @@ Returns all limit orders for a specific user.
 }
 ```
 
-### GET: Query Tick Liquidity
+## Swap Simulation
+
+### POST: Simulate Multi-Hop Swap
 
 ```
-GET /neutron/dex/tick_liquidity/{pair_id}/{token_in}
+POST /neutron/dex/simulate_multi_hop_swap
 ```
 
-Returns all liquidity (both pools and limit orders) for a specific pair.
+Simulates a multi-hop swap to estimate the output amount and price impact.
 
-#### Parameters
+#### Request Body
 
-- `pair_id`: The pair identifier
-- `token_in`: One of the tokens in the pair
-- `pagination`: Optional pagination parameters
+```json
+{
+  "creator": "neutron1...",
+  "receiver": "neutron1...",
+  "routes": [
+    {
+      "hops": ["untrn", "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"]
+    }
+  ],
+  "amount_in": "1000000",
+  "exit_limit_price": "0.95",
+  "pick_best_route": true
+}
+```
 
 #### Response Structure
 
 ```json
 {
-  "tick_liquidity": [
-    {
-      "pool_reserves": {
-        "pool_id": "1",
-        "pair_id": "untrn:uatom",
-        "token0": "uatom",
-        "token1": "untrn",
-        "fee": "3000",
-        "tick_index": "0",
-        "token0_reserve": "1000000",
-        "token1_reserve": "1000000",
-        "token0_denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
-        "token1_denom": "untrn"
-      }
-    },
-    {
-      "limit_order_tranche": {
-        "pair_id": "untrn:uatom",
-        "token_in": "untrn",
-        "tick_index": "100",
-        "tranche_key": "tranche123",
-        "reserves_token_in": "1000000",
-        "reserves_token_out": "0",
-        "total_token_in": "1000000",
-        "total_token_out": "0",
-        "token_in_denom": "untrn",
-        "token_out_denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
-        "status": "ACTIVE",
-        "expiration_time": null
-      }
-    }
-  ],
-  "pagination": {
-    "next_key": null,
-    "total": "2"
+  "coin_out": {
+    "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+    "amount": "950000"
+  },
+  "route": {
+    "hops": ["untrn", "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"]
   }
 }
 ```
 
-### GET: Simulation Endpoints
+## Deposit Simulation
 
-The Dex module provides several endpoints to simulate operations without executing them:
+### POST: Simulate Deposit
 
-- `GET /neutron/dex/simulate_deposit`: Simulates deposit operation
-- `GET /neutron/dex/simulate_withdrawal`: Simulates withdrawal operation
-- `GET /neutron/dex/simulate_place_limit_order`: Simulates placing a limit order
-- `GET /neutron/dex/simulate_withdraw_filled_limit_order`: Simulates withdrawing from a filled limit order
-- `GET /neutron/dex/simulate_cancel_limit_order`: Simulates cancelling a limit order
-- `GET /neutron/dex/simulate_multi_hop_swap`: Simulates a multi-hop swap
-
-These endpoints accept JSON request bodies containing the corresponding message parameters and return expected outcomes.
-
-## gRPC Endpoints
-
-The Dex module exposes gRPC query and transaction endpoints.
-
-### Query Service
-
-```protobuf
-service Query {
-  // Parameters queries the parameters of the module.
-  rpc Params(QueryParamsRequest) returns (QueryParamsResponse);
-  
-  // Queries a LimitOrderTrancheUser by index.
-  rpc LimitOrderTrancheUser(QueryGetLimitOrderTrancheUserRequest) returns (QueryGetLimitOrderTrancheUserResponse);
-  
-  // Queries a list of LimitOrderTrancheUser items.
-  rpc LimitOrderTrancheUserAll(QueryAllLimitOrderTrancheUserRequest) returns (QueryAllLimitOrderTrancheUserResponse);
-  
-  // Queries a list of LimitOrderTrancheUser items for a given address.
-  rpc LimitOrderTrancheUserAllByAddress(QueryAllLimitOrderTrancheUserByAddressRequest) returns (QueryAllLimitOrderTrancheUserByAddressResponse);
-  
-  // Queries a LimitOrderTranche by index.
-  rpc LimitOrderTranche(QueryGetLimitOrderTrancheRequest) returns (QueryGetLimitOrderTrancheResponse);
-  
-  // Queries a list of LimitOrderTranche items for a given pairID / TokenIn combination.
-  rpc LimitOrderTrancheAll(QueryAllLimitOrderTrancheRequest) returns (QueryAllLimitOrderTrancheResponse);
-  
-  // Queries a list of UserDeposits items.
-  rpc UserDepositsAll(QueryAllUserDepositsRequest) returns (QueryAllUserDepositsResponse);
-  
-  // Queries a list of TickLiquidity items.
-  rpc TickLiquidityAll(QueryAllTickLiquidityRequest) returns (QueryAllTickLiquidityResponse);
-  
-  // Queries an InactiveLimitOrderTranche by index.
-  rpc InactiveLimitOrderTranche(QueryGetInactiveLimitOrderTrancheRequest) returns (QueryGetInactiveLimitOrderTrancheResponse);
-  
-  // Queries a list of InactiveLimitOrderTranche items.
-  rpc InactiveLimitOrderTrancheAll(QueryAllInactiveLimitOrderTrancheRequest) returns (QueryAllInactiveLimitOrderTrancheResponse);
-  
-  // Queries a list of PoolReserves items.
-  rpc PoolReservesAll(QueryAllPoolReservesRequest) returns (QueryAllPoolReservesResponse);
-  
-  // Queries a PoolReserve by index
-  rpc PoolReserves(QueryGetPoolReservesRequest) returns (QueryGetPoolReservesResponse);
-  
-  // Queries a pool by pair, tick and fee
-  rpc Pool(QueryPoolRequest) returns (QueryPoolResponse);
-  
-  // Queries a pool by ID
-  rpc PoolByID(QueryPoolByIDRequest) returns (QueryPoolResponse);
-  
-  // Queries a PoolMetadata by ID
-  rpc PoolMetadata(QueryGetPoolMetadataRequest) returns (QueryGetPoolMetadataResponse);
-  
-  // Queries a list of PoolMetadata items.
-  rpc PoolMetadataAll(QueryAllPoolMetadataRequest) returns (QueryAllPoolMetadataResponse);
-  
-  // Simulation endpoints
-  rpc SimulateDeposit(QuerySimulateDepositRequest) returns (QuerySimulateDepositResponse);
-  rpc SimulateWithdrawal(QuerySimulateWithdrawalRequest) returns (QuerySimulateWithdrawalResponse);
-  rpc SimulatePlaceLimitOrder(QuerySimulatePlaceLimitOrderRequest) returns (QuerySimulatePlaceLimitOrderResponse);
-  rpc SimulateWithdrawFilledLimitOrder(QuerySimulateWithdrawFilledLimitOrderRequest) returns (QuerySimulateWithdrawFilledLimitOrderResponse);
-  rpc SimulateCancelLimitOrder(QuerySimulateCancelLimitOrderRequest) returns (QuerySimulateCancelLimitOrderResponse);
-  rpc SimulateMultiHopSwap(QuerySimulateMultiHopSwapRequest) returns (QuerySimulateMultiHopSwapResponse);
-}
+```
+POST /neutron/dex/simulate_deposit
 ```
 
-### Msg Service
+Simulates a deposit to estimate the shares that would be received.
 
-```protobuf
-service Msg {
-  rpc Deposit(MsgDeposit) returns (MsgDepositResponse);
-  rpc Withdrawal(MsgWithdrawal) returns (MsgWithdrawalResponse);
-  rpc PlaceLimitOrder(MsgPlaceLimitOrder) returns (MsgPlaceLimitOrderResponse);
-  rpc WithdrawFilledLimitOrder(MsgWithdrawFilledLimitOrder) returns (MsgWithdrawFilledLimitOrderResponse);
-  rpc CancelLimitOrder(MsgCancelLimitOrder) returns (MsgCancelLimitOrderResponse);
-  rpc MultiHopSwap(MsgMultiHopSwap) returns (MsgMultiHopSwapResponse);
-  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
-}
-```
+#### Request Body
 
-## JavaScript/TypeScript Integration
-
-Here's an example of how to interact with the Dex module using JavaScript:
-
-### Querying Pool Information
-
-```javascript
-import { QueryClient } from '@cosmjs/stargate';
-import { Tendermint34Client } from '@cosmjs/tendermint-rpc';
-
-async function queryPool(poolId) {
-  // Connect to the node
-  const tmClient = await Tendermint34Client.connect("https://rpc.neutron.org");
-  const queryClient = new QueryClient(tmClient);
-  
-  // Create query path
-  const path = `/neutron.dex.Query/PoolByID`;
-  
-  // Create request
-  const request = {
-    pool_id: poolId
-  };
-  const requestBytes = new TextEncoder().encode(JSON.stringify(request));
-  
-  // Execute query
-  const resultBytes = await queryClient.queryAbci(path, requestBytes);
-  const result = JSON.parse(new TextDecoder().decode(resultBytes));
-  
-  return result;
-}
-
-// Usage
-queryPool(1)
-  .then(pool => {
-    console.log("Pool info:", pool);
-  })
-  .catch(err => {
-    console.error("Error querying pool:", err);
-  });
-```
-
-### Executing a Swap
-
-```javascript
-import { SigningStargateClient } from '@cosmjs/stargate';
-import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
-
-async function executeSwap(
-  mnemonic, 
-  route, 
-  amountIn, 
-  exitLimitPrice
-) {
-  // Create wallet and client
-  const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, { prefix: "neutron" });
-  const client = await SigningStargateClient.connectWithSigner("https://rpc.neutron.org", wallet);
-  
-  const [account] = await wallet.getAccounts();
-  
-  // Create the multi-hop swap message
-  const msg = {
-    typeUrl: "/neutron.dex.MsgMultiHopSwap",
-    value: {
-      creator: account.address,
-      receiver: account.address,
-      routes: [{
-        hops: route.split(",")
-      }],
-      amountIn: amountIn,
-      exitLimitPrice: exitLimitPrice,
-      pickBestRoute: true
+```json
+{
+  "creator": "neutron1...",
+  "receiver": "neutron1...",
+  "token_a": "untrn",
+  "token_b": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+  "amounts_a": ["1000000"],
+  "amounts_b": ["1000000"],
+  "tick_indexes_a_to_b": [0],
+  "fees": [3000],
+  "options": [
+    {
+      "disable_autoswap": false
     }
-  };
-  
-  // Execute the transaction
-  const result = await client.signAndBroadcast(account.address, [msg], "auto");
-  
-  return result;
+  ]
 }
+```
 
-// Usage
-executeSwap(
-  "your mnemonic here", 
-  "untrn,ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2", 
-  "1000000", 
-  "0.95"
-)
-  .then(result => {
-    console.log("Swap result:", result);
-  })
-  .catch(err => {
-    console.error("Error executing swap:", err);
-  });
+#### Response Structure
+
+```json
+{
+  "shares_issued": ["1000000neutron/pool/1"],
+  "amounts_deposited": [
+    {
+      "token_a": "1000000",
+      "token_b": "1000000"
+    }
+  ]
+}
+```
+
+## Withdrawal Simulation
+
+### POST: Simulate Withdrawal
+
+```
+POST /neutron/dex/simulate_withdrawal
+```
+
+Simulates a withdrawal to estimate the tokens that would be received.
+
+#### Request Body
+
+```json
+{
+  "creator": "neutron1...",
+  "token_a": "untrn",
+  "token_b": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+  "shares_to_remove": ["500000"],
+  "tick_indexes_a_to_b": [0],
+  "fees": [3000]
+}
+```
+
+#### Response Structure
+
+```json
+{
+  "coins_out": [
+    {
+      "denom": "untrn",
+      "amount": "500000"
+    },
+    {
+      "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+      "amount": "500000"
+    }
+  ]
+}
+```
+
+## Limit Order Simulation
+
+### POST: Simulate Place Limit Order
+
+```
+POST /neutron/dex/simulate_place_limit_order
+```
+
+Simulates placing a limit order to estimate the immediate fill and remaining amount.
+
+#### Request Body
+
+```json
+{
+  "creator": "neutron1...",
+  "receiver": "neutron1...",
+  "token_in": "untrn",
+  "token_out": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+  "amount_in": "1000000",
+  "limit_sell_price": "1.05",
+  "order_type": "GOOD_TIL_CANCELLED",
+  "expiration_time": null,
+  "max_amount_out": null
+}
+```
+
+#### Response Structure
+
+```json
+{
+  "coin_in": {
+    "denom": "untrn",
+    "amount": "1000000"
+  },
+  "taker_coin_out": {
+    "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+    "amount": "500000"
+  },
+  "taker_coin_in": {
+    "denom": "untrn",
+    "amount": "500000"
+  }
+}
+```
+
+## Error Responses
+
+All endpoints may return error responses in the following format:
+
+```json
+{
+  "error": "error message",
+  "code": 400,
+  "details": "additional error details"
+}
+```
+
+Common error codes:
+- `400`: Bad Request - Invalid parameters
+- `404`: Not Found - Resource doesn't exist
+- `500`: Internal Server Error - Server-side error
+
+## Rate Limiting
+
+API endpoints are subject to rate limiting to ensure fair usage. Rate limits are applied per IP address:
+
+- **Query endpoints**: 100 requests per minute
+- **Simulation endpoints**: 20 requests per minute
+
+When rate limits are exceeded, the API returns a `429 Too Many Requests` status code with a `Retry-After` header indicating when requests can resume.
+
+## Pagination
+
+List endpoints support pagination through query parameters:
+
+- `pagination.key`: Base64-encoded key for the next page
+- `pagination.offset`: Number of items to skip
+- `pagination.limit`: Maximum number of items to return (default: 100, max: 1000)
+- `pagination.count_total`: Whether to return the total count
+- `pagination.reverse`: Whether to reverse the order
+
+Example:
+```
+GET /neutron/dex/pool_metadata?pagination.limit=50&pagination.offset=100
 ``` 

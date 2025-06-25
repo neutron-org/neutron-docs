@@ -185,7 +185,6 @@ Provide multiple routes for best price discovery:
 
 ```bash
 neutrond tx dex multi-hop-swap \
-  --routes untrn,ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
   --routes untrn,usdc,ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
   --amount-in 1000000 \
   --exit-limit-price 0.95 \
@@ -312,9 +311,10 @@ Cancel orders before they're filled:
 
 ```bash
 neutrond tx dex cancel-limit-order \
-  --tranche-key <tranche-key> \
-  --from mykey \
-  --chain-id neutron-1
+  --token-in untrn \
+  --token-out ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  --tranche-key &lt;tranche-key&gt; \
+  --from mykey
 ```
 
 ### Withdrawing Filled Orders
@@ -323,9 +323,10 @@ Claim proceeds from filled or partially filled orders:
 
 ```bash
 neutrond tx dex withdraw-filled-limit-order \
-  --tranche-key <tranche-key> \
-  --from mykey \
-  --chain-id neutron-1
+  --token-in untrn \
+  --token-out ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  --tranche-key &lt;tranche-key&gt; \
+  --from mykey
 ```
 
 ## Querying DEX State
@@ -335,29 +336,29 @@ neutrond tx dex withdraw-filled-limit-order \
 #### List All Pools
 
 ```bash
-neutrond query dex pool-metadata-all
+neutrond query dex list-pool-metadata
 ```
 
 #### Get Specific Pool
 
 ```bash
-neutrond query dex pool-by-id 1
+neutrond query dex show-pool-by-id 1
 ```
 
 #### Check Pool Reserves
 
 ```bash
-neutrond query dex pool-reserves \
-  untrn:ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  untrn 0 3000
+neutrond query dex list-pool-reserves \\
+  'tokenA&lt;&gt;tokenB' \\
+  tokenA
 ```
 
 #### View All Pool Reserves for Pair
 
 ```bash
-neutrond query dex pool-reserves-all \
-  untrn:ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  untrn
+neutrond query dex list-pool-reserves \\
+  'tokenA&lt;&gt;tokenB' \\
+  tokenA
 ```
 
 ### User Positions
@@ -365,19 +366,22 @@ neutrond query dex pool-reserves-all \
 #### Check Your Liquidity Positions
 
 ```bash
-neutrond query dex user-deposits-all neutron1... --include-pool-data
+neutrond query dex list-user-deposits neutron1... --include-pool-data
 ```
 
 #### Check Your Limit Orders
 
 ```bash
-neutrond query dex limit-order-tranche-user-all-by-address neutron1...
+neutrond query dex list-user-limit-orders neutron1...
 ```
+
+#### Get specific limit order tranche user details
+neutrond query dex show-limit-order-tranche-user neutron1... &lt;tranche-key&gt;
 
 #### Check Specific Order Status
 
 ```bash
-neutrond query dex limit-order-tranche-user neutron1... <tranche-key>
+neutrond query dex show-pool-reserves pair-id tick-index token-in fee
 ```
 
 ### Market Data
@@ -385,26 +389,18 @@ neutrond query dex limit-order-tranche-user neutron1... <tranche-key>
 #### View Order Book Depth
 
 ```bash
-neutrond query dex tick-liquidity-all \
-  untrn:ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  untrn
+neutrond query dex list-tick-liquidity \\
+  'tokenA&lt;&gt;tokenB' \\
+  tokenA
 ```
 
-#### Check Limit Order Tranches
+#### Query all limit order tranches for a pair
+neutrond query dex list-limit-order-tranche \\
+  'tokenA&lt;&gt;tokenB' \\
+  tokenA
 
-```bash
-neutrond query dex limit-order-tranche-all \
-  untrn:ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  untrn
-```
-
-#### View Inactive (Filled) Orders
-
-```bash
-neutrond query dex inactive-limit-order-tranche \
-  untrn:ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  untrn 100 <tranche-key>
-```
+#### View specific pool reserves
+neutrond query dex show-pool-reserves 'tokenA&lt;&gt;tokenB' 0 tokenA 3000
 
 ## Simulation and Testing
 
@@ -474,7 +470,7 @@ neutrond query dex simulate-place-limit-order \
 neutrond query dex simulate-withdraw-filled-limit-order \
   '{
     "creator":"neutron1...",
-    "tranche_key":"<tranche-key>"
+    "tranche_key":"&lt;tranche-key&gt;"
   }'
 ```
 
@@ -484,7 +480,7 @@ neutrond query dex simulate-withdraw-filled-limit-order \
 neutrond query dex simulate-cancel-limit-order \
   '{
     "creator":"neutron1...",
-    "tranche_key":"<tranche-key>"
+    "tranche_key":"&lt;tranche-key&gt;"
   }'
 ```
 
@@ -569,7 +565,9 @@ Calculate position sizes based on available liquidity:
 
 ```bash
 # Check current reserves before depositing
-neutrond query dex pool-reserves-all pair-id token-in
+neutrond query dex list-pool-reserves \\
+  'tokenA&lt;&gt;tokenB' \\
+  tokenA
 
 # Size positions proportionally to existing liquidity
 ```

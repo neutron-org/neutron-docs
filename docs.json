@@ -169,6 +169,28 @@
             "pages": [
               "developers/modules/overview",
               {
+                "group": "Dex",
+                "icon": "arrows-rotate",
+                "pages": [
+                  "developers/modules/dex/overview",
+                  "developers/modules/dex/explanation",
+                  "developers/modules/dex/how-to",
+                  "developers/modules/dex/known-bugs",
+                  {
+                    "group": "Reference",
+                    "icon": "book",
+                    "pages": [
+                      "developers/modules/dex/reference",
+                      "developers/modules/dex/api",
+                      "developers/modules/dex/messages",
+                      "developers/modules/dex/events",
+                      "developers/modules/dex/state",
+                      "developers/modules/dex/client"
+                    ]
+                  }
+                ]
+              },
+              {
                 "group": "Interchain Queries (ICQ)",
                 "icon": "link",
                 "pages": [
@@ -186,6 +208,28 @@
                       "developers/modules/interchain-queries/events",
                       "developers/modules/interchain-queries/state",
                       "developers/modules/interchain-queries/client"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Interchain Transactions (ICTX)",
+                "icon": "arrow-right-arrow-left",
+                "pages": [
+                  "developers/modules/interchaintxs/overview",
+                  "developers/modules/interchaintxs/explanation",
+                  "developers/modules/interchaintxs/how-to",
+                  "developers/modules/interchaintxs/known-bugs",
+                  {
+                    "group": "Reference",
+                    "icon": "book",
+                    "pages": [
+                      "developers/modules/interchaintxs/reference",
+                      "developers/modules/interchaintxs/api",
+                      "developers/modules/interchaintxs/messages",
+                      "developers/modules/interchaintxs/events",
+                      "developers/modules/interchaintxs/state",
+                      "developers/modules/interchaintxs/client"
                     ]
                   }
                 ]
@@ -229,28 +273,6 @@
                       "developers/modules/harpoon/messages",
                       "developers/modules/harpoon/state",
                       "developers/modules/harpoon/client"
-                    ]
-                  }
-                ]
-              },
-              {
-                "group": "Interchain Transactions (ICTX)",
-                "icon": "arrow-right-arrow-left",
-                "pages": [
-                  "developers/modules/interchaintxs/overview",
-                  "developers/modules/interchaintxs/explanation",
-                  "developers/modules/interchaintxs/how-to",
-                  "developers/modules/interchaintxs/known-bugs",
-                  {
-                    "group": "Reference",
-                    "icon": "book",
-                    "pages": [
-                      "developers/modules/interchaintxs/reference",
-                      "developers/modules/interchaintxs/api",
-                      "developers/modules/interchaintxs/messages",
-                      "developers/modules/interchaintxs/events",
-                      "developers/modules/interchaintxs/state",
-                      "developers/modules/interchaintxs/client"
                     ]
                   }
                 ]
@@ -364,28 +386,6 @@
                 ]
               },
               {
-                "group": "Dex",
-                "icon": "arrows-rotate",
-                "pages": [
-                  "developers/modules/dex/overview",
-                  "developers/modules/dex/explanation",
-                  "developers/modules/dex/how-to",
-                  "developers/modules/dex/known-bugs",
-                  {
-                    "group": "Reference",
-                    "icon": "book",
-                    "pages": [
-                      "developers/modules/dex/reference",
-                      "developers/modules/dex/api",
-                      "developers/modules/dex/messages",
-                      "developers/modules/dex/events",
-                      "developers/modules/dex/state",
-                      "developers/modules/dex/client"
-                    ]
-                  }
-                ]
-              },
-              {
                 "group": "Contract Manager",
                 "icon": "shield",
                 "pages": [
@@ -423,6 +423,86 @@
                       "developers/modules/admin/events",
                       "developers/modules/admin/state",
                       "developers/modules/admin/client"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Dynamic Fees",
+                "icon": "coins",
+                "pages": [
+                  "developers/modules/dynamicfees/overview",
+                  "developers/modules/dynamicfees/explanation",
+                  "developers/modules/dynamicfees/how-to",
+                  {
+                    "group": "Reference",
+                    "icon": "book",
+                    "pages": [
+                      "developers/modules/dynamicfees/reference",
+                      "developers/modules/dynamicfees/api",
+                      "developers/modules/dynamicfees/messages",
+                      "developers/modules/dynamicfees/events",
+                      "developers/modules/dynamicfees/state",
+                      "developers/modules/dynamicfees/client"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Global Fee",
+                "icon": "globe",
+                "pages": [
+                  "developers/modules/globalfee/overview",
+                  "developers/modules/globalfee/explanation",
+                  "developers/modules/globalfee/how-to",
+                  {
+                    "group": "Reference",
+                    "icon": "book",
+                    "pages": [
+                      "developers/modules/globalfee/reference",
+                      "developers/modules/globalfee/api",
+                      "developers/modules/globalfee/messages",
+                      "developers/modules/globalfee/events",
+                      "developers/modules/globalfee/state",
+                      "developers/modules/globalfee/client"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Token Factory",
+                "icon": "industry",
+                "pages": [
+                  "developers/modules/tokenfactory/overview",
+                  "developers/modules/tokenfactory/explanation",
+                  "developers/modules/tokenfactory/how-to",
+                  {
+                    "group": "Reference",
+                    "icon": "book",
+                    "pages": [
+                      "developers/modules/tokenfactory/reference",
+                      "developers/modules/tokenfactory/api",
+                      "developers/modules/tokenfactory/messages",
+                      "developers/modules/tokenfactory/events",
+                      "developers/modules/tokenfactory/state",
+                      "developers/modules/tokenfactory/client"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "GMP",
+                "icon": "message",
+                "pages": [
+                  "developers/modules/gmp/overview",
+                  "developers/modules/gmp/explanation",
+                  "developers/modules/gmp/how-to",
+                  "developers/modules/gmp/known-bugs",
+                  {
+                    "group": "Reference",
+                    "icon": "book",
+                    "pages": [
+                      "developers/modules/gmp/reference"
                     ]
                   }
                 ]

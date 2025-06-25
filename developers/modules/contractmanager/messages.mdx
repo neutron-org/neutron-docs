@@ -106,13 +106,30 @@ message MsgUpdateParamsResponse {}
 
 The response is empty if the operation succeeds.
 
-### CLI Usage
+<Warning>
+**Governance-Only Access**: The `MsgUpdateParams` message can only be executed through governance proposals. Individual users cannot directly submit this message via CLI or other means.
+</Warning>
 
-```bash
-neutrond tx contractmanager update-params [flags]
+### Governance Usage
+
+This message can only be executed through governance proposals. To update the Contract Manager module parameters, submit a governance proposal that includes this message:
+
+```json
+{
+  "title": "Update Contract Manager Parameters",
+  "description": "Update the sudo call gas limit for contract manager operations",
+  "messages": [
+    {
+      "@type": "/neutron.contractmanager.MsgUpdateParams",
+      "authority": "neutron1...", // governance authority address
+      "params": {
+        "sudo_call_gas_limit": "1000000"
+      }
+    }
+  ]
+}
 ```
 
-Required flags:
-- `--sudo-call-gas-limit`: The new gas limit for sudo calls
-- `--from`: The governance account that signs the transaction
-- `--chain-id`: The chain ID 
+<Note>
+Parameter updates require community governance approval through Neutron's DAO process. Individual users cannot directly execute this message.
+</Note> 

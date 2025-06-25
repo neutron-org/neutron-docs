@@ -1,0 +1,394 @@
+---
+title: "Dynamic Fees How-to Guide"
+description: "Step-by-step instructions for using the Dynamic Fees module"
+---
+
+# How-to Guide
+
+This guide provides practical instructions for working with the Dynamic Fees module, including governance operations and integration patterns.
+
+## Understanding the Module
+
+The Dynamic Fees module enables multi-asset fee payments by maintaining NTRN-denominated prices for supported assets. It works in conjunction with the fee market module to convert between different denominations.
+
+## Governance Operations
+
+<Warning>
+**Governance-Only Access**: All parameter updates in the Dynamic Fees module require governance approval. Individual users cannot directly modify asset prices.
+</Warning>
+
+### Updating Asset Prices
+
+#### Step 1: Prepare the Governance Proposal
+
+Create a governance proposal to update asset prices:
+
+```json
+{
+  "title": "Update Dynamic Fees Asset Prices",
+  "description": "Update NTRN-denominated prices for supported assets based on current market conditions",
+  "messages": [
+    {
+      "@type": "/neutron.dynamicfees.MsgUpdateParams",
+      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6zn9kn", // governance authority
+      "params": {
+        "ntrn_prices": [
+          {
+            "denom": "uatom",
+            "amount": "0.150000000000000000"
+          },
+          {
+            "denom": "uosmo", 
+            "amount": "0.080000000000000000"
+          },
+          {
+            "denom": "ujuno",
+            "amount": "0.025000000000000000"
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+#### Step 2: Submit the Proposal
+
+Using the CLI:
+
+```bash
+neutrond tx gov submit-proposal proposal.json \
+  --from your-key \
+  --gas auto \
+  --gas-adjustment 1.3 \
+  --fees 5000untrn
+```
+
+#### Step 3: Vote on the Proposal
+
+Once submitted, the community can vote:
+
+```bash
+# Vote yes on proposal ID 123
+neutrond tx gov vote 123 yes \
+  --from your-key \
+  --fees 5000untrn
+```
+
+### Adding New Assets
+
+To add support for a new asset:
+
+```json
+{
+  "title": "Add Support for New Asset",
+  "description": "Add JUNO token support to Dynamic Fees module",
+  "messages": [
+    {
+      "@type": "/neutron.dynamicfees.MsgUpdateParams", 
+      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6zn9kn",
+      "params": {
+        "ntrn_prices": [
+          {
+            "denom": "uatom",
+            "amount": "0.150000000000000000"
+          },
+          {
+            "denom": "uosmo",
+            "amount": "0.080000000000000000" 
+          },
+          {
+            "denom": "ujuno",
+            "amount": "0.025000000000000000"
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+### Removing Asset Support
+
+To remove an asset, simply exclude it from the `ntrn_prices` array:
+
+```json
+{
+  "ntrn_prices": [
+    {
+      "denom": "uatom", 
+      "amount": "0.150000000000000000"
+    }
+    // ujuno removed - no longer supported
+  ]
+}
+```
+
+## Querying Module Information
+
+### Query Current Parameters
+
+```bash
+# Query current asset prices
+neutrond query dynamicfees params
+```
+
+**Expected Output:**
+```yaml
+params:
+  ntrn_prices:
+  - amount: "0.150000000000000000"
+    denom: uatom
+  - amount: "0.080000000000000000"
+    denom: uosmo
+```
+
+### Using gRPC
+
+```bash
+grpcurl -plaintext localhost:9090 neutron.dynamicfees.Query/Params
+```
+
+### Using REST API
+
+```bash
+curl http://localhost:1317/neutron/dynamicfees/params
+```
+
+## Integration Patterns
+
+### Fee Market Integration
+
+The Dynamic Fees module automatically integrates with the fee market module. Users can pay fees in any supported asset:
+
+```bash
+# Pay fees in ATOM instead of NTRN
+neutrond tx bank send sender recipient 1000untrn \
+  --gas-prices 0.01uatom \
+  --from your-key
+```
+
+### Smart Contract Integration
+
+CosmWasm contracts can query supported denominations:
+
+```rust
+use cosmwasm_std::{Deps, StdResult, QueryRequest, Custom};
+
+// Query supported denominations
+pub fn query_supported_denoms(deps: Deps) -> StdResult<Vec<String>> {
+    let query = QueryRequest::Custom(NeutronQuery::DynamicFeesParams {});
+    let response: DynamicFeesParamsResponse = deps.querier.query(&query)?;
+    
+    let denoms: Vec<String> = response.params.ntrn_prices
+        .iter()
+        .map(|coin| coin.denom.clone())
+        .collect();
+        
+    Ok(denoms)
+}
+```
+
+### Application Development
+
+When building applications that interact with fees:
+
+```typescript
+// Check if asset is supported for fee payment
+async function isFeeAssetSupported(denom: string): Promise<boolean> {
+  const client = await getQueryClient();
+  const params = await client.dynamicfees.params();
+  
+  return params.params.ntrnPrices.some(price => price.denom === denom);
+}
+
+// Get current price for an asset
+async function getAssetPrice(denom: string): Promise<string | null> {
+  const client = await getQueryClient();
+  const params = await client.dynamicfees.params();
+  
+  const priceEntry = params.params.ntrnPrices.find(price => price.denom === denom);
+  return priceEntry ? priceEntry.amount : null;
+}
+```
+
+## Price Calculation Examples
+
+### Converting Asset to NTRN
+
+To calculate how much NTRN an asset amount represents:
+
+```
+Formula: asset_amount * ntrn_price = ntrn_equivalent
+
+Example:
+- Asset: 100 ATOM
+- NTRN Price: 0.15 (1 ATOM = 0.15 NTRN)
+- Calculation: 100 * 0.15 = 15 NTRN
+```
+
+### Converting NTRN to Asset
+
+To calculate how much of an asset equals a NTRN amount:
+
+```
+Formula: ntrn_amount / ntrn_price = asset_equivalent
+
+Example:
+- NTRN Amount: 15 NTRN
+- NTRN Price: 0.15 (1 ATOM = 0.15 NTRN)  
+- Calculation: 15 / 0.15 = 100 ATOM
+```
+
+## Best Practices
+
+### Price Setting Guidelines
+
+1. **Market Research**: Base prices on current market conditions
+2. **Conservative Updates**: Avoid dramatic price changes
+3. **Regular Reviews**: Update prices periodically to maintain accuracy
+4. **Community Input**: Seek community feedback before major changes
+
+### Governance Proposals
+
+1. **Clear Rationale**: Explain why price updates are needed
+2. **Market Data**: Include supporting market data
+3. **Impact Analysis**: Describe effects on users and applications
+4. **Gradual Changes**: Implement changes gradually when possible
+
+### Integration Considerations
+
+1. **Error Handling**: Handle unsupported denominations gracefully
+2. **Price Volatility**: Account for price changes in applications
+3. **Fallback Mechanisms**: Implement NTRN fallback for unsupported assets
+4. **Testing**: Test with various asset combinations
+
+## Troubleshooting
+
+### Common Issues
+
+#### Asset Not Supported for Fees
+
+**Problem**: Transaction fails with unsupported denomination error
+
+**Solution**: 
+- Check if asset is in the supported list
+- Use NTRN for fees instead
+- Submit governance proposal to add asset support
+
+#### Price Conversion Errors
+
+**Problem**: Unexpected fee calculations
+
+**Solution**:
+- Verify current asset prices with `neutrond query dynamicfees params`
+- Check for recent governance updates
+- Ensure using correct denomination format
+
+#### Governance Proposal Failures
+
+**Problem**: Parameter update proposal fails
+
+**Solution**:
+- Verify authority address matches governance authority
+- Ensure all required parameters are included
+- Check proposal format and syntax
+
+### Debugging Commands
+
+```bash
+# Check current parameters
+neutrond query dynamicfees params
+
+# Verify governance authority
+neutrond query auth account neutron10d07y265gmmuvt4z0w9aw880jnsr700j6zn9kn
+
+# Check proposal status
+neutrond query gov proposal [proposal-id]
+
+# View proposal details
+neutrond query gov proposal [proposal-id] --output json
+```
+
+## Advanced Usage
+
+### Automated Price Updates
+
+For applications that need to track price changes:
+
+```typescript
+// Monitor for parameter change events
+async function monitorPriceChanges() {
+  const client = await getWebSocketClient();
+  
+  client.subscribe({
+    query: "tm.event='Tx' AND message.action='/neutron.dynamicfees.MsgUpdateParams'"
+  }, (event) => {
+    console.log('Dynamic Fees parameters updated:', event);
+    // Handle price change
+    updateLocalPriceCache();
+  });
+}
+```
+
+### Multi-Asset Fee Estimation
+
+```typescript
+// Estimate fees in different assets
+async function estimateFeesInAssets(gasUsed: number): Promise<Map<string, string>> {
+  const params = await client.dynamicfees.params();
+  const feeEstimates = new Map<string, string>();
+  
+  // Base fee in NTRN
+  const baseFeeNtrn = gasUsed * 0.025; // Example gas price
+  
+  // Convert to other assets
+  for (const price of params.params.ntrnPrices) {
+    const assetFee = baseFeeNtrn / parseFloat(price.amount);
+    feeEstimates.set(price.denom, assetFee.toString());
+  }
+  
+  return feeEstimates;
+}
+```
+
+### Governance Automation
+
+```bash
+#!/bin/bash
+# Script to submit price update proposals
+
+PROPOSAL_FILE="price_update.json"
+KEY_NAME="governance-key"
+
+# Create proposal
+cat > $PROPOSAL_FILE << EOF
+{
+  "title": "Monthly Dynamic Fees Price Update",
+  "description": "Update asset prices based on 30-day average market data",
+  "messages": [
+    {
+      "@type": "/neutron.dynamicfees.MsgUpdateParams",
+      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6zn9kn",
+      "params": {
+        "ntrn_prices": [
+          {
+            "denom": "uatom",
+            "amount": "$(curl -s 'https://api.example.com/ntrn-atom-price')"
+          }
+        ]
+      }
+    }
+  ]
+}
+EOF
+
+# Submit proposal
+neutrond tx gov submit-proposal $PROPOSAL_FILE \
+  --from $KEY_NAME \
+  --gas auto \
+  --gas-adjustment 1.3 \
+  --fees 5000untrn
+```
+
+This guide covers the essential operations for working with the Dynamic Fees module, from basic queries to advanced integration patterns and governance operations.

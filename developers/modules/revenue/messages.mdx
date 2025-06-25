@@ -6,6 +6,10 @@ The Revenue module exposes the following messages for modifying state:
 
 ## MsgUpdateParams
 
+<Warning>
+**Governance-Only Access**: The `MsgUpdateParams` message can only be executed through governance proposals. Individual users cannot directly submit this message via CLI or other means.
+</Warning>
+
 `MsgUpdateParams` updates the module's parameters. This message can only be executed by the module's authority (typically governance).
 
 ```protobuf
@@ -22,26 +26,39 @@ message MsgUpdateParams {
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `authority` | string | The address of the account with authority to update parameters (typically the governance module account) |
+| `authority` | string | The address of the governance account (must be the governance authority) |
 | `params` | Params | The new parameters to set |
 
-### Example
+### Governance Usage
 
-```javascript
+This message can only be executed through governance proposals. To update the Revenue module parameters, submit a governance proposal that includes this message:
+
+```json
 {
-  "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6z2zm3",
-  "params": {
-    "base_compensation": "2000",
-    "denom_compensation": "untrn",
-    "twap_window_size": 30,
-    "performance_requirements": {
-      "required_at_least": "0.800000000000000000",
-      "allowed_to_miss": "0.050000000000000000"
-    },
-    "payment_schedule_type": "PAYMENT_SCHEDULE_TYPE_MONTHLY"
-  }
+  "title": "Update Revenue Module Parameters",
+  "description": "Update validator performance requirements and compensation settings",
+  "messages": [
+    {
+      "@type": "/neutron.revenue.MsgUpdateParams",
+      "authority": "neutron1...", // governance authority address
+      "params": {
+        "base_compensation": "2000",
+        "denom_compensation": "untrn",
+        "twap_window_size": 30,
+        "performance_requirements": {
+          "required_at_least": "0.800000000000000000",
+          "allowed_to_miss": "0.050000000000000000"
+        },
+        "payment_schedule_type": "PAYMENT_SCHEDULE_TYPE_MONTHLY"
+      }
+    }
+  ]
 }
 ```
+
+<Note>
+Parameter updates require community governance approval through Neutron's DAO process. Individual users cannot directly execute this message.
+</Note>
 
 ### Response
 

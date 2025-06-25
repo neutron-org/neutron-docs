@@ -1,0 +1,326 @@
+---
+title: "Dynamic Fees State"
+description: "State management in the Dynamic Fees module"
+---
+
+# State
+
+The Dynamic Fees module maintains minimal state, storing only module parameters for asset price conversion.
+
+## State Overview
+
+The module stores:
+- **Parameters**: Asset price registry for NTRN-denominated prices
+- **No Additional State**: No user data, transaction history, or complex state structures
+
+## Parameter State
+
+### Storage Key
+
+Parameters are stored under the standard parameter store key:
+
+```
+Key: "params"
+Value: Params (protobuf encoded)
+```
+
+### Parameter Structure
+
+```protobuf
+message Params {
+  // List of asset prices by the NTRN
+  // it's used in cooperation with feemarket module
+  // ntrn_prices is a data source to convert gas_price from feemarket's base_denom (untrn)
+  // into a given asset
+  repeated cosmos.base.v1beta1.DecCoin ntrn_prices = 1;
+}
+```
+
+### DecCoin Structure
+
+Each price entry in the registry:
+
+```protobuf
+message DecCoin {
+  string denom = 1;   // Asset denomination (e.g., "uatom")
+  string amount = 2;  // Price as decimal string (e.g., "0.150000000000000000")
+}
+```
+
+## State Access Patterns
+
+### Reading Parameters
+
+```go
+func (k Keeper) GetParams(ctx sdk.Context) types.Params {
+    var params types.Params
+    k.paramSpace.GetParamSet(ctx, &params)
+    return params
+}
+```
+
+### Writing Parameters
+
+```go
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
+    k.paramSpace.SetParamSet(ctx, &params)
+    return nil
+}
+```
+
+### Price Lookup
+
+```go
+func (k Keeper) GetAssetPrice(ctx sdk.Context, denom string) (sdk.Dec, bool) {
+    params := k.GetParams(ctx)
+    for _, coin := range params.NtrnPrices {
+        if coin.Denom == denom {
+            return coin.Amount, true
+        }
+    }
+    return sdk.Dec{}, false
+}
+```
+
+## State Queries
+
+### Query All Parameters
+
+**CLI:**
+```bash
+neutrond query dynamicfees params
+```
+
+**gRPC:**
+```bash
+grpcurl -plaintext localhost:9090 neutron.dynamicfees.Query/Params
+```
+
+**REST:**
+```bash
+curl http://localhost:1317/neutron/dynamicfees/params
+```
+
+### Response Format
+
+```json
+{
+  "params": {
+    "ntrn_prices": [
+      {
+        "denom": "uatom",
+        "amount": "0.150000000000000000"
+      },
+      {
+        "denom": "uosmo", 
+        "amount": "0.080000000000000000"
+      }
+    ]
+  }
+}
+```
+
+## State Transitions
+
+### Parameter Updates
+
+The only state transition is parameter updates through governance:
+
+```
+Initial State: params = {ntrn_prices: []}
+                    ↓
+Governance Proposal: MsgUpdateParams
+                    ↓
+Final State: params = {ntrn_prices: [new_prices]}
+```
+
+### Update Process
+
+1. **Proposal Submission**: Governance proposal with new parameters
+2. **Voting Period**: Community votes on the proposal
+3. **Execution**: If passed, parameters are updated atomically
+4. **State Change**: New parameters replace old ones completely
+
+## Genesis State
+
+### Genesis Structure
+
+```json
+{
+  "params": {
+    "ntrn_prices": [
+      {
+        "denom": "uatom",
+        "amount": "0.150000000000000000"
+      }
+    ]
+  }
+}
+```
+
+### Genesis Initialization
+
+```go
+func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
+    k.SetParams(ctx, genState.Params)
+}
+```
+
+### Genesis Export
+
+```go
+func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
+    return &types.GenesisState{
+        Params: k.GetParams(ctx),
+    }
+}
+```
+
+## State Validation
+
+### Parameter Validation
+
+```go
+func (p Params) Validate() error {
+    for _, coin := range p.NtrnPrices {
+        if err := coin.Validate(); err != nil {
+            return err
+        }
+        if coin.Amount.IsZero() || coin.Amount.IsNegative() {
+            return fmt.Errorf("price must be positive: %s", coin)
+        }
+    }
+    return nil
+}
+```
+
+### Validation Rules
+
+1. **Positive Prices**: All prices must be positive decimal values
+2. **Valid Denominations**: Denominations must follow Cosmos SDK format
+3. **No Duplicates**: Each denomination can only appear once in the registry
+4. **Decimal Format**: Amounts must be valid decimal strings
+
+## State Storage Details
+
+### Storage Efficiency
+
+- **Minimal Storage**: Only parameters are stored
+- **No Indexing**: Simple key-value storage for parameters
+- **No History**: Previous parameter values are not retained
+- **Atomic Updates**: Parameters are updated as a single unit
+
+### Memory Usage
+
+- **Parameter Cache**: Parameters may be cached in memory for performance
+- **No User Data**: No per-user or per-transaction state
+- **Stateless Operations**: Price conversions don't modify state
+
+## State Migration
+
+### Version Upgrades
+
+```go
+func Migrate(ctx sdk.Context, k keeper.Keeper) error {
+    // Migration logic for parameter format changes
+    params := k.GetParams(ctx)
+    
+    // Apply any necessary transformations
+    migratedParams := migrateParams(params)
+    
+    k.SetParams(ctx, migratedParams)
+    return nil
+}
+```
+
+### Backward Compatibility
+
+- **Parameter Format**: Changes to parameter structure require migration
+- **Genesis Compatibility**: Genesis format must remain compatible
+- **API Stability**: Query responses should maintain backward compatibility
+
+## State Monitoring
+
+### Parameter Change Detection
+
+```typescript
+// Monitor for parameter changes
+async function monitorStateChanges() {
+  let lastParams = await queryParams();
+  
+  setInterval(async () => {
+    const currentParams = await queryParams();
+    
+    if (!deepEqual(lastParams, currentParams)) {
+      console.log('Parameters changed:', {
+        old: lastParams,
+        new: currentParams
+      });
+      
+      lastParams = currentParams;
+    }
+  }, 10000);
+}
+```
+
+### State Consistency Checks
+
+```go
+func ValidateState(ctx sdk.Context, k keeper.Keeper) error {
+    params := k.GetParams(ctx)
+    
+    // Validate parameter consistency
+    if err := params.Validate(); err != nil {
+        return fmt.Errorf("invalid parameters: %w", err)
+    }
+    
+    // Check for duplicate denominations
+    seen := make(map[string]bool)
+    for _, coin := range params.NtrnPrices {
+        if seen[coin.Denom] {
+            return fmt.Errorf("duplicate denomination: %s", coin.Denom)
+        }
+        seen[coin.Denom] = true
+    }
+    
+    return nil
+}
+```
+
+## Performance Characteristics
+
+### Read Performance
+
+- **O(1)**: Parameter retrieval is constant time
+- **O(n)**: Price lookup is linear in number of supported assets
+- **Caching**: Parameters can be cached for improved performance
+
+### Write Performance
+
+- **Governance Only**: Writes only occur through governance proposals
+- **Atomic Updates**: All parameters updated in single transaction
+- **No Fragmentation**: Simple key-value storage without complex indexing
+
+## State Backup and Recovery
+
+### Export State
+
+```bash
+# Export current state
+neutrond export > genesis.json
+
+# Extract Dynamic Fees state
+jq '.app_state.dynamicfees' genesis.json
+```
+
+### Import State
+
+```bash
+# Import from genesis file
+neutrond init --genesis genesis.json
+
+# Validate imported state
+neutrond validate-genesis genesis.json
+```
+
+The Dynamic Fees module maintains a simple and efficient state model focused solely on parameter management, making it lightweight and easy to maintain.

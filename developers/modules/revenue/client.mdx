@@ -13,34 +13,45 @@ The Revenue module provides several commands to query state and send transaction
 #### Query Module Parameters
 
 ```bash
-neutron query revenue params [flags]
+neutrond query revenue params [flags]
 ```
 
 Example:
 ```bash
-neutron query revenue params --output json
+neutrond query revenue params --output json
 ```
 
-#### Query Validator Information
+#### Query Validator Stats
 
 ```bash
-neutron query revenue validator-info [validator-addr] [flags]
-```
-
-Example:
-```bash
-neutron query revenue validator-info neutronvaloper1... --output json
-```
-
-#### Query Payment Schedule
-
-```bash
-neutron query revenue payment-schedule [flags]
+neutrond query revenue validator-stats [validator-addr] [flags]
 ```
 
 Example:
 ```bash
-neutron query revenue payment-schedule --output json
+neutrond query revenue validator-stats neutronvaloper1... --output json
+```
+
+#### Query Payment Info
+
+```bash
+neutrond query revenue payment-info [flags]
+```
+
+Example:
+```bash
+neutrond query revenue payment-info --output json
+```
+
+#### Query All Validators Stats
+
+```bash
+neutrond query revenue validators-stats [flags]
+```
+
+Example:
+```bash
+neutrond query revenue validators-stats --output json
 ```
 
 ### Transactions
@@ -48,12 +59,12 @@ neutron query revenue payment-schedule --output json
 #### Fund Treasury
 
 ```bash
-neutron tx revenue fund-treasury [amount] [flags]
+neutrond tx revenue fund-treasury [amount] [flags]
 ```
 
 Example:
 ```bash
-neutron tx revenue fund-treasury 1000000untrn \
+neutrond tx revenue fund-treasury 1000000untrn \
   --from mykey \
   --chain-id neutron-1 \
   --gas auto \
@@ -90,50 +101,74 @@ Example Response:
 }
 ```
 
-### ValidatorInfo
+### ValidatorStats
 
 Query the performance metrics for a specific validator.
 
 ```bash
 grpcurl -plaintext \
-    -d '{"validator_addr": "neutronvaloper1..."}' \
+    -d '{"val_oper_address": "neutronvaloper1..."}' \
     localhost:9090 \
-    neutron.revenue.Query/ValidatorInfo
+    neutron.revenue.Query/ValidatorStats
 ```
 
 Example Response:
 ```json
 {
-  "validatorInfo": {
-    "address": "neutronvaloper1...",
-    "signedBlocks": "980",
-    "blocksInWindow": "1000",
-    "providedOracleVotes": "950",
-    "oracleVotesInWindow": "1000"
+  "stats": {
+    "validator_info": {
+      "address": "neutronvaloper1...",
+      "signed_blocks": "980",
+      "blocks_in_window": "1000",
+      "provided_oracle_votes": "950",
+      "oracle_votes_in_window": "1000"
+    },
+    "total_produced_blocks_in_period": "1000",
+    "performance_rating": "0.975000000000000000",
+    "expected_revenue": {
+      "denom": "untrn",
+      "amount": "1950"
+    }
   }
 }
 ```
 
-### PaymentSchedule
+### PaymentInfo
 
-Query the current payment schedule.
+Query the current payment info including schedule and revenue details.
 
 ```bash
 grpcurl -plaintext \
     localhost:9090 \
-    neutron.revenue.Query/PaymentSchedule
+    neutron.revenue.Query/PaymentInfo
 ```
 
 Example Response:
 ```json
 {
-  "paymentSchedule": {
+  "payment_schedule": {
     "type": "PAYMENT_SCHEDULE_TYPE_MONTHLY",
-    "periodsPassed": "5",
-    "periodsCount": "0",
-    "monthEndTime": "2023-11-01T00:00:00Z"
+    "periods_passed": "5",
+    "periods_count": "0",
+    "month_end_time": "2023-11-01T00:00:00Z"
+  },
+  "effective_period_progress": "0.750000000000000000",
+  "reward_asset_twap": "0.095000000000000000",
+  "base_revenue_amount": {
+    "denom": "untrn",
+    "amount": "2000"
   }
 }
+```
+
+### ValidatorsStats
+
+Query all validators' performance metrics.
+
+```bash
+grpcurl -plaintext \
+    localhost:9090 \
+    neutron.revenue.Query/ValidatorsStats
 ```
 
 ## gRPC Transactions
@@ -185,17 +220,18 @@ Example Response:
 }
 ```
 
-### Query Validator Info
+### Query Validator Stats
 
 ```
-GET /neutron/revenue/validator_info/{validatorAddr}
+GET /neutron/revenue/validator_stats/{validatorAddr}
 ```
 
 Example Response:
 ```json
 {
-  "validator_info": {
-    "address": "neutronvaloper1...",
+  "stats": {
+    "validator_info": {
+      "address": "neutronvaloper1...",
     "signed_blocks": 980,
     "blocks_in_window": 1000,
     "provided_oracle_votes": 950,
@@ -204,10 +240,10 @@ Example Response:
 }
 ```
 
-### Query Payment Schedule
+### Query Payment Info
 
 ```
-GET /neutron/revenue/payment_schedule
+GET /neutron/revenue/payment_info
 ```
 
 Example Response:
@@ -218,6 +254,12 @@ Example Response:
     "periods_passed": 5,
     "periods_count": 0,
     "month_end_time": "2023-11-01T00:00:00Z"
+  },
+  "effective_period_progress": "0.750000000000000000",
+  "reward_asset_twap": "0.095000000000000000",
+  "base_revenue_amount": {
+    "denom": "untrn",
+    "amount": "2000"
   }
 }
 ``` 

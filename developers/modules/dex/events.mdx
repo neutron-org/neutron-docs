@@ -1,8 +1,8 @@
 ---
-title: "Events"
+title: "Dex Events"
 ---
 
-The Dex module emits various events during operation that can be used for tracking interactions with the module. This document details the events and their attributes.
+The Dex module emits various events during transaction processing. These events provide detailed information about deposits, withdrawals, limit orders, and swaps.
 
 ## Deposit Events
 
@@ -14,7 +14,7 @@ Emitted when a user deposits liquidity into a pool.
 | --- | --- |
 | `creator` | Address of the user who initiated the deposit |
 | `receiver` | Address that received the liquidity position |
-| `pair_id` | The trading pair identifier (e.g., "untrn:uatom") |
+| `pair_id` | The trading pair identifier (e.g., "untrn&lt;&gt;uatom") |
 | `tick_indexes` | The tick indexes where liquidity was added |
 | `fees` | The fee tiers (in basis points) of the pools |
 | `token0_denom` | The denomination of token0 in the pool |
@@ -29,7 +29,7 @@ sdk.Event{
     Attributes: []sdk.Attribute{
         {Key: "creator", Value: "neutron1..."},
         {Key: "receiver", Value: "neutron1..."},
-        {Key: "pair_id", Value: "untrn:uatom"},
+        {Key: "pair_id", Value: "untrn&lt;&gt;uatom"},
         {Key: "tick_indexes", Value: "0"},
         {Key: "fees", Value: "3000"},
         {Key: "token0_denom", Value: "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"},
@@ -60,7 +60,7 @@ Emitted when a user withdraws liquidity from a pool.
 | --- | --- |
 | `creator` | Address of the user who initiated the withdrawal |
 | `receiver` | Address that received the withdrawn tokens |
-| `pair_id` | The trading pair identifier |
+| `pair_id` | The trading pair identifier (e.g., "untrn&lt;&gt;uatom") |
 | `tick_indexes` | The tick indexes from which liquidity was withdrawn |
 | `fees` | The fee tiers of the pools |
 | `amount0_withdrawn` | The amount of token0 that was withdrawn |
@@ -73,7 +73,7 @@ sdk.Event{
     Attributes: []sdk.Attribute{
         {Key: "creator", Value: "neutron1..."},
         {Key: "receiver", Value: "neutron1..."},
-        {Key: "pair_id", Value: "untrn:uatom"},
+        {Key: "pair_id", Value: "untrn&lt;&gt;uatom"},
         {Key: "tick_indexes", Value: "0"},
         {Key: "fees", Value: "3000"},
         {Key: "amount0_withdrawn", Value: "1000000"},
@@ -93,7 +93,7 @@ Emitted when a limit order is placed.
 | --- | --- |
 | `creator` | Address of the user who placed the limit order |
 | `receiver` | Address that will receive the proceeds |
-| `pair_id` | The trading pair identifier |
+| `pair_id` | The trading pair identifier (e.g., "untrn&lt;&gt;uatom") |
 | `token_in` | The token being sold |
 | `token_out` | The token being bought |
 | `tick_index` | The tick index of the limit order |
@@ -110,7 +110,7 @@ sdk.Event{
     Attributes: []sdk.Attribute{
         {Key: "creator", Value: "neutron1..."},
         {Key: "receiver", Value: "neutron1..."},
-        {Key: "pair_id", Value: "untrn:uatom"},
+        {Key: "pair_id", Value: "untrn&lt;&gt;uatom"},
         {Key: "token_in", Value: "untrn"},
         {Key: "token_out", Value: "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"},
         {Key: "tick_index", Value: "100"},
@@ -156,7 +156,7 @@ Emitted when a limit order is filled by a taker.
 | Attribute Key | Description |
 | --- | --- |
 | `tranche_key` | The unique identifier for the limit order |
-| `pair_id` | The trading pair identifier |
+| `pair_id` | The trading pair identifier (e.g., "untrn&lt;&gt;uatom") |
 | `token_in` | The token being sold |
 | `token_out` | The token being bought |
 | `tick_index` | The tick index of the limit order |
@@ -213,23 +213,64 @@ sdk.Event{
         {Key: "routes", Value: "[\"untrn,ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2\"]"},
         {Key: "chosen_route", Value: "untrn,ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"},
         {Key: "amount_in", Value: "1000000untrn"},
-        {Key: "amount_out", Value: "100000ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"},
-        {Key: "exit_limit_price", Value: "0.09"},
-        {Key: "effective_price", Value: "0.1"},
+        {Key: "amount_out", Value: "950000ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"},
+        {Key: "exit_limit_price", Value: "0.95"},
+        {Key: "effective_price", Value: "0.95"},
     },
 }
 ```
 
-### `swap_fail_below_exit_limit_price`
+## Fee Events
 
-Emitted when a swap fails because the obtainable price is below the exit limit price.
+### `dex_fee_collection`
+
+Emitted when trading fees are collected by liquidity providers.
 
 | Attribute Key | Description |
 | --- | --- |
-| `exit_limit_price` | The minimum acceptable output price |
-| `obtainable_price` | The price that would have been obtained |
+| `pool_id` | The ID of the pool where fees were collected |
+| `fee_recipient` | Address that received the fees |
+| `token0_fees` | Amount of token0 fees collected |
+| `token1_fees` | Amount of token1 fees collected |
 
-## Other Events
+```go
+sdk.Event{
+    Type: "dex_fee_collection",
+    Attributes: []sdk.Attribute{
+        {Key: "pool_id", Value: "1"},
+        {Key: "fee_recipient", Value: "neutron1..."},
+        {Key: "token0_fees", Value: "1000"},
+        {Key: "token1_fees", Value: "1000"},
+    },
+}
+```
+
+## Pool Events
+
+### `pool_created`
+
+Emitted when a new pool is created.
+
+| Attribute Key | Description |
+| --- | --- |
+| `pool_id` | The unique identifier for the new pool |
+| `creator` | Address that created the pool |
+| `pair_id` | The trading pair identifier |
+| `tick_index` | The tick index of the pool |
+| `fee` | The fee tier of the pool |
+
+```go
+sdk.Event{
+    Type: "pool_created",
+    Attributes: []sdk.Attribute{
+        {Key: "pool_id", Value: "1"},
+        {Key: "creator", Value: "neutron1..."},
+        {Key: "pair_id", Value: "untrn&lt;&gt;uatom"},
+        {Key: "tick_index", Value: "0"},
+        {Key: "fee", Value: "3000"},
+    },
+}
+```
 
 ### `purge_expired_limit_orders`
 
