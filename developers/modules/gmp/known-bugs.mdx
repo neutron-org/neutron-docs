@@ -1,0 +1,290 @@
+---
+title: "GMP Module Known Issues"
+description: "Known bugs and limitations of the General Message Passing module"
+---
+
+# Known Issues
+
+This document outlines known issues, limitations, and considerations when using the GMP (General Message Passing) module.
+
+## Current Limitations
+
+### 1. No Payload Size Validation
+
+**Issue**: The GMP module does not enforce specific payload size limits beyond standard IBC packet constraints.
+
+**Impact**: 
+- Large payloads may cause IBC packet failures
+- No clear error messaging for oversized payloads
+- Potential for unexpected failures during cross-chain transfers
+
+**Workaround**: 
+- Keep payloads small and efficient
+- Test with realistic payload sizes
+- Consider using external storage for large data with payload containing only references
+
+### 2. Limited Message Type Support
+
+**Issue**: Only two message types are currently supported (TypeGeneralMessage and TypeGeneralMessageWithToken).
+
+**Impact**:
+- Limited extensibility for future use cases
+- No versioning mechanism for message format evolution
+- Potential compatibility issues with future protocol upgrades
+
+**Workaround**:
+- Use existing message types for all current use cases
+- Embed versioning information within the payload itself
+- Plan for future protocol upgrades
+
+### 3. Source Field Trust Issues
+
+**Issue**: The `source_chain` and `source_address` fields in GMP messages are informational only and should not be trusted for security decisions.
+
+**Impact**:
+- Potential security vulnerabilities if applications rely on these fields
+- Confusion about message authenticity
+- Risk of spoofing attacks
+
+**Workaround**:
+- Never use source fields for authentication
+- Rely on IBC's cryptographic guarantees instead
+- Implement additional authentication mechanisms if needed
+
+### 4. Error Handling Limitations
+
+**Issue**: Error messages from GMP processing may not provide detailed diagnostic information.
+
+**Impact**:
+- Difficult debugging of failed cross-chain messages
+- Limited visibility into processing failures
+- Reduced developer experience
+
+**Workaround**:
+- Implement comprehensive logging in receiving applications
+- Use local testnets for debugging
+- Validate JSON structures before sending
+
+## Processing Limitations
+
+### 1. JSON Parsing Strictness
+
+**Issue**: The module uses strict JSON parsing which may reject valid but non-standard JSON formats.
+
+**Impact**:
+- Messages with trailing commas or comments will fail
+- Non-standard JSON encodings are rejected
+- Reduced flexibility in message formatting
+
+**Workaround**:
+- Use standard JSON formatting tools
+- Validate JSON before embedding in transfers
+- Avoid non-standard JSON features
+
+### 2. No Message Ordering Guarantees
+
+**Issue**: GMP messages are processed independently without ordering guarantees across multiple transfers.
+
+**Impact**:
+- Race conditions in multi-message protocols
+- Potential for out-of-order message processing
+- Complexity in implementing stateful cross-chain protocols
+
+**Workaround**:
+- Design protocols to be order-independent
+- Use sequence numbers or timestamps in payloads
+- Implement application-level ordering mechanisms
+
+### 3. No Message Acknowledgment Tracking
+
+**Issue**: The GMP module doesn't provide specific acknowledgment tracking for processed messages.
+
+**Impact**:
+- No confirmation that messages were processed successfully
+- Difficult to implement reliable message delivery
+- Limited visibility into processing status
+
+**Workaround**:
+- Implement application-level acknowledgments
+- Use IBC transfer acknowledgments as proxies
+- Design protocols to be idempotent
+
+## Integration Issues
+
+### 1. Middleware Ordering Dependencies
+
+**Issue**: The GMP module's position in the IBC middleware stack affects its behavior.
+
+**Impact**:
+- Interactions with other middleware may be unpredictable
+- Processing order affects message visibility
+- Potential for middleware conflicts
+
+**Workaround**:
+- Carefully plan middleware stack ordering
+- Test with complete middleware configurations
+- Document middleware dependencies
+
+### 2. Limited CosmWasm Integration
+
+**Issue**: No specific CosmWasm helpers or utilities for GMP message handling.
+
+**Impact**:
+- Manual JSON parsing required in contracts
+- Increased complexity for contract developers
+- Potential for parsing errors and bugs
+
+**Workaround**:
+- Create reusable parsing libraries
+- Implement comprehensive error handling
+- Use well-tested JSON parsing crates
+
+### 3. No SDK Message Types
+
+**Issue**: GMP doesn't provide custom SDK message types for easier integration.
+
+**Impact**:
+- Limited integration with Cosmos SDK applications
+- Manual message construction required
+- Reduced developer experience
+
+**Workaround**:
+- Use standard IBC transfer messages with structured memos
+- Create application-specific helper functions
+- Document integration patterns clearly
+
+## Security Considerations
+
+### 1. Payload Validation Requirements
+
+**Issue**: Receiving applications must validate all payload content independently.
+
+**Impact**:
+- Risk of processing malicious payloads
+- Potential for application-level vulnerabilities
+- Increased development complexity
+
+**Mitigation**:
+- Implement comprehensive payload validation
+- Use schema validation libraries
+- Follow secure coding practices
+
+### 2. Cross-chain Trust Model
+
+**Issue**: Trust assumptions may not be clear to developers using GMP.
+
+**Impact**:
+- Potential security vulnerabilities
+- Confusion about authentication mechanisms
+- Risk of improper trust decisions
+
+**Mitigation**:
+- Clearly document trust assumptions
+- Provide security guidelines
+- Implement defense-in-depth strategies
+
+## Performance Considerations
+
+### 1. JSON Parsing Overhead
+
+**Issue**: JSON parsing adds computational overhead to every IBC transfer.
+
+**Impact**:
+- Increased processing time for transfers
+- Higher resource usage
+- Potential performance bottlenecks
+
+**Mitigation**:
+- Use efficient JSON parsing libraries
+- Consider binary encoding for high-frequency use cases
+- Monitor performance metrics
+
+### 2. Memory Usage
+
+**Issue**: Message processing requires temporary memory allocation for parsing and re-marshaling.
+
+**Impact**:
+- Increased memory usage during processing
+- Potential for memory pressure under high load
+- Risk of out-of-memory conditions
+
+**Mitigation**:
+- Monitor memory usage patterns
+- Implement appropriate resource limits
+- Consider streaming processing for large messages
+
+## Future Improvements
+
+### Planned Enhancements
+
+1. **Enhanced Error Reporting**: More detailed error messages and diagnostic information
+2. **Message Type Extensibility**: Support for additional message types and versioning
+3. **Performance Optimizations**: Reduced parsing overhead and memory usage
+4. **Integration Helpers**: SDK and CosmWasm utilities for easier integration
+
+### Community Feedback
+
+The GMP module is actively developed and community feedback is welcome for:
+- Additional use cases and requirements
+- Performance optimization suggestions
+- Security considerations and improvements
+- Integration challenges and solutions
+
+## Reporting Issues
+
+To report bugs or issues with the GMP module:
+
+1. **Check existing issues**: Review known issues in this document
+2. **Gather information**: Include relevant logs, configurations, and reproduction steps
+3. **Create detailed reports**: Provide clear descriptions and expected behavior
+4. **Follow up**: Respond to questions and provide additional information as needed
+
+## Workaround Patterns
+
+### Safe Message Processing
+
+```json
+{
+  "version": "1.0",
+  "timestamp": "2024-01-01T00:00:00Z",
+  "sequence": 1,
+  "payload": {
+    "action": "swap",
+    "validation_hash": "sha256-hash-of-payload"
+  }
+}
+```
+
+### Error Handling Pattern
+
+```typescript
+function processGMPMessage(memo: string): ProcessingResult {
+  try {
+    // Validate JSON structure
+    const message = JSON.parse(memo);
+    
+    // Validate required fields
+    if (!message.action || !message.payload) {
+      return { success: false, error: "Missing required fields" };
+    }
+    
+    // Process message
+    return processMessage(message);
+  } catch (error) {
+    return { success: false, error: `JSON parsing failed: ${error.message}` };
+  }
+}
+```
+
+### Reliable Delivery Pattern
+
+```rust
+// Include sequence numbers and acknowledgment requests
+#[derive(Serialize, Deserialize)]
+struct ReliableMessage {
+    sequence: u64,
+    payload: serde_json::Value,
+    require_ack: bool,
+    timeout: Option<u64>,
+}
+```

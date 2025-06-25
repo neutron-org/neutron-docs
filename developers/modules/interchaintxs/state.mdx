@@ -1,0 +1,116 @@
+---
+title: "State"
+---
+
+The Interchain Transactions module maintains state information about registered interchain accounts and their associated channels. This document describes the state objects and their storage schema.
+
+## Genesis State
+
+The module's genesis state contains the module parameters:
+
+```go
+// GenesisState defines the interchaintxs module's genesis state.
+type GenesisState struct {
+    // params defines all the parameters of the module.
+    Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
+}
+```
+
+## Module Parameters
+
+The module parameters are stored in the params subspace and include:
+
+```go
+// Params defines the parameters for the interchaintxs module.
+type Params struct {
+    // host_enabled defines whether the host submodule is enabled.
+    HostEnabled bool `protobuf:"varint,1,opt,name=host_enabled,json=hostEnabled,proto3" json:"host_enabled,omitempty"`
+    // allow_messages defines a list of sdk messages that the interchaintxs 
+    // module can execute.
+    AllowMessages []string `protobuf:"bytes,2,rep,name=allow_messages,json=allowMessages,proto3" json:"allow_messages,omitempty"`
+}
+```
+
+The parameters control:
+- Whether the host functionality is enabled (for receiving interchain accounts)
+- Which message types are allowed to be executed on remote chains
+
+## State Objects
+
+The module maintains several key-value pairs in the store that track interchain accounts and their associated information.
+
+### Port-to-Owner Mapping
+
+Maps a port ID to the owner address and interchain account ID.
+
+**Key Format:**
+```
+portID → {owner_address, interchain_account_id}
+```
+
+This mapping allows the module to quickly determine which contract and interchain account ID are associated with a particular IBC port.
+
+### Channel-to-Port Mapping
+
+Maps a channel ID to its associated port ID.
+
+**Key Format:**
+```
+channelID → portID
+```
+
+This mapping enables the module to find the correct port ID when handling channel acknowledgements and timeouts based on channel ID.
+
+### Owner-to-Interchain Account Address Mapping
+
+Maps a combination of owner address, interchain account ID, and connection ID to the remote interchain account address.
+
+**Key Format:**
+```
+{owner_address}|{interchain_account_id}|{connection_id} → remote_account_address
+```
+
+This mapping allows contracts to query the address of their interchain accounts on remote chains.
+
+## State Transitions
+
+The state undergoes transitions during the following operations:
+
+### Interchain Account Registration
+
+When a contract successfully registers an interchain account:
+
+1. A new port and channel are created for the interchain account
+2. The port-to-owner mapping is stored, linking the port to the contract and interchain account ID
+3. The channel-to-port mapping is stored, linking the newly created channel to the port
+
+### Channel Acknowledgement
+
+When a channel open acknowledgement is received for an interchain account:
+
+1. The remote interchain account address is extracted from the acknowledgement
+2. The owner-to-interchain account address mapping is stored, allowing the contract to query the address
+
+### Transaction Submission
+
+When a contract submits a transaction for execution on a remote chain:
+
+1. The port and channel for the specified interchain account ID are looked up
+2. The transaction is sent through the appropriate IBC channel
+3. No state changes occur in the module itself during this operation
+
+### Module Parameter Updates
+
+When governance updates the module parameters:
+
+1. The new parameters are stored in the params subspace
+2. No existing interchain accounts or channels are affected by parameter updates
+
+## Querying State
+
+The module provides query endpoints to access state information:
+
+- `QueryInterchainAccountAddress`: Retrieves the remote address of an interchain account based on owner, interchain account ID, and connection ID
+- `QueryParams`: Retrieves the current module parameters
+
+These queries allow contracts and users to obtain information about registered interchain accounts without modifying state. 

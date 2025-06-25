@@ -1,0 +1,251 @@
+---
+title: "Events"
+---
+
+The Fee Refunder module emits several events that can be observed during operations. These events are useful for tracking fee locking, distribution, and monitoring system behavior.
+
+## Module Events
+
+### `lock_fees`
+
+Emitted when fees are locked for an IBC packet.
+
+| Attribute Key | Description |
+| --- | --- |
+| `payer` | Address of the account that paid the fees |
+| `port_id` | ID of the IBC port |
+| `channel_id` | ID of the IBC channel |
+| `sequence` | Sequence number of the packet |
+
+Example event:
+```json
+{
+  "type": "lock_fees",
+  "attributes": [
+    {
+      "key": "payer",
+      "value": "neutron1..."
+    },
+    {
+      "key": "port_id",
+      "value": "transfer"
+    },
+    {
+      "key": "channel_id",
+      "value": "channel-0"
+    },
+    {
+      "key": "sequence",
+      "value": "123"
+    }
+  ]
+}
+```
+
+### `distribute_acknowledgement_fee`
+
+Emitted when an acknowledgement fee is distributed to a relayer.
+
+| Attribute Key | Description |
+| --- | --- |
+| `receiver` | Address of the relayer receiving the acknowledgement fee |
+| `port_id` | ID of the IBC port |
+| `channel_id` | ID of the IBC channel |
+| `sequence` | Sequence number of the packet |
+
+Example event:
+```json
+{
+  "type": "distribute_acknowledgement_fee",
+  "attributes": [
+    {
+      "key": "receiver",
+      "value": "neutron1..."
+    },
+    {
+      "key": "port_id",
+      "value": "transfer"
+    },
+    {
+      "key": "channel_id",
+      "value": "channel-0"
+    },
+    {
+      "key": "sequence",
+      "value": "123"
+    }
+  ]
+}
+```
+
+### `distribute_timeout_fee`
+
+Emitted when a timeout fee is distributed to a relayer.
+
+| Attribute Key | Description |
+| --- | --- |
+| `receiver` | Address of the relayer receiving the timeout fee |
+| `port_id` | ID of the IBC port |
+| `channel_id` | ID of the IBC channel |
+| `sequence` | Sequence number of the packet |
+
+Example event:
+```json
+{
+  "type": "distribute_timeout_fee",
+  "attributes": [
+    {
+      "key": "receiver",
+      "value": "neutron1..."
+    },
+    {
+      "key": "port_id",
+      "value": "transfer"
+    },
+    {
+      "key": "channel_id",
+      "value": "channel-0"
+    },
+    {
+      "key": "sequence",
+      "value": "123"
+    }
+  ]
+}
+```
+
+## Generic System Events
+
+In addition to the module-specific events, standard Cosmos SDK events are emitted during fee operations:
+
+### `message`
+
+Emitted on all operations with module attribution.
+
+| Attribute Key | Description |
+| --- | --- |
+| `module` | Name of the module ("feerefunder") |
+
+Example event:
+```json
+{
+  "type": "message",
+  "attributes": [
+    {
+      "key": "module",
+      "value": "feerefunder"
+    }
+  ]
+}
+```
+
+### `transfer`
+
+Emitted by the Bank module when fees are transferred.
+
+When locking fees:
+
+| Attribute Key | Description |
+| --- | --- |
+| `sender` | Address of the fee payer |
+| `recipient` | Module account of the Fee Refunder |
+| `amount` | Total fee amount (ack_fee + timeout_fee) |
+
+When distributing fees:
+
+| Attribute Key | Description |
+| --- | --- |
+| `sender` | Module account of the Fee Refunder |
+| `recipient` | Address of the relayer or original payer |
+| `amount` | Amount of fee being distributed |
+
+Example event when locking fees:
+```json
+{
+  "type": "transfer",
+  "attributes": [
+    {
+      "key": "sender",
+      "value": "neutron1..." // Payer address
+    },
+    {
+      "key": "recipient",
+      "value": "neutron1..." // Fee Refunder module account
+    },
+    {
+      "key": "amount",
+      "value": "2000untrn" // Total fee amount
+    }
+  ]
+}
+```
+
+Example event when distributing fees:
+```json
+{
+  "type": "transfer",
+  "attributes": [
+    {
+      "key": "sender",
+      "value": "neutron1..." // Fee Refunder module account
+    },
+    {
+      "key": "recipient",
+      "value": "neutron1..." // Relayer address
+    },
+    {
+      "key": "amount",
+      "value": "1000untrn" // Acknowledgement fee
+    }
+  ]
+}
+```
+
+## Filtering Events
+
+To filter for Fee Refunder module events using Tendermint's event query syntax:
+
+### Filter for Fee Locking Events
+
+```
+tm.event='Tx' AND lock_fees.payer='neutron1...'
+```
+
+### Filter for Acknowledgement Fee Distribution Events
+
+```
+tm.event='Tx' AND distribute_acknowledgement_fee.receiver='neutron1...'
+```
+
+### Filter for Timeout Fee Distribution Events
+
+```
+tm.event='Tx' AND distribute_timeout_fee.receiver='neutron1...'
+```
+
+### Filter for All Fee Refunder Module Events
+
+```
+tm.event='Tx' AND message.module='feerefunder'
+```
+
+## Events in Block Results
+
+Fee Refunder events are also included in block results, which can be queried from the Tendermint RPC endpoint:
+
+```bash
+curl http://localhost:26657/block_results?height=<height>
+```
+
+This is useful for monitoring applications tracking fee operations across the blockchain.
+
+## Monitoring Event Sequences
+
+For a complete fee lifecycle, you would typically observe the following event sequence:
+
+1. `lock_fees` - When an IBC packet is sent with fees
+2. Either:
+   - `distribute_acknowledgement_fee` - When an acknowledgement is received
+   - `distribute_timeout_fee` - When a timeout is received
+
+Each event will be accompanied by the corresponding `transfer` events from the Bank module. 

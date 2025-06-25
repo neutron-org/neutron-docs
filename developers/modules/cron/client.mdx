@@ -1,0 +1,399 @@
+---
+title: "Client"
+description: "CLI commands and gRPC-gateway endpoints for the Cron module"
+---
+
+# Client
+
+This document details the client interfaces for interacting with the Cron module, including CLI commands and gRPC-gateway REST endpoints.
+
+## Command Line Interface (CLI)
+
+The `neutrond` CLI provides commands to interact with the Cron module. These commands are available under the `cron` namespace.
+
+### Queries
+
+#### Get all schedules
+
+Returns a list of all registered schedules, with optional filtering by name or owner.
+
+```bash
+neutrond query cron schedules [--name SCHEDULE_NAME] [--owner OWNER_ADDRESS]
+```
+
+**Example:**
+```bash
+# Get all schedules
+neutrond query cron schedules
+
+# Get all schedules for a specific owner
+neutrond query cron schedules --owner neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq
+
+# Get all schedules with a specific name pattern
+neutrond query cron schedules --name "daily_*"
+```
+
+**Output:**
+```json
+{
+  "schedules": [
+    {
+      "name": "daily_reward_distribution",
+      "owner": "neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq",
+      "period": 7200,
+      "msgs": [
+        {
+          "msg": "eyJleGVjdXRlX2NvbnRyYWN0Ijp7ImNvbnRyYWN0X2FkZHIiOiJuZXV0cm9uMTZjNHVtbnAzN3BnODl2bDI0YTJtMWdwNnFwcW5ld3d0OHB6d2h4M3FkdnU3aDd5c3l3N2RhcnVxbWVtMHdkZyIsIm1zZyI6ImV5SnNiMkZrY21WM1lYSmtjeUk2ZXlKMllXeHBaR0YwYjNJaU9pSmphR0Z1Ym1Wc0xUVXlJaXdpY21WemEybHBZblYwWlNJNlptRnNjMlY5ZlE9PSIsImZ1bmRzIjpbXX19",
+          "gas_limit": 200000
+        }
+      ],
+      "boundary": null,
+      "last_execute_height": 8764230
+    }
+  ],
+  "pagination": {
+    "next_key": null,
+    "total": "1"
+  }
+}
+```
+
+#### Get a specific schedule
+
+Retrieves details of a specific schedule by name.
+
+```bash
+neutrond query cron schedule <SCHEDULE_NAME>
+```
+
+**Example:**
+```bash
+neutrond query cron schedule daily_reward_distribution
+```
+
+**Output:**
+```json
+{
+  "schedule": {
+    "name": "daily_reward_distribution",
+    "owner": "neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq",
+    "period": 7200,
+    "msgs": [
+      {
+        "msg": "eyJleGVjdXRlX2NvbnRyYWN0Ijp7ImNvbnRyYWN0X2FkZHIiOiJuZXV0cm9uMTZjNHVtbnAzN3BnODl2bDI0YTJtMWdwNnFwcW5ld3d0OHB6d2h4M3FkdnU3aDd5c3l3N2RhcnVxbWVtMHdkZyIsIm1zZyI6ImV5SnNiMkZrY21WM1lYSmtjeUk2ZXlKMllXeHBaR0YwYjNJaU9pSmphR0Z1Ym1Wc0xUVXlJaXdpY21WemEybHBZblYwWlNJNlptRnNjMlY5ZlE9PSIsImZ1bmRzIjpbXX19",
+        "gas_limit": 200000
+      }
+    ],
+    "boundary": null,
+    "last_execute_height": 8764230
+  }
+}
+```
+
+#### Get module parameters
+
+Retrieves the current parameters of the Cron module.
+
+```bash
+neutrond query cron params
+```
+
+**Example:**
+```bash
+neutrond query cron params
+```
+
+**Output:**
+```json
+{
+  "params": {
+    "max_gas_per_block": 6000000,
+    "max_msg_size": 10240,
+    "max_msgs_per_schedule": 10,
+    "max_name_length": 64,
+    "min_period": 5
+  }
+}
+```
+
+### Transactions
+
+#### Create a schedule
+
+Creates a new schedule with the specified parameters.
+
+```bash
+neutrond tx cron create-schedule <NAME> <PERIOD> <MESSAGES> [--boundary BOUNDARY]
+```
+
+**Example:**
+```bash
+# Create a schedule that executes approximately once per day (with 12s blocks)
+neutrond tx cron create-schedule \
+  "daily_reward_distribution" \
+  7200 \
+  '[{"msg":"eyJleGVjdXRlX2NvbnRyYWN0Ijp7ImNvbnRyYWN0X2FkZHIiOiJuZXV0cm9uMTZjNHVtbnAzN3BnODl2bDI0YTJtMWdwNnFwcW5ld3d0OHB6d2h4M3FkdnU3aDd5c3l3N2RhcnVxbWVtMHdkZyIsIm1zZyI6ImV5SnNiMkZrY21WM1lYSmtjeUk2ZXlKMllXeHBaR0YwYjNJaU9pSmphR0Z1Ym1Wc0xUVXlJaXdpY21WemEybHBZblYwWlNJNlptRnNjMlY5ZlE9PSIsImZ1bmRzIjpbXX19","gas_limit":200000}]' \
+  --from mykey
+```
+
+**Note:**
+The `MESSAGES` parameter is a JSON array of message objects. Each message object has a `msg` field with a base64-encoded JSON string representing the message to execute, and an optional `gas_limit` field specifying the gas limit for that message.
+
+#### Update a schedule
+
+Updates an existing schedule with new parameters.
+
+```bash
+neutrond tx cron update-schedule <NAME> <PERIOD> <MESSAGES> [--boundary BOUNDARY]
+```
+
+**Example:**
+```bash
+# Update a schedule to execute approximately once every two days
+neutrond tx cron update-schedule \
+  "daily_reward_distribution" \
+  14400 \
+  '[{"msg":"eyJleGVjdXRlX2NvbnRyYWN0Ijp7ImNvbnRyYWN0X2FkZHIiOiJuZXV0cm9uMTZjNHVtbnAzN3BnODl2bDI0YTJtMWdwNnFwcW5ld3d0OHB6d2h4M3FkdnU3aDd5c3l3N2RhcnVxbWVtMHdkZyIsIm1zZyI6ImV5SnNiMkZrY21WM1lYSmtjeUk2ZXlKMllXeHBaR0YwYjNJaU9pSmphR0Z1Ym1Wc0xUVXlJaXdpY21WemEybHBZblYwWlNJNlptRnNjMlY5ZlE9PSIsImZ1bmRzIjpbXX19","gas_limit":300000}]' \
+  --from mykey
+```
+
+#### Remove a schedule
+
+Removes an existing schedule.
+
+```bash
+neutrond tx cron remove-schedule <NAME>
+```
+
+**Example:**
+```bash
+neutrond tx cron remove-schedule daily_reward_distribution --from mykey
+```
+
+## gRPC-Gateway REST Endpoints
+
+The Cron module exposes several REST endpoints through the gRPC-gateway.
+
+### Queries
+
+#### Get all schedules
+
+```
+GET /neutron/cron/schedules
+```
+
+Query parameters:
+- `name` (optional): Filter schedules by name
+- `owner` (optional): Filter schedules by owner address
+- `pagination.key` (optional): Pagination key
+- `pagination.offset` (optional): Pagination offset
+- `pagination.limit` (optional): Pagination limit
+- `pagination.count_total` (optional): Whether to include the total count
+
+**Example:**
+```
+curl -X 'GET' \
+  'https://rest.neutron.org/neutron/cron/schedules?owner=neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq' \
+  -H 'accept: application/json'
+```
+
+#### Get a specific schedule
+
+```
+GET /neutron/cron/schedule/{name}
+```
+
+Path parameters:
+- `name`: Name of the schedule to retrieve
+
+**Example:**
+```
+curl -X 'GET' \
+  'https://rest.neutron.org/neutron/cron/schedule/daily_reward_distribution' \
+  -H 'accept: application/json'
+```
+
+#### Get a specific schedule by name
+
+```
+GET /neutron/cron/schedule_by_name/{name}
+```
+
+Path parameters:
+- `name`: Name of the schedule to retrieve
+
+**Example:**
+```
+curl -X 'GET' \
+  'https://rest.neutron.org/neutron/cron/schedule_by_name/daily_reward_distribution' \
+  -H 'accept: application/json'
+```
+
+#### Get module parameters
+
+```
+GET /neutron/cron/params
+```
+
+**Example:**
+```
+curl -X 'GET' \
+  'https://rest.neutron.org/neutron/cron/params' \
+  -H 'accept: application/json'
+```
+
+### Transactions
+
+The REST API also supports transaction submission via the `/cosmos/tx/v1beta1/txs` endpoint. Here are the message types for various operations:
+
+#### Create a schedule
+
+```json
+{
+  "body": {
+    "messages": [
+      {
+        "@type": "/neutron.cron.MsgCreateSchedule",
+        "name": "daily_reward_distribution",
+        "period": "7200",
+        "msgs": [
+          {
+            "msg": "eyJleGVjdXRlX2NvbnRyYWN0Ijp7ImNvbnRyYWN0X2FkZHIiOiJuZXV0cm9uMTZjNHVtbnAzN3BnODl2bDI0YTJtMWdwNnFwcW5ld3d0OHB6d2h4M3FkdnU3aDd5c3l3N2RhcnVxbWVtMHdkZyIsIm1zZyI6ImV5SnNiMkZrY21WM1lYSmtjeUk2ZXlKMllXeHBaR0YwYjNJaU9pSmphR0Z1Ym1Wc0xUVXlJaXdpY21WemEybHBZblYwWlNJNlptRnNjMlY5ZlE9PSIsImZ1bmRzIjpbXX19",
+            "gas_limit": "200000"
+          }
+        ],
+        "sender": "neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq"
+      }
+    ],
+    "memo": "",
+    "timeout_height": "0",
+    "extension_options": [],
+    "non_critical_extension_options": []
+  },
+  "auth_info": {
+    "signer_infos": [],
+    "fee": {
+      "amount": [],
+      "gas_limit": "200000",
+      "payer": "",
+      "granter": ""
+    }
+  },
+  "signatures": []
+}
+```
+
+#### Update a schedule
+
+```json
+{
+  "body": {
+    "messages": [
+      {
+        "@type": "/neutron.cron.MsgUpdateSchedule",
+        "name": "daily_reward_distribution",
+        "period": "14400",
+        "msgs": [
+          {
+            "msg": "eyJleGVjdXRlX2NvbnRyYWN0Ijp7ImNvbnRyYWN0X2FkZHIiOiJuZXV0cm9uMTZjNHVtbnAzN3BnODl2bDI0YTJtMWdwNnFwcW5ld3d0OHB6d2h4M3FkdnU3aDd5c3l3N2RhcnVxbWVtMHdkZyIsIm1zZyI6ImV5SnNiMkZrY21WM1lYSmtjeUk2ZXlKMllXeHBaR0YwYjNJaU9pSmphR0Z1Ym1Wc0xUVXlJaXdpY21WemEybHBZblYwWlNJNlptRnNjMlY5ZlE9PSIsImZ1bmRzIjpbXX19",
+            "gas_limit": "300000"
+          }
+        ],
+        "sender": "neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq"
+      }
+    ],
+    "memo": "",
+    "timeout_height": "0",
+    "extension_options": [],
+    "non_critical_extension_options": []
+  },
+  "auth_info": {
+    "signer_infos": [],
+    "fee": {
+      "amount": [],
+      "gas_limit": "200000",
+      "payer": "",
+      "granter": ""
+    }
+  },
+  "signatures": []
+}
+```
+
+#### Remove a schedule
+
+```json
+{
+  "body": {
+    "messages": [
+      {
+        "@type": "/neutron.cron.MsgRemoveSchedule",
+        "name": "daily_reward_distribution",
+        "sender": "neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq"
+      }
+    ],
+    "memo": "",
+    "timeout_height": "0",
+    "extension_options": [],
+    "non_critical_extension_options": []
+  },
+  "auth_info": {
+    "signer_infos": [],
+    "fee": {
+      "amount": [],
+      "gas_limit": "200000",
+      "payer": "",
+      "granter": ""
+    }
+  },
+  "signatures": []
+}
+```
+
+## JavaScript/TypeScript Client
+
+Here's an example of using the Cron module from a JavaScript/TypeScript client using CosmJS:
+
+```typescript
+import { SigningStargateClient, GasPrice } from "@cosmjs/stargate";
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
+
+// Create a wallet from a mnemonic
+const wallet = await DirectSecp256k1HdWallet.fromMnemonic(
+  "your mnemonic here",
+  { prefix: "neutron" }
+);
+
+// Connect to the chain
+const client = await SigningStargateClient.connectWithSigner(
+  "https://rpc.neutron.org",
+  wallet,
+  { gasPrice: GasPrice.fromString("0.025untrn") }
+);
+
+// Create a new schedule
+const createScheduleMsg = {
+  typeUrl: "/neutron.cron.MsgCreateSchedule",
+  value: {
+    name: "daily_reward_distribution",
+    period: "7200",
+    msgs: [
+      {
+        msg: "eyJleGVjdXRlX2NvbnRyYWN0Ijp7ImNvbnRyYWN0X2FkZHIiOiJuZXV0cm9uMTZjNHVtbnAzN3BnODl2bDI0YTJtMWdwNnFwcW5ld3d0OHB6d2h4M3FkdnU3aDd5c3l3N2RhcnVxbWVtMHdkZyIsIm1zZyI6ImV5SnNiMkZrY21WM1lYSmtjeUk2ZXlKMllXeHBaR0YwYjNJaU9pSmphR0Z1Ym1Wc0xUVXlJaXdpY21WemEybHBZblYwWlNJNlptRnNjMlY5ZlE9PSIsImZ1bmRzIjpbXX19",
+        gas_limit: "200000"
+      }
+    ],
+    sender: (await wallet.getAccounts())[0].address
+  }
+};
+
+// Broadcast the transaction
+const result = await client.signAndBroadcast(
+  (await wallet.getAccounts())[0].address,
+  [createScheduleMsg],
+  "auto",
+  "Create a daily reward distribution schedule"
+);
+
+console.log("Transaction result:", result);
+``` 

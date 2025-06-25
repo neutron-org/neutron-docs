@@ -1,0 +1,344 @@
+---
+title: "Dex Reference"
+---
+
+This reference provides detailed information about the data structures, types, and constants used in the Dex module.
+
+## Core Concepts
+
+### Pair ID
+
+A pair ID uniquely identifies a token pair and follows the format: `{tokenA}&lt;&gt;{tokenB}` where tokens are lexicographically ordered (alphabetically). Example: `untrn&lt;&gt;uatom`.
+
+**Components:**
+- Token names are sorted alphabetically
+- Separated by `&lt;&gt;` delimiter
+- Case-sensitive
+
+**Examples:**
+- `atom&lt;&gt;usdc` (ATOM comes before USDC alphabetically)
+- `untrn&lt;&gt;uatom` (UNTRN comes before UATOM alphabetically)
+
+**String Representation:** `Token0&lt;&gt;Token1` (e.g., "ATOM&lt;&gt;USDC")
+
+### Tick Index
+
+Tick indexes represent discrete price points where:
+
+- Price = 1.0001^tickIndex
+- Each tick represents a 0.01% (1 basis point) price change
+- Valid range: -559,680 to 559,680
+- Positive tick indexes mean token1 is worth more than token0
+- Negative tick indexes mean token0 is worth more than token1
+
+**Price Conversion Formulas:**
+
+**Tick to Price:**
+```
+price = 1.0001^tickIndex
+```
+
+**Price to Tick:**
+```
+tickIndex = log(price) / log(1.0001)
+```
+
+### Trade Pair ID
+
+Identifies the direction of a trade within a pair:
+
+```go
+type TradePairID struct {
+    MakerDenom string  // Token being sold
+    TakerDenom string  // Token being bought
+}
+```
+
+### Pool ID
+
+Each pool is uniquely identified by:
+- Pair ID (the two tokens)
+- Tick index (the price point)
+- Fee (in basis points)
+
+### Tick Liquidity
+
+The `TickLiquidity` type is a union type that can represent one of:
+- `PoolReserves`: Liquidity in an AMM pool
+- `LimitOrderTranche`: A group of limit orders at the same price
+
+### Tranche Key
+
+A unique identifier for a limit order tranche, typically derived from:
+- Creator address
+- Token pair
+- Tick index
+- Creation timestamp
+
+## Data Structures
+
+### Pool
+
+```protobuf
+message Pool {
+  uint64 id = 1;
+  PoolReserves lower_tick0 = 2;
+  PoolReserves upper_tick1 = 3;
+}
+```
+
+### PoolReserves
+
+```protobuf
+message PoolReserves {
+  PoolReservesKey key = 1;
+  string reserves_maker_denom = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string price_taker_to_maker = 3 [
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false
+  ];
+  string price_opposite_taker_to_maker = 4 [
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message PoolReservesKey {
+  TradePairID trade_pair_id = 1;
+  int64 tick_index_taker_to_maker = 2;
+  uint64 fee = 3;
+}
+```
+
+### LimitOrderTranche
+
+```protobuf
+message LimitOrderTranche {
+  LimitOrderTrancheKey key = 1;
+  string reserves_maker_denom = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string reserves_taker_denom = 3 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string total_maker_denom = 4 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string total_taker_denom = 5 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  google.protobuf.Timestamp expiration_time = 6 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = true
+  ];
+  string price_taker_to_maker = 7 [
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false,
+    deprecated = true
+  ];
+  string maker_price = 8 [
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message LimitOrderTrancheKey {
+  TradePairID trade_pair_id = 1;
+  int64 tick_index_taker_to_maker = 2;
+  string tranche_key = 3;
+}
+```
+
+### LimitOrderTrancheUser
+
+```protobuf
+message LimitOrderTrancheUser {
+  TradePairID trade_pair_id = 1;
+  int64 tick_index_taker_to_maker = 2;
+  string tranche_key = 3;
+  string address = 4;
+  string shares_owned = 5 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string shares_withdrawn = 6 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string shares_cancelled = 7 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  LimitOrderType order_type = 8;
+}
+```
+
+### DepositRecord
+
+```protobuf
+message DepositRecord {
+  PairID pair_id = 1;
+  string shares_owned = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  int64 center_tick_index = 3;
+  int64 lower_tick_index = 4;
+  int64 upper_tick_index = 5;
+  uint64 fee = 6;
+  string total_shares = 7 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = true
+  ];
+  Pool pool = 8 [(gogoproto.nullable) = true];
+}
+```
+
+### PoolMetadata
+
+```protobuf
+message PoolMetadata {
+  uint64 id = 1;
+  int64 tick = 2;
+  uint64 fee = 3;
+  PairID pair_id = 4;
+}
+```
+
+### TickLiquidity
+
+```protobuf
+message TickLiquidity {
+  oneof liquidity {
+    PoolReserves pool_reserves = 1;
+    LimitOrderTranche limit_order_tranche = 2;
+  }
+}
+```
+
+### TradePairID
+
+```protobuf
+message TradePairID {
+  string maker_denom = 1;
+  string taker_denom = 2;
+}
+```
+
+### PairID
+
+```protobuf
+message PairID {
+  string token0 = 1;
+  string token1 = 2;
+}
+```
+
+## Enums
+
+### LimitOrderType
+
+```protobuf
+enum LimitOrderType {
+  GOOD_TIL_CANCELLED = 0;
+  FILL_OR_KILL = 1;
+  IMMEDIATE_OR_CANCEL = 2;
+  JUST_IN_TIME = 3;
+  GOOD_TIL_TIME = 4;
+}
+```
+
+### TickLiquidityType
+
+```protobuf
+enum TickLiquidityType {
+  POOL_RESERVES = 0;
+  LIMIT_ORDER_TRANCHE = 1;
+}
+```
+
+## Constants
+
+### Fee Tiers
+
+Standard fee tiers (in basis points):
+
+- **1 bp (0.01%)**: Ultra-low fee for stablecoins and highly correlated assets
+- **5 bp (0.05%)**: Low fee for major token pairs
+- **30 bp (0.30%)**: Standard fee for most token pairs
+- **100 bp (1.00%)**: High fee for exotic or volatile pairs
+
+### Tick Spacing
+
+The minimum tick spacing between adjacent ticks varies by fee tier:
+
+- **1 bp**: 1 tick spacing
+- **5 bp**: 10 tick spacing  
+- **30 bp**: 60 tick spacing
+- **100 bp**: 200 tick spacing
+
+### Price Limits
+
+- **Minimum Price**: 1.0001^(-559,680) ≈ 4.45e-25
+- **Maximum Price**: 1.0001^(559,680) ≈ 2.25e24
+- **Tick Range**: -559,680 to 559,680
+
+### Precision
+
+- **Price Precision**: 18 decimal places
+- **Amount Precision**: Varies by token denomination
+- **Fee Precision**: Basis points (1/10,000)
+
+## Mathematical Formulas
+
+### Price to Tick Conversion
+
+```
+tick = floor(log(price) / log(1.0001))
+```
+
+### Tick to Price Conversion
+
+```
+price = 1.0001^tick
+```
+
+### Liquidity Calculation
+
+For a pool with reserves R0 and R1 at price P:
+
+```
+L = sqrt(R0 * R1 * P)
+```
+
+### Fee Calculation
+
+Trading fees are calculated as:
+
+```
+fee_amount = trade_amount * fee_rate / 10000
+```
+
+Where `fee_rate` is in basis points.
+
+## Error Codes
+
+Common error codes returned by the Dex module:
+
+- **1**: Invalid pair ID format
+- **2**: Insufficient liquidity
+- **3**: Price out of range
+- **4**: Invalid tick index
+- **5**: Order expired
+- **6**: Insufficient balance
+- **7**: Invalid fee tier
+- **8**: Pool does not exist
+- **9**: Tranche not found
+- **10**: Unauthorized operation 

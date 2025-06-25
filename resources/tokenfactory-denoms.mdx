@@ -1,0 +1,65 @@
+---
+title: "TokenFactory Denoms"
+description: "TokenFactory-created denominations available on Neutron"
+icon: "coins"
+---
+
+This page lists tokens created using the TokenFactory module on Neutron, which allows smart contracts to create native tokens with custom denominations.
+
+## Mainnet (neutron-1)
+
+| Symbol | TokenFactory Denom |
+|--------|-------------------|
+| wstETH | `factory/neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry/wstETH` |
+
+## Bridge Contracts
+
+The wstETH token is provided by the Lido Satellite contract on Neutron:
+
+| Contract | Address |
+|----------|---------|
+| Lido Satellite (neutron-1) | `neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry` |
+
+## Testnet (pion-1)
+
+| Symbol | TokenFactory Denom |
+|--------|-------------------|
+| wstETH | `factory/neutron1pf7u5tqkc9xc5l2xjqzsufc467ccmjxw68v5hl0k5gaye7zer3tqvrucam/wstETH` |
+
+| Contract | Address |
+|----------|---------|
+| Lido Satellite (pion-1) | `neutron1pf7u5tqkc9xc5l2xjqzsufc467ccmjxw68v5hl0k5gaye7zer3tqvrucam` |
+
+## Using TokenFactory Denoms
+
+To interact with TokenFactory tokens, use the full denomination format. For example:
+
+```bash
+# Query wstETH balance
+neutrond query bank balances neutron123... --denom="factory/neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry/wstETH"
+
+# Send wstETH tokens
+neutrond tx bank send \
+  my-wallet recipient-address \
+  1000000factory/neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry/wstETH \
+  --chain-id neutron-1 \
+  --gas auto \
+  --gas-adjustment 1.3
+```
+
+## Creating TokenFactory Denoms
+
+Smart contracts on Neutron can create their own TokenFactory denominations by using the TokenFactory module. This is particularly useful for applications that need to:
+
+1. Create wrapped versions of existing tokens
+2. Mint liquidity provider tokens
+3. Create synthetic assets
+4. Create governance tokens
+
+To create a TokenFactory denom from a smart contract, the contract code needs to invoke the appropriate messages from the TokenFactory module.
+
+## Fee Tokens
+
+Some TokenFactory tokens can be used to pay for transaction fees on Neutron. The current list of supported TokenFactory fee tokens includes:
+
+- `factory/neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry/wstETH` (wstETH) 

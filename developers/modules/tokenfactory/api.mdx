@@ -1,0 +1,872 @@
+---
+sidebar_position: 6
+---
+
+# API Reference
+
+## gRPC Endpoints
+
+### Query Service
+
+The Token Factory module provides the following gRPC query endpoints:
+
+#### Params
+
+Get current module parameters.
+
+**Endpoint:** `/neutron.tokenfactory.Query/Params`
+
+**Request:**
+```protobuf
+message QueryParamsRequest {}
+```
+
+**Response:**
+```protobuf
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+```
+
+**Example:**
+```bash
+grpcurl -plaintext localhost:9090 neutron.tokenfactory.Query/Params
+```
+
+#### DenomAuthorityMetadata
+
+Get the admin address for a specific token denomination.
+
+**Endpoint:** `/neutron.tokenfactory.Query/DenomAuthorityMetadata`
+
+**Request:**
+```protobuf
+message QueryDenomAuthorityMetadataRequest {
+  string denom = 1;
+}
+```
+
+**Response:**
+```protobuf
+message QueryDenomAuthorityMetadataResponse {
+  DenomAuthorityMetadata authority_metadata = 1;
+}
+```
+
+**Example:**
+```bash
+grpcurl -plaintext -d '{"denom":"factory/neutron1abc.../mytoken"}' \
+  localhost:9090 neutron.tokenfactory.Query/DenomAuthorityMetadata
+```
+
+#### DenomsFromCreator
+
+Get all token denominations created by a specific address.
+
+**Endpoint:** `/neutron.tokenfactory.Query/DenomsFromCreator`
+
+**Request:**
+```protobuf
+message QueryDenomsFromCreatorRequest {
+  string creator = 1;
+}
+```
+
+**Response:**
+```protobuf
+message QueryDenomsFromCreatorResponse {
+  repeated string denoms = 1;
+}
+```
+
+**Example:**
+```bash
+grpcurl -plaintext -d '{"creator":"neutron1abc..."}' \
+  localhost:9090 neutron.tokenfactory.Query/DenomsFromCreator
+```
+
+#### BeforeSendHookAddress
+
+Get the before-send hook contract address for a token denomination.
+
+**Endpoint:** `/neutron.tokenfactory.Query/BeforeSendHookAddress`
+
+**Request:**
+```protobuf
+message QueryBeforeSendHookAddressRequest {
+  string denom = 1;
+}
+```
+
+**Response:**
+```protobuf
+message QueryBeforeSendHookAddressResponse {
+  string contract_addr = 1;
+}
+```
+
+**Example:**
+```bash
+grpcurl -plaintext -d '{"denom":"factory/neutron1abc.../mytoken"}' \
+  localhost:9090 neutron.tokenfactory.Query/BeforeSendHookAddress
+```
+
+## REST API Endpoints
+
+### Query Endpoints
+
+#### Get Parameters
+
+**Endpoint:** `GET /neutron/tokenfactory/v1beta1/params`
+
+**Description:** Retrieve current Token Factory module parameters
+
+**Response:**
+```json
+{
+  "params": {
+    "denom_creation_fee": [
+      {
+        "denom": "untrn",
+        "amount": "1000000"
+      }
+    ],
+    "denom_creation_gas_consume": "2000000",
+    "fee_collector_address": "neutron1fee_collector...",
+    "whitelisted_hooks": [
+      {
+        "code_id": "1",
+        "denom_creator": "neutron1creator..."
+      }
+    ]
+  }
+}
+```
+
+#### Get Denom Admin
+
+**Endpoint:** `GET /neutron/tokenfactory/v1beta1/denom/{denom}/admin`
+
+**Description:** Get the admin address for a specific token denomination
+
+**Path Parameters:**
+- `denom`: Token denomination (URL-encoded)
+
+**Example:**
+```bash
+curl "https://rest.neutron.org/neutron/tokenfactory/v1beta1/denom/factory%2Fneutron1abc...%2Fmytoken/admin"
+```
+
+**Response:**
+```json
+{
+  "authority_metadata": {
+    "admin": "neutron1admin..."
+  }
+}
+```
+
+#### Get Denoms by Creator
+
+**Endpoint:** `GET /neutron/tokenfactory/v1beta1/denoms/{creator}`
+
+**Description:** Get all token denominations created by a specific address
+
+**Path Parameters:**
+- `creator`: Creator address
+
+**Example:**
+```bash
+curl "https://rest.neutron.org/neutron/tokenfactory/v1beta1/denoms/neutron1creator..."
+```
+
+**Response:**
+```json
+{
+  "denoms": [
+    "factory/neutron1creator.../token1",
+    "factory/neutron1creator.../token2",
+    "factory/neutron1creator.../lp-token"
+  ]
+}
+```
+
+#### Get Before-Send Hook
+
+**Endpoint:** `GET /neutron/tokenfactory/v1beta1/denom/{denom}/hook`
+
+**Description:** Get the before-send hook contract address for a token
+
+**Path Parameters:**
+- `denom`: Token denomination (URL-encoded)
+
+**Example:**
+```bash
+curl "https://rest.neutron.org/neutron/tokenfactory/v1beta1/denom/factory%2Fneutron1abc...%2Fmytoken/hook"
+```
+
+**Response:**
+```json
+{
+  "contract_addr": "neutron1hook_contract..."
+}
+```
+
+## Transaction Messages
+
+### MsgCreateDenom
+
+Create a new custom token denomination.
+
+**Type:** `/neutron.tokenfactory.MsgCreateDenom`
+
+**Structure:**
+```protobuf
+message MsgCreateDenom {
+  string sender = 1;
+  string subdenom = 2;
+}
+```
+
+**Response:**
+```protobuf
+message MsgCreateDenomResponse {
+  string new_token_denom = 1;
+}
+```
+
+### MsgMint
+
+Mint tokens to a specified address.
+
+**Type:** `/neutron.tokenfactory.MsgMint`
+
+**Structure:**
+```protobuf
+message MsgMint {
+  string sender = 1;
+  cosmos.base.v1beta1.Coin amount = 2;
+  string mint_to_address = 3;
+}
+```
+
+### MsgBurn
+
+Burn tokens from a specified address.
+
+**Type:** `/neutron.tokenfactory.MsgBurn`
+
+**Structure:**
+```protobuf
+message MsgBurn {
+  string sender = 1;
+  cosmos.base.v1beta1.Coin amount = 2;
+  string burn_from_address = 3;
+}
+```
+
+### MsgChangeAdmin
+
+Change the admin of a token denomination.
+
+**Type:** `/neutron.tokenfactory.MsgChangeAdmin`
+
+**Structure:**
+```protobuf
+message MsgChangeAdmin {
+  string sender = 1;
+  string denom = 2;
+  string new_admin = 3;
+}
+```
+
+### MsgSetDenomMetadata
+
+Set or update token metadata.
+
+**Type:** `/neutron.tokenfactory.MsgSetDenomMetadata`
+
+**Structure:**
+```protobuf
+message MsgSetDenomMetadata {
+  string sender = 1;
+  cosmos.bank.v1beta1.Metadata metadata = 2;
+}
+```
+
+### MsgSetBeforeSendHook
+
+Set or remove a before-send hook for a token.
+
+**Type:** `/neutron.tokenfactory.MsgSetBeforeSendHook`
+
+**Structure:**
+```protobuf
+message MsgSetBeforeSendHook {
+  string sender = 1;
+  string denom = 2;
+  string contract_addr = 3;
+}
+```
+
+### MsgForceTransfer
+
+Force a transfer that bypasses before-send hooks.
+
+**Type:** `/neutron.tokenfactory.MsgForceTransfer`
+
+**Structure:**
+```protobuf
+message MsgForceTransfer {
+  string sender = 1;
+  cosmos.base.v1beta1.Coin amount = 2;
+  string transfer_from_address = 3;
+  string transfer_to_address = 4;
+}
+```
+
+### MsgUpdateParams
+
+Update module parameters (governance only).
+
+**Type:** `/neutron.tokenfactory.MsgUpdateParams`
+
+**Structure:**
+```protobuf
+message MsgUpdateParams {
+  string authority = 1;
+  Params params = 2;
+}
+```
+
+<Warning>
+This message can only be executed through governance proposals.
+</Warning>
+
+## Client Libraries
+
+### Go Client
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    
+    "google.golang.org/grpc"
+    "github.com/neutron-org/neutron/v6/x/tokenfactory/types"
+    sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
+type TokenFactoryClient struct {
+    conn   *grpc.ClientConn
+    client types.QueryClient
+}
+
+func NewTokenFactoryClient(endpoint string) (*TokenFactoryClient, error) {
+    conn, err := grpc.Dial(endpoint, grpc.WithInsecure())
+    if err != nil {
+        return nil, err
+    }
+    
+    client := types.NewQueryClient(conn)
+    
+    return &TokenFactoryClient{
+        conn:   conn,
+        client: client,
+    }, nil
+}
+
+func (c *TokenFactoryClient) Close() error {
+    return c.conn.Close()
+}
+
+func (c *TokenFactoryClient) GetParams(ctx context.Context) (*types.QueryParamsResponse, error) {
+    req := &types.QueryParamsRequest{}
+    return c.client.Params(ctx, req)
+}
+
+func (c *TokenFactoryClient) GetDenomAdmin(ctx context.Context, denom string) (string, error) {
+    req := &types.QueryDenomAuthorityMetadataRequest{
+        Denom: denom,
+    }
+    
+    resp, err := c.client.DenomAuthorityMetadata(ctx, req)
+    if err != nil {
+        return "", err
+    }
+    
+    return resp.AuthorityMetadata.Admin, nil
+}
+
+func (c *TokenFactoryClient) GetDenomsByCreator(ctx context.Context, creator string) ([]string, error) {
+    req := &types.QueryDenomsFromCreatorRequest{
+        Creator: creator,
+    }
+    
+    resp, err := c.client.DenomsFromCreator(ctx, req)
+    if err != nil {
+        return nil, err
+    }
+    
+    return resp.Denoms, nil
+}
+
+func (c *TokenFactoryClient) GetBeforeSendHook(ctx context.Context, denom string) (string, error) {
+    req := &types.QueryBeforeSendHookAddressRequest{
+        Denom: denom,
+    }
+    
+    resp, err := c.client.BeforeSendHookAddress(ctx, req)
+    if err != nil {
+        return "", err
+    }
+    
+    return resp.ContractAddr, nil
+}
+
+// Usage example
+func main() {
+    client, err := NewTokenFactoryClient("localhost:9090")
+    if err != nil {
+        panic(err)
+    }
+    defer client.Close()
+    
+    ctx := context.Background()
+    
+    // Get parameters
+    params, err := client.GetParams(ctx)
+    if err != nil {
+        panic(err)
+    }
+    
+    fmt.Printf("Creation fee: %v\n", params.Params.DenomCreationFee)
+    
+    // Get denoms by creator
+    denoms, err := client.GetDenomsByCreator(ctx, "neutron1creator...")
+    if err != nil {
+        panic(err)
+    }
+    
+    fmt.Printf("Denoms created: %v\n", denoms)
+    
+    // Get admin for each denom
+    for _, denom := range denoms {
+        admin, err := client.GetDenomAdmin(ctx, denom)
+        if err != nil {
+            continue
+        }
+        fmt.Printf("Denom %s admin: %s\n", denom, admin)
+    }
+}
+```
+
+### JavaScript/TypeScript Client
+
+```typescript
+import { QueryClient } from "@cosmjs/stargate";
+import { Tendermint34Client } from "@cosmjs/tendermint-rpc";
+
+interface TokenFactoryParams {
+  denom_creation_fee: Array<{ denom: string; amount: string }>;
+  denom_creation_gas_consume: string;
+  fee_collector_address: string;
+  whitelisted_hooks: Array<{
+    code_id: string;
+    denom_creator: string;
+  }>;
+}
+
+interface DenomAuthorityMetadata {
+  admin: string;
+}
+
+export class TokenFactoryQueryClient {
+  private queryClient: QueryClient;
+
+  constructor(queryClient: QueryClient) {
+    this.queryClient = queryClient;
+  }
+
+  static async connect(rpcEndpoint: string): Promise<TokenFactoryQueryClient> {
+    const tmClient = await Tendermint34Client.connect(rpcEndpoint);
+    const queryClient = new QueryClient(tmClient);
+    return new TokenFactoryQueryClient(queryClient);
+  }
+
+  async getParams(): Promise<TokenFactoryParams> {
+    const response = await this.queryClient.queryAbci("/neutron.tokenfactory.Query/Params", new Uint8Array());
+    const decoded = this.decodeParamsResponse(response.value);
+    return decoded.params;
+  }
+
+  async getDenomAdmin(denom: string): Promise<string> {
+    const request = this.encodeDenomAdminRequest({ denom });
+    const response = await this.queryClient.queryAbci("/neutron.tokenfactory.Query/DenomAuthorityMetadata", request);
+    const decoded = this.decodeDenomAdminResponse(response.value);
+    return decoded.authority_metadata.admin;
+  }
+
+  async getDenomsByCreator(creator: string): Promise<string[]> {
+    const request = this.encodeDenomsFromCreatorRequest({ creator });
+    const response = await this.queryClient.queryAbci("/neutron.tokenfactory.Query/DenomsFromCreator", request);
+    const decoded = this.decodeDenomsFromCreatorResponse(response.value);
+    return decoded.denoms;
+  }
+
+  async getBeforeSendHook(denom: string): Promise<string> {
+    const request = this.encodeBeforeSendHookRequest({ denom });
+    const response = await this.queryClient.queryAbci("/neutron.tokenfactory.Query/BeforeSendHookAddress", request);
+    const decoded = this.decodeBeforeSendHookResponse(response.value);
+    return decoded.contract_addr;
+  }
+
+  async isTokenAdmin(denom: string, address: string): Promise<boolean> {
+    try {
+      const admin = await this.getDenomAdmin(denom);
+      return admin === address;
+    } catch {
+      return false;
+    }
+  }
+
+  async getTokenInfo(denom: string): Promise<{
+    admin: string;
+    hook?: string;
+    isFactory: boolean;
+  }> {
+    const isFactory = denom.startsWith("factory/");
+    
+    if (!isFactory) {
+      return { admin: "", isFactory: false };
+    }
+
+    const admin = await this.getDenomAdmin(denom);
+    let hook: string | undefined;
+    
+    try {
+      hook = await this.getBeforeSendHook(denom);
+      if (hook === "") hook = undefined;
+    } catch {
+      // Hook not set
+    }
+
+    return { admin, hook, isFactory };
+  }
+
+  // Placeholder methods for protobuf encoding/decoding
+  private decodeParamsResponse(data: Uint8Array): { params: TokenFactoryParams } {
+    // Implementation depends on your protobuf library
+    throw new Error("Implement protobuf decoding");
+  }
+
+  private encodeDenomAdminRequest(req: { denom: string }): Uint8Array {
+    // Implementation depends on your protobuf library
+    throw new Error("Implement protobuf encoding");
+  }
+
+  private decodeDenomAdminResponse(data: Uint8Array): { authority_metadata: DenomAuthorityMetadata } {
+    // Implementation depends on your protobuf library
+    throw new Error("Implement protobuf decoding");
+  }
+
+  // ... other encoding/decoding methods
+
+  disconnect(): void {
+    this.queryClient.disconnect();
+  }
+}
+
+// Usage example
+async function example() {
+  const client = await TokenFactoryQueryClient.connect("https://rpc.neutron.org");
+  
+  try {
+    // Get parameters
+    const params = await client.getParams();
+    console.log("Creation fee:", params.denom_creation_fee);
+    
+    // Get denoms by creator
+    const denoms = await client.getDenomsByCreator("neutron1creator...");
+    console.log("Created denoms:", denoms);
+    
+    // Get token info
+    for (const denom of denoms) {
+      const info = await client.getTokenInfo(denom);
+      console.log(`${denom}:`, info);
+    }
+    
+  } finally {
+    client.disconnect();
+  }
+}
+```
+
+### Python Client
+
+```python
+import requests
+from typing import List, Dict, Any, Optional
+from dataclasses import dataclass
+
+@dataclass
+class WhitelistedHook:
+    code_id: str
+    denom_creator: str
+
+@dataclass
+class TokenFactoryParams:
+    denom_creation_fee: List[Dict[str, str]]
+    denom_creation_gas_consume: str
+    fee_collector_address: str
+    whitelisted_hooks: List[WhitelistedHook]
+
+class TokenFactoryRestClient:
+    def __init__(self, rest_endpoint: str = "https://rest.neutron.org"):
+        self.rest_endpoint = rest_endpoint.rstrip("/")
+    
+    def get_params(self) -> TokenFactoryParams:
+        """Get Token Factory module parameters."""
+        url = f"{self.rest_endpoint}/neutron/tokenfactory/v1beta1/params"
+        
+        response = requests.get(url)
+        response.raise_for_status()
+        
+        data = response.json()["params"]
+        
+        return TokenFactoryParams(
+            denom_creation_fee=data["denom_creation_fee"],
+            denom_creation_gas_consume=data["denom_creation_gas_consume"],
+            fee_collector_address=data["fee_collector_address"],
+            whitelisted_hooks=[
+                WhitelistedHook(
+                    code_id=hook["code_id"],
+                    denom_creator=hook["denom_creator"]
+                ) for hook in data["whitelisted_hooks"]
+            ]
+        )
+    
+    def get_denom_admin(self, denom: str) -> str:
+        """Get the admin address for a token denomination."""
+        # URL encode the denomination
+        import urllib.parse
+        encoded_denom = urllib.parse.quote(denom, safe='')
+        
+        url = f"{self.rest_endpoint}/neutron/tokenfactory/v1beta1/denom/{encoded_denom}/admin"
+        
+        response = requests.get(url)
+        response.raise_for_status()
+        
+        return response.json()["authority_metadata"]["admin"]
+    
+    def get_denoms_by_creator(self, creator: str) -> List[str]:
+        """Get all denominations created by a specific address."""
+        url = f"{self.rest_endpoint}/neutron/tokenfactory/v1beta1/denoms/{creator}"
+        
+        response = requests.get(url)
+        response.raise_for_status()
+        
+        return response.json()["denoms"]
+    
+    def get_before_send_hook(self, denom: str) -> Optional[str]:
+        """Get the before-send hook contract address for a token."""
+        import urllib.parse
+        encoded_denom = urllib.parse.quote(denom, safe='')
+        
+        url = f"{self.rest_endpoint}/neutron/tokenfactory/v1beta1/denom/{encoded_denom}/hook"
+        
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            
+            hook_addr = response.json()["contract_addr"]
+            return hook_addr if hook_addr else None
+        except requests.exceptions.HTTPError:
+            return None
+    
+    def is_token_admin(self, denom: str, address: str) -> bool:
+        """Check if an address is the admin of a token."""
+        try:
+            admin = self.get_denom_admin(denom)
+            return admin == address
+        except:
+            return False
+    
+    def get_token_info(self, denom: str) -> Dict[str, Any]:
+        """Get comprehensive token information."""
+        if not denom.startswith("factory/"):
+            return {
+                "admin": "",
+                "hook": None,
+                "is_factory": False
+            }
+        
+        admin = self.get_denom_admin(denom)
+        hook = self.get_before_send_hook(denom)
+        
+        return {
+            "admin": admin,
+            "hook": hook,
+            "is_factory": True
+        }
+    
+    def get_creation_fee(self) -> List[Dict[str, str]]:
+        """Get the current token creation fee."""
+        params = self.get_params()
+        return params.denom_creation_fee
+    
+    def is_hook_whitelisted(self, code_id: str, creator: str) -> bool:
+        """Check if a hook contract is whitelisted for a creator."""
+        params = self.get_params()
+        
+        for hook in params.whitelisted_hooks:
+            if hook.code_id == code_id and hook.denom_creator == creator:
+                return True
+        
+        return False
+
+# Usage example
+if __name__ == "__main__":
+    client = TokenFactoryRestClient()
+    
+    # Get parameters
+    params = client.get_params()
+    print(f"Creation fee: {params.denom_creation_fee}")
+    print(f"Gas consume: {params.denom_creation_gas_consume}")
+    
+    # Get denoms by creator
+    creator = "neutron1creator..."
+    denoms = client.get_denoms_by_creator(creator)
+    print(f"Denoms created by {creator}: {denoms}")
+    
+    # Get token info for each denom
+    for denom in denoms:
+        info = client.get_token_info(denom)
+        print(f"{denom}: {info}")
+    
+    # Check if hook is whitelisted
+    is_whitelisted = client.is_hook_whitelisted("1", creator)
+    print(f"Hook code_id=1 whitelisted for {creator}: {is_whitelisted}")
+```
+
+## CLI Commands
+
+### Query Commands
+
+#### Query Parameters
+
+```bash
+neutrond query tokenfactory params
+```
+
+#### Query Denom Authority Metadata
+
+```bash
+neutrond query tokenfactory denom-authority-metadata factory/neutron1abc.../mytoken
+```
+
+#### Query Denoms from Creator
+
+```bash
+neutrond query tokenfactory denoms-from-creator neutron1creator...
+```
+
+#### Query Before-Send Hook
+
+```bash
+neutrond query tokenfactory before-send-hook factory/neutron1abc.../mytoken
+```
+
+### Transaction Commands
+
+#### Create Denomination
+
+```bash
+neutrond tx tokenfactory create-denom mytoken --from creator
+```
+
+#### Mint Tokens
+
+```bash
+neutrond tx tokenfactory mint 1000000factory/neutron1.../mytoken --from admin
+```
+
+#### Burn Tokens
+
+```bash
+neutrond tx tokenfactory burn 500000factory/neutron1.../mytoken --from admin
+```
+
+#### Change Admin
+
+```bash
+neutrond tx tokenfactory change-admin factory/neutron1.../mytoken neutron1newadmin... --from admin
+```
+
+#### Set Metadata
+
+```bash
+neutrond tx tokenfactory set-denom-metadata metadata.json --from admin
+```
+
+#### Set Before-Send Hook
+
+```bash
+neutrond tx tokenfactory set-before-send-hook factory/neutron1.../mytoken neutron1hook... --from admin
+```
+
+#### Force Transfer
+
+```bash
+neutrond tx tokenfactory force-transfer 1000factory/neutron1.../mytoken neutron1from... neutron1to... --from admin
+```
+
+## Error Responses
+
+### Common Error Codes
+
+#### Denom Already Exists
+```json
+{
+  "error": "denom already exists: factory/neutron1.../mytoken",
+  "code": 18,
+  "message": "denom already exists: factory/neutron1.../mytoken"
+}
+```
+
+#### Unauthorized
+```json
+{
+  "error": "unauthorized: sender neutron1... is not admin of denom factory/neutron1.../mytoken",
+  "code": 4,
+  "message": "unauthorized: sender neutron1... is not admin of denom factory/neutron1.../mytoken"
+}
+```
+
+#### Invalid Subdenom
+```json
+{
+  "error": "invalid subdenom: must be alphanumeric",
+  "code": 3,
+  "message": "invalid subdenom: must be alphanumeric"
+}
+```
+
+#### Hook Not Whitelisted
+```json
+{
+  "error": "hook contract neutron1... not whitelisted for creator neutron1...",
+  "code": 3,
+  "message": "hook contract neutron1... not whitelisted for creator neutron1..."
+}
+```
+
+#### Insufficient Fee
+```json
+{
+  "error": "insufficient fee for denom creation: got 0untrn, required 1000000untrn",
+  "code": 13,
+  "message": "insufficient fee for denom creation: got 0untrn, required 1000000untrn"
+} 

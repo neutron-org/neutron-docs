@@ -1,0 +1,214 @@
+---
+title: "Revenue How-To"
+---
+
+This guide provides practical examples for interacting with the Revenue module, focusing on monitoring validator performance, treasury management, and parameter updates.
+
+## Checking Validator Performance
+
+You can query a validator's current performance metrics to understand their reward eligibility status.
+
+### Using CLI
+
+```bash
+neutron query revenue validator-info <validator_address>
+```
+
+### Using REST
+
+```
+GET /neutron/revenue/validator_info/{validatorAddr}
+```
+
+Example response:
+```json
+{
+  "validator_info": {
+    "address": "neutronvaloper1...",
+    "signed_blocks": 980,
+    "blocks_in_window": 1000,
+    "provided_oracle_votes": 950,
+    "oracle_votes_in_window": 1000
+  }
+}
+```
+
+### Using a Contract
+
+CosmWasm contracts can query validator performance through the Neutron bindings:
+
+```rust
+// Set up the message
+let msg = QueryRequest::Custom(RevenueQuery::ValidatorInfo { 
+    validator_addr: "neutronvaloper1...".to_string() 
+});
+
+// Send the query
+let result: ValidatorInfoResponse = deps.querier.query(&msg)?;
+```
+
+## Funding the Treasury
+
+The treasury needs to be funded to ensure there are sufficient tokens for validator compensation.
+
+### Using CLI
+
+```bash
+neutron tx revenue fund-treasury \
+  --from=<sender> \
+  --amount=<amount><denom> \
+  --chain-id=<chain-id>
+```
+
+Example:
+```bash
+neutron tx revenue fund-treasury \
+  --from=mykey \
+  --amount=1000000untrn \
+  --chain-id=neutron-1
+```
+
+### Using a Contract
+
+Contracts with appropriate permissions can fund the treasury:
+
+```rust
+// Create the message
+let fund_msg = CosmosMsg::Custom(RevenueMsg::FundTreasury { 
+    amount: vec![Coin {
+        denom: "untrn".to_string(),
+        amount: Uint128::from(1000000u128),
+    }]
+});
+
+// Send the transaction
+let res = Response::new().add_message(fund_msg);
+```
+
+## Querying the Payment Schedule
+
+Check when the next validator payment will occur.
+
+### Using CLI
+
+```bash
+neutron query revenue payment-schedule
+```
+
+### Using REST
+
+```
+GET /neutron/revenue/payment_schedule
+```
+
+Example response:
+```json
+{
+  "payment_schedule": {
+    "type": "PAYMENT_SCHEDULE_TYPE_MONTHLY",
+    "periods_passed": 5,
+    "periods_count": 0,
+    "month_end_time": "2023-11-01T00:00:00Z"
+  }
+}
+```
+
+## Checking Module Parameters
+
+View the current configuration parameters of the Revenue module.
+
+### Using CLI
+
+```bash
+neutron query revenue params
+```
+
+### Using REST
+
+```
+GET /neutron/revenue/params
+```
+
+Example response:
+```json
+{
+  "params": {
+    "base_compensation": "2000",
+    "denom_compensation": "untrn",
+    "twap_window_size": 30,
+    "performance_requirements": {
+      "required_at_least": "0.800000000000000000",
+      "allowed_to_miss": "0.050000000000000000"
+    },
+    "payment_schedule_type": "PAYMENT_SCHEDULE_TYPE_MONTHLY"
+  }
+}
+```
+
+## Updating Module Parameters
+
+Parameters can be updated through governance proposals.
+
+### Using CLI to Submit a Parameter Change Proposal
+
+```bash
+neutron tx gov submit-proposal param-change proposal.json --from=<key_name> --chain-id=<chain-id>
+```
+
+Example proposal.json:
+```json
+{
+  "title": "Revenue Parameter Change",
+  "description": "Update base compensation amount",
+  "changes": [
+    {
+      "subspace": "revenue",
+      "key": "BaseCompensation",
+      "value": "2500"
+    }
+  ],
+  "deposit": [
+    {
+      "denom": "untrn",
+      "amount": "1000000"
+    }
+  ]
+}
+```
+
+## Monitoring Revenue Distribution
+
+Track when and how much compensation validators receive.
+
+### Using Event Monitoring
+
+The Revenue module emits events when distributing rewards. You can monitor these events through your node logs or event subscriptions:
+
+```
+EVENT RevenuePaid
+    amount: 2000untrn
+    validator: neutronvaloper1...
+    performance_rating: 0.95
+```
+
+## Understanding Performance Rating
+
+If a validator is receiving partial rewards, you can calculate their expected rewards based on performance rating.
+
+### Example Calculation
+
+If the base compensation is 2000 NTRN, and a validator has:
+- 95% blocks signed (allowed to miss is 95%)
+- 85% oracle votes provided (allowed to miss is 95%, required at least is 80%)
+
+Their performance rating would be:
+```
+missedBlocksPerfQuo = 0 (meeting the allowed to miss threshold)
+missedOracleVotesPerfQuo = (0.95 - 0.85) / (0.95 - 0.80) = 0.67
+
+rating = 0.5 * ((1 - 0²) + (1 - 0.67²))
+       = 0.5 * (1 + 0.55)
+       = 0.775
+```
+
+Expected compensation: 2000 NTRN * 0.775 = 1550 NTRN 

@@ -1,0 +1,517 @@
+---
+sidebar_position: 7
+---
+
+# Messages
+
+The Token Factory module provides several message types for creating and managing custom tokens.
+
+## MsgCreateDenom
+
+Create a new custom token denomination.
+
+### Structure
+
+```protobuf
+message MsgCreateDenom {
+  string sender = 1;
+  string subdenom = 2;
+}
+
+message MsgCreateDenomResponse {
+  string new_token_denom = 1;
+}
+```
+
+### Parameters
+
+- `sender`: Address of the token creator (becomes initial admin)
+- `subdenom`: Custom subdenom for the token (alphanumeric, max 44 chars)
+
+### Validation
+
+- Subdenom must be alphanumeric (a-z, A-Z, 0-9)
+- Subdenom cannot start with a number
+- Maximum length: 44 characters
+- Must be unique for the sender
+- Sender must have sufficient balance for creation fee
+
+### Example
+
+```bash
+neutrond tx tokenfactory create-denom mytoken \
+  --from creator \
+  --chain-id neutron-1 \
+  --gas auto \
+  --fees 1000untrn
+```
+
+**Generated Denomination:** `factory/neutron1creator.../mytoken`
+
+## MsgMint
+
+Mint tokens to a specified address.
+
+### Structure
+
+```protobuf
+message MsgMint {
+  string sender = 1;
+  cosmos.base.v1beta1.Coin amount = 2 [(gogoproto.nullable) = false];
+  string mint_to_address = 3;
+}
+
+message MsgMintResponse {}
+```
+
+### Parameters
+
+- `sender`: Address of the token admin
+- `amount`: Amount and denomination to mint
+- `mint_to_address`: Recipient address for minted tokens
+
+### Authorization
+
+- Only the token admin can mint tokens
+- Admin is initially the token creator
+- Admin can be transferred to another address
+
+### Example
+
+```bash
+neutrond tx tokenfactory mint \
+  1000000factory/neutron1creator.../mytoken \
+  neutron1recipient... \
+  --from admin \
+  --chain-id neutron-1 \
+  --fees 1000untrn
+```
+
+## MsgBurn
+
+Burn tokens from a specified address.
+
+### Structure
+
+```protobuf
+message MsgBurn {
+  string sender = 1;
+  cosmos.base.v1beta1.Coin amount = 2 [(gogoproto.nullable) = false];
+  string burn_from_address = 3;
+}
+
+message MsgBurnResponse {}
+```
+
+### Parameters
+
+- `sender`: Address of the token admin
+- `amount`: Amount and denomination to burn
+- `burn_from_address`: Address to burn tokens from
+
+### Authorization
+
+- Only the token admin can burn tokens
+- Tokens are permanently removed from circulation
+- Reduces total supply
+
+### Example
+
+```bash
+neutrond tx tokenfactory burn \
+  500000factory/neutron1creator.../mytoken \
+  neutron1holder... \
+  --from admin \
+  --chain-id neutron-1 \
+  --fees 1000untrn
+```
+
+## MsgChangeAdmin
+
+Change the admin of a token denomination.
+
+### Structure
+
+```protobuf
+message MsgChangeAdmin {
+  string sender = 1;
+  string denom = 2;
+  string new_admin = 3;
+}
+
+message MsgChangeAdminResponse {}
+```
+
+### Parameters
+
+- `sender`: Current admin address
+- `denom`: Token denomination to change admin for
+- `new_admin`: New admin address (empty string to renounce)
+
+### Special Cases
+
+- Set `new_admin` to empty string to permanently renounce admin rights
+- Once renounced, admin rights cannot be restored
+- Only current admin can change admin
+
+### Examples
+
+**Transfer to new admin:**
+```bash
+neutrond tx tokenfactory change-admin \
+  factory/neutron1creator.../mytoken \
+  neutron1newadmin... \
+  --from current_admin \
+  --chain-id neutron-1 \
+  --fees 1000untrn
+```
+
+**Renounce admin rights:**
+```bash
+neutrond tx tokenfactory change-admin \
+  factory/neutron1creator.../mytoken \
+  "" \
+  --from admin \
+  --chain-id neutron-1 \
+  --fees 1000untrn
+```
+
+<Warning>
+Renouncing admin rights is irreversible. The token becomes permanently immutable.
+</Warning>
+
+## MsgSetDenomMetadata
+
+Set or update token metadata.
+
+### Structure
+
+```protobuf
+message MsgSetDenomMetadata {
+  string sender = 1;
+  cosmos.bank.v1beta1.Metadata metadata = 2 [(gogoproto.nullable) = false];
+}
+
+message MsgSetDenomMetadataResponse {}
+```
+
+### Parameters
+
+- `sender`: Token admin address
+- `metadata`: Token metadata structure
+
+### Metadata Structure
+
+```protobuf
+message Metadata {
+  string description = 1;
+  repeated DenomUnit denom_units = 2;
+  string base = 3;
+  string display = 4;
+  string name = 5;
+  string symbol = 6;
+  string uri = 7;
+  string uri_hash = 8;
+}
+
+message DenomUnit {
+  string denom = 1;
+  uint32 exponent = 2;
+  repeated string aliases = 3;
+}
+```
+
+### Authorization
+
+- Only token admin can set metadata
+- Metadata can be updated multiple times
+- Used by wallets and exchanges for display
+
+### Example
+
+```bash
+neutrond tx tokenfactory set-denom-metadata \
+  factory/neutron1creator.../mytoken \
+  --name "My Custom Token" \
+  --symbol "MCT" \
+  --description "A custom token for my application" \
+  --decimals 6 \
+  --from admin \
+  --chain-id neutron-1 \
+  --fees 1000untrn
+```
+
+## MsgSetBeforeSendHook
+
+Set or remove a before-send hook for a token.
+
+### Structure
+
+```protobuf
+message MsgSetBeforeSendHook {
+  string sender = 1;
+  string denom = 2;
+  string contract_addr = 3;
+}
+
+message MsgSetBeforeSendHookResponse {}
+```
+
+### Parameters
+
+- `sender`: Token admin address
+- `denom`: Token denomination
+- `contract_addr`: Hook contract address (empty to remove)
+
+### Hook Requirements
+
+- Contract must be whitelisted for the token creator
+- Hook contract must implement the correct interface
+- Set `contract_addr` to empty string to remove hook
+
+### Authorization
+
+- Only token admin can set hooks
+- Hook whitelist is managed through governance
+- Provides security against malicious hooks
+
+### Example
+
+**Set hook:**
+```bash
+neutrond tx tokenfactory set-before-send-hook \
+  factory/neutron1creator.../mytoken \
+  neutron1hook_contract... \
+  --from admin \
+  --chain-id neutron-1 \
+  --fees 1000untrn
+```
+
+**Remove hook:**
+```bash
+neutrond tx tokenfactory set-before-send-hook \
+  factory/neutron1creator.../mytoken \
+  "" \
+  --from admin \
+  --chain-id neutron-1 \
+  --fees 1000untrn
+```
+
+## MsgForceTransfer
+
+Force a transfer that bypasses before-send hooks.
+
+### Structure
+
+```protobuf
+message MsgForceTransfer {
+  string sender = 1;
+  cosmos.base.v1beta1.Coin amount = 2 [(gogoproto.nullable) = false];
+  string transfer_from_address = 3;
+  string transfer_to_address = 4;
+}
+
+message MsgForceTransferResponse {}
+```
+
+### Parameters
+
+- `sender`: Token admin address
+- `amount`: Amount and denomination to transfer
+- `transfer_from_address`: Source address
+- `transfer_to_address`: Destination address
+
+### Use Cases
+
+- Emergency token recovery
+- Bypassing stuck hooks
+- Regulatory compliance
+- Protocol upgrades
+
+### Authorization
+
+- Only token admin can force transfers
+- Bypasses all before-send hooks
+- Should be used sparingly
+
+### Example
+
+```bash
+neutrond tx tokenfactory force-transfer \
+  1000factory/neutron1creator.../mytoken \
+  neutron1from... \
+  neutron1to... \
+  --from admin \
+  --chain-id neutron-1 \
+  --fees 1000untrn
+```
+
+## MsgUpdateParams
+
+Update module parameters (governance only).
+
+### Structure
+
+```protobuf
+message MsgUpdateParams {
+  string authority = 1;
+  Params params = 2 [(gogoproto.nullable) = false];
+}
+
+message MsgUpdateParamsResponse {}
+```
+
+### Parameters
+
+- `authority`: Governance module address
+- `params`: New parameter values
+
+### Governance Process
+
+1. Submit parameter change proposal
+2. Community voting period
+3. Proposal execution if passed
+4. Parameters updated on-chain
+
+<Warning>
+This message can only be executed through governance proposals. Direct execution by users will fail.
+</Warning>
+
+### Example Proposal
+
+```json
+{
+  "title": "Update Token Factory Parameters",
+  "description": "Adjust creation fees and add new whitelisted hooks",
+  "changes": [
+    {
+      "subspace": "tokenfactory",
+      "key": "Params",
+      "value": {
+        "denom_creation_fee": [
+          {
+            "denom": "untrn",
+            "amount": "1000000"
+          }
+        ],
+        "denom_creation_gas_consume": "2000000",
+        "fee_collector_address": "neutron1fee_collector...",
+        "whitelisted_hooks": [
+          {
+            "code_id": "1",
+            "denom_creator": "neutron1creator..."
+          }
+        ]
+      }
+    }
+  ],
+  "deposit": "10000000untrn"
+}
+```
+
+## Message Fees and Gas
+
+### Transaction Fees
+
+Each message type has associated gas costs:
+
+- **MsgCreateDenom**: Base gas + `denom_creation_gas_consume` parameter
+- **MsgMint**: Standard transaction gas
+- **MsgBurn**: Standard transaction gas  
+- **MsgChangeAdmin**: Standard transaction gas
+- **MsgSetDenomMetadata**: Standard transaction gas
+- **MsgSetBeforeSendHook**: Standard transaction gas
+- **MsgForceTransfer**: Standard transaction gas
+
+### Creation Fee
+
+- **MsgCreateDenom** charges an additional creation fee
+- Fee amount set by `denom_creation_fee` parameter
+- Fee sent to `fee_collector_address` (usually community pool)
+- Prevents spam token creation
+
+### Gas Estimation
+
+```bash
+# Estimate gas for token creation
+neutrond tx tokenfactory create-denom mytoken \
+  --from creator \
+  --gas auto \
+  --gas-adjustment 1.5 \
+  --dry-run
+
+# Estimate gas for minting
+neutrond tx tokenfactory mint \
+  1000000factory/neutron1.../mytoken \
+  neutron1recipient... \
+  --from admin \
+  --gas auto \
+  --dry-run
+```
+
+## Error Handling
+
+### Common Errors
+
+#### Invalid Subdenom
+```
+Error: invalid subdenom: must be alphanumeric
+```
+**Solution**: Use only letters and numbers in subdenom.
+
+#### Unauthorized
+```
+Error: unauthorized: sender is not admin
+```
+**Solution**: Use admin account or transfer admin rights.
+
+#### Denom Already Exists
+```
+Error: denom already exists: factory/neutron1.../mytoken
+```
+**Solution**: Choose a different subdenom.
+
+#### Hook Not Whitelisted
+```
+Error: hook contract not whitelisted
+```
+**Solution**: Use whitelisted contract or submit governance proposal.
+
+#### Insufficient Fee
+```
+Error: insufficient fee for denom creation
+```
+**Solution**: Ensure sufficient balance for creation fee.
+
+### Error Recovery
+
+1. **Check account balance** before operations
+2. **Verify admin permissions** for token operations
+3. **Validate subdenom format** before creation
+4. **Confirm hook whitelist** before setting hooks
+5. **Test on testnet** before mainnet deployment
+
+## Best Practices
+
+### Message Ordering
+
+1. **Create token** with `MsgCreateDenom`
+2. **Set metadata** with `MsgSetDenomMetadata`
+3. **Configure hooks** with `MsgSetBeforeSendHook` (if needed)
+4. **Mint initial supply** with `MsgMint`
+5. **Transfer admin** with `MsgChangeAdmin` (if desired)
+
+### Security Considerations
+
+1. **Admin Management**: Use multisig or DAO for valuable tokens
+2. **Hook Validation**: Only use audited, trusted hook contracts
+3. **Metadata Accuracy**: Provide complete, accurate information
+4. **Testing**: Test all operations on testnet first
+5. **Documentation**: Document token purpose and mechanics
+
+### Performance Optimization
+
+1. **Batch Operations**: Group multiple mints/burns when possible
+2. **Gas Estimation**: Use `--gas auto` for optimal gas usage
+3. **Hook Efficiency**: Keep hook logic simple and fast
+4. **Metadata Updates**: Minimize metadata changes after deployment 
