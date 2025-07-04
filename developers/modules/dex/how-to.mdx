@@ -1,12 +1,11 @@
 ---
-title: "Dex How-To"
+title: "DEX How-To"
+description: "Practical guide for using Neutron's DEX module"
 ---
 
-This guide provides practical examples for interacting with Neutron's Dex module, including providing liquidity, placing trades, managing limit orders, using the web interface, and advanced strategies.
+This guide provides practical examples for interacting with Neutron's DEX module through the web interface and command-line tools.
 
 ## User Interfaces
-
-You can interact with Neutron DEX through multiple interfaces:
 
 ### Neutron App (Web Interface)
 
@@ -20,7 +19,7 @@ Access the orderbook at [app.neutron.org/orderbook](https://app.neutron.org/orde
 - **Live Price Chart**: TradingView-powered charts with advanced analysis tools
 - **Order Book Table**: Real-time liquidity depth and price levels
 - **Recent Trades**: Live trade feed with transaction links
-- **Order Form**: Intuitive interface for placing limit and market orders
+- **Order Form**: Interface for placing limit and market orders
 - **Order History**: Track your active and completed orders
 
 **Token Pair Navigation:**
@@ -50,315 +49,176 @@ Access the bridge at [app.neutron.org/bridge](https://app.neutron.org/bridge)
 
 ## CLI Interface
 
-All DEX functionality is available through the `neutrond` command-line interface.
+All DEX functionality is available through the `neutrond` command-line interface using positional arguments.
 
-## Adding Liquidity
+### Adding Liquidity
 
-Liquidity providers earn fees by depositing tokens at specific price points.
-
-### Basic Single-Tick Deposit
+#### Basic Single-Tick Deposit
 
 ```bash
 neutrond tx dex deposit \
-  --token-a untrn \
-  --token-b ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  --amounts-a 1000000 \
-  --amounts-b 1000000 \
-  --tick-indexes-a-to-b 0 \
-  --fees 3000 \
+  alice \
+  untrn \
+  ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  1000000 \
+  1000000 \
+  0 \
+  3000 \
+  false \
+  false \
   --from mykey \
   --chain-id neutron-1
 ```
 
-### Multi-Tick Liquidity Strategy
+**Arguments:**
+1. `receiver` - Address to receive the liquidity position
+2. `token-a` - First token denomination
+3. `token-b` - Second token denomination  
+4. `amounts-a` - Comma-separated amounts of token A (e.g., "1000000,500000")
+5. `amounts-b` - Comma-separated amounts of token B (e.g., "1000000,500000")
+6. `tick-indexes` - Comma-separated tick indexes (e.g., "0,-100,100")
+7. `fees` - Comma-separated fee tiers (e.g., "3000,3000,3000")
+8. `disable-autoswap` - Comma-separated boolean values (e.g., "false,false,false")
+9. `fail-tx-on-bel` - Comma-separated boolean values (e.g., "false,false,false")
 
-Provide liquidity across multiple price ranges for better capital utilization:
+#### Multi-Tick Liquidity Strategy
 
 ```bash
 neutrond tx dex deposit \
-  --token-a untrn \
-  --token-b ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  --amounts-a 1000000,1000000,1000000 \
-  --amounts-b 1000000,1000000,1000000 \
-  --tick-indexes-a-to-b -100,0,100 \
-  --fees 3000,3000,3000 \
+  alice \
+  untrn \
+  ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  1000000,1000000,1000000 \
+  1000000,1000000,1000000 \
+  [-100,0,100] \
+  3000,3000,3000 \
+  false,false,false \
+  false,false,false \
   --from mykey \
   --chain-id neutron-1
 ```
 
-### Advanced Deposit Options
+### Removing Liquidity
 
-Control deposit behavior with advanced options:
-
-```bash
-neutrond tx dex deposit \
-  --token-a untrn \
-  --token-b ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  --amounts-a 1000000 \
-  --amounts-b 1000000 \
-  --tick-indexes-a-to-b 0 \
-  --fees 3000 \
-  --options '{"disable_autoswap":false,"fail_tx_on_bel":true,"swap_on_deposit":true,"swap_on_deposit_slop_tolerance_bps":100}' \
-  --from mykey \
-  --chain-id neutron-1
-```
-
-**Deposit Options Explained:**
-- `disable_autoswap`: Prevent automatic token balancing
-- `fail_tx_on_bel`: Fail if deposit is Behind Enemy Lines
-- `swap_on_deposit`: Allow swapping to achieve desired ratio
-- `swap_on_deposit_slop_tolerance_bps`: Maximum slippage tolerance
-
-### Fee Tier Selection Strategy
-
-Choose fee tiers based on pair volatility:
-
-**Stable Pairs (1-5 bp):**
-```bash
---fees 1  # 0.01% for highly correlated assets
---fees 5  # 0.05% for stable pairs with slight volatility
-```
-
-**Standard Pairs (30 bp):**
-```bash
---fees 30  # 0.3% for most token pairs
-```
-
-**Volatile Pairs (100-300 bp):**
-```bash
---fees 100  # 1% for exotic pairs
---fees 300  # 3% for highly volatile or risky pairs
-```
-
-## Removing Liquidity
-
-Withdraw your deposited liquidity and earned fees.
-
-### Basic Withdrawal
+#### Basic Withdrawal
 
 ```bash
 neutrond tx dex withdrawal \
-  --token-a untrn \
-  --token-b ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  --shares-to-remove 500000 \
-  --tick-indexes-a-to-b 0 \
-  --fees 3000 \
+  alice \
+  untrn \
+  ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  500000 \
+  0 \
+  3000 \
   --from mykey \
   --chain-id neutron-1
 ```
 
-### Multi-Position Withdrawal
+**Arguments:**
+1. `receiver` - Address to receive withdrawn tokens
+2. `token-a` - First token denomination
+3. `token-b` - Second token denomination
+4. `shares-to-remove` - Comma-separated share amounts to remove
+5. `tick-indexes-a-to-b` - Comma-separated tick indexes
+6. `fees` - Comma-separated fee tiers
 
-Remove liquidity from multiple positions simultaneously:
+### Trading
 
-```bash
-neutrond tx dex withdrawal \
-  --token-a untrn \
-  --token-b ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  --shares-to-remove 500000,300000,200000 \
-  --tick-indexes-a-to-b -100,0,100 \
-  --fees 3000,3000,3000 \
-  --from mykey \
-  --chain-id neutron-1
-```
-
-## Trading Strategies
-
-### Market Swaps (Immediate Execution)
-
-Execute trades immediately at the best available price.
-
-#### Simple Market Swap
+#### Multi-Hop Swap
 
 ```bash
 neutrond tx dex multi-hop-swap \
-  --routes untrn,ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  --amount-in 1000000 \
-  --exit-limit-price 0.95 \
+  alice \
+  "untrn,ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2" \
+  1000000 \
+  0.95 \
+  true \
   --from mykey \
   --chain-id neutron-1
 ```
 
-#### Multi-Route Optimization
+**Arguments:**
+1. `receiver` - Address to receive output tokens
+2. `routes` - Semicolon-separated routes, each route is comma-separated tokens
+3. `amount-in` - Amount of input tokens
+4. `exit-limit-price` - Minimum acceptable output price
+5. `pick-best-route` - Whether to pick the best route (true/false)
 
-Provide multiple routes for best price discovery:
-
-```bash
-neutrond tx dex multi-hop-swap \
-  --routes untrn,usdc,ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  --amount-in 1000000 \
-  --exit-limit-price 0.95 \
-  --pick-best-route \
-  --from mykey \
-  --chain-id neutron-1
-```
-
-#### Complex Multi-Hop Routes
-
-Trade through multiple intermediate tokens:
-
-```bash
-neutrond tx dex multi-hop-swap \
-  --routes untrn,usdc,usdt,ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  --amount-in 1000000 \
-  --exit-limit-price 0.9 \
-  --from mykey \
-  --chain-id neutron-1
-```
-
-### Limit Orders (Conditional Execution)
-
-Place orders that execute when specific price conditions are met.
-
-#### Good Til Cancelled (GTC) Orders
-
-Standard limit orders that remain active until cancelled:
+#### Place Limit Order
 
 ```bash
 neutrond tx dex place-limit-order \
-  --token-in untrn \
-  --token-out ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  --amount-in 1000000 \
-  --limit-sell-price 1.05 \
-  --order-type GOOD_TIL_CANCELLED \
+  alice \
+  untrn \
+  ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  100 \
+  1000000 \
+  GOOD_TIL_CANCELLED \
   --from mykey \
   --chain-id neutron-1
 ```
 
-#### Time-Limited Orders (GTT)
+**Arguments:**
+1. `receiver` - Address to receive proceeds
+2. `token-in` - Token being sold
+3. `token-out` - Token being bought
+4. `tick-index` - Price tick for the order
+5. `amount-in` - Amount of input token
+6. `order-type` - Order type (GOOD_TIL_CANCELLED, GOOD_TIL_TIME, FILL_OR_KILL, IMMEDIATE_OR_CANCEL, JUST_IN_TIME)
+7. `expiration-time` - (Optional) Expiration time for GTT orders
 
-Orders that automatically expire:
+### Order Management
 
-```bash
-neutrond tx dex place-limit-order \
-  --token-in untrn \
-  --token-out ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  --amount-in 1000000 \
-  --limit-sell-price 1.05 \
-  --order-type GOOD_TIL_TIME \
-  --expiration-time 2024-12-31T23:59:59Z \
-  --from mykey \
-  --chain-id neutron-1
-```
-
-#### Fill or Kill (FOK) Orders
-
-All-or-nothing execution:
-
-```bash
-neutrond tx dex place-limit-order \
-  --token-in untrn \
-  --token-out ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  --amount-in 1000000 \
-  --limit-sell-price 1.05 \
-  --order-type FILL_OR_KILL \
-  --from mykey \
-  --chain-id neutron-1
-```
-
-#### Immediate or Cancel (IOC) Orders
-
-Fill what's possible immediately:
-
-```bash
-neutrond tx dex place-limit-order \
-  --token-in untrn \
-  --token-out ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  --amount-in 1000000 \
-  --limit-sell-price 1.05 \
-  --order-type IMMEDIATE_OR_CANCEL \
-  --from mykey \
-  --chain-id neutron-1
-```
-
-#### Just in Time (JIT) Orders
-
-Advanced maker orders for one block:
-
-```bash
-neutrond tx dex place-limit-order \
-  --token-in untrn \
-  --token-out ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  --amount-in 1000000 \
-  --limit-sell-price 1.05 \
-  --order-type JUST_IN_TIME \
-  --from mykey \
-  --chain-id neutron-1
-```
-
-#### Advanced Order Parameters
-
-Use additional parameters for precise control:
-
-```bash
-neutrond tx dex place-limit-order \
-  --token-in untrn \
-  --token-out ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  --amount-in 1000000 \
-  --limit-sell-price 1.05 \
-  --max-amount-out 950000 \
-  --min-average-sell-price 1.04 \
-  --order-type GOOD_TIL_CANCELLED \
-  --from mykey \
-  --chain-id neutron-1
-```
-
-## Order Management
-
-### Cancelling Active Orders
-
-Cancel orders before they're filled:
+#### Cancel Limit Order
 
 ```bash
 neutrond tx dex cancel-limit-order \
-  --token-in untrn \
-  --token-out ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  --tranche-key &lt;tranche-key&gt; \
-  --from mykey
+  tranche-key-here \
+  --from mykey \
+  --chain-id neutron-1
 ```
 
-### Withdrawing Filled Orders
-
-Claim proceeds from filled or partially filled orders:
+#### Withdraw Filled Limit Order
 
 ```bash
 neutrond tx dex withdraw-filled-limit-order \
-  --token-in untrn \
-  --token-out ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  --tranche-key &lt;tranche-key&gt; \
-  --from mykey
+  tranche-key-here \
+  --from mykey \
+  --chain-id neutron-1
 ```
 
 ## Querying DEX State
 
 ### Pool Information
 
-#### List All Pools
+#### List All Pool Metadata
 
 ```bash
 neutrond query dex list-pool-metadata
 ```
 
-#### Get Specific Pool
+#### Get Pool by ID
 
 ```bash
 neutrond query dex show-pool-by-id 1
 ```
 
+#### Get Pool by Parameters
+
+```bash
+neutrond query dex show-pool "untrn<>uatom" 0 3000
+```
+
 #### Check Pool Reserves
 
 ```bash
-neutrond query dex list-pool-reserves \\
-  'tokenA&lt;&gt;tokenB' \\
-  tokenA
+neutrond query dex show-pool-reserves "untrn<>uatom" untrn 0 3000
 ```
 
-#### View All Pool Reserves for Pair
+#### List All Pool Reserves for Pair
 
 ```bash
-neutrond query dex list-pool-reserves \\
-  'tokenA&lt;&gt;tokenB' \\
-  tokenA
+neutrond query dex list-pool-reserves "untrn<>uatom" untrn
 ```
 
 ### User Positions
@@ -375,299 +235,70 @@ neutrond query dex list-user-deposits neutron1... --include-pool-data
 neutrond query dex list-user-limit-orders neutron1...
 ```
 
-#### Get specific limit order tranche user details
-neutrond query dex show-limit-order-tranche-user neutron1... &lt;tranche-key&gt;
-
-#### Check Specific Order Status
+#### Get Specific Limit Order Tranche User
 
 ```bash
-neutrond query dex show-pool-reserves pair-id tick-index token-in fee
+neutrond query dex show-limit-order-tranche-user neutron1... tranche-key
 ```
 
 ### Market Data
 
-#### View Order Book Depth
+#### View Tick Liquidity
 
 ```bash
-neutrond query dex list-tick-liquidity \\
-  'tokenA&lt;&gt;tokenB' \\
-  tokenA
+neutrond query dex list-tick-liquidity "untrn<>uatom" untrn
 ```
 
-#### Query all limit order tranches for a pair
-neutrond query dex list-limit-order-tranche \\
-  'tokenA&lt;&gt;tokenB' \\
-  tokenA
+#### List Limit Order Tranches
 
-#### View specific pool reserves
-neutrond query dex show-pool-reserves 'tokenA&lt;&gt;tokenB' 0 tokenA 3000
+```bash
+neutrond query dex list-limit-order-tranche "untrn<>uatom" untrn
+```
+
+#### Get Specific Limit Order Tranche
+
+```bash
+neutrond query dex show-limit-order-tranche "untrn<>uatom" untrn 100 tranche-key
+```
 
 ## Simulation and Testing
 
-Always simulate operations before executing to understand outcomes and fees.
+Use simulation queries to preview operations before executing them.
 
-### Simulate Deposits
+### Simulate Deposit
 
-```bash
-neutrond query dex simulate-deposit \
-  '{
-    "creator":"neutron1...",
-    "receiver":"neutron1...",
-    "token_a":"untrn",
-    "token_b":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
-    "amounts_a":["1000000"],
-    "amounts_b":["1000000"],
-    "tick_indexes_a_to_b":[0],
-    "fees":[3000],
-    "options":[{"disable_autoswap":false}]
-  }'
-```
+Use the simulate-deposit endpoint with a JSON message body containing the same parameters as the deposit transaction.
 
-### Simulate Withdrawals
+### Simulate Withdrawal
 
-```bash
-neutrond query dex simulate-withdrawal \
-  '{
-    "creator":"neutron1...",
-    "token_a":"untrn",
-    "token_b":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
-    "shares_to_remove":["500000"],
-    "tick_indexes_a_to_b":[0],
-    "fees":[3000]
-  }'
-```
+Use the simulate-withdrawal endpoint with a JSON message body containing the same parameters as the withdrawal transaction.
 
-### Simulate Swaps
+### Simulate Multi-Hop Swap
 
-```bash
-neutrond query dex simulate-multi-hop-swap \
-  '{
-    "creator":"neutron1...",
-    "routes":[{"hops":["untrn","ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"]}],
-    "amount_in":"1000000",
-    "exit_limit_price":"0.95",
-    "pick_best_route":true
-  }'
-```
+Use the simulate-multi-hop-swap endpoint with a JSON message body containing the same parameters as the swap transaction.
 
-### Simulate Limit Orders
+### Simulate Limit Order
 
-```bash
-neutrond query dex simulate-place-limit-order \
-  '{
-    "creator":"neutron1...",
-    "token_in":"untrn",
-    "token_out":"ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
-    "amount_in":"1000000",
-    "limit_sell_price":"1.05",
-    "order_type":"GOOD_TIL_CANCELLED"
-  }'
-```
-
-### Simulate Order Withdrawals
-
-```bash
-neutrond query dex simulate-withdraw-filled-limit-order \
-  '{
-    "creator":"neutron1...",
-    "tranche_key":"&lt;tranche-key&gt;"
-  }'
-```
-
-### Simulate Order Cancellations
-
-```bash
-neutrond query dex simulate-cancel-limit-order \
-  '{
-    "creator":"neutron1...",
-    "tranche_key":"&lt;tranche-key&gt;"
-  }'
-```
-
-## Advanced Strategies
-
-### Liquidity Provision Strategies
-
-#### Concentrated Liquidity (Stablecoin Pairs)
-
-For highly correlated assets, concentrate liquidity near the peg:
-
-```bash
-# Deploy most liquidity at the peg with lowest fees
-neutrond tx dex deposit \
-  --token-a usdc \
-  --token-b usdt \
-  --amounts-a 10000000,5000000,2000000 \
-  --amounts-b 10000000,5000000,2000000 \
-  --tick-indexes-a-to-b -1,0,1 \
-  --fees 1,1,1 \
-  --from mykey
-```
-
-#### Wide Range Strategy (Volatile Pairs)
-
-For volatile pairs, spread liquidity across wider ranges:
-
-```bash
-# Spread liquidity across price ranges with higher fees
-neutrond tx dex deposit \
-  --token-a untrn \
-  --token-b atom \
-  --amounts-a 1000000,1000000,1000000,1000000,1000000 \
-  --amounts-b 1000000,1000000,1000000,1000000,1000000 \
-  --tick-indexes-a-to-b -500,-250,0,250,500 \
-  --fees 100,100,100,100,100 \
-  --from mykey
-```
-
-### Trading Strategies
-
-#### Dollar Cost Averaging with Limit Orders
-
-Place multiple time-limited orders to average into positions:
-
-```bash
-# Place weekly orders that expire
-for i in {1..4}; do
-  expiry=$(date -d "+${i} weeks" -u +"%Y-%m-%dT%H:%M:%SZ")
-  neutrond tx dex place-limit-order \
-    --token-in usdc \
-    --token-out untrn \
-    --amount-in 250000000 \
-    --limit-sell-price 0.5 \
-    --order-type GOOD_TIL_TIME \
-    --expiration-time $expiry \
-    --from mykey
-done
-```
-
-#### Arbitrage Detection
-
-Use simulation to detect arbitrage opportunities:
-
-```bash
-# Check direct route
-direct=$(neutrond query dex simulate-multi-hop-swap \
-  '{"creator":"neutron1...","routes":[{"hops":["tokenA","tokenB"]}],"amount_in":"1000000","exit_limit_price":"0"}')
-
-# Check indirect route
-indirect=$(neutrond query dex simulate-multi-hop-swap \
-  '{"creator":"neutron1...","routes":[{"hops":["tokenA","tokenC","tokenB"]}],"amount_in":"1000000","exit_limit_price":"0"}')
-
-# Compare outputs and execute better route
-```
-
-### Risk Management
-
-#### Position Sizing
-
-Calculate position sizes based on available liquidity:
-
-```bash
-# Check current reserves before depositing
-neutrond query dex list-pool-reserves \\
-  'tokenA&lt;&gt;tokenB' \\
-  tokenA
-
-# Size positions proportionally to existing liquidity
-```
-
-#### Stop-Loss with Time Limits
-
-Use GTT orders as stop-losses:
-
-```bash
-neutrond tx dex place-limit-order \
-  --token-in untrn \
-  --token-out usdc \
-  --amount-in 1000000 \
-  --limit-sell-price 0.8 \
-  --order-type GOOD_TIL_TIME \
-  --expiration-time $(date -d "+1 day" -u +"%Y-%m-%dT%H:%M:%SZ") \
-  --from mykey
-```
+Use the simulate-place-limit-order endpoint with a JSON message body containing the same parameters as the place limit order transaction.
 
 ## Best Practices
 
 ### For Liquidity Providers
 
-1. **Fee Tier Selection**:
-   - Use lower fees (1-5 bp) for stable pairs
-   - Use higher fees (30-300 bp) for volatile pairs
-   - Monitor competition and adjust accordingly
-
-2. **Position Management**:
-   - Regularly rebalance positions based on price movement
-   - Withdraw unused liquidity (positions earning no fees)
-   - Consider impermanent loss vs fee earnings
-
-3. **Risk Assessment**:
-   - Understand Behind Enemy Lines (BEL) restrictions
-   - Use autoswap carefully to avoid unexpected fees
-   - Monitor for large position concentrations
+1. **Fee Tier Selection**: Choose appropriate fee tiers based on pair volatility
+2. **Position Management**: Regularly monitor and rebalance positions
+3. **Risk Assessment**: Understand impermanent loss implications
 
 ### For Traders
 
-1. **Order Type Selection**:
-   - Use FOK for all-or-nothing trades
-   - Use IOC for partial fills acceptable
-   - Use GTC for patient limit orders
-   - Use JIT for advanced maker strategies
+1. **Order Type Selection**: Choose the right order type for your strategy
+2. **Price Protection**: Always set reasonable exit limit prices
+3. **Gas Optimization**: Consider transaction costs vs. trade size
 
-2. **Price Protection**:
-   - Always set reasonable exit limit prices
-   - Use simulation to understand price impact
-   - Consider multiple routes for better execution
+### General
 
-3. **Gas Optimization**:
-   - Batch operations when possible
-   - Use simulation to avoid failed transactions
-   - Consider order sizes vs gas costs
+1. **Testing**: Always use simulation endpoints before executing transactions
+2. **Validation**: Verify all parameters before submitting transactions
+3. **Monitoring**: Track your positions and orders regularly
 
-### For Developers
-
-1. **Integration Patterns**:
-   - Always simulate before executing
-   - Handle partial fills gracefully
-   - Implement proper error handling for order failures
-
-2. **User Experience**:
-   - Show simulation results before confirmation
-   - Provide clear order status updates
-   - Implement position tracking and alerts
-
-3. **Security Considerations**:
-   - Validate all user inputs
-   - Implement slippage protection
-   - Use proper key management for automated trading
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Behind Enemy Lines Error**:
-   - Check current market prices
-   - Adjust tick indexes to valid ranges
-   - Consider using different fee tiers
-
-2. **Insufficient Liquidity**:
-   - Use multiple routes with `--pick-best-route`
-   - Adjust order sizes
-   - Consider using IOC instead of FOK
-
-3. **Order Not Filling**:
-   - Check order is not behind enemy lines
-   - Verify sufficient opposing liquidity exists
-   - Consider adjusting price or using market orders
-
-4. **Simulation Failures**:
-   - Verify account has sufficient balance
-   - Check token denominations are correct
-   - Ensure tick indexes are within valid ranges
-
-### Getting Help
-
-- **Documentation**: Refer to the [Neutron documentation](https://docs.neutron.org)
-- **Community**: Join the [Neutron Discord](https://discord.gg/neutron)
-- **Support**: Contact support through the Neutron app
-- **Code Examples**: Check the [Neutron GitHub](https://github.com/neutron-org) for integration examples 
+For complete command syntax and additional options, use `neutrond tx dex --help` and `neutrond query dex --help`.

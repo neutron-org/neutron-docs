@@ -24,3 +24,5 @@ yarn-error.log*
 /concepts-reference
 /module-reference
 /old-docs
+
+CLAUDE.md

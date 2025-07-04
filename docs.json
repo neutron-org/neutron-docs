@@ -173,9 +173,20 @@
                 "icon": "arrows-rotate",
                 "pages": [
                   "developers/modules/dex/overview",
-                  "developers/modules/dex/explanation",
-                  "developers/modules/dex/how-to",
-                  "developers/modules/dex/known-bugs",
+                  {
+                    "group": "Concepts",
+                    "icon": "lightbulb",
+                    "pages": [
+                      "developers/modules/dex/concepts/ticks",
+                      "developers/modules/dex/concepts/liquidity-pools",
+                      "developers/modules/dex/concepts/tick-liquidity",
+                      "developers/modules/dex/concepts/amms-and-orderbooks",
+                      "developers/modules/dex/concepts/swaps",
+                      "developers/modules/dex/concepts/liquidity-iteration",
+                      "developers/modules/dex/concepts/fees"
+                    ]
+                                     },
+                    "developers/modules/dex/how-to",
                   {
                     "group": "Reference",
                     "icon": "book",
@@ -219,7 +230,6 @@
                   "developers/modules/interchaintxs/overview",
                   "developers/modules/interchaintxs/explanation",
                   "developers/modules/interchaintxs/how-to",
-                  "developers/modules/interchaintxs/known-bugs",
                   {
                     "group": "Reference",
                     "icon": "book",
@@ -241,7 +251,6 @@
                   "developers/modules/cron/overview",
                   "developers/modules/cron/explanation",
                   "developers/modules/cron/how-to",
-                  "developers/modules/cron/known-bugs",
                   {
                     "group": "Reference",
                     "icon": "book",
@@ -264,7 +273,6 @@
                   "developers/modules/harpoon/overview",
                   "developers/modules/harpoon/explanation",
                   "developers/modules/harpoon/how-to",
-                  "developers/modules/harpoon/known-bugs",
                   {
                     "group": "Reference",
                     "icon": "book",
@@ -326,7 +334,6 @@
                   "developers/modules/revenue/overview",
                   "developers/modules/revenue/explanation",
                   "developers/modules/revenue/how-to",
-                  "developers/modules/revenue/known-bugs",
                   {
                     "group": "Reference",
                     "icon": "book",
@@ -348,7 +355,6 @@
                   "developers/modules/ibc-rate-limit/overview",
                   "developers/modules/ibc-rate-limit/explanation",
                   "developers/modules/ibc-rate-limit/how-to",
-                  "developers/modules/ibc-rate-limit/known-bugs",
                   {
                     "group": "Reference",
                     "icon": "book",
@@ -370,7 +376,6 @@
                   "developers/modules/transfer/overview",
                   "developers/modules/transfer/explanation",
                   "developers/modules/transfer/how-to",
-                  "developers/modules/transfer/known-bugs",
                   {
                     "group": "Reference",
                     "icon": "book",
@@ -453,7 +458,6 @@
                 "icon": "globe",
                 "pages": [
                   "developers/modules/globalfee/overview",
-                  "developers/modules/globalfee/explanation",
                   "developers/modules/globalfee/how-to",
                   {
                     "group": "Reference",
@@ -497,7 +501,6 @@
                   "developers/modules/gmp/overview",
                   "developers/modules/gmp/explanation",
                   "developers/modules/gmp/how-to",
-                  "developers/modules/gmp/known-bugs",
                   {
                     "group": "Reference",
                     "icon": "book",

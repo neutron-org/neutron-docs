@@ -1,178 +1,68 @@
 ---
-title: "Dex API"
+title: "DEX API"
+description: "REST API endpoints for querying DEX module data"
 ---
 
-The Dex module provides a comprehensive REST API for querying pool information, reserves, limit orders, and user positions. All endpoints follow RESTful conventions and return JSON responses.
+The DEX module provides REST API endpoints for querying pool information, reserves, limit orders, and user positions. All endpoints use GET requests and return JSON responses.
 
 ## Pool Queries
 
-### GET: Query Pool by ID
+### Query Pool by ID
 
 ```
 GET /neutron/dex/pool/{pool_id}
 ```
 
-Returns information about a specific pool.
+Returns information about a specific pool by its ID.
 
-#### Parameters
-
-- `pool_id`: The unique pool identifier
-
-#### Response Structure
-
-```json
-{
-  "pool": {
-    "id": "1",
-    "pair_id": "untrn&lt;&gt;uatom",
-    "token0": "uatom",
-    "token1": "untrn",
-    "fee": "3000",
-    "tick_index": "0",
-    "sqrt_price": "1000000000000000000",
-    "liquidity": "1000000",
-    "token0_locked": "1000000",
-    "token1_locked": "1000000"
-  }
-}
-```
-
-### GET: Query Pool by Parameters
+### Query Pool by Parameters
 
 ```
 GET /neutron/dex/pool/{pair_id}/{tick_index}/{fee}
 ```
 
-Returns information about a specific pool identified by its parameters.
+Returns information about a specific pool by its parameters.
 
-#### Parameters
+**Parameters:**
+- `pair_id`: Token pair identifier (e.g., "untrn<>uatom")
+- `tick_index`: Tick index of the pool
+- `fee`: Fee tier in basis points
 
-- `pair_id`: The pair identifier (e.g., "untrn&lt;&gt;uatom")
-- `tick_index`: The tick index of the pool
-- `fee`: The fee tier of the pool in basis points
-
-#### Response Structure
-
-Same as Query Pool by ID.
-
-### GET: Query Pool Reserves
+### Query Pool Reserves
 
 ```
 GET /neutron/dex/pool_reserves/{pair_id}/{token_in}/{tick_index}/{fee}
 ```
 
-Returns the current reserves of a specific pool.
+Returns reserves for a specific pool.
 
-#### Parameters
-
-- `pair_id`: The pair identifier (e.g., "untrn&lt;&gt;uatom")
-- `token_in`: One of the tokens in the pair
-- `tick_index`: The tick index of the pool
-- `fee`: The fee tier of the pool in basis points
-
-#### Response Structure
-
-```json
-{
-  "pool_reserves": {
-    "pool_id": "1",
-    "pair_id": "untrn&lt;&gt;uatom",
-    "token0": "uatom",
-    "token1": "untrn",
-    "fee": "3000",
-    "tick_index": "0",
-    "token0_reserve": "1000000",
-    "token1_reserve": "1000000",
-    "token0_denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
-    "token1_denom": "untrn"
-  }
-}
-```
-
-### GET: Query All Pool Reserves
+### Query All Pool Reserves
 
 ```
 GET /neutron/dex/pool_reserves/{pair_id}/{token_in}
 ```
 
-Returns reserves for all pools for a specific pair.
+Returns reserves for all pools of a token pair.
 
-#### Parameters
+### Query Pool Metadata
 
-- `pair_id`: The pair identifier (e.g., "untrn&lt;&gt;uatom")
-- `token_in`: One of the tokens in the pair
-- `pagination`: Optional pagination parameters
-
-#### Response Structure
-
-```json
-{
-  "pool_reserves": [
-    {
-      "pool_id": "1",
-      "pair_id": "untrn&lt;&gt;uatom",
-      "token0": "uatom",
-      "token1": "untrn",
-      "fee": "3000",
-      "tick_index": "0",
-      "token0_reserve": "1000000",
-      "token1_reserve": "1000000",
-      "token0_denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
-      "token1_denom": "untrn"
-    },
-    {
-      "pool_id": "2",
-      "pair_id": "untrn&lt;&gt;uatom",
-      "token0": "uatom",
-      "token1": "untrn",
-      "fee": "3000",
-      "tick_index": "100",
-      "token0_reserve": "500000",
-      "token1_reserve": "500000",
-      "token0_denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
-      "token1_denom": "untrn"
-    }
-  ],
-  "pagination": {
-    "next_key": null,
-    "total": "2"
-  }
-}
+```
+GET /neutron/dex/pool_metadata/{id}
 ```
 
-### GET: Query All Pool Metadata
+Returns metadata for a specific pool.
+
+### Query All Pool Metadata
 
 ```
 GET /neutron/dex/pool_metadata
 ```
 
-Returns metadata for all pools.
+Returns metadata for all pools with pagination support.
 
-#### Parameters
+## Limit Order Queries
 
-- `pagination`: Optional pagination parameters
-
-#### Response Structure
-
-```json
-{
-  "pool_metadata": [
-    {
-      "id": "1",
-      "creator": "neutron1...",
-      "display_name": "NTRN/ATOM Pool",
-      "created_at": "2023-01-01T00:00:00Z",
-      "fee_recipient": "neutron1..."
-    }
-  ],
-  "pagination": {
-    "next_key": null,
-    "total": "1"
-  }
-}
-```
-
-### GET: Query Limit Order Tranche
+### Query Limit Order Tranche
 
 ```
 GET /neutron/dex/limit_order_tranche/{pair_id}/{token_in}/{tick_index}/{tranche_key}
@@ -180,35 +70,33 @@ GET /neutron/dex/limit_order_tranche/{pair_id}/{token_in}/{tick_index}/{tranche_
 
 Returns information about a specific limit order tranche.
 
-#### Parameters
+### Query All Limit Order Tranches
 
-- `pair_id`: The pair identifier (e.g., "untrn&lt;&gt;uatom")
-- `token_in`: The token being sold
-- `tick_index`: The tick index of the limit order
-- `tranche_key`: The unique tranche key
-
-#### Response Structure
-
-```json
-{
-  "limit_order_tranche": {
-    "pair_id": "untrn&lt;&gt;uatom",
-    "token_in": "untrn",
-    "tick_index": "100",
-    "tranche_key": "tranche123",
-    "reserves_token_in": "1000000",
-    "reserves_token_out": "0",
-    "total_token_in": "1000000",
-    "total_token_out": "0",
-    "token_in_denom": "untrn",
-    "token_out_denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
-    "status": "ACTIVE",
-    "expiration_time": null
-  }
-}
+```
+GET /neutron/dex/limit_order_tranche/{pair_id}/{token_in}
 ```
 
-### GET: Query User Deposits
+Returns all limit order tranches for a token pair.
+
+### Query Inactive Limit Order Tranche
+
+```
+GET /neutron/dex/inactive_limit_order_tranche/{pair_id}/{token_in}/{tick_index}/{tranche_key}
+```
+
+Returns information about an inactive (filled) limit order tranche.
+
+### Query All Inactive Limit Order Tranches
+
+```
+GET /neutron/dex/inactive_limit_order_tranche
+```
+
+Returns all inactive limit order tranches.
+
+## User Queries
+
+### Query User Deposits
 
 ```
 GET /neutron/dex/user/deposits/{address}
@@ -216,38 +104,12 @@ GET /neutron/dex/user/deposits/{address}
 
 Returns all deposits for a specific user.
 
-#### Parameters
-
-- `address`: The user's address
+**Parameters:**
+- `address`: User's address
 - `pagination`: Optional pagination parameters
-- `include_pool_data`: Whether to include pool data in the response
+- `include_pool_data`: Whether to include pool data in response
 
-#### Response Structure
-
-```json
-{
-  "deposits": [
-    {
-      "pair_id": "untrn&lt;&gt;uatom",
-      "share_denom": "neutron/pool/1",
-      "shares_owned": "1000000",
-      "tick_index": "0",
-      "fee": "3000",
-      "token0": "uatom",
-      "token1": "untrn",
-      "pool_id": "1",
-      "token0_denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
-      "token1_denom": "untrn"
-    }
-  ],
-  "pagination": {
-    "next_key": null,
-    "total": "1"
-  }
-}
-```
-
-### GET: Query User Limit Orders
+### Query User Limit Orders
 
 ```
 GET /neutron/dex/user/limit_orders/{address}
@@ -255,243 +117,103 @@ GET /neutron/dex/user/limit_orders/{address}
 
 Returns all limit orders for a specific user.
 
-#### Parameters
-
-- `address`: The user's address
-- `pagination`: Optional pagination parameters
-
-#### Response Structure
-
-```json
-{
-  "limit_orders": [
-    {
-      "pair_id": "untrn&lt;&gt;uatom",
-      "token_in": "untrn",
-      "token_out": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
-      "tick_index": "100",
-      "tranche_key": "tranche123",
-      "address": "neutron1...",
-      "shares_owned": "1000000",
-      "shares_withdrawn": "0",
-      "shares_cancelled": "0",
-      "order_type": "GOOD_TIL_CANCELLED"
-    }
-  ],
-  "pagination": {
-    "next_key": null,
-    "total": "1"
-  }
-}
-```
-
-## Swap Simulation
-
-### POST: Simulate Multi-Hop Swap
+### Query Limit Order Tranche User
 
 ```
-POST /neutron/dex/simulate_multi_hop_swap
+GET /neutron/dex/limit_order_tranche_user/{address}/{tranche_key}
 ```
 
-Simulates a multi-hop swap to estimate the output amount and price impact.
+Returns user's position in a specific limit order tranche.
 
-#### Request Body
-
-```json
-{
-  "creator": "neutron1...",
-  "receiver": "neutron1...",
-  "routes": [
-    {
-      "hops": ["untrn", "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"]
-    }
-  ],
-  "amount_in": "1000000",
-  "exit_limit_price": "0.95",
-  "pick_best_route": true
-}
-```
-
-#### Response Structure
-
-```json
-{
-  "coin_out": {
-    "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
-    "amount": "950000"
-  },
-  "route": {
-    "hops": ["untrn", "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"]
-  }
-}
-```
-
-## Deposit Simulation
-
-### POST: Simulate Deposit
+### Query All Limit Order Tranche Users
 
 ```
-POST /neutron/dex/simulate_deposit
+GET /neutron/dex/limit_order_tranche_user
 ```
 
-Simulates a deposit to estimate the shares that would be received.
+Returns all limit order tranche user positions.
 
-#### Request Body
+## Liquidity Queries
 
-```json
-{
-  "creator": "neutron1...",
-  "receiver": "neutron1...",
-  "token_a": "untrn",
-  "token_b": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
-  "amounts_a": ["1000000"],
-  "amounts_b": ["1000000"],
-  "tick_indexes_a_to_b": [0],
-  "fees": [3000],
-  "options": [
-    {
-      "disable_autoswap": false
-    }
-  ]
-}
-```
-
-#### Response Structure
-
-```json
-{
-  "shares_issued": ["1000000neutron/pool/1"],
-  "amounts_deposited": [
-    {
-      "token_a": "1000000",
-      "token_b": "1000000"
-    }
-  ]
-}
-```
-
-## Withdrawal Simulation
-
-### POST: Simulate Withdrawal
+### Query Tick Liquidity
 
 ```
-POST /neutron/dex/simulate_withdrawal
+GET /neutron/dex/tick_liquidity/{pair_id}/{token_in}
 ```
 
-Simulates a withdrawal to estimate the tokens that would be received.
+Returns tick liquidity for a token pair.
 
-#### Request Body
+## Simulation Endpoints
 
-```json
-{
-  "creator": "neutron1...",
-  "token_a": "untrn",
-  "token_b": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
-  "shares_to_remove": ["500000"],
-  "tick_indexes_a_to_b": [0],
-  "fees": [3000]
-}
-```
-
-#### Response Structure
-
-```json
-{
-  "coins_out": [
-    {
-      "denom": "untrn",
-      "amount": "500000"
-    },
-    {
-      "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
-      "amount": "500000"
-    }
-  ]
-}
-```
-
-## Limit Order Simulation
-
-### POST: Simulate Place Limit Order
+### Simulate Deposit
 
 ```
-POST /neutron/dex/simulate_place_limit_order
+GET /neutron/dex/simulate_deposit
 ```
 
-Simulates placing a limit order to estimate the immediate fill and remaining amount.
+Simulates a deposit transaction. Requires MsgDeposit parameters.
 
-#### Request Body
+### Simulate Withdrawal
 
-```json
-{
-  "creator": "neutron1...",
-  "receiver": "neutron1...",
-  "token_in": "untrn",
-  "token_out": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
-  "amount_in": "1000000",
-  "limit_sell_price": "1.05",
-  "order_type": "GOOD_TIL_CANCELLED",
-  "expiration_time": null,
-  "max_amount_out": null
-}
+```
+GET /neutron/dex/simulate_withdrawal
 ```
 
-#### Response Structure
+Simulates a withdrawal transaction. Requires MsgWithdrawal parameters.
 
-```json
-{
-  "coin_in": {
-    "denom": "untrn",
-    "amount": "1000000"
-  },
-  "taker_coin_out": {
-    "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
-    "amount": "500000"
-  },
-  "taker_coin_in": {
-    "denom": "untrn",
-    "amount": "500000"
-  }
-}
+### Simulate Place Limit Order
+
+```
+GET /neutron/dex/simulate_place_limit_order
 ```
 
-## Error Responses
+Simulates placing a limit order. Requires MsgPlaceLimitOrder parameters.
 
-All endpoints may return error responses in the following format:
+### Simulate Multi-Hop Swap
 
-```json
-{
-  "error": "error message",
-  "code": 400,
-  "details": "additional error details"
-}
+```
+GET /neutron/dex/simulate_multi_hop_swap
 ```
 
-Common error codes:
-- `400`: Bad Request - Invalid parameters
-- `404`: Not Found - Resource doesn't exist
-- `500`: Internal Server Error - Server-side error
+Simulates a multi-hop swap transaction. Requires MsgMultiHopSwap parameters.
 
-## Rate Limiting
+### Simulate Withdraw Filled Limit Order
 
-API endpoints are subject to rate limiting to ensure fair usage. Rate limits are applied per IP address:
+```
+GET /neutron/dex/simulate_withdraw_filled_limit_order
+```
 
-- **Query endpoints**: 100 requests per minute
-- **Simulation endpoints**: 20 requests per minute
+Simulates withdrawing from a filled limit order. Requires MsgWithdrawFilledLimitOrder parameters.
 
-When rate limits are exceeded, the API returns a `429 Too Many Requests` status code with a `Retry-After` header indicating when requests can resume.
+### Simulate Cancel Limit Order
+
+```
+GET /neutron/dex/simulate_cancel_limit_order
+```
+
+Simulates canceling a limit order. Requires MsgCancelLimitOrder parameters.
+
+## Module Parameters
+
+### Query Parameters
+
+```
+GET /neutron/dex/params
+```
+
+Returns the module parameters.
 
 ## Pagination
 
-List endpoints support pagination through query parameters:
-
-- `pagination.key`: Base64-encoded key for the next page
+List endpoints support standard Cosmos SDK pagination parameters:
+- `pagination.key`: Next page key
 - `pagination.offset`: Number of items to skip
-- `pagination.limit`: Maximum number of items to return (default: 100, max: 1000)
-- `pagination.count_total`: Whether to return the total count
-- `pagination.reverse`: Whether to reverse the order
+- `pagination.limit`: Maximum items per page
+- `pagination.count_total`: Whether to count total items
+- `pagination.reverse`: Whether to reverse order
 
-Example:
-```
-GET /neutron/dex/pool_metadata?pagination.limit=50&pagination.offset=100
-``` 
+## Response Format
+
+All endpoints return JSON responses. The exact response structure depends on the specific endpoint and matches the corresponding protobuf message definitions.
+
+For detailed response schemas, refer to the protocol buffer definitions in the module source code.

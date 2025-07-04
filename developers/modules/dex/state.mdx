@@ -1,121 +1,116 @@
 ---
-title: "Dex State"
+title: "DEX State"
+description: "State management and storage in the DEX module"
 ---
 
-The Dex module maintains several types of state to track pools, reserves, limit orders, and user positions.
+The DEX module maintains state to track pools, reserves, limit orders, and user positions. All state objects are defined in protocol buffer files and stored in the module's key-value store.
 
-## State Objects
+## Core State Objects
 
-The following objects are stored in the module's KVStore:
+### Pool
 
-## Pool
-
-The Pool object defines a liquidity pool for a pair of tokens at a specific price (tick index) and fee tier.
+Represents a liquidity pool for a specific trading pair, tick, and fee combination.
 
 ```protobuf
 message Pool {
-  uint64 id = 1;             // Unique identifier for the pool
-  string pair_id = 2;        // Trading pair identifier (e.g., "untrn&lt;&gt;uatom")
-  int64 tick_index = 3;      // Price tick index
-  uint64 fee = 4;            // Fee tier in basis points
+  uint64 id = 1;
+  PoolReserves lower_tick0 = 2;
+  PoolReserves upper_tick1 = 3;
 }
 ```
 
 ### PoolReserves
 
-PoolReserves stores the actual token amounts in a pool and is associated with a Pool.
+Stores the actual token reserves for a pool at a specific price point.
 
 ```protobuf
 message PoolReserves {
-  uint64 pool_id = 1;        // Reference to the Pool ID
-  string pair_id = 2;        // Trading pair identifier
-  string token0 = 3;         // First token in the pair (lexicographically smaller)
-  string token1 = 4;         // Second token in the pair
-  uint64 fee = 5;            // Fee tier in basis points
-  int64 tick_index = 6;      // Price tick index
-  string token0_reserve = 7; // Amount of token0 in the pool
-  string token1_reserve = 8; // Amount of token1 in the pool
-  string token0_denom = 9;   // Full denomination of token0
-  string token1_denom = 10;  // Full denomination of token1
+  PoolReservesKey key = 1;
+  string reserves_maker_denom = 2;
+  string price_taker_to_maker = 3;
+  string price_opposite_taker_to_maker = 4;
+}
+
+message PoolReservesKey {
+  TradePairID trade_pair_id = 1;
+  int64 tick_index_taker_to_maker = 2;
+  uint64 fee = 3;
 }
 ```
 
 ### PoolMetadata
 
-PoolMetadata stores additional information about a pool.
+Contains metadata information about pools.
 
 ```protobuf
 message PoolMetadata {
-  uint64 id = 1;               // References the Pool ID
-  string creator = 2;          // Address of the pool creator
-  string display_name = 3;     // Optional user-friendly name for the pool
-  google.protobuf.Timestamp created_at = 4; // Creation timestamp
-  string fee_recipient = 5;    // Optional address to receive fee share
+  uint64 id = 1;
+  int64 tick = 2;
+  uint64 fee = 3;
+  PairID pair_id = 4;
 }
 ```
 
 ### LimitOrderTranche
 
-LimitOrderTranche represents a group of limit orders at the same price.
+Represents a group of limit orders at the same price level.
 
 ```protobuf
 message LimitOrderTranche {
-  string pair_id = 1;          // Trading pair identifier
-  string token_in = 2;         // Token being sold
-  int64 tick_index = 3;        // Price tick index
-  string tranche_key = 4;      // Unique identifier for the tranche
-  string reserves_token_in = 5; // Remaining amount of token_in to be sold
-  string reserves_token_out = 6; // Accumulated amount of token_out to be claimed
-  string total_token_in = 7;    // Total amount of token_in originally placed
-  string total_token_out = 8;   // Total amount of token_out received thus far
-  string token_in_denom = 9;   // Full denomination of token_in
-  string token_out_denom = 10; // Full denomination of token_out
-  TrancheStatus status = 11;   // Status of the limit order tranche
-  google.protobuf.Timestamp expiration_time = 12; // Expiration timestamp (if applicable)
-  
-  enum TrancheStatus {
-    ACTIVE = 0;
-    INACTIVE = 1;
-  }
+  LimitOrderTrancheKey key = 1;
+  string reserves_maker_denom = 2;
+  string reserves_taker_denom = 3;
+  string total_maker_denom = 4;
+  string total_taker_denom = 5;
+  google.protobuf.Timestamp expiration_time = 6;
+  string price_taker_to_maker = 7 [deprecated = true];
+  string maker_price = 8;
+}
+
+message LimitOrderTrancheKey {
+  TradePairID trade_pair_id = 1;
+  int64 tick_index_taker_to_maker = 2;
+  string tranche_key = 3;
 }
 ```
 
 ### LimitOrderTrancheUser
 
-LimitOrderTrancheUser tracks a user's ownership of a limit order tranche.
+Tracks individual user positions within limit order tranches.
 
 ```protobuf
 message LimitOrderTrancheUser {
-  string address = 1;         // User's address
-  string tranche_key = 2;     // Reference to the tranche
-  string shares_owned = 3;    // Number of shares owned in the tranche
-  string shares_withdrawn = 4; // Number of shares already withdrawn/claimed
-  string shares_cancelled = 5; // Number of shares cancelled
+  TradePairID trade_pair_id = 1;
+  int64 tick_index_taker_to_maker = 2;
+  string tranche_key = 3;
+  string address = 4;
+  string shares_owned = 5;
+  string shares_withdrawn = 6;
+  string shares_cancelled = 7;
+  LimitOrderType order_type = 8;
 }
 ```
 
 ### DepositRecord
 
-DepositRecord tracks a user's liquidity position in a pool.
+Tracks user liquidity positions in pools.
 
 ```protobuf
 message DepositRecord {
-  string pair_id = 1;         // Trading pair identifier
-  string share_denom = 2;     // Denomination of the share token
-  string shares_owned = 3;    // Number of shares owned
-  int64 tick_index = 4;       // Price tick index
-  uint64 fee = 5;             // Fee tier in basis points
-  string token0 = 6;          // First token in the pair
-  string token1 = 7;          // Second token in the pair
-  string pool_id = 8;         // Reference to the Pool ID
-  string token0_denom = 9;    // Full denomination of token0
-  string token1_denom = 10;   // Full denomination of token1
+  PairID pair_id = 1;
+  string shares_owned = 2;
+  int64 center_tick_index = 3;
+  int64 lower_tick_index = 4;
+  int64 upper_tick_index = 5;
+  uint64 fee = 6;
+  string total_shares = 7;
+  Pool pool = 8;
 }
 ```
 
 ### TickLiquidity
 
-TickLiquidity is a union type that can represent either a PoolReserves or a LimitOrderTranche at a given tick.
+A union type that represents either pool reserves or limit order tranches at a tick.
 
 ```protobuf
 message TickLiquidity {
@@ -126,118 +121,67 @@ message TickLiquidity {
 }
 ```
 
-## KVStore
+## Identifiers
 
-The Dex module uses the following key prefixes in the KVStore:
+### TradePairID
 
-### Pool Keys
-
-| Prefix | Key Format | Value Type | Description |
-| ------ | ---------- | ---------- | ----------- |
-| `PoolKey` | `0x01 \| []byte(pool_id)` | `Pool` | Store pool by ID |
-| `PoolByParamsKey` | `0x02 \| []byte(pair_id) \| []byte(tick_index) \| []byte(fee)` | `uint64` | Store pool ID by parameters |
-| `PoolMetadataKey` | `0x03 \| []byte(pool_id)` | `PoolMetadata` | Store pool metadata by ID |
-
-### Reserves Keys
-
-| Prefix | Key Format | Value Type | Description |
-| ------ | ---------- | ---------- | ----------- |
-| `PoolReservesKey` | `0x11 \| []byte(pool_id)` | `PoolReserves` | Store pool reserves by pool ID |
-| `PoolReservesByParamsKey` | `0x12 \| []byte(pair_id) \| []byte(token_in) \| []byte(tick_index) \| []byte(fee)` | `PoolReserves` | Store pool reserves by parameters |
-
-### Limit Order Keys
-
-| Prefix | Key Format | Value Type | Description |
-| ------ | ---------- | ---------- | ----------- |
-| `LimitOrderTrancheKey` | `0x21 \| []byte(pair_id) \| []byte(token_in) \| []byte(tick_index) \| []byte(tranche_key)` | `LimitOrderTranche` | Store limit order tranches |
-| `InactiveLimitOrderTrancheKey` | `0x22 \| []byte(pair_id) \| []byte(token_in) \| []byte(tick_index) \| []byte(tranche_key)` | `LimitOrderTranche` | Store inactive limit order tranches |
-| `LimitOrderTrancheUserKey` | `0x23 \| []byte(address) \| []byte(tranche_key)` | `LimitOrderTrancheUser` | Store user positions in limit order tranches |
-| `LimitOrderExpirationKey` | `0x24 \| []byte(expiration_time) \| []byte(tranche_key)` | `bool` | Store limit order expiration info |
-
-### Deposit Keys
-
-| Prefix | Key Format | Value Type | Description |
-| ------ | ---------- | ---------- | ----------- |
-| `DepositKey` | `0x31 \| []byte(address) \| []byte(share_denom)` | `DepositRecord` | Store user deposit records |
-
-### Tick Iteration Keys
-
-| Prefix | Key Format | Value Type | Description |
-| ------ | ---------- | ---------- | ----------- |
-| `TickLiquidityKey` | `0x41 \| []byte(pair_id) \| []byte(token_in) \| []byte(tick_index)` | `TickLiquidity` | Store all liquidity at a tick |
-
-## Genesis State
-
-The genesis state of the Dex module contains all the state information necessary to initialize the module:
+Identifies the direction of a trade within a token pair.
 
 ```protobuf
-message GenesisState {
-  repeated Pool pools = 1;
-  repeated PoolMetadata pool_metadata = 2;
-  repeated PoolReserves pool_reserves = 3;
-  repeated DepositRecord deposits = 4;
-  repeated LimitOrderTranche limit_order_tranches = 5;
-  repeated LimitOrderTrancheUser limit_order_tranche_users = 6;
-  repeated LimitOrderTranche inactive_limit_order_tranches = 7;
-  Params params = 8;
+message TradePairID {
+  string maker_denom = 1;
+  string taker_denom = 2;
 }
 ```
 
-## State Transitions
+### PairID
 
-### Pool Creation
-
-When liquidity is first deposited into a new pool:
-
-1. A new `Pool` object is created with a unique ID
-2. `PoolReserves` are initialized with the deposited token amounts
-3. A corresponding `PoolMetadata` entry is created
-4. A `share_denom` is generated based on the pool ID
-5. A `DepositRecord` is created for the depositing user
-
-### Limit Order Placement
-
-When a limit order is placed:
-
-1. If a `LimitOrderTranche` doesn't exist at the specified tick and price, a new one is created
-2. A `LimitOrderTrancheUser` entry is created or updated for the user
-3. If the order is of type `GOOD_TIL_TIME`, an expiration entry is added
-4. Immediate fills are processed, updating the tranche reserves
-
-### Limit Order Cancellation/Expiration
-
-When a limit order is cancelled or expires:
-
-1. The `LimitOrderTranche` is marked as inactive if completely cancelled
-2. The tranche is moved from active to inactive storage
-3. User positions are updated to reflect the cancellation
-
-### Swap Execution
-
-During a swap:
-
-1. The swap algorithm iterates through ticks in price order
-2. Pool reserves are updated as liquidity is consumed
-3. Limit order tranches are filled, updating their reserves
-4. User positions in filled tranches are updated
-5. Trading fees are distributed to liquidity providers
-
-## Parameters
-
-The Dex module parameters control various aspects of the module's behavior:
+Identifies a token pair with lexicographically ordered tokens.
 
 ```protobuf
-message Params {
-  // Trading fees in basis points (1/10,000)
-  repeated uint64 fee_tiers = 1;
-  
-  // Tick spacing for each fee tier
-  repeated uint64 tick_spacings = 2;
-  
-  // Maximum number of hops allowed in multi-hop swaps
-  uint64 max_hops = 3;
-  
-  // Maximum number of ticks to iterate during a swap
-  uint64 max_tick_iterations = 4;
+message PairID {
+  string token0 = 1;
+  string token1 = 2;
 }
-``` 
+```
+
+## Enumerations
+
+### LimitOrderType
+
+Defines the different types of limit orders supported.
+
+```protobuf
+enum LimitOrderType {
+  GOOD_TIL_CANCELLED = 0;
+  FILL_OR_KILL = 1;
+  IMMEDIATE_OR_CANCEL = 2;
+  JUST_IN_TIME = 3;
+  GOOD_TIL_TIME = 4;
+}
+```
+
+### TickLiquidityType
+
+Distinguishes between different types of liquidity at a tick.
+
+```protobuf
+enum TickLiquidityType {
+  POOL_RESERVES = 0;
+  LIMIT_ORDER_TRANCHE = 1;
+}
+```
+
+## State Management
+
+The DEX module uses these state objects to:
+
+- Track liquidity pools and their reserves
+- Manage limit order tranches and user positions
+- Store user deposit records and shares
+- Maintain tick-based liquidity organization
+- Handle order expiration and lifecycle management
+
+State transitions occur through the various message handlers (MsgDeposit, MsgWithdrawal, MsgPlaceLimitOrder, etc.) and during automated processes like limit order expiration.
+
+For detailed implementation specifics, refer to the Go source code in the module-reference directory.

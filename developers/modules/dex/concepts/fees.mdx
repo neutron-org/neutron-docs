@@ -1,0 +1,164 @@
+---
+title: "Fees"
+---
+
+_Disclaimer: Liquidity providing into all AMMs is risky and requires due dilligence. While we explain how fees can hypothetically be used to make money, we reccommend that you do your own research before making decisions on how to choose fees and whether to liquidity provide._
+
+Fees are used by liquidity providers to make money from trades using their liquidity. Every time a trade is made, the fee charges traders a slight premium for using the liquidity.
+
+The best strategy for liquidity providers will not always be to charge traders the highest fee. This is because higher fees also means higher prices, which can be undercut by liquidity being deposited at lower fees or prices. Thus, liquidity providers should be thoughtful in their selection of fees.
+
+A rule of thumb on choosing fees is that liquidity providers typically choose higher fees on pairs with more volatility.
+
+* Less volatile assets (like stablecoin pairs) carry little to no risk of loss-versus-balancing (LVR) and impermanent loss (loss-versus-holding or IL) for liquidity providers. It is relatively straightforward to LP and make a price prediction. This means that attracting order flow is very competitive and fees may end up becoming a race to the bottom. A typical strategy might be to deploy a lot of liquidity at very close to and at the peg price with the lowest fee tier.
+* More volatile assets are subject to higher LVR and IL. LPs may spread their liquidity across a wider range to capture more volume. This additional volume and lack of liquidity concentration makes it more suitable for LPs to charge higher fees.
+
+The Neutron DEX implements a comprehensive fee system that balances liquidity provider compensation with competitive trading costs. Fees are charged on swaps and integrated into the tick-based liquidity model.
+
+## Fee Structure
+
+### Representation
+Fees are represented in **basis points** (bp), where 1 bp = 0.01%.
+
+### Common Fee Tiers
+
+- **1 bp (0.01%)**: Ultra-low volatility pairs (e.g., stablecoin pairs)
+- **5 bp (0.05%)**: Low volatility pairs (e.g., major token pairs)
+- **30 bp (0.30%)**: Standard pairs (e.g., most trading pairs)
+- **100 bp (1.00%)**: Exotic pairs (e.g., new or volatile tokens)
+- **300 bp (3.00%)**: Highly volatile pairs (e.g., experimental tokens)
+
+## Fee Mathematics
+
+### Basic Fee Math
+
+We will use $\gamma$ to represent fees in constant sum pools. Fees work as follows:
+
+* Consider a pool between token $A$ and token $B$
+* When a trader wants to trade $a_{in} = X$ units of token $A$ for token $B$ through a pool with the price $p$ and a fee $\gamma$, they receive $a_{out} = p (1 -\gamma) X$ as long as there are enough reserves in the pool i.e., $R_B \geq p (1 - \gamma) X$
+* When a trader wants to trade $a_{in} = Y$ units of token $B$ for token $A$ through the same pool, they receive $a_{out} = \frac{(1 - \gamma) Y}{p}$ as long as there are enough reserves in the pool i.e., $R_A \geq \frac{(1 - \gamma) Y}{p}$
+
+_Note_: that since price $p$ is the exchange rate for trades from token $A$ to token $B$, $\frac{1}{p}$ is the exchange rate for trades ​from token $B$ to token $A$.
+
+### Swap Fee Calculation
+
+For a swap with fee γ:
+
+**Token A → Token B:**
+$$\text{amountOut} = p \times (1 - \gamma) \times \text{amountIn}$$
+
+**Token B → Token A:**
+$$\text{amountOut} = \frac{(1 - \gamma) \times \text{amountIn}}{p}$$
+
+Where:
+- `p` is the tick price: $p = 1.0001^{tickIndex}$
+- `γ` is the fee rate (as a decimal)
+- Fees are deducted from the output amount
+
+### Example Calculation
+
+For a 30 bp (0.3%) fee on a 100 USDC → ATOM swap at tick 23027:
+
+1. **Base conversion**: $100 / 1.0001^{23027} = 10.0$ ATOM
+2. **Fee deduction**: $10.0 \times (1 - 0.003) = 9.97$ ATOM
+3. **Fee amount**: $10.0 - 9.97 = 0.03$ ATOM
+
+## Fee Integration
+
+### Tick-Level Fees
+- Each tick can have multiple fee tiers
+- Different fee tiers maintain separate liquidity pools
+- Swaps execute against the best available price across all fee tiers
+
+### Pool-Specific Fees
+- PoolReserves at the same tick can have different fees
+- Fee is part of the PoolReservesKey identification
+- Enables competitive fee markets at each price point
+
+## Fee Strategy Considerations
+
+### For Liquidity Providers
+
+**Low Volatility Pairs:**
+- Race to the bottom on fees to attract volume
+- Higher volume compensates for lower per-trade fees
+- Focus on tight spreads and deep liquidity
+
+**High Volatility Pairs:**
+- Higher fees compensate for impermanent loss risk
+- Lower volume but higher per-trade compensation
+- Balance between attracting trades and risk management
+
+### For Traders
+
+**Cost Optimization:**
+- Choose appropriate fee tiers based on trade size
+- Consider fee impact on multi-hop swaps
+- Balance execution certainty with cost
+
+**Price Discovery:**
+- Lower fees may provide better prices
+- Higher fees may have less competition
+- Fee arbitrage opportunities across tiers
+
+## Fee Distribution
+
+### Liquidity Provider Rewards
+- Fees are distributed to liquidity providers proportional to their share
+- Automatic compounding into pool reserves
+- Real-time fee accrual with each swap
+
+### Pool Growth
+- Fees increase the total pool value
+- Share token prices appreciate with accumulated fees
+- Organic growth mechanism for successful pools
+
+## Autoswap Fee Handling
+
+When autoswap is enabled during deposits, additional fees may apply:
+
+### Autoswap Fee Calculation
+$$\text{autoswapFee} = (\text{residual}_0 + \text{residual}_1 \times \text{price1To0}) \times (1 - p(\text{fee}))$$
+
+### Impact on Deposits
+- Autoswap fees reduce the final share token issuance
+- Fee calculation includes the impact of price conversion
+- Provides cost transparency for deposit operations
+
+## Multi-Hop Fee Accumulation
+
+For multi-hop swaps, fees compound across each hop:
+
+### Sequential Fee Application
+1. **First hop**: Apply fee to initial swap
+2. **Subsequent hops**: Apply fee to remaining amount
+3. **Final output**: Reduced by cumulative fee impact
+
+### Route Optimization
+- Router considers fee impact when selecting optimal paths
+- Lower total fees may outweigh longer routes
+- Dynamic fee-aware routing for best execution
+
+## Fee Governance
+
+### Fee Tier Management
+- Standard fee tiers are established by governance
+- Custom fee tiers can be created for specific use cases
+- Fee adjustments require governance proposals
+
+### Market Dynamics
+- Fee competition drives innovation in liquidity provision
+- Market forces determine optimal fee levels
+- Governance can adjust parameters based on market feedback
+
+## Implementation Details
+
+### Fee Precision
+- Fee calculations use high-precision decimal arithmetic
+- Rounding is handled consistently across all operations
+- Minimal precision loss in fee calculations
+
+### Gas Optimization
+- Fee calculations are optimized for gas efficiency
+- Batch operations reduce per-swap overhead
+- Efficient storage of fee-related data structures
