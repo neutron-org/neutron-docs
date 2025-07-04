@@ -1,0 +1,128 @@
+---
+title: "Global Fee Overview"
+---
+
+The Global Fee module enforces minimum gas prices across the entire Neutron network and provides mechanisms for fee exemptions on specific message types. This module is essential for network security and economic sustainability.
+
+<Info>
+**Governance-Controlled Parameters**: The Global Fee module's parameters (minimum gas prices, bypass message types) can only be updated through governance proposals. Individual users cannot directly modify module settings.
+</Info>
+
+## Key Features
+
+- **Minimum Gas Price Enforcement**: Sets network-wide minimum gas prices that all transactions must meet
+
+- **Multi-Asset Support**: Supports minimum gas prices in multiple denominations with alternative acceptance
+
+- **Message Type Bypass**: Allows specific message types to bypass minimum fee requirements
+
+- **Gas Usage Limits**: Controls the maximum gas usage allowed for fee-exempt transactions
+
+- **Network Security**: Prevents spam attacks by ensuring adequate transaction costs
+
+## Module Functionality
+
+The Global Fee module operates through the following workflow:
+
+1. **Fee Validation**: Validates that all transactions meet minimum gas price requirements
+
+2. **Bypass Processing**: Checks if transactions contain only fee-exempt message types
+
+3. **Gas Limit Enforcement**: Ensures fee-exempt transactions don't exceed gas usage limits
+
+4. **Multi-Asset Acceptance**: Accepts fees in any of the configured denominations
+
+## Parameters
+
+The module maintains the following parameters:
+
+### Minimum Gas Prices
+
+```protobuf
+message Params {
+  // minimum_gas_prices stores the minimum gas price(s) for all TX on the chain.
+  // When multiple coins are defined then they are accepted alternatively.
+  // The list must be sorted by denoms asc. No duplicate denoms or zero amount
+  // values allowed.
+  repeated cosmos.base.v1beta1.DecCoin minimum_gas_prices = 1;
+  
+  // bypass_min_fee_msg_types defines a list of message type urls
+  // that are free of fee charge.
+  repeated string bypass_min_fee_msg_types = 2;
+  
+  // max_total_bypass_min_fee_msg_gas_usage defines the total maximum gas usage
+  // allowed for a transaction containing only messages of types in bypass_min_fee_msg_types
+  // to bypass fee charge.
+  uint64 max_total_bypass_min_fee_msg_gas_usage = 3;
+}
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `minimum_gas_prices` | []DecCoin | Minimum gas prices required for transactions |
+| `bypass_min_fee_msg_types` | []string | Message types that can bypass minimum fee requirements |
+| `max_total_bypass_min_fee_msg_gas_usage` | uint64 | Maximum gas usage allowed for fee-exempt transactions |
+
+## Fee Enforcement Logic
+
+### Standard Transactions
+
+For regular transactions:
+
+1. **Gas Price Check**: Transaction gas price must meet or exceed minimum requirements
+2. **Multi-Asset Support**: Fees can be paid in any configured denomination
+3. **Alternative Acceptance**: If multiple denominations are configured, any one can be used
+
+### Fee-Exempt Transactions
+
+For transactions containing only bypass message types:
+
+1. **Message Type Validation**: All messages must be in the bypass list
+2. **Gas Limit Check**: Total gas usage must not exceed the configured limit
+3. **Zero Fee Acceptance**: These transactions can have zero or minimal fees
+
+## Use Cases
+
+### For Network Security
+- **Spam Prevention**: Prevents low-cost spam attacks on the network
+- **Economic Sustainability**: Ensures validators receive adequate compensation
+- **Resource Protection**: Protects network resources from abuse
+
+### For Users
+- **Predictable Costs**: Clear minimum fee requirements
+- **Multi-Asset Flexibility**: Option to pay fees in different denominations
+- **Fee Exemptions**: Certain operations may qualify for reduced fees
+
+### For Validators
+- **Revenue Assurance**: Guaranteed minimum fee income
+- **Network Protection**: Protection against unprofitable transactions
+- **Operational Stability**: Consistent fee structure for planning
+
+### For Governance
+- **Economic Policy**: Control over network fee structure
+- **Security Tuning**: Ability to adjust fees based on network conditions
+- **Exemption Management**: Control over which operations qualify for fee reductions
+
+## Common Bypass Message Types
+
+Typical message types that might be configured for fee bypass include:
+
+- **Governance Messages**: Voting and proposal submission
+- **Validator Operations**: Delegation and staking operations
+- **IBC Acknowledgments**: Certain IBC protocol messages
+- **Emergency Operations**: Critical network maintenance operations
+
+<Warning>
+**Security Consideration**: Fee bypass configurations must be carefully managed to prevent abuse while maintaining network accessibility for essential operations.
+</Warning>
+
+## Integration with Other Modules
+
+The Global Fee module works alongside:
+
+- **Dynamic Fees**: Provides base minimum requirements for dynamic pricing
+- **Fee Burner**: Ensures adequate fees are available for burning mechanisms
+- **Auth**: Integrates with transaction authentication and fee deduction
+- **Bank**: Coordinates with token transfer and balance management
+
+This module is fundamental to Neutron's economic security model, ensuring sustainable network operation while providing flexibility for essential operations. 

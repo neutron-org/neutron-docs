@@ -1,0 +1,165 @@
+---
+title: "Events"
+---
+
+The Revenue module emits the following events:
+
+## RevenuePaid
+
+Emitted when a validator receives compensation based on their performance.
+
+**Type**: `revenue_paid`
+
+### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `amount` | string | Amount of tokens paid to the validator (e.g., "2000untrn") |
+| `validator` | string | The validator's address that received payment |
+| `performance_rating` | string | The performance rating (0.0-1.0) used to calculate the payment |
+
+### Example
+
+```json
+{
+  "type": "revenue_paid",
+  "attributes": [
+    {
+      "key": "amount",
+      "value": "2000untrn",
+      "index": true
+    },
+    {
+      "key": "validator",
+      "value": "neutronvaloper1abcdef...",
+      "index": true
+    },
+    {
+      "key": "performance_rating",
+      "value": "0.95",
+      "index": true
+    }
+  ]
+}
+```
+
+## PaymentPeriodEnded
+
+Emitted when a payment period ends and a new one begins.
+
+**Type**: `payment_period_ended`
+
+### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `period_type` | string | The type of payment period that ended (e.g., "MONTHLY") |
+| `period_number` | string | The sequential number of the period that ended |
+| `total_paid` | string | The total amount distributed to all validators |
+| `validators_paid` | string | The number of validators that received payment |
+
+### Example
+
+```json
+{
+  "type": "payment_period_ended",
+  "attributes": [
+    {
+      "key": "period_type",
+      "value": "MONTHLY",
+      "index": true
+    },
+    {
+      "key": "period_number",
+      "value": "5",
+      "index": true
+    },
+    {
+      "key": "total_paid",
+      "value": "40000untrn",
+      "index": true
+    },
+    {
+      "key": "validators_paid",
+      "value": "20",
+      "index": true
+    }
+  ]
+}
+```
+
+## TreasuryFunded
+
+Emitted when the treasury is funded using the MsgFundTreasury message.
+
+**Type**: `treasury_funded`
+
+### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `sender` | string | The address of the account that funded the treasury |
+| `amount` | string | The amount of tokens added to the treasury |
+
+### Example
+
+```json
+{
+  "type": "treasury_funded",
+  "attributes": [
+    {
+      "key": "sender",
+      "value": "neutron1abcdef...",
+      "index": true
+    },
+    {
+      "key": "amount",
+      "value": "10000000untrn",
+      "index": true
+    }
+  ]
+}
+```
+
+## ParamsUpdated
+
+Emitted when the module's parameters are updated through governance.
+
+**Type**: `params_updated`
+
+### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `authority` | string | The address of the account that authorized the update |
+
+### Example
+
+```json
+{
+  "type": "params_updated",
+  "attributes": [
+    {
+      "key": "authority",
+      "value": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6z2zm3",
+      "index": true
+    }
+  ]
+}
+```
+
+## Usage Example
+
+To monitor events from the Revenue module, you can subscribe to these events using a Tendermint WebSocket subscription:
+
+```javascript
+// Subscribe to all revenue_paid events
+client.subscribe('tm.event=\'Tx\' AND revenue_paid.validator=\'neutronvaloper1...\'', function(event) {
+  console.log('Validator payment:', event);
+});
+
+// Subscribe to payment period endings
+client.subscribe('tm.event=\'Tx\' AND payment_period_ended.period_type=\'MONTHLY\'', function(event) {
+  console.log('Monthly period ended:', event);
+});
+``` 

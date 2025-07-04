@@ -1,0 +1,29 @@
+---
+title: "Fee Refunder Overview"
+---
+
+The Fee Refunder module implements a mechanism to reimburse IBC relayers for their costs when submitting acknowledgement and timeout packets. It solves a critical economic challenge in the IBC ecosystem by ensuring relayers are compensated for their services.
+
+## Key Features
+
+- **IBC Relayer Compensation**: Ensures relayers receive payment for delivering acknowledgements and timeouts
+  
+- **Smart Contract Fee Management**: Requires smart contracts to pre-pay fees for the IBC packets they send
+  
+- **Fee Escrow**: Locks fees when packets are sent and distributes them appropriately when acknowledgements or timeouts are processed
+
+- **Minimum Fee Enforcement**: Enforces governance-set minimum fees to prevent spam and ensure relayers are adequately compensated
+
+## Module Functionality
+
+The Fee Refunder module operates through the following workflow:
+
+1. **Fee Collection**: When a smart contract sends an IBC packet via Transfer or SubmitTx messages, it must specify fees to be paid for acknowledgement and timeout processing
+
+2. **Fee Locking**: The module locks the total fees in an escrow account until the packet is resolved
+
+3. **Fee Distribution**:
+   - When an acknowledgement is received, the relayer is paid the acknowledgement fee, and the timeout fee is refunded to the contract
+   - When a timeout occurs, the relayer is paid the timeout fee, and the acknowledgement fee is refunded to the contract
+
+This mechanism provides an economic incentive for relayers to deliver IBC packets and prevents spam attacks by requiring pre-payment of fees. 

@@ -1,0 +1,440 @@
+---
+title: "Part 2: Modules & Contracts"
+description: "Learn how to interact with Neutron modules and other smart contracts"
+---
+
+In this tutorial, you'll extend your knowledge by learning how to interact with Neutron's unique modules and call other smart contracts. This is where Neutron's power really shines.
+
+## What You'll Learn
+
+- How to use Neutron's custom modules (Oracle, Cron, ICQ)
+- Inter-contract communication patterns
+- Advanced message handling and responses
+- Working with Neutron-specific message types
+
+## Prerequisites
+
+- Completed [Part 1: Minimal Smart Contract](/developers/tutorials/onboarding/part-1-minimal-application)
+- Basic understanding of the Cosmos SDK
+- Familiarity with CosmWasm message patterns
+
+## Neutron's Unique Modules
+
+Neutron provides several custom modules that enable powerful DeFi functionality:
+
+<CardGroup cols={3}>
+  <Card title="Oracle" icon="database">
+    Get high-frequency price data for any asset
+  </Card>
+  <Card title="Cron" icon="clock">
+    Schedule automated contract executions
+  </Card>
+  <Card title="ICQ" icon="link">
+    Query data from other IBC-connected chains
+  </Card>
+</CardGroup>
+
+## Enhanced Contract: Oracle Integration
+
+Let's extend our counter contract to use Neutron's Oracle module. We'll create a contract that tracks the price of ATOM and only allows increments when the price is above a certain threshold.
+
+### 1. Update Dependencies
+
+Add to your `Cargo.toml`:
+
+```toml
+[dependencies]
+cosmwasm-std = "1.0"
+cw-storage-plus = "1.0"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+neutron-sdk = "0.8"  # Add Neutron SDK
+```
+
+### 2. Enhanced State
+
+Update `src/state.rs`:
+
+```rust
+use cosmwasm_std::{Uint128, Decimal};
+use cw_storage_plus::Item;
+use neutron_sdk::bindings::types::ProtobufAny;
+
+// Storage
+pub const COUNTER: Item<Uint128> = Item::new("counter");
+pub const PRICE_THRESHOLD: Item<Decimal> = Item::new("price_threshold");
+pub const LAST_PRICE: Item<Decimal> = Item::new("last_price");
+
+// Configuration
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct Config {
+    pub price_threshold: Decimal,
+    pub oracle_base: String,
+    pub oracle_quote: String,
+}
+```
+
+### 3. Enhanced Messages
+
+Update `src/msg.rs`:
+
+```rust
+use cosmwasm_std::{Uint128, Decimal};
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct InstantiateMsg {
+    pub initial_count: Uint128,
+    pub price_threshold: Decimal,
+    pub oracle_base: String,
+    pub oracle_quote: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub enum ExecuteMsg {
+    Increment { amount: Uint128 },
+    UpdateThreshold { new_threshold: Decimal },
+    CheckPriceAndIncrement { amount: Uint128 },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub enum QueryMsg {
+    GetCount {},
+    GetConfig {},
+    GetLastPrice {},
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct CountResponse {
+    pub count: Uint128,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct ConfigResponse {
+    pub price_threshold: Decimal,
+    pub oracle_base: String,
+    pub oracle_quote: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct PriceResponse {
+    pub price: Decimal,
+}
+```
+
+### 4. Oracle Integration
+
+Update `src/contract.rs`:
+
+```rust
+use cosmwasm_std::{
+    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, 
+    Response, StdResult, Uint128, Decimal, StdError,
+};
+use neutron_sdk::bindings::msg::NeutronMsg;
+use neutron_sdk::bindings::query::NeutronQuery;
+
+use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, CountResponse, ConfigResponse, PriceResponse};
+use crate::state::{COUNTER, PRICE_THRESHOLD, LAST_PRICE, Config};
+
+#[entry_point]
+pub fn instantiate(
+    deps: DepsMut,
+    _env: Env,
+    _info: MessageInfo,
+    msg: InstantiateMsg,
+) -> StdResult<Response> {
+    // Save initial state
+    COUNTER.save(deps.storage, &msg.initial_count)?;
+    PRICE_THRESHOLD.save(deps.storage, &msg.price_threshold)?;
+    
+    // Save oracle configuration
+    let config = Config {
+        price_threshold: msg.price_threshold,
+        oracle_base: msg.oracle_base,
+        oracle_quote: msg.oracle_quote,
+    };
+    
+    Ok(Response::new()
+        .add_attribute("action", "instantiate")
+        .add_attribute("threshold", msg.price_threshold.to_string()))
+}
+
+#[entry_point]
+pub fn execute(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: ExecuteMsg,
+) -> StdResult<Response> {
+    match msg {
+        ExecuteMsg::Increment { amount } => increment(deps, amount),
+        ExecuteMsg::UpdateThreshold { new_threshold } => {
+            update_threshold(deps, info, new_threshold)
+        }
+        ExecuteMsg::CheckPriceAndIncrement { amount } => {
+            check_price_and_increment(deps, env, amount)
+        }
+    }
+}
+
+fn increment(deps: DepsMut, amount: Uint128) -> StdResult<Response> {
+    if amount > Uint128::from(100u128) {
+        return Err(StdError::generic_err("Cannot increment by more than 100"));
+    }
+    
+    let current = COUNTER.load(deps.storage)?;
+    let new_count = current + amount;
+    COUNTER.save(deps.storage, &new_count)?;
+    
+    Ok(Response::new()
+        .add_attribute("action", "increment")
+        .add_attribute("amount", amount.to_string())
+        .add_attribute("new_count", new_count.to_string()))
+}
+
+fn check_price_and_increment(
+    deps: DepsMut, 
+    env: Env, 
+    amount: Uint128
+) -> StdResult<Response> {
+    // Query current price from Oracle module
+    let price_query = NeutronQuery::Oracle {
+        base: "ATOM".to_string(),
+        quote: "USD".to_string(),
+    };
+    
+    let price_response: PriceResponse = deps.querier.query(&price_query.into())?;
+    let current_price = price_response.price;
+    
+    // Save the price for future reference
+    LAST_PRICE.save(deps.storage, &current_price)?;
+    
+    // Check if price meets threshold
+    let threshold = PRICE_THRESHOLD.load(deps.storage)?;
+    if current_price < threshold {
+        return Err(StdError::generic_err(
+            format!("Price {} is below threshold {}", current_price, threshold)
+        ));
+    }
+    
+    // Price is good, increment the counter
+    increment(deps, amount)
+}
+
+#[entry_point]
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    match msg {
+        QueryMsg::GetCount {} => {
+            let count = COUNTER.load(deps.storage)?;
+            let response = CountResponse { count };
+            to_binary(&response)
+        }
+        QueryMsg::GetLastPrice {} => {
+            let price = LAST_PRICE.may_load(deps.storage)?.unwrap_or_default();
+            let response = PriceResponse { price };
+            to_binary(&response)
+        }
+        QueryMsg::GetConfig {} => {
+            let threshold = PRICE_THRESHOLD.load(deps.storage)?;
+            let response = ConfigResponse {
+                price_threshold: threshold,
+                oracle_base: "ATOM".to_string(),
+                oracle_quote: "USD".to_string(),
+            };
+            to_binary(&response)
+        }
+    }
+}
+```
+
+## Inter-Contract Communication
+
+Contracts can call other contracts using the `WasmMsg::Execute` message type. Here's how to call another contract:
+
+```rust
+use cosmwasm_std::{WasmMsg, CosmosMsg, to_binary};
+
+pub fn call_other_contract(
+    contract_addr: String,
+    msg: OtherContractMsg,
+) -> StdResult<Response> {
+    let wasm_msg = WasmMsg::Execute {
+        contract_addr,
+        msg: to_binary(&msg)?,
+        funds: vec![], // Send tokens if needed
+    };
+    
+    Ok(Response::new()
+        .add_message(CosmosMsg::Wasm(wasm_msg))
+        .add_attribute("action", "call_other_contract"))
+}
+```
+
+## Using the Cron Module
+
+Schedule automated executions using Neutron's Cron module:
+
+```rust
+use neutron_sdk::bindings::msg::NeutronMsg;
+
+pub fn schedule_periodic_increment(
+    deps: DepsMut,
+    env: Env,
+) -> StdResult<Response> {
+    let cron_msg = NeutronMsg::AddSchedule {
+        name: "daily_increment".to_string(),
+        period: 86400, // 24 hours in seconds
+        msgs: vec![
+            WasmMsg::Execute {
+                contract_addr: env.contract.address.to_string(),
+                msg: to_binary(&ExecuteMsg::Increment { 
+                    amount: Uint128::from(1u128) 
+                })?,
+                funds: vec![],
+            }.into()
+        ],
+    };
+    
+    Ok(Response::new()
+        .add_message(cron_msg)
+        .add_attribute("action", "schedule_created"))
+}
+```
+
+## Advanced Patterns
+
+### 1. Contract Factory Pattern
+
+Create contracts that can instantiate other contracts:
+
+```rust
+use cosmwasm_std::WasmMsg;
+
+pub fn create_child_contract(
+    code_id: u64,
+    init_msg: ChildContractMsg,
+    label: String,
+) -> StdResult<Response> {
+    let instantiate_msg = WasmMsg::Instantiate {
+        admin: None,
+        code_id,
+        msg: to_binary(&init_msg)?,
+        funds: vec![],
+        label,
+    };
+    
+    Ok(Response::new()
+        .add_message(instantiate_msg)
+        .add_attribute("action", "create_child"))
+}
+```
+
+### 2. Cross-Chain Operations
+
+Use Interchain Queries to get data from other chains:
+
+```rust
+use neutron_sdk::interchain_queries::v045::types::QueryRequest;
+
+pub fn register_balance_query(
+    connection_id: String,
+    address: String,
+) -> StdResult<Response> {
+    let icq_msg = NeutronMsg::RegisterInterchainQuery {
+        query_type: QueryRequest::Balance {
+            address,
+            denom: "uatom".to_string(),
+        },
+        transactions_filter: "".to_string(),
+        connection_id,
+        update_period: 10,
+    };
+    
+    Ok(Response::new()
+        .add_message(icq_msg)
+        .add_attribute("action", "register_icq"))
+}
+```
+
+## Testing Your Enhanced Contract
+
+### 1. Build and Deploy
+
+```bash
+# Build the enhanced contract
+cargo wasm
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.12.13
+
+# Deploy with oracle configuration
+neutrond tx wasm instantiate CODE_ID \
+  '{"initial_count":"0","price_threshold":"10.0","oracle_base":"ATOM","oracle_quote":"USD"}' \
+  --from your-key \
+  --label "oracle-counter" \
+  --chain-id neutron-testing-1 \
+  --gas auto \
+  --node http://localhost:26657 \
+  --yes
+```
+
+### 2. Test Oracle Integration
+
+```bash
+# Check price and increment (only works if ATOM > $10)
+neutrond tx wasm execute CONTRACT_ADDRESS \
+  '{"check_price_and_increment":{"amount":"5"}}' \
+  --from your-key \
+  --chain-id neutron-testing-1 \
+  --gas auto \
+  --node http://localhost:26657 \
+  --yes
+
+# Query last price
+neutrond query wasm contract-state smart CONTRACT_ADDRESS \
+  '{"get_last_price":{}}' \
+  --node http://localhost:26657
+```
+
+## Key Concepts Learned
+
+- **Module Integration**: Using Neutron's custom modules in contracts
+- **Inter-Contract Calls**: Calling other smart contracts
+- **Oracle Queries**: Getting real-time price data
+- **Cron Scheduling**: Automating contract executions
+- **Cross-Chain Queries**: Accessing data from other blockchains
+- **Advanced Patterns**: Factory contracts and complex workflows
+
+## Best Practices
+
+1. **Error Handling**: Always handle Oracle query failures gracefully
+2. **Gas Limits**: Be mindful of gas costs when calling multiple contracts
+3. **State Management**: Cache frequently accessed data to reduce costs
+4. **Security**: Validate all external data and implement proper access controls
+
+## Next Steps
+
+Continue to [Part 3: Building a Web App](/developers/tutorials/onboarding/part-3-web-app) to learn how to create a frontend that interacts with your enhanced smart contract.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Oracle Query Failed">
+    Ensure the Oracle module is running and the currency pair exists:
+    ```bash
+    neutrond query oracle params
+    ```
+  </Accordion>
+  
+  <Accordion title="Inter-Contract Call Failed">
+    Verify the target contract address and message format are correct.
+  </Accordion>
+  
+  <Accordion title="Cron Schedule Not Working">
+    Check that the Cron module is enabled and your schedule is valid:
+    ```bash
+    neutrond query cron schedules
+    ```
+  </Accordion>
+</AccordionGroup> 

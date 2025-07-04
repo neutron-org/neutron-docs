@@ -1,0 +1,310 @@
+---
+title: "Interchain Transactions Reference"
+---
+
+This document provides technical reference information for the Interchain Transactions module, including message formats, parameters, state, and API endpoints.
+
+## Parameters
+
+The Interchain Transactions module's behavior is governed by the following parameters:
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `host_enabled` | bool | Indicates whether the host functionality is enabled |
+| `allow_messages` | []string | List of allowed message type URLs that can be executed on remote chains |
+
+## Messages
+
+### MsgRegisterInterchainAccount
+
+Registers an interchain account on a remote chain through an IBC connection.
+
+```protobuf
+message MsgRegisterInterchainAccount {
+  string from_address = 1;
+  string connection_id = 2;
+  string interchain_account_id = 3;
+  repeated cosmos.base.v1beta1.Coin register_fee = 4;
+  ibc.core.channel.v1.Order ordering = 5;
+}
+```
+
+#### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `from_address` | string | The address initiating the registration request (typically a contract address) |
+| `connection_id` | string | ID of the IBC connection to use for the interchain account |
+| `interchain_account_id` | string | Custom identifier for the interchain account (used in port ID) |
+| `register_fee` | []Coin | Fee paid for registering the interchain account |
+| `ordering` | Order | Channel ordering (typically ORDERED for interchain accounts) |
+
+#### Response
+
+```protobuf
+message MsgRegisterInterchainAccountResponse {
+  string channel_id = 1;
+  string port_id = 2;
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `channel_id` | string | ID of the newly created IBC channel |
+| `port_id` | string | Port ID used for the interchain account |
+
+### MsgSubmitTx
+
+Submits a transaction to be executed on a remote chain through an interchain account.
+
+```protobuf
+message MsgSubmitTx {
+  string from_address = 1;
+  string interchain_account_id = 2;
+  string connection_id = 3;
+  repeated google.protobuf.Any msgs = 4;
+  string memo = 5;
+  uint64 timeout = 6;
+  neutron.feerefunder.Fee fee = 7;
+}
+```
+
+#### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `from_address` | string | The address submitting the transaction (typically a contract address) |
+| `interchain_account_id` | string | The identifier used when registering the interchain account |
+| `connection_id` | string | ID of the IBC connection to use |
+| `msgs` | []Any | The messages to execute on the remote chain |
+| `memo` | string | Optional memo to include with the transaction |
+| `timeout` | uint64 | Timeout in seconds after which the packet times out |
+| `fee` | Fee | Fees for relayer compensation |
+
+#### Response
+
+```protobuf
+message MsgSubmitTxResponse {
+  uint64 sequence_id = 1;
+  string channel = 2;
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `sequence_id` | uint64 | Sequence ID of the outgoing IBC packet |
+| `channel` | string | Source channel ID on the Neutron side |
+
+### MsgUpdateParams
+
+Updates the module parameters. This message can only be executed by the governance account.
+
+```protobuf
+message MsgUpdateParams {
+  string authority = 1;
+  Params params = 2;
+}
+```
+
+#### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `authority` | string | The address of the governance account |
+| `params` | Params | The new parameters to set |
+
+#### Response
+
+```protobuf
+message MsgUpdateParamsResponse {}
+```
+
+## Queries
+
+### QueryParams
+
+Returns the current module parameters.
+
+```protobuf
+message QueryParamsRequest {}
+
+message QueryParamsResponse {
+  Params params = 1;
+}
+```
+
+#### Example
+
+```bash
+neutron query interchaintxs params
+```
+
+### QueryInterchainAccountAddress
+
+Retrieves the address of an interchain account on the remote chain.
+
+```protobuf
+message QueryInterchainAccountAddressRequest {
+  string owner_address = 1;
+  string interchain_account_id = 2;
+  string connection_id = 3;
+}
+
+message QueryInterchainAccountAddressResponse {
+  string interchain_account_address = 1;
+}
+```
+
+#### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `owner_address` | string | The owner address on the controller chain |
+| `interchain_account_id` | string | The identifier used when registering the interchain account |
+| `connection_id` | string | The ID of the IBC connection |
+
+#### Response
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `interchain_account_address` | string | The interchain account address on the host chain |
+
+#### Example
+
+```bash
+neutron query interchaintxs interchain-account-address \
+  neutron1abcdef... \
+  myaccount \
+  connection-0
+```
+
+## IBC Events and Callbacks
+
+The Interchain Transactions module communicates with contracts through sudo callbacks when IBC events occur.
+
+### Channel Open Acknowledgement
+
+Sent when an interchain account is successfully registered:
+
+```json
+{
+  "type": "sudo",
+  "attributes": [
+    {"key": "OpenAck", "value": "..."},
+    {"key": "port_id", "value": "icacontroller-neutron1abc...def.myaccount"},
+    {"key": "channel_id", "value": "channel-123"},
+    {"key": "counterparty_channel_id", "value": "channel-456"},
+    {"key": "counterparty_version", "value": "..."}
+  ]
+}
+```
+
+### Transaction Response
+
+Sent when a transaction is successfully executed on the remote chain:
+
+```json
+{
+  "type": "sudo",
+  "attributes": [
+    {"key": "Response", "value": "..."},
+    {"key": "request_id", "value": "channel-123-42"},
+    {"key": "data", "value": "...base64-encoded acknowledgement data..."}
+  ]
+}
+```
+
+### Transaction Error
+
+Sent when a transaction fails on the remote chain:
+
+```json
+{
+  "type": "sudo",
+  "attributes": [
+    {"key": "Error", "value": "..."},
+    {"key": "request_id", "value": "channel-123-42"},
+    {"key": "error", "value": "error message or code"}
+  ]
+}
+```
+
+### Transaction Timeout
+
+Sent when a transaction times out before being executed on the remote chain:
+
+```json
+{
+  "type": "sudo",
+  "attributes": [
+    {"key": "Timeout", "value": "..."},
+    {"key": "request_id", "value": "channel-123-42"}
+  ]
+}
+```
+
+## Fee Structure
+
+The Interchain Transactions module uses the Fee Refunder module to manage fees for IBC packet delivery. Three types of fees are required:
+
+| Fee Type | Description |
+| --- | --- |
+| `recv_fee` | Fee for packet delivery to the remote chain |
+| `ack_fee` | Fee for acknowledgement delivery back to Neutron |
+| `timeout_fee` | Fee for timeout delivery if the packet times out |
+
+The fee structure is defined as:
+
+```protobuf
+message Fee {
+  repeated cosmos.base.v1beta1.Coin recv_fee = 1;
+  repeated cosmos.base.v1beta1.Coin ack_fee = 2;
+  repeated cosmos.base.v1beta1.Coin timeout_fee = 3;
+}
+```
+
+## Port and Channel Naming
+
+The Interchain Transactions module uses a specific naming convention for IBC ports and channels:
+
+### Port ID Format
+
+```
+icacontroller-{contract_address}.{interchain_account_id}
+```
+
+Example:
+```
+icacontroller-neutron14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s5c2epq.myaccount
+```
+
+### Request ID Format
+
+When callbacks are delivered to contracts, the `request_id` follows this format:
+
+```
+{channel_id}-{sequence_id}
+```
+
+Example:
+```
+channel-123-42
+```
+
+This allows contracts to correlate callbacks with their original requests.
+
+## Error Codes
+
+The following error codes may be returned by the module:
+
+| Code | Description |
+| --- | --- |
+| 1 | Invalid connection ID |
+| 2 | Invalid interchain account ID |
+| 3 | Invalid port ID |
+| 4 | Invalid channel ID |
+| 5 | Invalid fee |
+| 6 | Insufficient fee |
+| 7 | Interchain account not found |
+| 8 | Channel not found |
+| 9 | Message type not allowed | 

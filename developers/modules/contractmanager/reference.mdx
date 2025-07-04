@@ -1,0 +1,157 @@
+---
+title: "Technical Reference"
+---
+
+This document provides detailed reference information for developers working with the Contract Manager module.
+
+## Module Parameters
+
+The Contract Manager module has the following parameters:
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `sudo_call_gas_limit` | uint64 | Maximum gas that can be used during a sudo call to a contract |
+
+## Data Structures
+
+### Failure
+
+The `Failure` struct is the core data structure used to store information about failed sudo calls.
+
+```protobuf
+message Failure {
+  // Address of the failed contract
+  string address = 1;
+  // Id of the failure under specific address
+  uint64 id = 2;
+  // Serialized MessageSudoCallback with Packet and Ack(if exists)
+  bytes sudo_payload = 3;
+  // Redacted error response of the sudo call. Full error is emitted as an event
+  string error = 4;
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `address` | The contract address that experienced the failure |
+| `id` | Sequential identifier for failures specific to the contract |
+| `sudo_payload` | Serialized message callback data that was sent to the sudo handler |
+| `error` | Redacted error message (contains codespace and code) |
+
+## Key Space
+
+The Contract Manager module uses the following key prefixes in the KVStore:
+
+| Prefix | Purpose |
+| --- | --- |
+| `0x01` | Contract Failures |
+| `0x02` | Module Parameters |
+
+### Failure Key Structure
+
+Failure records are indexed by:
+- Contract address
+- Sequential failure ID
+
+The keys are structured as:
+```
+ContractFailuresKey + address + "/" + id
+```
+
+## Error Codes
+
+| Code | Name | Description |
+| --- | --- | --- |
+| 1101 | `ErrIncorrectFailureToResubmit` | The failure ID does not exist or belongs to a different contract |
+| 1102 | `ErrFailedToResubmitFailure` | Error occurred during failure resubmission |
+| 1103 | `ErrSudoOutOfGas` | Sudo handling exceeded the gas limit allowed by the module |
+| 1104 | `ErrNotContractResubmission` | Only smart contracts can resubmit failures |
+
+## IBC Middleware
+
+The Contract Manager provides middleware that wraps the Wasm module's sudo functionality. The middleware is defined by:
+
+```go
+type SudoLimitWrapper struct {
+  Keeper            keeper.Keeper
+  ContractManagerIK ContractManagerKeeper
+  WasmKeeper        WasmKeeper
+}
+```
+
+The wrapper implements the `WasmKeeper` interface:
+
+```go
+type WasmKeeper interface {
+  HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool
+  Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte) ([]byte, error)
+}
+```
+
+## CosmWasm Bindings
+
+### Messages
+
+#### ResubmitFailure
+
+Allows contracts to resubmit a failed operation:
+
+```rust
+pub enum NeutronMsg {
+    ResubmitFailure {
+        failure_id: u64,
+    },
+    // other messages...
+}
+```
+
+This message can only be called by the contract that originally experienced the failure.
+
+### Queries
+
+#### ContractManagerFailures
+
+Query failures for a specific contract:
+
+```rust
+pub enum NeutronQuery {
+    ContractManagerFailures {
+        address: String,
+        pagination: Option<PageRequest>,
+    },
+    // other queries...
+}
+```
+
+Response structure:
+
+```rust
+pub struct FailuresResponse {
+    pub failures: Vec<Failure>,
+    pub pagination: Option<PageResponse>,
+}
+
+pub struct Failure {
+    pub address: String,
+    pub id: u64,
+    pub sudo_payload: Binary,
+    pub error: String,
+}
+```
+
+## Permissions
+
+The Contract Manager module enforces strict permissions:
+
+1. Only the original contract can resubmit its own failures
+2. Only modules with proper authority can register failures (typically IBC modules)
+3. Query operations are unrestricted
+
+## Gas Considerations
+
+It's important to understand gas usage in the Contract Manager context:
+
+1. Sudo calls are limited to `sudo_call_gas_limit` gas
+2. Resubmitted operations do not have this gas limit
+3. Gas used for storing failures is charged to the transaction that triggered the sudo call
+4. Querying failures uses standard query gas 

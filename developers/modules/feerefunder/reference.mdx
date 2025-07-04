@@ -1,0 +1,308 @@
+---
+title: "Technical Reference"
+---
+
+This document provides detailed reference information for developers working with the Fee Refunder module.
+
+## Module Parameters
+
+The Fee Refunder module has the following parameters:
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `min_fee` | Fee | Minimum required fees for IBC packet acknowledgements and timeouts |
+
+The `min_fee` parameter structure:
+
+```protobuf
+message Fee {
+  repeated cosmos.base.v1beta1.Coin recv_fee = 1;
+  repeated cosmos.base.v1beta1.Coin ack_fee = 2;
+  repeated cosmos.base.v1beta1.Coin timeout_fee = 3;
+}
+```
+
+## Data Structures
+
+### Fee
+
+The `Fee` struct defines fees required for each type of IBC packet operation:
+
+```protobuf
+message Fee {
+  repeated cosmos.base.v1beta1.Coin recv_fee = 1;
+  repeated cosmos.base.v1beta1.Coin ack_fee = 2;
+  repeated cosmos.base.v1beta1.Coin timeout_fee = 3;
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `recv_fee` | Fees paid to relayers for delivering receive packets (must be zero in Neutron) |
+| `ack_fee` | Fees paid to relayers for delivering acknowledgement packets |
+| `timeout_fee` | Fees paid to relayers for delivering timeout packets |
+
+### PacketID
+
+The `PacketID` struct uniquely identifies an IBC packet:
+
+```protobuf
+message PacketID {
+  string channel_id = 1;
+  string port_id = 2;
+  uint64 sequence = 3;
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `channel_id` | ID of the IBC channel |
+| `port_id` | ID of the IBC port |
+| `sequence` | Sequence number of the packet |
+
+### FeeInfo
+
+The `FeeInfo` struct stores fee information for a specific packet:
+
+```protobuf
+message FeeInfo {
+  string payer = 1;
+  Fee fee = 2 [(gogoproto.nullable) = false];
+  PacketID packet_id = 3 [(gogoproto.nullable) = false];
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `payer` | Address of the account that paid the fees |
+| `fee` | Fee information including ack and timeout fees |
+| `packet_id` | Identifier of the IBC packet |
+
+## Key Space
+
+The Fee Refunder module uses the following keys in the KVStore:
+
+| Prefix | Purpose |
+| --- | --- |
+| `0x01` + `portID/channelID/sequence` | Stores fee information for specific IBC packets |
+| `0x02` | Stores module parameters |
+
+## Keeper Functions
+
+### LockFees
+
+```go
+func (k Keeper) LockFees(ctx context.Context, payer sdk.AccAddress, packetID types.PacketID, fee types.Fee) error
+```
+
+Locks fees for a specific IBC packet. This function:
+- Validates that the provided fees meet minimum requirements
+- Stores fee information for the packet
+- Transfers fees from the payer to the module account
+
+### DistributeAcknowledgementFee
+
+```go
+func (k Keeper) DistributeAcknowledgementFee(ctx context.Context, receiver sdk.AccAddress, packetID types.PacketID)
+```
+
+Distributes fees when an acknowledgement is received:
+- Pays the acknowledgement fee to the relayer
+- Returns the timeout fee to the original payer
+- Removes the fee information from storage
+
+### DistributeTimeoutFee
+
+```go
+func (k Keeper) DistributeTimeoutFee(ctx context.Context, receiver sdk.AccAddress, packetID types.PacketID)
+```
+
+Distributes fees when a timeout is received:
+- Pays the timeout fee to the relayer
+- Returns the acknowledgement fee to the original payer
+- Removes the fee information from storage
+
+### GetFeeInfo
+
+```go
+func (k Keeper) GetFeeInfo(ctx sdk.Context, packetID types.PacketID) (*types.FeeInfo, error)
+```
+
+Retrieves fee information for a specific packet.
+
+### GetAllFeeInfos
+
+```go
+func (k Keeper) GetAllFeeInfos(ctx sdk.Context) []types.FeeInfo
+```
+
+Returns all fee information entries stored in the module.
+
+### GetMinFee
+
+```go
+func (k Keeper) GetMinFee(ctx sdk.Context) types.Fee
+```
+
+Returns the minimum required fees from module parameters.
+
+## Query Service
+
+The Fee Refunder module exposes the following query endpoints:
+
+### MinFee
+
+`MinFee` queries the minimum required fees.
+
+Request:
+```protobuf
+message QueryMinFeeRequest {}
+```
+
+Response:
+```protobuf
+message QueryMinFeeResponse {
+  Fee min_fee = 1 [(gogoproto.nullable) = false];
+}
+```
+
+### Params
+
+`Params` queries the module parameters.
+
+Request:
+```protobuf
+message QueryParamsRequest {}
+```
+
+Response:
+```protobuf
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+```
+
+### FeeInfo
+
+`FeeInfo` queries fee information for a specific packet.
+
+Request:
+```protobuf
+message QueryFeeInfoRequest {
+  string port_id = 1;
+  string channel_id = 2;
+  uint64 sequence = 3;
+}
+```
+
+Response:
+```protobuf
+message QueryFeeInfoResponse {
+  FeeInfo fee_info = 1 [(gogoproto.nullable) = false];
+}
+```
+
+### AllFeeInfo
+
+`AllFeeInfo` queries all fee information entries.
+
+Request:
+```protobuf
+message QueryAllFeeInfoRequest {}
+```
+
+Response:
+```protobuf
+message QueryAllFeeInfoResponse {
+  repeated FeeInfo fee_infos = 1 [(gogoproto.nullable) = false];
+}
+```
+
+## Events
+
+The Fee Refunder module emits the following events:
+
+### `lock_fees`
+
+Emitted when fees are locked for a packet.
+
+| Attribute Key | Description |
+| --- | --- |
+| `payer` | Address of the account that paid the fees |
+| `port_id` | ID of the IBC port |
+| `channel_id` | ID of the IBC channel |
+| `sequence` | Sequence number of the packet |
+
+### `distribute_acknowledgement_fee`
+
+Emitted when an acknowledgement fee is distributed.
+
+| Attribute Key | Description |
+| --- | --- |
+| `receiver` | Address receiving the acknowledgement fee (relayer) |
+| `port_id` | ID of the IBC port |
+| `channel_id` | ID of the IBC channel |
+| `sequence` | Sequence number of the packet |
+
+### `distribute_timeout_fee`
+
+Emitted when a timeout fee is distributed.
+
+| Attribute Key | Description |
+| --- | --- |
+| `receiver` | Address receiving the timeout fee (relayer) |
+| `port_id` | ID of the IBC port |
+| `channel_id` | ID of the IBC channel |
+| `sequence` | Sequence number of the packet |
+
+## CLI Commands
+
+### Queries
+
+#### Query Module Parameters
+
+```bash
+neutrond query feerefunder params
+```
+
+Returns the current module parameters, including minimum required fees.
+
+#### Query Minimum Fees
+
+```bash
+neutrond query feerefunder min-fee
+```
+
+Returns the minimum required fees for IBC operations.
+
+#### Query Fee Information for a Packet
+
+```bash
+neutrond query feerefunder fee-info <port-id> <channel-id> <sequence>
+```
+
+Returns fee information for a specific IBC packet.
+
+#### Query All Fee Information
+
+```bash
+neutrond query feerefunder all-fee-info
+```
+
+Returns all fee information entries stored in the module.
+
+## Integration Points
+
+The Fee Refunder module integrates with:
+
+### IBC Transfer Module
+
+When an IBC transfer is initiated with a `MsgTransfer` that includes a fee, the Fee Refunder module locks the fees and associates them with the generated packet.
+
+### Interchain Transactions Module
+
+When an interchain transaction is submitted with a `MsgSubmitTx` that includes a fee, the Fee Refunder module locks the fees and associates them with the generated packet.
+
+### IBC Core
+
+The Fee Refunder hooks into IBC acknowledgement and timeout packet processing to distribute fees to relayers. 

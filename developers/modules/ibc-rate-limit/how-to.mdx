@@ -1,0 +1,285 @@
+---
+title: "IBC Rate Limit How-To"
+---
+
+This guide provides practical instructions for configuring and managing the IBC Rate Limit module, including setting up rate limits, monitoring transfers, and handling rate limit exceptions.
+
+## Configuring the Rate Limit Contract
+
+The IBC Rate Limit module delegates all rate limiting logic to a CosmWasm contract. The contract address is set through governance parameters.
+
+### Checking Current Parameters
+
+To check the current contract address parameter:
+
+```bash
+neutron query ibcratelimit params
+```
+
+Sample response:
+```json
+{
+  "params": {
+    "contract_address": "neutron1abcdef..."
+  }
+}
+```
+
+### Updating the Contract Address
+
+To update the contract address, governance must submit a parameter change proposal:
+
+```bash
+neutron tx gov submit-proposal param-change proposal.json --from=<key> --chain-id=<chain-id>
+```
+
+Example proposal.json:
+```json
+{
+  "title": "IBC Rate Limit Contract Address Update",
+  "description": "Update the contract address for the IBC Rate Limit module",
+  "changes": [
+    {
+      "subspace": "ibcratelimit",
+      "key": "ContractAddress",
+      "value": "neutron1newaddress..."
+    }
+  ],
+  "deposit": [
+    {
+      "denom": "untrn", 
+      "amount": "10000000"
+    }
+  ]
+}
+```
+
+## Managing Rate Limits Through the Contract
+
+Once the contract is set up, rate limits are managed through contract messages. These examples use the Neutron CLI for interaction.
+
+### Querying Current Quotas
+
+To check the current quotas for a specific path (channel and denomination):
+
+```bash
+neutron query wasm contract-state smart <contract-address> '{"get_quotas":{"channel_id":"channel-0","denom":"untrn"}}'
+```
+
+Sample response:
+```json
+{
+  "data": {
+    "quotas": [
+      {
+        "name": "daily-outflow",
+        "duration_seconds": 86400,
+        "percentage": "0.300000000000000000",
+        "channel_value": "1000000000",
+        "max_percentage_reset_time": "2023-07-01T00:00:00Z",
+        "flow": {
+          "amount": "50000000",
+          "period_end": "2023-07-01T00:00:00Z"
+        }
+      }
+    ]
+  }
+}
+```
+
+### Adding a Rate Limit Path
+
+To add a new rate limit for a specific channel and denomination:
+
+```bash
+neutron tx wasm execute <contract-address> '{
+  "add_path": {
+    "channel_id": "channel-1",
+    "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+    "quotas": [
+      {
+        "name": "daily-outflow",
+        "duration_seconds": 86400,
+        "percentage": "0.300000000000000000",
+        "flow_direction": "out"
+      },
+      {
+        "name": "weekly-outflow",
+        "duration_seconds": 604800,
+        "percentage": "0.500000000000000000",
+        "flow_direction": "out"
+      },
+      {
+        "name": "daily-inflow",
+        "duration_seconds": 86400,
+        "percentage": "0.500000000000000000",
+        "flow_direction": "in"
+      }
+    ]
+  }
+}' --from=<key> --chain-id=<chain-id>
+```
+
+This example creates:
+- A daily outflow limit of 30% of the total token supply
+- A weekly outflow limit of 50% of the total token supply
+- A daily inflow limit of 50% of the total token supply
+
+### Removing a Rate Limit Path
+
+To remove all rate limits for a specific path:
+
+```bash
+neutron tx wasm execute <contract-address> '{
+  "remove_path": {
+    "channel_id": "channel-1",
+    "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"
+  }
+}' --from=<key> --chain-id=<chain-id>
+```
+
+### Resetting a Rate Limit Quota
+
+If a rate limit has been reached and governance decides it was a false positive or the situation has been resolved, the quota can be reset:
+
+```bash
+neutron tx wasm execute <contract-address> '{
+  "reset_path_quota": {
+    "channel_id": "channel-0",
+    "denom": "untrn",
+    "quota": "daily-outflow"
+  }
+}' --from=<key> --chain-id=<chain-id>
+```
+
+## Recommended Rate Limit Strategies
+
+When setting up rate limits, consider the following strategies:
+
+### For High-Value Assets
+
+For tokens with high value or risk profile:
+
+```
+Daily Outflow: 30% of total supply
+Weekly Outflow: 50% of total supply
+Daily Inflow: 50% of total supply
+Weekly Inflow: 100% of total supply  
+```
+
+### For Medium-Value Assets
+
+For tokens with medium value or risk profile:
+
+```
+Daily Outflow: 50% of total supply
+Weekly Outflow: 70% of total supply
+Daily Inflow: 100% of total supply
+```
+
+### For "Any" Channel
+
+To set a global limit that applies across all channels:
+
+```bash
+neutron tx wasm execute <contract-address> '{
+  "add_path": {
+    "channel_id": "any",
+    "denom": "untrn",
+    "quotas": [
+      {
+        "name": "global-daily-outflow",
+        "duration_seconds": 86400,
+        "percentage": "0.500000000000000000",
+        "flow_direction": "out"
+      }
+    ]
+  }
+}' --from=<key> --chain-id=<chain-id>
+```
+
+This creates a safety backstop that limits the total outflow across all channels.
+
+## Monitoring Rate Limit Usage
+
+To effectively use the rate limit system, it's important to monitor quota usage.
+
+### Creating a Monitoring Script
+
+Here's a basic script concept to monitor rate limit usage:
+
+```python
+import requests
+import json
+import time
+
+# Configuration
+CONTRACT_ADDRESS = "neutron1abcdef..."
+RPC_ENDPOINT = "https://rpc.neutron.org"
+PATHS_TO_MONITOR = [
+    {"channel": "channel-0", "denom": "untrn"},
+    {"channel": "channel-1", "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"}
+]
+THRESHOLD_PERCENTAGE = 80  # Alert when usage reaches 80% of quota
+
+def query_quota_usage():
+    for path in PATHS_TO_MONITOR:
+        query = {
+            "get_quotas": {
+                "channel_id": path["channel"],
+                "denom": path["denom"]
+            }
+        }
+        
+        response = requests.get(
+            f"{RPC_ENDPOINT}/wasm/contract/{CONTRACT_ADDRESS}/smart/{json.dumps(query)}"
+        )
+        
+        data = response.json()["data"]
+        if "quotas" in data:
+            for quota in data["quotas"]:
+                flow_amount = int(quota["flow"]["amount"])
+                max_amount = int(quota["channel_value"]) * float(quota["percentage"])
+                usage_percentage = (flow_amount / max_amount) * 100
+                
+                if usage_percentage >= THRESHOLD_PERCENTAGE:
+                    print(f"ALERT: {path['denom']} on {path['channel']} has reached {usage_percentage:.2f}% of the {quota['name']} quota")
+
+while True:
+    query_quota_usage()
+    time.sleep(300)  # Check every 5 minutes
+```
+
+## Handling Rate Limit Errors
+
+When transactions are rejected due to rate limits, they will return specific error codes. Here's how to handle them:
+
+### Error Response
+
+When a transfer exceeds a rate limit, it will return an error with code similar to:
+
+```json
+{
+  "code": 5,
+  "message": "Rate limit exceeded for channel-0 and denom untrn",
+  "details": []
+}
+```
+
+### User Communication
+
+When implementing applications that interact with IBC transfers, communicate clearly to users about rate limits:
+
+1. Inform users that transfers are subject to rate limits for security
+2. When a rate limit error occurs, suggest:
+   - Trying a smaller amount
+   - Waiting for the next quota period
+   - Splitting the transfer across multiple denominations or channels if appropriate
+
+### Emergency Procedures
+
+For validators and governance participants, establish procedures for handling legitimate high-volume periods:
+
+1. Monitor rate limit usage with alerts for approaching limits
+2. Have a governance process ready for quota reset proposals
+3. Maintain a communication channel to coordinate responses to rate limit hits 

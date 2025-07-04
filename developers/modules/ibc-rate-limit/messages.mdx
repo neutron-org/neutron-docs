@@ -1,0 +1,299 @@
+---
+title: "Messages"
+---
+
+The IBC Rate Limit module exposes a single message for governance to update the module parameters. The primary rate limit functionality is delegated to a CosmWasm contract, which has its own message interface.
+
+## Module Messages
+
+### MsgUpdateParams
+
+`MsgUpdateParams` updates the module's parameters. This message can only be executed by the module's authority (typically governance).
+
+```protobuf
+message MsgUpdateParams {
+  option (amino.name) = "neutron/ibc-rate-limit/MsgUpdateParams";
+  option (cosmos.msg.v1.signer) = "authority";
+
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  Params params = 2 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+}
+```
+
+#### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `authority` | string | The address of the account with authority to update parameters (typically the governance module account) |
+| `params` | Params | The new parameters to set |
+
+#### Params Structure
+
+```protobuf
+message Params {
+  string contract_address = 1 [(gogoproto.moretags) = "yaml:\"contract_address\"", (gogoproto.nullable) = true];
+}
+```
+
+#### Example
+
+```javascript
+{
+  "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6z2zm3",
+  "params": {
+    "contract_address": "neutron1abcdef..."
+  }
+}
+```
+
+#### Response
+
+```protobuf
+message MsgUpdateParamsResponse {}
+```
+
+### Processing
+
+When `MsgUpdateParams` is processed:
+
+1. The module validates that the sender is the authorized governance account
+2. It updates the contract address parameter in the params subspace
+3. It returns an empty response
+
+## Contract Messages
+
+Since most of the rate limiting logic is delegated to a CosmWasm contract, it's important to understand the contract's message interface as well.
+
+### ExecuteMsg
+
+#### AddPath
+
+`AddPath` adds or updates rate limit quotas for a specific channel and denomination.
+
+```rust
+pub struct AddPath {
+    pub channel_id: String,
+    pub denom: String,
+    pub quotas: Vec<Quota>,
+}
+```
+
+Parameters:
+- `channel_id`: The IBC channel ID (e.g., "channel-0") or "any" for a global limit
+- `denom`: The token denomination (e.g., "untrn" or "ibc/...")
+- `quotas`: List of quota definitions
+
+Example:
+```json
+{
+  "add_path": {
+    "channel_id": "channel-0",
+    "denom": "untrn",
+    "quotas": [
+      {
+        "name": "daily-outflow",
+        "duration_seconds": 86400,
+        "percentage": "0.30",
+        "flow_direction": "out"
+      }
+    ]
+  }
+}
+```
+
+#### RemovePath
+
+`RemovePath` removes all rate limits for a specific channel and denomination.
+
+```rust
+pub struct RemovePath {
+    pub channel_id: String,
+    pub denom: String,
+}
+```
+
+Parameters:
+- `channel_id`: The IBC channel ID
+- `denom`: The token denomination
+
+Example:
+```json
+{
+  "remove_path": {
+    "channel_id": "channel-0",
+    "denom": "untrn"
+  }
+}
+```
+
+#### ResetPathQuota
+
+`ResetPathQuota` resets a specific quota if it has been exceeded.
+
+```rust
+pub struct ResetPathQuota {
+    pub channel_id: String,
+    pub denom: String,
+    pub quota: String,
+}
+```
+
+Parameters:
+- `channel_id`: The IBC channel ID
+- `denom`: The token denomination
+- `quota`: The name of the quota to reset
+
+Example:
+```json
+{
+  "reset_path_quota": {
+    "channel_id": "channel-0",
+    "denom": "untrn",
+    "quota": "daily-outflow"
+  }
+}
+```
+
+### SudoMsg
+
+SudoMsg variants can only be called by the chain itself, not by users or contracts directly.
+
+#### SendPacket
+
+`SendPacket` is called by the middleware when a token transfer packet is being sent from Neutron to another chain.
+
+```rust
+pub struct SendPacket {
+    pub packet: Packet,
+}
+```
+
+Processing:
+1. The contract extracts the token denomination and amount from the packet
+2. It calculates the current channel value for the token
+3. It updates the outflow tracking for each quota
+4. It verifies that no quota has been exceeded
+5. If any quota is exceeded, it returns an error that causes the packet to be rejected
+
+#### RecvPacket
+
+`RecvPacket` is called by the middleware when a token transfer packet is being received by Neutron from another chain.
+
+```rust
+pub struct RecvPacket {
+    pub packet: Packet,
+}
+```
+
+Processing:
+1. The contract extracts the token denomination and amount from the packet
+2. It determines the local denomination of the token on Neutron
+3. It calculates the current channel value for the token
+4. It updates the inflow tracking for each quota
+5. It verifies that no quota has been exceeded
+6. If any quota is exceeded, it returns an error that causes the packet to be rejected
+
+#### UndoSend
+
+`UndoSend` is called by the middleware when a previously sent packet fails due to an error acknowledgement or timeout.
+
+```rust
+pub struct UndoSend {
+    pub packet: Packet,
+}
+```
+
+Processing:
+1. The contract extracts the token denomination and amount from the packet
+2. It reverses the outflow tracking for each quota
+3. This ensures that quota space is freed up for failed packets
+
+### QueryMsg
+
+#### GetQuotas
+
+`GetQuotas` returns the current quotas and usage for a specific channel and denomination.
+
+```rust
+pub struct GetQuotas {
+    pub channel_id: String,
+    pub denom: String,
+}
+```
+
+Response:
+```json
+{
+  "quotas": [
+    {
+      "name": "daily-outflow",
+      "duration_seconds": 86400,
+      "percentage": "0.300000000000000000",
+      "channel_value": "1000000000",
+      "max_percentage_reset_time": "2023-07-01T00:00:00Z",
+      "flow": {
+        "amount": "50000000",
+        "period_end": "2023-07-01T00:00:00Z"
+      }
+    }
+  ]
+}
+```
+
+## Contract Data Structures
+
+### Quota
+
+```rust
+pub struct Quota {
+    pub name: String,
+    pub duration_seconds: u64,
+    pub percentage: Decimal,
+    pub flow_direction: FlowDirection,
+}
+```
+
+Fields:
+- `name`: Unique identifier for the quota
+- `duration_seconds`: Duration of the quota period in seconds
+- `percentage`: Maximum percentage of the token's supply that can flow in the specified direction during the period
+- `flow_direction`: Either "in" or "out"
+
+### FlowDirection
+
+```rust
+pub enum FlowDirection {
+    In,
+    Out,
+}
+```
+
+### Packet
+
+Represents an IBC packet with token transfer data.
+
+```rust
+pub struct Packet {
+    pub sequence: u64,
+    pub source_port: String,
+    pub source_channel: String,
+    pub destination_port: String,
+    pub destination_channel: String,
+    pub data: FungibleTokenPacketData,
+    pub timeout_height: Height,
+    pub timeout_timestamp: u64,
+}
+```
+
+### FungibleTokenPacketData
+
+Contains the token transfer details.
+
+```rust
+pub struct FungibleTokenPacketData {
+    pub denom: String,
+    pub amount: String,
+    pub sender: String,
+    pub receiver: String,
+}
+``` 

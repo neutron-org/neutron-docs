@@ -1,0 +1,321 @@
+---
+title: "IBC Rate Limit Reference"
+---
+
+This document provides technical reference information for the IBC Rate Limit module, including parameters, state, message formats, and API endpoints.
+
+## Parameters
+
+The IBC Rate Limit module's behavior is governed by the following parameters:
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `contract_address` | string | The address of the CosmWasm contract that implements the rate limiting logic |
+
+## State
+
+The IBC Rate Limit module itself maintains minimal state, as most of the rate limiting state is stored in the CosmWasm contract. 
+
+### Genesis State
+
+```protobuf
+message GenesisState {
+  Params params = 1;
+}
+```
+
+### Params
+
+```protobuf
+message Params {
+  string contract_address = 1;
+}
+```
+
+## Messages
+
+### MsgUpdateParams
+
+Updates the module parameters. This message can only be executed by the governance account.
+
+```protobuf
+message MsgUpdateParams {
+  string authority = 1;
+  Params params = 2;
+}
+```
+
+#### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `authority` | string | The address of the governance account |
+| `params` | Params | The new parameters to set |
+
+#### Response
+
+```protobuf
+message MsgUpdateParamsResponse {}
+```
+
+## Queries
+
+### QueryParams
+
+Returns the current module parameters.
+
+```protobuf
+message QueryParamsRequest {}
+
+message QueryParamsResponse {
+  Params params = 1;
+}
+```
+
+#### Example
+
+```bash
+neutron query ibcratelimit params
+```
+
+## Contract Interface
+
+The IBC Rate Limit module interacts with a CosmWasm contract that implements the actual rate limiting logic. Below is the interface specification for this contract.
+
+### Contract Messages
+
+#### ExecuteMsg
+
+```rust
+pub enum ExecuteMsg {
+    // Adds rate limiting quotas for a specific path
+    AddPath {
+        channel_id: String,
+        denom: String,
+        quotas: Vec<Quota>,
+    },
+    // Removes all rate limits for a specific path
+    RemovePath {
+        channel_id: String,
+        denom: String,
+    },
+    // Resets a specific quota if it has been exceeded
+    ResetPathQuota {
+        channel_id: String,
+        denom: String,
+        quota: String,
+    },
+}
+```
+
+#### QueryMsg
+
+```rust
+pub enum QueryMsg {
+    // Returns the quotas for a specific path
+    GetQuotas {
+        channel_id: String,
+        denom: String,
+    },
+}
+```
+
+#### SudoMsg
+
+```rust
+pub enum SudoMsg {
+    // Called when a packet is sent via IBC
+    SendPacket {
+        packet: Packet,
+    },
+    // Called when a packet is received via IBC
+    RecvPacket {
+        packet: Packet,
+    },
+    // Called when a sent packet fails or times out
+    UndoSend {
+        packet: Packet,
+    },
+}
+```
+
+### Data Structures
+
+#### Quota
+
+```rust
+pub struct Quota {
+    // Name of the quota for identification
+    pub name: String,
+    // Duration of the quota period in seconds
+    pub duration_seconds: u64,
+    // Percentage of total tokens allowed to flow (0.0-1.0)
+    pub percentage: Decimal,
+    // Direction of the flow (in or out)
+    pub flow_direction: FlowDirection,
+}
+```
+
+#### FlowDirection
+
+```rust
+pub enum FlowDirection {
+    In,
+    Out,
+}
+```
+
+#### Packet
+
+```rust
+pub struct Packet {
+    pub sequence: u64,
+    pub source_port: String,
+    pub source_channel: String,
+    pub destination_port: String,
+    pub destination_channel: String,
+    pub data: FungibleTokenPacketData,
+    pub timeout_height: Height,
+    pub timeout_timestamp: u64,
+}
+```
+
+#### FungibleTokenPacketData
+
+```rust
+pub struct FungibleTokenPacketData {
+    pub denom: String,
+    pub amount: String,
+    pub sender: String,
+    pub receiver: String,
+}
+```
+
+## IBC Middleware
+
+The IBC Rate Limit module implements the following IBC middleware interfaces:
+
+- `porttypes.Middleware` - For intercepting IBC messages
+- `porttypes.ICS4Wrapper` - For sending IBC packets and writing acknowledgements
+
+The middleware only adds custom logic to the following methods:
+
+| Method | Description |
+| --- | --- |
+| `ICS4Wrapper.SendPacket` | Forwards packet information to the contract to track outgoing value |
+| `Middleware.OnRecvPacket` | Forwards packet information to the contract to track incoming value |
+| `Middleware.OnAcknowledgementPacket` | Forwards acknowledgement to the contract to undo tracking if the packet failed |
+| `Middleware.OnTimeoutPacket` | Forwards timeout to the contract to undo tracking of a failed packet |
+
+All other methods are pass-through to the underlying IBC Transfer module.
+
+## Error Codes
+
+| Code | Error | Description |
+| --- | --- | --- |
+| 1 | ErrContractError | Generic error from the contract |
+| 2 | ErrRateLimitExceeded | A rate limit quota has been exceeded |
+| 3 | ErrBadMessage | Invalid message format |
+
+## Events
+
+The module emits the following events:
+
+### EventBadRevert
+
+Emitted when there is an error while trying to revert a sent packet due to an error acknowledgement or timeout.
+
+**Type**: `bad_revert`
+
+| Attribute | Description |
+| --- | --- |
+| `module` | Always "ibcratelimit" |
+| `failure_type` | Either "acknowledgment" or "timeout" |
+| `packet` | The serialized packet data |
+| `ack` | (Only for acknowledgements) The acknowledgement data |
+
+## API Endpoints
+
+### REST
+
+| Endpoint | Method | Description |
+| --- | --- | --- |
+| `/neutron/ibc-rate-limit/v1beta1/params` | GET | Get the current module parameters |
+
+### gRPC
+
+| Service | Method | Description |
+| --- | --- | --- |
+| `neutron.ibcratelimit.v1beta1.Query` | `Params` | Get the current module parameters |
+| `neutron.ibcratelimit.v1beta1.Msg` | `UpdateParams` | Update the module parameters |
+
+## CLI Commands
+
+### Queries
+
+```bash
+# Query module parameters
+neutron query ibcratelimit params
+```
+
+### Transactions
+
+```bash
+# Update module parameters (governance only)
+neutron tx gov submit-proposal param-change <proposal-file> --from=<key> --chain-id=<chain-id>
+```
+
+## Contract Interaction Examples
+
+### Query Quotas for a Path
+
+```bash
+neutron query wasm contract-state smart <contract-address> '{
+  "get_quotas": {
+    "channel_id": "channel-0",
+    "denom": "untrn"
+  }
+}'
+```
+
+### Add a Rate Limit Path
+
+```bash
+neutron tx wasm execute <contract-address> '{
+  "add_path": {
+    "channel_id": "channel-0",
+    "denom": "untrn",
+    "quotas": [
+      {
+        "name": "daily-outflow",
+        "duration_seconds": 86400,
+        "percentage": "0.30",
+        "flow_direction": "out"
+      }
+    ]
+  }
+}' --from=<key> --chain-id=<chain-id>
+```
+
+### Remove a Rate Limit Path
+
+```bash
+neutron tx wasm execute <contract-address> '{
+  "remove_path": {
+    "channel_id": "channel-0",
+    "denom": "untrn"
+  }
+}' --from=<key> --chain-id=<chain-id>
+```
+
+### Reset a Quota
+
+```bash
+neutron tx wasm execute <contract-address> '{
+  "reset_path_quota": {
+    "channel_id": "channel-0",
+    "denom": "untrn",
+    "quota": "daily-outflow"
+  }
+}' --from=<key> --chain-id=<chain-id>
+``` 
