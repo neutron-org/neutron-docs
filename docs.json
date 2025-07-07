@@ -7,15 +7,15 @@
   },
   "favicon": "/favicon.svg",
   "colors": {
-    "primary": "#5BA8F5",
-    "light": "#B8D4F5",
-    "dark": "#5BA8F5"
+    "primary": "#404040",
+    "light": "#F5F5F4",
+    "dark": "#1C1C1C"
   },
   "background": {
     "decoration": "grid",
     "color": {
-      "light": "#F0F7FF",
-      "dark": "#0A1420"
+      "light": "#FAFAF9",
+      "dark": "#0C0A09"
     }
   },
   "theme": "mint",
@@ -34,7 +34,7 @@
       "type": "button",
       "label": "Launch App",
       "href": "https://app.neutron.org",
-      "color": "#B8E6FF"
+      "color": "#737373"
     }
   },
   "navigation": {
