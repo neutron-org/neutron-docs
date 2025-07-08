@@ -16,7 +16,9 @@ $$
 \text{Tick Index Formula}
 $$
 $$
-\text{Price} = 1.0001 ^ \text{TickIndex}\\
+\text{Price} = 1.0001 ^ \text{TickIndex}
+$$
+$$
 \text{TickIndex} = log_{1.0001}(price)
 $$
 * **Deposit 1:**<br />
@@ -32,19 +34,10 @@ $$
 * **Limit Order 2:**<br />
  **Amount:** 10 `USDC`. **Price:** $0.14$ `ATOM` per `USDC`: **Tick index** $-19640$
 
-<Info>
-**Liquidity Distribution Visualization**
+![Example liquidity iteration ](/img/duality-dex-deposit-1.png)
 
-The liquidity is distributed across different tick indexes:
-- Tick 19640: 10 ATOM (Limit Order) at 7 USDC/ATOM
-- Tick 20795: 10 ATOM (Pool) at 8 USDC/ATOM  
-- Tick 21973: 10 ATOM (Pool) at 9 USDC/ATOM
-- Tick 23027: 10 ATOM (Pool) at 10 USDC/ATOM
-- Tick -19640: 10 USDC (Limit Order) at 0.14 ATOM/USDC
-</Info>
-
-- Tick Index $19640$ offers the cheapest `ATOM` per `USDC` spent. it yields $1$ `ATOM` per $7$ `USDC`
-- Tick Index $-19640$ offers the cheapest `USDC` per `ATOM` spent. it yields $1$ `USDC` per $0.14$ `ATOM`
+- Tick Index $19640$  offers the cheapest `ATOM` per `USDC` spent. it yields $1$ `ATOM` per $7$ `USDC`
+- Tick Index  $-19640$ offers the cheapest `USDC` per `ATOM` spent. it yields $1$ `USDC` per $0.14$ `ATOM`
 - It is visible that iterating left to right will always yield the best price regardless of the token being swapped.
 
 ### Example Liquidity Iteration: Swap
@@ -56,41 +49,34 @@ Alice Performs a Swap using a `Taker Limit Order`. She wants to swap $100$ `USDC
 
 $$
 \begin{aligned}
-AmountSwapped &= ATOMAvailable \cdot Price\\
-&= 10 * 1.0001^{19640}\\
+AmountSwapped &= ATOMAvailable \cdot Price \\
+&= 10 \times 1.0001^{19640} \\
 &= 71.27
 \end{aligned}
 $$
+
 
 3. Alice still has $28.73$ `USDC` she needs to swap, so we move to the next available tick: $20795$
 This tick offers `ATOM` at a price of $8$ `USDC` per `ATOM` and is of type `PoolReserve`. Any USDC Alice pays for this swap will be placed in the corresponding poolReserves of the Pool (USDC @ Tick $-20795$ .) Alice swaps the remainder of her `USDC` here, resulting in an additional $3.5$ `ATOM`:
 
 $$
 \begin{aligned}
-AmountOut &= \frac{AmountIn}{Price}\\
-&= \frac{28.73}{1.0001^{20795}}\\
+AmountOut &= \frac{AmountIn}{Price} \\
+&= \frac{28.73}{1.0001^{20795}} \\
 &= 3.59
 \end{aligned}
 $$
 
+
+
 4. Done. Alice has swapped $100$ `USDC` for $13.59$ `ATOM` with an average price of $0.136$ `ATOM` per `USDC`.
 
-<Info>
-For the clarity of this example we are assuming that the `PoolReserves` have a fee of zero. In a real world scenario almost all `PoolReserves` will have a fee. In a scenario with fees `TokenIn` will be added to $Tick * -1 + (2\cdot fee$). Learn more about fees in the [PoolReserves](/developers/modules/dex/concepts/tick-liquidity#pool-reserves) section.
-</Info>
+NOTE: For the clarity of this example we are assuming that the `PoolReserves` have a fee of zero. In a real world scenario almost all `PoolReserves` will have a fee. In a scenario with fees `TokenIn` will be added to $Tick * -1 + (2\cdot fee$). Learn more about fees in the [PoolReserves](/developers/modules/dex/concepts/tick-liquidity#pool-reserves) section.
+
 
 ### Example liquidity Placement Post Swap
 
-<Info>
-**Post-Swap Liquidity State**
-
-After Alice's swap of 100 USDC:
-- Tick 19640: 0 ATOM (Limit Order depleted)
-- Tick 20795: 6.41 ATOM remaining (Pool partially used)
-- Tick 21973: 10 ATOM (Pool unused)
-- Tick 23027: 10 ATOM (Pool unused)
-- Tick -20795: 28.73 USDC added (from Alice's swap)
-</Info>
+![Example liquidity iteration ](/img/duality-dex-swap-1.png)
 
 We are still displaying the tick liquidity at $19640$ as a visual aid. In reality this tick is depleted and removed
 

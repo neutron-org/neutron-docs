@@ -7,7 +7,7 @@
   </g>
 
   <!-- DOCS text -->
-  <text x="150" y="78"
+  <text x="170" y="100"
         font-family="ChakraPetch-Bold, 'Chakra Petch', sans-serif" font-size="70"
         font-weight="700" fill="#404040" letter-spacing="2">DOCS</text>
 </svg>

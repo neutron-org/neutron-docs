@@ -177,12 +177,12 @@
                     "group": "Concepts",
                     "icon": "lightbulb",
                     "pages": [
-                      "developers/modules/dex/concepts/ticks",
-                      "developers/modules/dex/concepts/liquidity-pools",
-                      "developers/modules/dex/concepts/tick-liquidity",
                       "developers/modules/dex/concepts/amms-and-orderbooks",
-                      "developers/modules/dex/concepts/swaps",
+                      "developers/modules/dex/concepts/liquidity-pools",
+                      "developers/modules/dex/concepts/ticks",
+                      "developers/modules/dex/concepts/tick-liquidity",
                       "developers/modules/dex/concepts/liquidity-iteration",
+                      "developers/modules/dex/concepts/swaps",
                       "developers/modules/dex/concepts/fees"
                     ]
                                      },
