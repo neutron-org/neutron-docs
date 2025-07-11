@@ -41,19 +41,19 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Discord",
-          "icon": "discord",
-          "href": "https://discord.com/invite/bzPBzbDvWC"
+          "anchor": "Bridge",
+          "icon": "bridge",
+          "href": "https://app.neutron.org/bridge?src_chain=1&src_asset=USDC"
         },
         {
-          "anchor": "Twitter",
-          "icon": "twitter",
-          "href": "https://twitter.com/neutron_org"
+          "anchor": "Faucet",
+          "icon": "droplet",
+          "href": "https://t.me/+SyhWrlnwfCw2NGM6"
         },
         {
-          "anchor": "GitHub",
-          "icon": "github",
-          "href": "https://github.com/neutron-org"
+          "anchor": "Status",
+          "icon": "signal",
+          "href": "https://neutron.betteruptime.com/"
         }
       ]
     },
@@ -565,6 +565,7 @@
             "group": "Upgrades",
             "icon": "arrow-up-right-dots",
             "pages": [
+              "resources/upgrades/v6.0.3",
               "resources/upgrades/v6.0.2",
               "resources/upgrades/v6.0.1",
               "resources/upgrades/v7.0.0-rc0"
