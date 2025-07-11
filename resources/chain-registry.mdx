@@ -1,0 +1,125 @@
+---
+title: "Chain Registry"
+description: "Information about Neutron in the Cosmos Chain Registry"
+icon: "database"
+---
+
+Neutron is registered in the [Cosmos Chain Registry](https://github.com/cosmos/chain-registry), providing standardized information about the chain for wallets, explorers, and tools in the Cosmos ecosystem.
+
+## Registry Information
+
+| Resource | URL |
+|----------|-----|
+| Chain Registry | [chains.cosmos.directory/neutron](https://chains.cosmos.directory/neutron) |
+| Chain.json | [chains.cosmos.directory/neutron/chain](https://chains.cosmos.directory/neutron/chain) |
+| Assetlist | [chains.cosmos.directory/neutron/assetlist](https://chains.cosmos.directory/neutron/assetlist) |
+| Validator Registry | [validators.cosmos.directory/chains/neutron](https://validators.cosmos.directory/chains/neutron) |
+
+## Chain Configuration
+
+| Item | Value |
+|------|-------|
+| Chain ID | `neutron-1` |
+| Bech32 Prefix | `neutron` |
+| Slip44 | `118` |
+| Key Algorithms | `secp256k1` |
+| Daemon Name | `neutrond` |
+| Node Home | `$HOME/.neutrond` |
+
+## Native Assets
+
+| Symbol | Description | Type |
+|--------|-------------|------|
+| NTRN | Neutron's native token | Native |
+| dNTRN | Liquid staked NTRN | IBC |
+
+## Fee Tokens
+
+Neutron supports the following tokens for paying transaction fees:
+
+```json
+[
+  "untrn", 
+  "ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9", 
+  "ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349", 
+  "factory/neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry/wstETH", 
+  "ibc/2CB87BCE0937B1D1DFCEE79BE4501AAF3C265E923509AEAC410AD85D27F35130", 
+  "ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7"
+]
+```
+
+## Chain Registry JSON
+
+Below is a simplified version of the chain.json information. For the full and most up-to-date version, refer to the [Cosmos Chain Registry repository](https://github.com/cosmos/chain-registry/blob/master/neutron/chain.json).
+
+```json
+{
+  "chain_name": "neutron",
+  "status": "live",
+  "network_type": "mainnet",
+  "website": "https://neutron.org/",
+  "pretty_name": "Neutron",
+  "chain_id": "neutron-1",
+  "bech32_prefix": "neutron",
+  "daemon_name": "neutrond",
+  "node_home": "$HOME/.neutrond",
+  "key_algos": ["secp256k1"],
+  "slip44": 118,
+  "fees": {
+    "fee_tokens": [
+      {
+        "denom": "untrn",
+        "fixed_min_gas_price": 0.01,
+        "low_gas_price": 0.01,
+        "average_gas_price": 0.025,
+        "high_gas_price": 0.04
+      }
+    ]
+  },
+  "codebase": {
+    "git_repo": "https://github.com/neutron-org/neutron",
+    "recommended_version": "v6.0.1",
+    "compatible_versions": ["v6.0.1"]
+  },
+  "peers": {
+    "seeds": [
+      {
+        "id": "24f609fb5946ca3a979f40b7f54132c00104433e",
+        "address": "p2p-erheim.neutron-1.neutron.org:26656"
+      }
+    ]
+  },
+  "apis": {
+    "rpc": [
+      {
+        "address": "https://rpc-kralum.neutron-1.neutron.org",
+        "provider": "neutron"
+      }
+    ],
+    "rest": [
+      {
+        "address": "https://rest-kralum.neutron-1.neutron.org",
+        "provider": "neutron"
+      }
+    ]
+  },
+  "explorers": [
+    {
+      "kind": "mintscan",
+      "url": "https://www.mintscan.io/neutron",
+      "tx_page": "https://www.mintscan.io/neutron/transactions/${txHash}"
+    }
+  ]
+}
+```
+
+## Using Chain Registry Information
+
+Chain Registry information can be used to:
+
+1. Configure wallets to support Neutron
+2. Set up nodes with correct parameters
+3. Integrate Neutron into ecosystem tools and explorers
+4. Access standardized information about IBC connections
+
+For developers building on Neutron, this information is essential for ensuring compatibility with ecosystem tools. 

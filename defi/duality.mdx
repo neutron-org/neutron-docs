@@ -1,0 +1,78 @@
+---
+title: "Duality Orderbook"
+description: "High-performance orderbook combining the advantages of orderbooks and AMMs into a single capital-efficient trading venue"
+icon: "arrows-rotate"
+---
+
+Duality is a protocol-native orderbook integrated directly into Neutron's core infrastructure that merges the strengths of orderbooks and AMMs into a unified, capital-efficient design. Unlike traditional orderbooks implemented as smart contracts, Duality is built at the protocol level, giving it significant performance advantages and deeper integration with other Neutron features.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Dynamic Trade Routing & Order Types" icon="route" iconType="duotone">
+    Automatically finds the best price and mitigates extractive behaviors like sandwiching. Place limit orders directly on the orderbook or use the Market tab for instant token swaps with optimal execution.
+  </Card>
+  
+  <Card title="Protocol Integration & Vault Partnerships" icon="puzzle-piece" iconType="duotone">
+    As a core protocol module rather than a smart contract, Duality gains performance advantages and serves as the base liquidity layer. Partners like Margined and Astroport enable passive LPs to participate in professional-grade trading strategies.
+  </Card>
+</CardGroup>
+
+## Technical Architecture
+
+Duality is built directly into Neutron's core infrastructure as a native protocol module, making it highly capital-efficient and integrated with other Neutron applications. It **maintains a full limit orderbook** for precise price discovery and execution while supporting diverse order types. **Open composability** ensures the fully open-source design allows other applications to build on top, enhancing overall ecosystem liquidity.
+
+<div className="p-4 border-l-4 border-primary bg-primary/5 rounded my-6">
+  <strong>Explore the module code:</strong> For developers interested in the technical implementation, check out the <a href="/developers/modules/dex/overview" className="text-primary hover:underline">Dex module documentation</a> for a complete code breakdown of the Duality implementation.
+</div>
+
+## Benefits for Users
+
+**Professional Market Makers**: Advanced order types support better prices at higher frequencies with less risk of adverse selection.
+
+**Traders**: Better prices, less slippage, and protection from predatory trading behaviors like sandwiching and front-running.
+
+**Passive LPs**: Vault providers enable participation in sophisticated strategies without sacrificing convenience, offering professional-grade profitability.
+
+## Ecosystem Integration
+
+Duality serves as the base layer for spot liquidity on Neutron, enhancing capital efficiency across the ecosystem:
+
+<div className="p-4 border-l-4 border-primary bg-primary/5 rounded my-6">
+  <strong>Key integrations:</strong>
+  <ul className="mt-2">
+    <li><strong>Mars:</strong> Efficiently routes liquidations and onramping to positions through Duality to safely offer higher lending deposit caps and borrowing capacity.</li>
+    <li><strong>Astroport:</strong> Increases LP rewards by enabling <a href="https://docs.astroport.fi/docs/learn/astro-pools/passive-concentrated-liquidity-pools/passive-concentrated-liquidity-pools-intro">PCL pools</a> to provide liquidity on Duality.</li>
+    <li><strong>Margined:</strong> Enables off-chain market-making strategy vaults for Duality markets.</li>
+    <li><strong>Drop:</strong> Collaborating with Margined and Supervaults to develop profitable market-making strategy vaults for dAsset markets.</li>
+    <li><strong>Eclipse Fi:</strong> Coordinating with Margined to release arbitrage vaults for Duality pairs.</li>
+  </ul>
+</div>
+
+## Trading on Duality
+
+<CardGroup cols={2}>
+  <Card title="Limit Orders" icon="list-check" iconType="duotone">
+    <p>Place buy and sell orders at specific prices, ensuring optimal execution. Duality supports expressive limit order types:</p>
+    <ul className="mb-4 list-disc pl-6">
+      <li>Fill-Or-Kill: Only execute if the entire order can be filled</li>
+      <li>Immediate-Or-Cancel: Execute as much as possible below limit price</li>
+      <li>Good-Til-Canceled: Maker order that sits on orderbook until filled or canceled</li>
+      <li>Good-Til-Time: Maker order with an expiration time</li>
+      <li>Just-In-Time: Good-Til-Time limit order that expires after exactly 1 block</li>
+    </ul>
+  </Card>
+  
+  <Card title="Market Swaps" icon="arrows-rotate" iconType="duotone">
+    <p>Execute instant token swaps with minimal slippage, making it easy to trade one token for another in just a few clicks.</p>
+    <p>MultiHopSwaps trade through multiple pairs in a single atomic trade, using on-chain route finding to find optimal trades and avoid front-running.</p>
+  </Card>
+</CardGroup>
+
+## Get Started with Duality
+
+**Trade Now**: Start trading NTRN, TIA, ATOM, WBTC, WETH, OSMO, DYDX and other assets on [Duality](https://app.neutron.org/orderbook/NTRN/USDC)
+
+**Developer Integration**: Learn how to integrate with and build on top of Duality in our [developer docs](/developers/modules/dex)
+
+**Community**: Discuss Duality in the [Neutron Community Telegram group](https://t.me/neutronzone)

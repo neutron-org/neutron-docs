@@ -1,0 +1,91 @@
+---
+title: "Neutron Vesting Contracts"
+description: "Information about Neutron's token vesting smart contracts"
+icon: "clock"
+---
+
+This page provides information about the smart contracts that manage token vesting schedules for various Neutron token recipient groups.
+
+## Mainnet (neutron-1)
+
+| Name | Address | Source Code | Code ID |
+|------|---------|------------|---------|
+| Neutron Vesting Investors [no voting power] | `neutron14q5elxj4ghktt7d7d0uw0cs0gqyeay25h5fkree897gjm38gevxqmvqsq5` | [vesting-investors](https://github.com/neutron-org/neutron-tge-contracts) | 28 |
+| Neutron Vesting Investors | `neutron17fcdl6crgsp49ja270fp0pdwm354ar5qqv3mda07py58lgqmm2sqasvgz9` | [vesting-investors](https://github.com/neutron-org/neutron-tge-contracts) | 28 |
+| LTI Vesting | `neutron1a5xz4zm0gkpcf92ddm7fw8pghg2mf4wm6cyu6cgcruq35upf7auslnnfye` | [vesting-lti](https://github.com/neutron-org/neutron-tge-contracts) | 29 |
+| Validator Incentivization Vesting | `neutron1lzw9jmag8kj7py46z83zuvlwx944a3we3h9nwe804lp0qex3qa9qvp82l4` | [vesting-investors](https://github.com/neutron-org/neutron-tge-contracts) | 28 |
+
+## Other Vesting-Related Contracts
+
+The following contracts also participate in the vesting ecosystem:
+
+| Name | Address | Source Code | Code ID |
+|------|---------|------------|---------|
+| LP Vesting Vault | `neutron1adavpfxyp5kgs3zp0n0vkc37qakeh5eqwxqxzysgg0ahlx82rmsqp4rnz8` | [vesting-lp-vault](https://github.com/neutron-org/neutron-dao) | 41 |
+| LP Vesting Vault PCL | `neutron1w2jqqefaalu9ylyh6sge8atxg0re4llade8xwc5r2tx4zkdj4keq5r4pxk` | [vesting-lp-vault-for-cl-pools](https://github.com/neutron-org/neutron-dao) | 1086 |
+| Vesting Investors Vault | `neutron1dmd56h7hlevuwssp203fgc2uh0qdtwep2m735fzksuavgq3naslqp0ehvx` | [investors-vesting-vault](https://github.com/neutron-org/neutron-dao) | 30 |
+
+## Understanding Vesting Contracts
+
+Neutron uses several types of vesting contracts to manage token release schedules for different groups:
+
+### Investor Vesting
+
+The investor vesting contracts manage token release schedules for private sale participants. These contracts typically:
+
+- Release tokens gradually over a predefined period
+- May include a cliff period before any tokens are released
+- Provide options for governance participation during the vesting period
+
+### LP Vesting
+
+The LP (Liquidity Provider) vesting contracts manage incentives for liquidity providers who participated in Neutron's initial liquidity bootstrapping. These contracts:
+
+- Release tokens over time to encourage long-term liquidity provision
+- Can be integrated with DEX pools to provide ongoing incentives
+
+### LTI Vesting
+
+The LTI (Long-Term Incentive) vesting contracts manage token release for Neutron team members and advisors. These typically have:
+
+- Longer vesting periods to ensure long-term alignment
+- Structured release schedules to match project milestones
+
+## Vesting Contract Features
+
+The Neutron vesting contracts include several features:
+
+1. **Scheduled Release**: Tokens are released according to a predefined schedule, usually linear or milestone-based
+2. **Governance Rights**: Some vesting contracts allow vested tokens to be used for governance while still locked
+3. **Vault Integration**: Vesting contracts can be integrated with vaults for additional functionality
+4. **Delegation Rights**: Some contracts allow staking and delegation of vested tokens while they're still locked
+
+## Interacting with Vesting Contracts
+
+To check vesting information for a specific address:
+
+```bash
+# Query vesting info
+neutrond query wasm contract-state smart neutron17fcdl6crgsp49ja270fp0pdwm354ar5qqv3mda07py58lgqmm2sqasvgz9 \
+'{"vesting_info":{"address":"your-neutron-address"}}'
+
+# Check claimable amount
+neutrond query wasm contract-state smart neutron17fcdl6crgsp49ja270fp0pdwm354ar5qqv3mda07py58lgqmm2sqasvgz9 \
+'{"claimable":{"address":"your-neutron-address"}}'
+
+# Claim vested tokens
+neutrond tx wasm execute neutron17fcdl6crgsp49ja270fp0pdwm354ar5qqv3mda07py58lgqmm2sqasvgz9 \
+'{"claim":{}}' \
+--from your-key --chain-id neutron-1 --gas auto --gas-adjustment 1.3
+```
+
+## Vesting Schedules
+
+Vesting schedules vary by contract and recipient category, but generally follow these patterns:
+
+- **Team and Advisors**: 3-4 year vesting with 12-month cliff
+- **Investors**: 18-24 month vesting with various cliff periods
+- **Liquidity Providers**: Shorter vesting periods (6-12 months) to encourage initial liquidity
+- **Ecosystem Fund**: Controlled by the DAO for strategic allocations
+
+You can view the specific vesting schedule for your allocation by querying the relevant contract with your address. 

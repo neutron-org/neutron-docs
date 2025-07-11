@@ -20,3 +20,9 @@ yarn-debug.log*
 yarn-error.log*
 
 .idea/
+
+/concepts-reference
+/module-reference
+/old-docs
+
+CLAUDE.md

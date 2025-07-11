@@ -1,0 +1,377 @@
+---
+title: "Transfer Reference"
+---
+
+This document provides technical reference information for the Neutron Transfer module, including message formats, state, events, and API endpoints.
+
+## Messages
+
+The Transfer module exposes the following messages for sending tokens across chains:
+
+### MsgTransfer
+
+`MsgTransfer` initiates an IBC token transfer from Neutron to a connected chain.
+
+```protobuf
+message MsgTransfer {
+  // the port on which the packet will be sent
+  string source_port = 1;
+  // the channel by which the packet will be sent
+  string source_channel = 2;
+  // the tokens to be transferred
+  cosmos.base.v1beta1.Coin token = 3;
+  // the sender address
+  string sender = 4;
+  // the recipient address on the destination chain
+  string receiver = 5;
+  // Timeout height relative to the current block height.
+  // The timeout is disabled when set to 0.
+  ibc.core.client.v1.Height timeout_height = 6;
+  // Timeout timestamp in absolute nanoseconds since unix epoch.
+  // The timeout is disabled when set to 0.
+  uint64 timeout_timestamp = 7;
+  // optional memo
+  string memo = 8;
+  // fees for IBC packet processing
+  neutron.feerefunder.Fee fee = 9;
+}
+```
+
+#### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `source_port` | string | Port identifier on Neutron ("transfer") |
+| `source_channel` | string | Channel identifier on Neutron (e.g., "channel-1") |
+| `token` | Coin | Token to transfer, including denom and amount |
+| `sender` | string | Address of the sender on Neutron |
+| `receiver` | string | Address of the recipient on the destination chain |
+| `timeout_height` | Height | Block height on the destination chain after which the packet times out |
+| `timeout_timestamp` | uint64 | Timestamp after which the packet times out (nanoseconds) |
+| `memo` | string | Optional memo string to include with the transfer |
+| `fee` | Fee | Fees to pay for IBC packet delivery |
+
+#### Response
+
+Neutron's Transfer module enhances the standard IBC transfer response to include tracking information:
+
+```protobuf
+message MsgTransferResponse {
+  // channel's sequence_id for outgoing ibc packet. Unique per a channel.
+  uint64 sequence_id = 1;
+  // channel src channel on neutron side transaction was submitted from
+  string channel = 2;
+}
+```
+
+This response allows contracts to track their outgoing transfers and correlate them with incoming acknowledgements.
+
+### MsgUpdateParams
+
+`MsgUpdateParams` updates the module parameters. This message can only be executed by the governance account.
+
+```protobuf
+message MsgUpdateParams {
+  // signer address
+  string signer = 1;
+  // params defines the transfer parameters to update.
+  ibc.applications.transfer.v1.Params params = 2;
+}
+```
+
+#### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `signer` | string | The address of the governance account |
+| `params` | Params | The new parameters to set |
+
+#### Response
+
+```protobuf
+message MsgUpdateParamsResponse {}
+```
+
+## Fee Structure
+
+The Transfer module requires fees for IBC packet processing:
+
+```protobuf
+message Fee {
+  repeated cosmos.base.v1beta1.Coin recv_fee = 1;
+  repeated cosmos.base.v1beta1.Coin ack_fee = 2;
+  repeated cosmos.base.v1beta1.Coin timeout_fee = 3;
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `recv_fee` | []Coin | Fee paid to the relayer for delivering the packet to the receiving chain |
+| `ack_fee` | []Coin | Fee paid to the relayer for delivering the acknowledgement back to Neutron |
+| `timeout_fee` | []Coin | Fee paid to the relayer for delivering a timeout packet if the transfer times out |
+
+## Sudo Message Interface
+
+The Transfer module calls back to contracts using the following Sudo message interface:
+
+### Success Response
+
+```json
+{
+  "response": {
+    "request_id": "channel-1-42",
+    "data": "base64encodeddata"
+  }
+}
+```
+
+### Error Response
+
+```json
+{
+  "error": {
+    "request_id": "channel-1-42",
+    "error": "error message"
+  }
+}
+```
+
+### Timeout Response
+
+```json
+{
+  "timeout": {
+    "request_id": "channel-1-42"
+  }
+}
+```
+
+The `request_id` follows the format `channel-{channelID}-{sequence}` and can be used to correlate the response with the original transfer request.
+
+## Queries
+
+### DenomTrace
+
+`DenomTrace` queries the denomination trace information.
+
+```protobuf
+rpc DenomTrace(QueryDenomTraceRequest) returns (QueryDenomTraceResponse);
+```
+
+#### Request
+
+```protobuf
+message QueryDenomTraceRequest {
+  // hash (in hex format) or denom (full denom with trace info) of the denomination trace
+  string hash = 1;
+}
+```
+
+#### Response
+
+```protobuf
+message QueryDenomTraceResponse {
+  // denom_trace returns the requested denomination trace information.
+  DenomTrace denom_trace = 1;
+}
+```
+
+### DenomTraces
+
+`DenomTraces` queries all denomination traces.
+
+```protobuf
+rpc DenomTraces(QueryDenomTracesRequest) returns (QueryDenomTracesResponse);
+```
+
+#### Request
+
+```protobuf
+message QueryDenomTracesRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+```
+
+#### Response
+
+```protobuf
+message QueryDenomTracesResponse {
+  // denom_traces returns all denomination trace information.
+  repeated DenomTrace denom_traces = 1;
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+```
+
+### Params
+
+`Params` queries all parameters of the IBC transfer module.
+
+```protobuf
+rpc Params(QueryParamsRequest) returns (QueryParamsResponse);
+```
+
+#### Request
+
+```protobuf
+message QueryParamsRequest {}
+```
+
+#### Response
+
+```protobuf
+message QueryParamsResponse {
+  // params defines the parameters of the module.
+  Params params = 1;
+}
+```
+
+### DenomHash
+
+`DenomHash` queries a denomination hash information.
+
+```protobuf
+rpc DenomHash(QueryDenomHashRequest) returns (QueryDenomHashResponse);
+```
+
+#### Request
+
+```protobuf
+message QueryDenomHashRequest {
+  // The denomination trace ([port_id]/[channel_id])+/[denom]
+  string trace = 1;
+}
+```
+
+#### Response
+
+```protobuf
+message QueryDenomHashResponse {
+  // hash (in hex format) of the denomination trace information.
+  string hash = 1;
+}
+```
+
+## Events
+
+The Transfer module emits the following events:
+
+### PacketReceived
+
+Emitted when an IBC packet is received and processed by the Transfer module.
+
+```
+Type: transfer
+Attributes:
+- receiver: <receiver address>
+- amount: <token amount>
+- denom: <token denomination>
+- memo: <optional memo>
+```
+
+### PacketAcknowledgement
+
+Emitted when an acknowledgement for a sent packet is received.
+
+```
+Type: acknowledge_packet
+Attributes:
+- module: transfer
+- packet_data: <serialized packet data>
+- acknowledgement: <serialized acknowledgement>
+```
+
+### ContractSudoCallback
+
+Emitted when the Transfer module attempts to call back to a contract.
+
+```
+Type: contract_sudo_callback
+Attributes:
+- contract_address: <contract address>
+- success: <true/false>
+- error: <optional error message>
+```
+
+## Types
+
+### DenomTrace
+
+`DenomTrace` contains the base denomination for IBC fungible tokens and the source tracing information path.
+
+```protobuf
+message DenomTrace {
+  // path defines the chain of port/channel identifiers used for tracing the source of the fungible token.
+  string path = 1;
+  // base denomination of the relayed fungible token.
+  string base_denom = 2;
+}
+```
+
+### Params
+
+`Params` defines the parameters for the IBC transfer module.
+
+```protobuf
+message Params {
+  // send_enabled enables or disables all cross-chain token transfers from this chain.
+  bool send_enabled = 1;
+  // receive_enabled enables or disables all cross-chain token transfers to this chain.
+  bool receive_enabled = 2;
+}
+```
+
+## CLI Commands
+
+### Transfers
+
+```bash
+# Send tokens to a destination chain
+neutron tx ibc-transfer transfer transfer [dst-port] [dst-channel] [receiver] [amount] [flags]
+
+# Example
+neutron tx ibc-transfer transfer transfer transfer channel-1 cosmos1abc... 1000untrn --from=mykey
+```
+
+### Queries
+
+```bash
+# Query a denom trace
+neutron query ibc-transfer denom-trace [hash] [flags]
+
+# Query all denom traces
+neutron query ibc-transfer denom-traces [flags]
+
+# Query the module parameters
+neutron query ibc-transfer params [flags]
+
+# Query a denom hash
+neutron query ibc-transfer denom-hash [trace] [flags]
+```
+
+## Token Representation
+
+When tokens are transferred through IBC, they are represented differently on the destination chain:
+
+### Native Tokens
+
+Neutron's native tokens (e.g., `untrn`) that are sent to another chain are represented with an IBC prefix that traces their path:
+
+```
+{destPort}/{destChannel}/{denom}
+```
+
+For example, `untrn` sent to the Cosmos Hub might become `transfer/channel-1/untrn` on the Hub.
+
+### Non-Native Tokens
+
+Tokens from other chains that are received on Neutron are similarly prefixed:
+
+```
+{srcPort}/{srcChannel}/{denom}
+```
+
+For example, `uatom` received from the Cosmos Hub might become `transfer/channel-2/uatom` on Neutron.
+
+In code and APIs, these tokens are often represented by a hash of their denomination trace, for example: `ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2`. 

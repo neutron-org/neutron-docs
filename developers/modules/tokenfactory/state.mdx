@@ -1,0 +1,624 @@
+---
+sidebar_position: 9
+---
+
+# State
+
+The Token Factory module maintains several state objects to track custom tokens, their administrators, metadata, and hooks.
+
+## State Objects
+
+### DenomAuthorityMetadata
+
+Tracks the admin address for each custom token denomination.
+
+**Key:** `DenomAuthorityMetadataPrefix + denom`  
+**Value:** Protobuf-encoded `DenomAuthorityMetadata`  
+**Purpose:** Maps token denominations to their admin addresses
+
+#### Structure
+
+```protobuf
+message DenomAuthorityMetadata {
+  string admin = 1;
+}
+```
+
+**Example:**
+```
+Key: tokenfactory/denom_admin/factory/neutron1abc.../mytoken
+Value: DenomAuthorityMetadata{admin: "neutron1admin..."}
+```
+
+### TokenMetadata
+
+Stores metadata information for custom tokens.
+
+**Key:** `DenomMetadataPrefix + denom`  
+**Value:** Protobuf-encoded `Metadata` (from Cosmos SDK bank module)  
+**Purpose:** Provides display information for tokens
+
+#### Structure
+
+```protobuf
+message Metadata {
+  string description = 1;
+  repeated DenomUnit denom_units = 2;
+  string base = 3;
+  string display = 4;
+  string name = 5;
+  string symbol = 6;
+  string uri = 7;
+  string uri_hash = 8;
+}
+
+message DenomUnit {
+  string denom = 1;
+  uint32 exponent = 2;
+  repeated string aliases = 3;
+}
+```
+
+### BeforeSendHook
+
+Associates token denominations with their before-send hook contracts.
+
+**Key:** `BeforeSendHookPrefix + denom`  
+**Value:** Contract address (string)  
+**Purpose:** Enables custom transfer logic for tokens
+
+**Example:**
+```
+Key: tokenfactory/before_send_hook/factory/neutron1abc.../mytoken
+Value: "neutron1hook_contract..."
+```
+
+### CreatorDenoms
+
+Maps token creators to lists of denominations they created.
+
+**Key:** `CreatorPrefix + creator_address`  
+**Value:** Array of denomination strings  
+**Purpose:** Efficient lookup of tokens created by specific addresses
+
+**Example:**
+```
+Key: tokenfactory/creator/neutron1creator...
+Value: [
+  "factory/neutron1creator.../token1",
+  "factory/neutron1creator.../token2",
+  "factory/neutron1creator.../lp-token"
+]
+```
+
+### Parameters
+
+Module parameters stored as a single state object.
+
+**Key:** `ParamsKey`  
+**Value:** Protobuf-encoded `Params`  
+**Purpose:** Configures module behavior
+
+#### Structure
+
+```protobuf
+message Params {
+  repeated cosmos.base.v1beta1.Coin denom_creation_fee = 1;
+  uint64 denom_creation_gas_consume = 2;
+  string fee_collector_address = 3;
+  repeated WhitelistedHook whitelisted_hooks = 4;
+}
+
+message WhitelistedHook {
+  uint64 code_id = 1;
+  string denom_creator = 2;
+}
+```
+
+## State Transitions
+
+### Token Creation
+
+**Trigger:** `MsgCreateDenom`
+
+**State Changes:**
+1. **DenomAuthorityMetadata**: Create entry with sender as admin
+2. **CreatorDenoms**: Add new denomination to creator's list
+
+**Validation:**
+- Subdenom must be unique for creator
+- Creator must have sufficient balance for creation fee
+- Subdenom must follow format requirements
+
+```go
+// State transition for token creation
+func (k Keeper) CreateDenom(ctx sdk.Context, creatorAddr, subdenom string) (string, error) {
+    denom := fmt.Sprintf("factory/%s/%s", creatorAddr, subdenom)
+    
+    // Check if denom already exists
+    if k.HasDenomAuthorityMetadata(ctx, denom) {
+        return "", ErrDenomExists
+    }
+    
+    // Set admin metadata
+    k.SetDenomAuthorityMetadata(ctx, denom, DenomAuthorityMetadata{
+        Admin: creatorAddr,
+    })
+    
+    // Add to creator's denom list
+    k.AddDenomFromCreator(ctx, creatorAddr, denom)
+    
+    return denom, nil
+}
+```
+
+### Admin Changes
+
+**Trigger:** `MsgChangeAdmin`
+
+**State Changes:**
+1. **DenomAuthorityMetadata**: Update admin field
+
+**Special Cases:**
+- Setting admin to empty string removes the entry (renounces admin)
+- Only current admin can change admin
+
+```go
+// State transition for admin change
+func (k Keeper) ChangeAdmin(ctx sdk.Context, denom, sender, newAdmin string) error {
+    metadata, found := k.GetDenomAuthorityMetadata(ctx, denom)
+    if !found {
+        return ErrDenomDoesNotExist
+    }
+    
+    if metadata.Admin != sender {
+        return ErrUnauthorized
+    }
+    
+    if newAdmin == "" {
+        // Renounce admin - remove metadata
+        k.DeleteDenomAuthorityMetadata(ctx, denom)
+    } else {
+        // Transfer admin
+        k.SetDenomAuthorityMetadata(ctx, denom, DenomAuthorityMetadata{
+            Admin: newAdmin,
+        })
+    }
+    
+    return nil
+}
+```
+
+### Metadata Updates
+
+**Trigger:** `MsgSetDenomMetadata`
+
+**State Changes:**
+1. **TokenMetadata**: Set or update metadata entry
+
+**Authorization:** Only token admin can set metadata
+
+### Hook Management
+
+**Trigger:** `MsgSetBeforeSendHook`
+
+**State Changes:**
+1. **BeforeSendHook**: Set or remove hook contract address
+
+**Validation:**
+- Hook contract must be whitelisted for the token creator
+- Only token admin can set hooks
+
+### Parameter Updates
+
+**Trigger:** `MsgUpdateParams` (governance only)
+
+**State Changes:**
+1. **Parameters**: Update module parameters
+
+**Validation:**
+- Only governance can update parameters
+- Parameters must pass validation checks
+
+## State Access Patterns
+
+### Read Operations
+
+#### Get Token Admin
+
+```go
+func (k Keeper) GetDenomAdmin(ctx sdk.Context, denom string) (string, error) {
+    metadata, found := k.GetDenomAuthorityMetadata(ctx, denom)
+    if !found {
+        return "", ErrDenomDoesNotExist
+    }
+    return metadata.Admin, nil
+}
+```
+
+#### Get Denoms by Creator
+
+```go
+func (k Keeper) GetDenomsFromCreator(ctx sdk.Context, creator string) []string {
+    store := ctx.KVStore(k.storeKey)
+    key := append(types.CreatorPrefix, []byte(creator)...)
+    
+    bz := store.Get(key)
+    if bz == nil {
+        return []string{}
+    }
+    
+    var denoms []string
+    k.cdc.MustUnmarshal(bz, &denoms)
+    return denoms
+}
+```
+
+#### Get Before-Send Hook
+
+```go
+func (k Keeper) GetBeforeSendHook(ctx sdk.Context, denom string) string {
+    store := ctx.KVStore(k.storeKey)
+    key := append(types.BeforeSendHookPrefix, []byte(denom)...)
+    
+    bz := store.Get(key)
+    if bz == nil {
+        return ""
+    }
+    
+    return string(bz)
+}
+```
+
+### Write Operations
+
+#### Set Token Admin
+
+```go
+func (k Keeper) SetDenomAuthorityMetadata(ctx sdk.Context, denom string, metadata DenomAuthorityMetadata) {
+    store := ctx.KVStore(k.storeKey)
+    key := append(types.DenomAuthorityMetadataPrefix, []byte(denom)...)
+    
+    bz := k.cdc.MustMarshal(&metadata)
+    store.Set(key, bz)
+}
+```
+
+#### Set Hook
+
+```go
+func (k Keeper) SetBeforeSendHook(ctx sdk.Context, denom, contractAddr string) {
+    store := ctx.KVStore(k.storeKey)
+    key := append(types.BeforeSendHookPrefix, []byte(denom)...)
+    
+    if contractAddr == "" {
+        store.Delete(key)
+    } else {
+        store.Set(key, []byte(contractAddr))
+    }
+}
+```
+
+## State Storage Layout
+
+### Key-Value Store Structure
+
+```
+TokenFactoryStore/
+├── denom_admin/{denom} → DenomAuthorityMetadata
+├── denom_metadata/{denom} → Metadata
+├── before_send_hook/{denom} → string (contract address)
+├── creator/{creator_address} → []string (denom list)
+└── params → Params
+```
+
+### Key Prefixes
+
+```go
+const (
+    // DenomAuthorityMetadataPrefix - stores admin for each denom
+    DenomAuthorityMetadataPrefix = "tokenfactory/denom_admin/"
+    
+    // DenomMetadataPrefix - stores metadata for each denom  
+    DenomMetadataPrefix = "tokenfactory/denom_metadata/"
+    
+    // BeforeSendHookPrefix - stores hook contract for each denom
+    BeforeSendHookPrefix = "tokenfactory/before_send_hook/"
+    
+    // CreatorPrefix - maps creator to list of denoms
+    CreatorPrefix = "tokenfactory/creator/"
+    
+    // ParamsKey - stores module parameters
+    ParamsKey = "tokenfactory/params"
+)
+```
+
+### Storage Details
+
+#### Encoding
+- **Format:** Protocol Buffers (protobuf) for structured data
+- **Strings:** Direct byte encoding for simple strings
+- **Arrays:** Protobuf-encoded string arrays
+
+#### Key Construction
+- **Denom Keys:** Prefix + full denomination string
+- **Creator Keys:** Prefix + creator address
+- **Parameter Key:** Static key
+
+## State Migration
+
+### Genesis State
+
+**Genesis Structure:**
+```protobuf
+message GenesisState {
+  Params params = 1;
+  repeated GenesisDenom factory_denoms = 2;
+}
+
+message GenesisDenom {
+  string denom = 1;
+  DenomAuthorityMetadata authority_metadata = 2;
+  string name = 3;
+  string symbol = 4;
+  string description = 5;
+  repeated DenomUnit denom_units = 6;
+}
+```
+
+**Default Genesis:**
+```json
+{
+  "params": {
+    "denom_creation_fee": [],
+    "denom_creation_gas_consume": "2000000",
+    "fee_collector_address": "",
+    "whitelisted_hooks": []
+  },
+  "factory_denoms": []
+}
+```
+
+### State Export/Import
+
+**Export State:**
+```go
+func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
+    params := k.GetParams(ctx)
+    
+    var factoryDenoms []types.GenesisDenom
+    
+    // Iterate through all denoms
+    k.IterateDenomAuthorityMetadata(ctx, func(denom string, metadata types.DenomAuthorityMetadata) bool {
+        genesisDenom := types.GenesisDenom{
+            Denom: denom,
+            AuthorityMetadata: metadata,
+        }
+        
+        // Get metadata if exists
+        if bankMetadata, found := k.bankKeeper.GetDenomMetaData(ctx, denom); found {
+            genesisDenom.Name = bankMetadata.Name
+            genesisDenom.Symbol = bankMetadata.Symbol
+            genesisDenom.Description = bankMetadata.Description
+            genesisDenom.DenomUnits = bankMetadata.DenomUnits
+        }
+        
+        factoryDenoms = append(factoryDenoms, genesisDenom)
+        return false
+    })
+    
+    return &types.GenesisState{
+        Params:        params,
+        FactoryDenoms: factoryDenoms,
+    }
+}
+```
+
+**Import State:**
+```go
+func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
+    k.SetParams(ctx, genState.Params)
+    
+    for _, denom := range genState.FactoryDenoms {
+        // Set authority metadata
+        k.SetDenomAuthorityMetadata(ctx, denom.Denom, denom.AuthorityMetadata)
+        
+        // Extract creator from denom
+        creator := k.ExtractCreatorFromDenom(denom.Denom)
+        k.AddDenomFromCreator(ctx, creator, denom.Denom)
+        
+        // Set bank metadata if provided
+        if denom.Name != "" || denom.Symbol != "" {
+            metadata := banktypes.Metadata{
+                Description: denom.Description,
+                DenomUnits:  denom.DenomUnits,
+                Base:        denom.Denom,
+                Display:     denom.Denom,
+                Name:        denom.Name,
+                Symbol:      denom.Symbol,
+            }
+            k.bankKeeper.SetDenomMetaData(ctx, metadata)
+        }
+    }
+}
+```
+
+### Upgrade Handling
+
+**Version Migration Example:**
+```go
+func (m Migrator) Migrate1to2(ctx sdk.Context) error {
+    // Example: Add fee collector address to existing params
+    params := m.keeper.GetParams(ctx)
+    
+    if params.FeeCollectorAddress == "" {
+        params.FeeCollectorAddress = authtypes.NewModuleAddress("community_pool").String()
+        m.keeper.SetParams(ctx, params)
+    }
+    
+    return nil
+}
+```
+
+## State Queries
+
+### Direct State Access
+
+**Query Raw State:**
+```bash
+# Get token admin
+neutrond query store tokenfactory key tokenfactory/denom_admin/factory/neutron1.../mytoken
+
+# Get creator denoms
+neutrond query store tokenfactory key tokenfactory/creator/neutron1creator...
+
+# Get hook contract
+neutrond query store tokenfactory key tokenfactory/before_send_hook/factory/neutron1.../mytoken
+```
+
+### Programmatic Access
+
+#### Go Client
+
+```go
+func QueryTokenState(clientCtx client.Context, denom string) error {
+    queryClient := types.NewQueryClient(clientCtx)
+    
+    // Get admin
+    adminResp, err := queryClient.DenomAuthorityMetadata(context.Background(), 
+        &types.QueryDenomAuthorityMetadataRequest{Denom: denom})
+    if err != nil {
+        return err
+    }
+    
+    fmt.Printf("Admin: %s\n", adminResp.AuthorityMetadata.Admin)
+    
+    // Get hook
+    hookResp, err := queryClient.BeforeSendHookAddress(context.Background(),
+        &types.QueryBeforeSendHookAddressRequest{Denom: denom})
+    if err == nil {
+        fmt.Printf("Hook: %s\n", hookResp.ContractAddr)
+    }
+    
+    return nil
+}
+```
+
+## State Validation
+
+### Invariants
+
+**Token Factory Invariants:**
+1. Every denom with authority metadata must exist in creator's denom list
+2. Hook contracts must be whitelisted for their creators
+3. Metadata denominations must match existing factory denoms
+4. Parameters must pass validation
+
+**Invariant Checks:**
+```go
+func TokenFactoryInvariant(k Keeper) sdk.Invariant {
+    return func(ctx sdk.Context) (string, bool) {
+        broken := false
+        msg := ""
+        
+        // Check admin-creator consistency
+        k.IterateDenomAuthorityMetadata(ctx, func(denom string, metadata types.DenomAuthorityMetadata) bool {
+            creator := k.ExtractCreatorFromDenom(denom)
+            creatorDenoms := k.GetDenomsFromCreator(ctx, creator)
+            
+            found := false
+            for _, creatorDenom := range creatorDenoms {
+                if creatorDenom == denom {
+                    found = true
+                    break
+                }
+            }
+            
+            if !found {
+                broken = true
+                msg += fmt.Sprintf("denom %s not found in creator %s list\n", denom, creator)
+            }
+            
+            return false
+        })
+        
+        return msg, broken
+    }
+}
+```
+
+### State Consistency
+
+**Consistency Checks:**
+1. **Admin-Creator Mapping**: Every denom with admin must be in creator's list
+2. **Hook Whitelist**: All set hooks must be whitelisted
+3. **Metadata Consistency**: Metadata denominations must match factory denoms
+4. **Parameter Validity**: Parameters must pass validation
+
+## Performance Considerations
+
+### State Access Optimization
+
+1. **Caching**: Cache frequently accessed parameters and metadata
+2. **Batch Operations**: Group state reads/writes when possible
+3. **Index Efficiency**: Use appropriate key prefixes for efficient iteration
+4. **Memory Management**: Clean up unused state entries
+
+### Storage Efficiency
+
+1. **Key Length**: Minimize key length while maintaining uniqueness
+2. **Value Size**: Use efficient protobuf encoding
+3. **Pruning**: Remove unnecessary historical state
+4. **Compression**: Consider compression for large metadata values
+
+### Query Performance
+
+1. **Prefix Iteration**: Use prefix iteration for creator denom queries
+2. **Index Scanning**: Implement efficient scanning for large datasets
+3. **Pagination**: Support pagination for large result sets
+4. **Caching**: Cache query results when appropriate
+
+## State Monitoring
+
+### Health Checks
+
+```bash
+# Verify state consistency
+neutrond query tokenfactory params
+
+# Check token count
+neutrond query store tokenfactory subspace tokenfactory/denom_admin/ | wc -l
+
+# Verify creator mappings
+neutrond query tokenfactory denoms-from-creator neutron1creator...
+```
+
+### Metrics Collection
+
+```go
+func CollectTokenFactoryMetrics(k Keeper, ctx sdk.Context) {
+    // Count total tokens
+    tokenCount := 0
+    k.IterateDenomAuthorityMetadata(ctx, func(denom string, metadata types.DenomAuthorityMetadata) bool {
+        tokenCount++
+        return false
+    })
+    totalTokens.Set(float64(tokenCount))
+    
+    // Count tokens with hooks
+    hookCount := 0
+    k.IterateBeforeSendHooks(ctx, func(denom, contractAddr string) bool {
+        hookCount++
+        return false
+    })
+    tokensWithHooks.Set(float64(hookCount))
+    
+    // Count unique creators
+    creatorCount := 0
+    k.IterateCreators(ctx, func(creator string, denoms []string) bool {
+        creatorCount++
+        return false
+    })
+    uniqueCreators.Set(float64(creatorCount))
+}
+``` 

@@ -1,0 +1,205 @@
+---
+title: "State"
+---
+
+The Fee Refunder module maintains state information to track fee payments associated with IBC packets and module parameters.
+
+## State Objects
+
+### FeeInfo
+
+The primary state object is the `FeeInfo` record, which stores information about fees for a specific IBC packet:
+
+```protobuf
+message FeeInfo {
+  string payer = 1;
+  Fee fee = 2 [(gogoproto.nullable) = false];
+  PacketID packet_id = 3 [(gogoproto.nullable) = false];
+}
+```
+
+This record contains:
+- `payer`: Address of the account that paid the fees
+- `fee`: Fee information including acknowledgement and timeout fees
+- `packet_id`: Identifier of the IBC packet
+
+### Fee
+
+The `Fee` structure defines the fees for different IBC packet operations:
+
+```protobuf
+message Fee {
+  repeated cosmos.base.v1beta1.Coin recv_fee = 1;
+  repeated cosmos.base.v1beta1.Coin ack_fee = 2;
+  repeated cosmos.base.v1beta1.Coin timeout_fee = 3;
+}
+```
+
+This contains:
+- `recv_fee`: Fees for packet receive operations (must be empty in Neutron)
+- `ack_fee`: Fees for packet acknowledgement operations
+- `timeout_fee`: Fees for packet timeout operations
+
+### PacketID
+
+The `PacketID` structure uniquely identifies an IBC packet:
+
+```protobuf
+message PacketID {
+  string channel_id = 1;
+  string port_id = 2;
+  uint64 sequence = 3;
+}
+```
+
+This contains:
+- `channel_id`: IBC channel identifier
+- `port_id`: IBC port identifier
+- `sequence`: Packet sequence number
+
+### Module Parameters
+
+The module parameters are stored as a `Params` object:
+
+```protobuf
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+  Fee min_fee = 1 [(gogoproto.nullable) = false];
+}
+```
+
+This contains:
+- `min_fee`: Minimum required fees for IBC operations
+
+## State Structure
+
+The Fee Refunder module uses a key-value store system to manage its state:
+
+```
+FeeKey (0x01) + PortID/ChannelID/Sequence → FeeInfo
+ParamsKey (0x02) → Params
+```
+
+### Key Prefixes
+
+The module uses the following key prefixes in the KVStore:
+
+| Prefix | Value | Purpose |
+| --- | --- | --- |
+| `FeeKey` | `0x01` | Prefix for storing fee information |
+| `ParamsKey` | `0x02` | Prefix for storing module parameters |
+
+### Fee Information Storage
+
+Fee information is stored using a composite key structure:
+
+```
+0x01 + PortID/ChannelID/Sequence → FeeInfo
+```
+
+This allows efficient retrieval of fee information for a specific packet.
+
+The key is constructed using the `GetFeePacketKey` function:
+
+```go
+func GetFeePacketKey(packetID PacketID) []byte {
+    return append(FeeKey, []byte(fmt.Sprintf("%s/%s/%d", packetID.PortId, packetID.ChannelId, packetID.Sequence))...)
+}
+```
+
+## State Transitions
+
+The Fee Refunder module modifies state during the following operations:
+
+### Storing Fee Information
+
+When an IBC packet is sent with fees, the module creates a new `FeeInfo` record:
+
+1. Creates a `FeeInfo` record with the payer address, fees, and packet ID
+2. Stores the record under the appropriate key
+
+```go
+func (k Keeper) StoreFeeInfo(ctx sdk.Context, feeInfo types.FeeInfo) {
+    store := ctx.KVStore(k.storeKey)
+    bzFeeInfo := k.cdc.MustMarshal(&feeInfo)
+    store.Set(types.GetFeePacketKey(feeInfo.PacketId), bzFeeInfo)
+}
+```
+
+### Removing Fee Information
+
+When an acknowledgement or timeout is processed, the module removes the fee information:
+
+1. Constructs the key for the packet
+2. Deletes the record from the store
+
+```go
+func (k Keeper) removeFeeInfo(ctx sdk.Context, packetID types.PacketID) {
+    store := ctx.KVStore(k.storeKey)
+    store.Delete(types.GetFeePacketKey(packetID))
+}
+```
+
+## Genesis State
+
+The genesis state of the Fee Refunder module consists of:
+
+```protobuf
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+  repeated FeeInfo fee_infos = 2 [(gogoproto.nullable) = false];
+}
+```
+
+This includes:
+- The module parameters
+- A list of fee information records
+
+## State Initialization
+
+During the module's `InitGenesis` function:
+
+1. Module parameters are stored in the KVStore
+2. Any initial fee information records are stored
+
+```go
+func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
+    // Set params
+    k.SetParams(ctx, genState.Params)
+
+    // Initialize fee infos
+    for _, feeInfo := range genState.FeeInfos {
+        k.StoreFeeInfo(ctx, feeInfo)
+    }
+}
+```
+
+## State Export
+
+During the module's `ExportGenesis` function:
+
+1. Current parameters are retrieved from the KVStore
+2. All fee information records are retrieved
+3. Both are included in the exported genesis state
+
+```go
+func ExportGenesis(ctx sdk.Context, k keeper.Keeper) types.GenesisState {
+    return types.GenesisState{
+        Params:   k.GetParams(ctx),
+        FeeInfos: k.GetAllFeeInfos(ctx),
+    }
+}
+```
+
+This allows the state to be properly preserved during chain exports and upgrades.
+
+## State Queries
+
+The module provides several query methods to access its state:
+
+1. `Params`: Retrieves the current module parameters
+2. `MinFee`: Retrieves the minimum required fees
+3. `FeeInfo`: Retrieves fee information for a specific packet
+4. `AllFeeInfo`: Retrieves all fee information records
+
+These queries support retrieving specific pieces of state information for clients and applications. 
