@@ -1,0 +1,77 @@
+---
+title: "Reference"
+description: "Technical reference for the Harpoon module"
+---
+
+The Harpoon module allows CosmWasm smart contracts to subscribe to staking module hooks for tracking historical voting power and other staking events.
+
+## Message
+
+### MsgManageHookSubscription
+
+Manages hook subscriptions for a contract address (governance only).
+
+```protobuf
+message MsgManageHookSubscription {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "harpoon/MsgManageHookSubscription";
+
+  // Address of the governance account
+  string authority = 1;
+  
+  // Hook subscription to be updated
+  HookSubscription hook_subscription = 2;
+}
+
+message HookSubscription {
+  // Contract address to update subscriptions for
+  string contract_address = 2;
+  
+  // List of hooks to subscribe to. Hooks not listed here will be removed.
+  repeated HookType hooks = 3;
+}
+```
+
+**Authority Required**: Governance only
+
+## Query
+
+### QuerySubscribedContracts
+
+Retrieves contracts subscribed to a specific hook type.
+
+```protobuf
+message QuerySubscribedContractsRequest {
+  // The response will include only contract addresses for this hook type
+  HookType hook_type = 1;
+}
+
+message QuerySubscribedContractsResponse {
+  // List of contract addresses subscribed to a specific hook
+  repeated string contract_addresses = 1;
+}
+```
+
+## Hook Types
+
+Available staking hooks that contracts can subscribe to:
+
+- `HOOK_TYPE_AFTER_VALIDATOR_CREATED`
+- `HOOK_TYPE_BEFORE_VALIDATOR_MODIFIED`
+- `HOOK_TYPE_AFTER_VALIDATOR_REMOVED`
+- `HOOK_TYPE_AFTER_VALIDATOR_BONDED`
+- `HOOK_TYPE_AFTER_VALIDATOR_BEGIN_UNBONDING`
+- `HOOK_TYPE_BEFORE_DELEGATION_CREATED`
+- `HOOK_TYPE_BEFORE_DELEGATION_SHARES_MODIFIED`
+- `HOOK_TYPE_BEFORE_DELEGATION_REMOVED`
+- `HOOK_TYPE_AFTER_DELEGATION_MODIFIED`
+- `HOOK_TYPE_BEFORE_VALIDATOR_SLASHED`
+- `HOOK_TYPE_AFTER_UNBONDING_INITIATED`
+
+## Key Concepts
+
+- **Governance-Only Subscriptions**: Only governance can manage hook subscriptions
+- **Sudo Calls**: Subscribed contracts receive `sudo` calls when hooks trigger
+- **No Error Handling**: Contract errors can halt transactions or the chain
+- **Historical Data**: Primary use case is tracking historical voting power
+- **Storage Efficiency**: Optimized for fast hook execution 

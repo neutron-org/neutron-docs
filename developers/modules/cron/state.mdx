@@ -3,15 +3,13 @@ title: "State"
 description: "State management in the Cron module"
 ---
 
-# State
-
 This document describes the state management of the Cron module, including the data structures and storage patterns used to maintain schedules and execution state.
 
 ## State Objects
 
 ### Schedule
 
-The primary state object in the Cron module is the `Schedule`, which represents a time-based task:
+The primary state object in the Cron module is the `Schedule`:
 
 ```protobuf
 message Schedule {
@@ -20,21 +18,7 @@ message Schedule {
   repeated MsgExecuteContract msgs = 3;      // Messages to execute when triggered
   uint64 last_execute_height = 4;           // Last block height when executed
 }
-
-message MsgExecuteContract {
-  string contract = 1;                       // Contract address to call
-  string msg = 2;                           // JSON-encoded message to pass to contract
-}
 ```
-
-**Fields explanation:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `name` | string | Unique identifier for the schedule, used as a key in state storage |
-| `period` | uint64 | Number of blocks between executions (0 for one-time execution) |
-| `msgs` | []MsgExecuteContract | Array of contract messages to execute when the schedule triggers |
-| `last_execute_height` | uint64 | Last block height when the schedule was executed |
 
 ### Params
 
@@ -47,257 +31,10 @@ message Params {
 }
 ```
 
-**Parameters explanation:**
+## State Storage
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `security_address` | string | Address authorized to remove schedules (typically Security SubDAO) |
-| `limit` | uint64 | Maximum number of schedules that can be executed in a single block |
+The module uses key-value storage for persistent state:
 
-## State Mappings
-
-The Cron module uses the following state mappings:
-
-### Schedules by Name
-
-```
-ScheduleKey (name string) -> Schedule
-```
-
-This mapping stores all schedules, indexed by their unique name. It is the primary storage mechanism for accessing schedules.
-
-### Schedule Execution Index
-
-The module maintains an internal execution index to efficiently find schedules that are due for execution. During `BeginBlock` or `EndBlock`, the module queries all schedules and checks:
-
-```
-current_block_height >= (schedule.last_execute_height + schedule.period)
-```
-
-## State Flow
-
-### Schedule Creation
-
-When a governance proposal creates a schedule through `AddSchedule`:
-
-1. The module validates the schedule parameters
-2. It creates a new `Schedule` object:
-   - Sets `name` and `period` from the governance message
-   - Sets `msgs` array from the provided contract messages
-   - Initializes `last_execute_height` to 0
-3. The schedule is stored in state using the `name` as the key
-
-```go
-func AddSchedule(ctx Context, msg AddSchedule) error {
-  // Validate governance authorization
-  if err := validateGovernanceAuth(ctx, msg); err != nil {
-    return err
-  }
-  
-  // Create schedule
-  schedule := Schedule{
-    Name:              msg.Name,
-    Period:            msg.Period,
-    Msgs:              msg.Msgs,
-    LastExecuteHeight: 0,
-  }
-  
-  // Store schedule
-  SetSchedule(ctx, schedule)
-  
-  // Emit event
-  EmitAddScheduleEvent(ctx, schedule)
-  
-  return nil
-}
-```
-
-### Schedule Execution
-
-During each block's execution phase (BEGIN_BLOCKER or END_BLOCKER based on the schedule's execution_stage):
-
-1. The module queries all schedules from state
-2. For each schedule, it checks if execution is due:
-   ```
-   current_height >= (last_execute_height + period)
-   ```
-3. Due schedules are collected up to the configured `limit`
-4. For each due schedule:
-   - The module constructs `wasmtypes.MsgExecuteContract` messages
-   - Sets the sender as the Cron module account
-   - Sets funds to empty coins
-   - Executes all messages in the schedule atomically
-   - Updates the `last_execute_height` to current block height
-   - Emits execution events
-
-```go
-func EndBlock(ctx Context) {
-  currentHeight := ctx.BlockHeight()
-  limit := GetParams(ctx).Limit
-  
-  // Get all schedules and filter for due executions
-  schedules := GetAllSchedules(ctx)
-  dueSchedules := FilterDueSchedules(schedules, currentHeight)
-  
-  // Limit executions per block
-  if len(dueSchedules) > int(limit) {
-    dueSchedules = dueSchedules[:limit]
-  }
-  
-  // Execute each due schedule
-  for _, schedule := range dueSchedules {
-    success, err := ExecuteSchedule(ctx, schedule)
-    
-    // Update schedule state
-    schedule.LastExecuteHeight = currentHeight
-    SetSchedule(ctx, schedule)
-    
-    // Emit event
-    EmitExecuteScheduleEvent(ctx, schedule, success, err)
-  }
-}
-```
-
-### Schedule Removal
-
-When a governance proposal removes a schedule through `RemoveSchedule`:
-
-1. The module validates governance authorization (Main DAO or Security SubDAO)
-2. It loads the existing schedule from state
-3. Removes the schedule from state storage
-4. Emits a removal event
-
-### Message Execution Details
-
-When executing scheduled messages, the module transforms the stored `MsgExecuteContract` into `wasmtypes.MsgExecuteContract`:
-
-```go
-// Transform stored message to executable message
-wasmMsg := wasmtypes.MsgExecuteContract{
-  Sender:   cronModuleAccount,        // Cron module account
-  Contract: scheduleMsg.Contract,     // Contract address from schedule
-  Msg:      []byte(scheduleMsg.Msg),  // JSON message from schedule
-  Funds:    sdk.Coins{},             // Always empty - no funds sent
-}
-```
-
-## Execution Ordering and Limits
-
-### Deterministic Ordering
-
-When multiple schedules are due for execution in the same block, they are processed in deterministic order:
-
-1. **By last execution height**: Schedules that haven't run in longer get priority
-2. **By name**: Alphabetical order for schedules with the same last execution height
-
-This ensures fairness and prevents schedule starvation.
-
-### Block Limits
-
-The `limit` parameter prevents resource exhaustion:
-- Maximum number of schedules executed per block
-- If more schedules are due than the limit allows, excess schedules wait until the next block
-- This prevents DoS attacks and ensures consistent block times
-
-## Example State Structure
-
-Here's an example of the state structure with two registered schedules:
-
-### Schedule 1: Daily Reward Distribution
-
-```json
-{
-  "name": "daily_reward_distribution",
-  "period": 7200,
-  "msgs": [
-    {
-      "contract": "neutron1contract1...",
-      "msg": "{\"distribute_rewards\": {\"validator\": \"channel-52\", \"recipient\": \"neutron123...\"}}"
-    }
-  ],
-  "last_execute_height": 8764230
-}
-```
-
-### Schedule 2: Weekly Parameter Update
-
-```json
-{
-  "name": "weekly_parameter_update", 
-  "period": 50400,
-  "msgs": [
-    {
-      "contract": "neutron1contract2...",
-      "msg": "{\"update_params\": {\"new_value\": \"0.20\"}}"
-    },
-    {
-      "contract": "neutron1contract3...",
-      "msg": "{\"notify_update\": {}}"
-    }
-  ],
-  "last_execute_height": 8749830
-}
-```
-
-### Module Parameters
-
-```json
-{
-  "security_address": "neutron1security...",
-  "limit": 20
-}
-```
-
-## Genesis State
-
-The Genesis state of the Cron module includes:
-
-```protobuf
-message GenesisState {
-  Params params = 1;
-  repeated Schedule schedule_list = 2;
-}
-```
-
-- **params**: Module parameters (security_address, limit)
-- **schedule_list**: All registered schedules at genesis
-
-## Storage Keys
-
-The module uses the following key prefixes for state storage:
-
-| Key Prefix | Description |
-|------------|-------------|
-| `0x01` | Schedule storage prefix |
-| `0x02` | Parameters storage prefix |
-
-Schedule keys are constructed as:
-```
-ScheduleKey = 0x01 + len(name) + name
-```
-
-This ensures efficient storage and retrieval of schedules by name.
-
-## State Transitions
-
-### Valid Transitions
-
-1. **Empty → Schedule**: New schedule creation via governance
-2. **Schedule → Updated Schedule**: Execution updates last_execute_height
-3. **Schedule → Empty**: Schedule removal via governance
-
-### Invalid Transitions
-
-- Direct user modification of schedules (only governance allowed)
-- Schedule creation without proper governance authorization
-- Schedule execution outside of BeginBlock/EndBlock phases
-
-## Metrics Integration
-
-The state management integrates with the module's metrics system:
-
-- **schedule_count**: Updated when schedules are added/removed
-- **schedule_executions_count**: Incremented on each execution
-- **execute_ready_schedules**: Measures execution time
-
-These metrics help monitor the health and performance of the Cron module's state management. 
+- **Schedules**: Stored with the schedule name as the key
+- **Parameters**: Stored as module parameters
+- **Execution tracking**: Last execution height maintained per schedule 

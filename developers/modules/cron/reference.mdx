@@ -5,7 +5,7 @@ description: "Technical reference for the Cron module"
 
 ## Governance Messages
 
-The Cron module only accepts messages through governance proposals. Individual users cannot directly interact with this module.
+The Cron module accepts messages through governance proposals.
 
 ### AddSchedule
 
@@ -16,16 +16,9 @@ message AddSchedule {
   string name = 1;                           // Unique identifier for the schedule
   uint64 period = 2;                         // Number of blocks between executions
   repeated MsgExecuteContract msgs = 3;      // Messages to execute
-  string execution_stage = 4;                // "EXECUTION_STAGE_BEGIN_BLOCKER" or "EXECUTION_STAGE_END_BLOCKER"
-}
-
-message MsgExecuteContract {
-  string contract = 1;                       // Contract address to call
-  string msg = 2;                           // JSON-encoded message to pass to contract
+  string execution_stage = 4;                // Execution stage
 }
 ```
-
-**Usage**: This message can only be submitted through Main DAO governance proposals.
 
 ### RemoveSchedule
 
@@ -37,285 +30,46 @@ message RemoveSchedule {
 }
 ```
 
-**Usage**: This message can be submitted through:
-- Main DAO governance proposals
-- Security SubDAO proposals (emergency removal)
-
 ## Query Methods
 
 ### Params
 
 Returns the module parameters.
 
-```protobuf
-message QueryParamsRequest {
-  // Empty request
-}
-
-message QueryParamsResponse {
-  Params params = 1;
-}
-
-message Params {
-  string security_address = 1;              // Security address that can remove schedules
-  uint64 limit = 2;                        // Limit of schedules executed in one block
-}
-```
-
 **CLI Usage:**
 ```bash
 neutrond query cron params
-```
-
-**gRPC Endpoint:**
-```
-/neutron.cron.Query/Params
-```
-
-**REST Endpoint:**
-```
-GET /neutron/cron/params
 ```
 
 ### Schedule
 
 Returns a specific schedule by name.
 
-```protobuf
-message QueryGetScheduleRequest {
-  string name = 1;                           // Name of the schedule
-}
-
-message QueryGetScheduleResponse {
-  Schedule schedule = 1;
-}
-
-message Schedule {
-  string name = 1;                           // Unique identifier
-  uint64 period = 2;                         // Blocks between executions
-  repeated MsgExecuteContract msgs = 3;      // Messages to execute
-  uint64 last_execute_height = 4;           // Last execution block height
-}
-```
-
 **CLI Usage:**
 ```bash
 neutrond query cron schedule [schedule-name]
 ```
 
-**gRPC Endpoint:**
-```
-/neutron.cron.Query/Schedule
-```
-
-**REST Endpoint:**
-```
-GET /neutron/cron/schedule/{name}
-```
-
 ### Schedules
 
-Returns all schedules with optional pagination.
-
-```protobuf
-message QuerySchedulesRequest {
-  cosmos.base.query.v1beta1.PageRequest pagination = 1;
-}
-
-message QuerySchedulesResponse {
-  repeated Schedule schedules = 1;
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
-}
-```
+Returns all schedules.
 
 **CLI Usage:**
 ```bash
 neutrond query cron schedules
 ```
 
-**gRPC Endpoint:**
-```
-/neutron.cron.Query/Schedules
-```
-
-**REST Endpoint:**
-```
-GET /neutron/cron/schedule
-```
-
 ## Module Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `security_address` | string | (set by governance) | Address authorized to remove schedules (typically Security SubDAO) |
-| `limit` | uint64 | 20 | Maximum number of schedules executed in one block |
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `security_address` | string | Address authorized to remove schedules |
+| `limit` | uint64 | Maximum number of schedules executed in one block |
 
 ## Events
 
-### EventAddSchedule
+The module emits events for schedule operations:
 
-Emitted when a new schedule is created through governance.
-
-| Attribute | Type | Description |
-|-----------|------|-------------|
-| `name` | string | Name of the created schedule |
-| `period` | string | Execution period in blocks |
-| `msgs_count` | string | Number of messages in the schedule |
-| `execution_stage` | string | BEGIN_BLOCKER or END_BLOCKER |
-
-### EventRemoveSchedule
-
-Emitted when a schedule is removed through governance.
-
-| Attribute | Type | Description |
-|-----------|------|-------------|
-| `name` | string | Name of the removed schedule |
-
-### EventExecuteSchedule
-
-Emitted when a schedule is executed during block processing.
-
-| Attribute | Type | Description |
-|-----------|------|-------------|
-| `name` | string | Name of the executed schedule |
-| `height` | string | Block height of execution |
-| `success` | string | Whether execution was successful ("true" or "false") |
-| `error` | string | Error message if execution failed (empty if successful) |
-
-## Metrics
-
-The Cron module collects the following metrics for monitoring:
-
-| Metric | Type | Description |
-|--------|------|-------------|
-| `execute_ready_schedules` | histogram | Time taken to execute all ready schedules in EndBlocker |
-| `schedule_count` | gauge | Current number of active schedules |
-| `schedule_executions_count` | counter | Total schedule executions, labeled by success result and schedule name |
-
-## Error Handling
-
-### Common Error Scenarios
-
-| Error | Description | Resolution |
-|-------|-------------|------------|
-| Schedule not found | Querying a non-existent schedule | Verify schedule name and ensure it was created |
-| Unauthorized | Non-governance attempt to modify schedules | Use governance proposals for schedule management |
-| Execution failure | Scheduled message execution failed | Check contract state and message validity |
-| Limit exceeded | Too many schedules due in one block | Wait for next block or adjust limit parameter |
-
-### Schedule Execution Failures
-
-When a scheduled message fails:
-1. The entire schedule's execution is rolled back (atomicity)
-2. The failure is logged with error details
-3. The schedule's `last_execute_height` is updated to prevent retry loops
-4. The schedule continues to be processed in future blocks
-5. An `EventExecuteSchedule` event is emitted with `success: false`
-
-## Integration with CosmWasm
-
-### Message Construction
-
-When executing schedules, the module constructs `wasmtypes.MsgExecuteContract` messages:
-
-```go
-msg := wasmtypes.MsgExecuteContract{
-    Sender:   cronModuleAccount,        // Cron module account
-    Contract: scheduleMsg.Contract,     // Contract address from schedule
-    Msg:      []byte(scheduleMsg.Msg),  // JSON message from schedule
-    Funds:    sdk.Coins{},             // Always empty - no funds sent
-}
-```
-
-### Contract Considerations
-
-Contracts that will be called by scheduled messages should:
-
-1. **Handle the Cron module account as sender**: The sender will always be the Cron module account, not a user account
-2. **Expect no funds**: Scheduled messages never include funds
-3. **Be idempotent**: Messages might be retried if there are execution issues
-4. **Validate inputs**: Include proper validation since messages come from governance
-5. **Handle failures gracefully**: Failed executions don't retry automatically
-
-### Example Schedule Creation
-
-To create a schedule through governance, construct a proposal like this:
-
-```json
-{
-  "propose": {
-    "msg": {
-      "propose": {
-        "title": "Add Daily Reward Distribution Schedule",
-        "description": "Creates a schedule to distribute rewards every 7200 blocks (approximately daily)",
-        "msgs": [
-          {
-            "custom": {
-              "add_schedule": {
-                "name": "daily_rewards",
-                "period": 7200,
-                "msgs": [
-                  {
-                    "contract": "neutron1contract...",
-                    "msg": "{\"distribute_rewards\": {\"amount\": \"1000\"}}"
-                  }
-                ],
-                "execution_stage": "EXECUTION_STAGE_END_BLOCKER"
-              }
-            }
-          }
-        ]
-      }
-    }
-  }
-}
-```
-
-### Example Schedule Removal
-
-To remove a schedule through governance:
-
-```json
-{
-  "propose": {
-    "msg": {
-      "propose": {
-        "title": "Remove Daily Reward Distribution Schedule",
-        "description": "Removes the daily rewards distribution schedule",
-        "msgs": [
-          {
-            "custom": {
-              "remove_schedule": {
-                "name": "daily_rewards"
-              }
-            }
-          }
-        ]
-      }
-    }
-  }
-}
-```
-
-## Best Practices
-
-### Schedule Design
-
-1. **Use descriptive names**: Make schedule names clear and descriptive
-2. **Consider execution stages**: Choose BEGIN_BLOCKER or END_BLOCKER based on dependencies
-3. **Group related operations**: Use multiple messages in one schedule for atomic operations
-4. **Plan for failures**: Design messages to be robust against temporary failures
-
-### Governance Considerations
-
-1. **Thorough testing**: Test scheduled operations thoroughly before governance submission
-2. **Clear documentation**: Provide detailed descriptions in governance proposals
-3. **Emergency procedures**: Understand how Security SubDAO can remove schedules if needed
-4. **Resource impact**: Consider the computational cost of scheduled operations
-
-### Monitoring
-
-1. **Watch metrics**: Monitor schedule execution metrics for performance issues
-2. **Track events**: Use events to monitor schedule execution success/failure
-3. **Set up alerts**: Alert on execution failures or unusual patterns
-4. **Regular review**: Periodically review active schedules for relevance 
+- `EventAddSchedule` - When a schedule is created
+- `EventRemoveSchedule` - When a schedule is removed  
+- `EventExecuteSchedule` - When a schedule is executed 

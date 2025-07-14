@@ -1,221 +1,70 @@
 ---
-title: "Revenue Reference"
+title: "Reference"
+description: "Basic reference for the Revenue module"
 ---
 
-This document provides technical reference information for the Revenue module, including parameters, state, and gRPC endpoints.
+The Revenue module manages validator compensation based on performance metrics and payment schedules.
 
 ## Parameters
 
-The Revenue module's behavior is governed by the following parameters:
-
 | Parameter | Type | Description |
 | --- | --- | --- |
-| `base_compensation` | string | The USD value of compensation paid to validators with 100% performance rating |
-| `denom_compensation` | string | The token denomination used for compensation payments |
-| `twap_window_size` | uint64 | The number of blocks to use for calculating the TWAP of the compensation asset |
-| `performance_requirements.required_at_least` | string (sdk.Dec) | Minimum performance threshold to qualify for any rewards (0.0-1.0) |
-| `performance_requirements.allowed_to_miss` | string (sdk.Dec) | Maximum miss rate to still receive full rewards (0.0-1.0) |
-| `payment_schedule_type` | enum | The type of payment schedule (monthly, block-based, or empty) |
+| `base_compensation` | string | USD value of compensation for validators with 100% performance |
+| `denom_compensation` | string | Token denomination used for compensation payments |
+| `twap_window_size` | uint64 | Number of blocks for calculating asset price averages |
+| `performance_requirements` | object | Performance thresholds for reward eligibility |
+| `payment_schedule_type` | enum | Type of payment schedule (monthly, block-based, or empty) |
 
-## State
+### Performance Requirements
+- `required_at_least`: Minimum performance threshold (0.0-1.0)
+- `allowed_to_miss`: Maximum miss rate for full rewards (0.0-1.0)
 
-The Revenue module stores the following state information:
+## Queries
 
-| Store Key | Value Type | Description |
-| --- | --- | --- |
-| `PaymentScheduleKey` | `PaymentSchedule` | The current payment schedule with period tracking information |
-| `ValidatorInfoKeyPrefix + validatorAddr` | `ValidatorInfo` | Performance metrics for each validator |
-| `RewardAssetPricePrefix + timestamp` | `RewardAssetPrice` | Historical price data for the reward asset |
+### QueryParams
+Retrieve the current module parameters.
 
-## gRPC Queries
+**Response:**
+- `params`: Current Revenue parameters
 
-The Revenue module exposes the following queries:
+### QueryValidatorInfo
+Retrieve performance metrics for a specific validator.
 
-### Params
+**Parameters:**
+- `validator_addr`: Validator address to query
 
-```protobuf
-rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {}
-```
+**Response:**
+- `validator_info`: Performance metrics for the validator
 
-Request:
-```protobuf
-message QueryParamsRequest {}
-```
+### QueryPaymentSchedule
+Retrieve the current payment schedule information.
 
-Response:
-```protobuf
-message QueryParamsResponse {
-  Params params = 1 [(gogoproto.nullable) = false];
-}
-```
+**Response:**
+- `payment_schedule`: Current payment schedule with period tracking
 
-### ValidatorInfo
+## Messages
 
-```protobuf
-rpc ValidatorInfo(QueryValidatorInfoRequest) returns (QueryValidatorInfoResponse) {}
-```
+### MsgUpdateParams
+Update module parameters through governance.
 
-Request:
-```protobuf
-message QueryValidatorInfoRequest {
-  string validator_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-}
-```
+**Authority Required**: Governance only
 
-Response:
-```protobuf
-message QueryValidatorInfoResponse {
-  ValidatorInfo validator_info = 1 [(gogoproto.nullable) = false];
-}
-```
+**Fields:**
+- `authority`: Governance authority address
+- `params`: New module parameters
 
-### PaymentSchedule
+### MsgFundTreasury
+Fund the treasury for validator compensation.
 
-```protobuf
-rpc PaymentSchedule(QueryPaymentScheduleRequest) returns (QueryPaymentScheduleResponse) {}
-```
+**Fields:**
+- `sender`: Address sending funds
+- `amount`: Coins to send to treasury
 
-Request:
-```protobuf
-message QueryPaymentScheduleRequest {}
-```
+## Key Concepts
 
-Response:
-```protobuf
-message QueryPaymentScheduleResponse {
-  PaymentSchedule payment_schedule = 1 [(gogoproto.nullable) = false];
-}
-```
-
-## gRPC Transactions
-
-The Revenue module supports the following transactions:
-
-### UpdateParams
-
-```protobuf
-rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse) {}
-```
-
-Message:
-```protobuf
-message MsgUpdateParams {
-  option (amino.name) = "revenue/MsgUpdateParams";
-  option (cosmos.msg.v1.signer) = "authority";
-
-  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  Params params = 2 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
-}
-```
-
-Response:
-```protobuf
-message MsgUpdateParamsResponse {}
-```
-
-### FundTreasury
-
-```protobuf
-rpc FundTreasury(MsgFundTreasury) returns (MsgFundTreasuryResponse) {}
-```
-
-Message:
-```protobuf
-message MsgFundTreasury {
-  option (amino.name) = "revenue/MsgFundTreasury";
-  option (cosmos.msg.v1.signer) = "sender";
-
-  string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  repeated cosmos.base.v1beta1.Coin amount = 2 [
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-  ];
-}
-```
-
-Response:
-```protobuf
-message MsgFundTreasuryResponse {}
-```
-
-## Data Structures
-
-### Params
-
-```protobuf
-message Params {
-  string base_compensation = 1 [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int", (gogoproto.nullable) = false];
-  string denom_compensation = 2;
-  uint64 twap_window_size = 3;
-  PerformanceRequirements performance_requirements = 4 [(gogoproto.nullable) = false];
-  PaymentScheduleType payment_schedule_type = 5;
-}
-```
-
-### PaymentScheduleType
-
-```protobuf
-enum PaymentScheduleType {
-  option (gogoproto.goproto_enum_prefix) = false;
-
-  PAYMENT_SCHEDULE_TYPE_UNSPECIFIED = 0;
-  PAYMENT_SCHEDULE_TYPE_MONTHLY = 1;
-  PAYMENT_SCHEDULE_TYPE_BLOCK_BASED = 2;
-  PAYMENT_SCHEDULE_TYPE_EMPTY = 3;
-}
-```
-
-### PerformanceRequirements
-
-```protobuf
-message PerformanceRequirements {
-  string required_at_least = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-  string allowed_to_miss = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-}
-```
-
-### PaymentSchedule
-
-```protobuf
-message PaymentSchedule {
-  PaymentScheduleType type = 1;
-  uint64 periods_passed = 2;
-  uint64 periods_count = 3;
-  google.protobuf.Timestamp month_end_time = 4 [(gogoproto.stdtime) = true, (gogoproto.nullable) = true];
-}
-```
-
-### ValidatorInfo
-
-```protobuf
-message ValidatorInfo {
-  string address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  uint64 signed_blocks = 2;
-  uint64 blocks_in_window = 3;
-  uint64 provided_oracle_votes = 4;
-  uint64 oracle_votes_in_window = 5;
-}
-```
-
-### RewardAssetPrice
-
-```protobuf
-message RewardAssetPrice {
-  string cumulative_price = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-  string absolute_price = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false
-  ];
-  int64 timestamp = 3;
-}
-``` 
+- **Performance-Based**: Compensation based on validator performance metrics
+- **Payment Schedules**: Configurable payment periods (monthly or block-based)
+- **Price Tracking**: Uses TWAP for asset price calculations
+- **Treasury Funding**: Requires funding for validator compensation
+- **Query-Only**: Users can only query parameters and validator info
+- **Governance Updates**: Parameters can only be updated through governance proposals 

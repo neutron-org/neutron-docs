@@ -1,252 +1,50 @@
 ---
-title: "Dynamic Fees Reference"
-description: "Complete reference for the Dynamic Fees module"
+title: "Reference"
+description: "Basic reference for the Dynamic Fees module"
 ---
 
-# Reference
+The Dynamic Fees module provides asset price conversion capabilities for the fee market by maintaining NTRN-denominated prices for supported assets.
 
-This document provides a complete reference for the Dynamic Fees module, including all APIs, commands, and integration details.
+## Parameters
 
-## Module Overview
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `ntrn_prices` | DecCoin[] | Array of asset prices denominated in NTRN |
 
-The Dynamic Fees module provides asset price conversion capabilities for the fee market module by maintaining a registry of NTRN-denominated prices for supported assets.
+### Price Format
+Each price entry contains:
+- `denom`: Asset denomination (e.g., "uatom", "uosmo")
+- `amount`: Price in NTRN (e.g., "0.150000000000000000")
 
-## Quick Reference
+## Queries
 
-### Key Concepts
-- **DenomResolver**: Interface for converting between asset denominations
-- **NTRN Prices**: Registry of asset prices denominated in NTRN
-- **Fee Market Integration**: Enables multi-asset fee payments
+### QueryParams
+Retrieve the current asset price registry.
 
-### Main Operations
-- **Query Parameters**: Get current asset price registry
-- **Update Parameters**: Governance-only parameter updates
-- **Convert Denominations**: Internal conversion between assets and NTRN
+**Response:**
+- `params`: Current Dynamic Fees parameters with asset prices
 
-## API Reference
-
-### gRPC Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/neutron.dynamicfees.Query/Params` | Query | Get module parameters |
-
-### REST Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/neutron/dynamicfees/params` | GET | Get module parameters |
-
-### CLI Commands
-
-| Command | Description |
-|---------|-------------|
-| `neutrond query dynamicfees params` | Query current parameters |
-
-## Message Types
+## Messages
 
 ### MsgUpdateParams
-
-Updates module parameters through governance.
+Update asset prices through governance.
 
 **Authority Required**: Governance only
 
-**Fields**:
+**Fields:**
 - `authority`: Governance authority address
-- `params`: New module parameters
+- `params`: New module parameters with updated prices
 
-## Parameter Structure
+## Key Concepts
 
-```protobuf
-message Params {
-  repeated cosmos.base.v1beta1.DecCoin ntrn_prices = 1;
-}
-```
+- **Price Registry**: Maintains NTRN-denominated prices for supported assets
+- **Fee Market Integration**: Enables multi-asset fee payments
+- **Conversion Interface**: Provides denomination conversion capabilities
+- **Query-Only**: Users can only query current asset prices
+- **Governance Updates**: Prices can only be updated through governance proposals
 
-**Example**:
-```json
-{
-  "ntrn_prices": [
-    {
-      "denom": "uatom",
-      "amount": "0.150000000000000000"
-    },
-    {
-      "denom": "uosmo",
-      "amount": "0.080000000000000000"
-    }
-  ]
-}
-```
+## Example Usage
 
-## Integration Interfaces
-
-### DenomResolver Interface
-
-```go
-type DenomResolver interface {
-    ConvertToDenom(ctx sdk.Context, fromCoin sdk.DecCoin, toDenom string) (sdk.DecCoin, error)
-    ExtraDenoms(ctx sdk.Context) ([]string, error)
-}
-```
-
-### Conversion Examples
-
-**NTRN to Asset**:
-```
-Input: 15 untrn
-Price: 0.15 (1 ATOM = 0.15 NTRN)
-Output: 100 uatom
-```
-
-**Asset to NTRN**:
-```
-Input: 100 uatom  
-Price: 0.15 (1 ATOM = 0.15 NTRN)
-Output: 15 untrn
-```
-
-## Error Codes
-
-| Code | Name | Description |
-|------|------|-------------|
-| 1 | `ErrUnknownDenom` | Denomination not found in price registry |
-
-## Events
-
-### Parameter Update Events
-
-**Type**: `message`
-
-**Attributes**:
-- `action`: `/neutron.dynamicfees.MsgUpdateParams`
-- `module`: `dynamicfees`
-- `sender`: Governance authority address
-
-## State
-
-### Storage
-- **Parameters**: Module parameters stored in parameter store
-- **No Additional State**: No user data or transaction history
-
-### Genesis
-```json
-{
-  "params": {
-    "ntrn_prices": [...]
-  }
-}
-```
-
-## Governance Operations
-
-### Updating Asset Prices
-
-1. **Create Proposal**: Submit governance proposal with new parameters
-2. **Community Vote**: Proposal goes through voting process
-3. **Execution**: If passed, parameters are updated
-
-### Proposal Format
-
-```json
-{
-  "title": "Update Dynamic Fees Asset Prices",
-  "description": "Update NTRN-denominated prices for supported assets",
-  "messages": [
-    {
-      "@type": "/neutron.dynamicfees.MsgUpdateParams",
-      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6zn9kn",
-      "params": {
-        "ntrn_prices": [...]
-      }
-    }
-  ]
-}
-```
-
-## Integration Patterns
-
-### Fee Market Integration
-
-The module automatically integrates with the fee market module to enable multi-asset fee payments.
-
-### Application Integration
-
-```typescript
-// Check supported assets
-async function getSupportedAssets(): Promise<string[]> {
-  const params = await client.dynamicfees.params();
-  return params.params.ntrnPrices.map(p => p.denom);
-}
-
-// Get asset price
-async function getAssetPrice(denom: string): Promise<string | null> {
-  const params = await client.dynamicfees.params();
-  const price = params.params.ntrnPrices.find(p => p.denom === denom);
-  return price ? price.amount : null;
-}
-```
-
-### Smart Contract Integration
-
-```rust
-// Query supported denominations
-let query = QueryRequest::Custom(NeutronQuery::DynamicFeesParams {});
-let response: DynamicFeesParamsResponse = deps.querier.query(&query)?;
-```
-
-## Best Practices
-
-### Price Management
-1. **Regular Updates**: Keep prices current with market conditions
-2. **Conservative Changes**: Avoid dramatic price adjustments
-3. **Community Input**: Seek feedback before major changes
-
-### Integration
-1. **Error Handling**: Handle unsupported denominations gracefully
-2. **Caching**: Cache parameters for performance
-3. **Event Monitoring**: Listen for parameter updates
-
-### Security
-1. **Governance Only**: All updates require governance approval
-2. **Validation**: Ensure positive, valid price values
-3. **Testing**: Test thoroughly before parameter updates
-
-## Troubleshooting
-
-### Common Issues
-
-**Asset Not Supported**:
-- Check if asset is in registry with `neutrond query dynamicfees params`
-- Submit governance proposal to add support
-
-**Conversion Errors**:
-- Verify denomination format
-- Check for recent parameter updates
-- Ensure positive price values
-
-**Governance Failures**:
-- Verify authority address
-- Check proposal format
-- Ensure all parameters included
-
-### Debugging Commands
-
-```bash
-# Check current parameters
-neutrond query dynamicfees params
-
-# Verify governance authority  
-neutrond query auth account neutron10d07y265gmmuvt4z0w9aw880jnsr700j6zn9kn
-
-# Monitor events
-neutrond query txs --events "message.action='/neutron.dynamicfees.MsgUpdateParams'"
-```
-
-## Version Information
-
-- **Module Version**: v1.0
-- **Cosmos SDK**: Compatible with Cosmos SDK v0.47+
-- **API Stability**: Stable API, backward compatible
-
-This reference provides comprehensive information for working with the Dynamic Fees module across all use cases and integration scenarios. 
+If 1 ATOM = 0.15 NTRN:
+- **Asset to NTRN**: 100 uatom → 15 untrn
+- **NTRN to Asset**: 15 untrn → 100 uatom 

@@ -1,22 +1,19 @@
 ---
-title: "Technical Reference"
+title: "Reference"
+description: "Technical reference for the Contract Manager module"
 ---
 
-This document provides detailed reference information for developers working with the Contract Manager module.
+The Contract Manager module manages sudo call failures and provides resubmission capabilities for IBC-related contract operations.
 
-## Module Parameters
-
-The Contract Manager module has the following parameters:
+## Parameters
 
 | Parameter | Type | Description |
 | --- | --- | --- |
 | `sudo_call_gas_limit` | uint64 | Maximum gas that can be used during a sudo call to a contract |
 
-## Data Structures
+## Core Data Structure
 
 ### Failure
-
-The `Failure` struct is the core data structure used to store information about failed sudo calls.
 
 ```protobuf
 message Failure {
@@ -31,70 +28,11 @@ message Failure {
 }
 ```
 
-| Field | Description |
-| --- | --- |
-| `address` | The contract address that experienced the failure |
-| `id` | Sequential identifier for failures specific to the contract |
-| `sudo_payload` | Serialized message callback data that was sent to the sudo handler |
-| `error` | Redacted error message (contains codespace and code) |
-
-## Key Space
-
-The Contract Manager module uses the following key prefixes in the KVStore:
-
-| Prefix | Purpose |
-| --- | --- |
-| `0x01` | Contract Failures |
-| `0x02` | Module Parameters |
-
-### Failure Key Structure
-
-Failure records are indexed by:
-- Contract address
-- Sequential failure ID
-
-The keys are structured as:
-```
-ContractFailuresKey + address + "/" + id
-```
-
-## Error Codes
-
-| Code | Name | Description |
-| --- | --- | --- |
-| 1101 | `ErrIncorrectFailureToResubmit` | The failure ID does not exist or belongs to a different contract |
-| 1102 | `ErrFailedToResubmitFailure` | Error occurred during failure resubmission |
-| 1103 | `ErrSudoOutOfGas` | Sudo handling exceeded the gas limit allowed by the module |
-| 1104 | `ErrNotContractResubmission` | Only smart contracts can resubmit failures |
-
-## IBC Middleware
-
-The Contract Manager provides middleware that wraps the Wasm module's sudo functionality. The middleware is defined by:
-
-```go
-type SudoLimitWrapper struct {
-  Keeper            keeper.Keeper
-  ContractManagerIK ContractManagerKeeper
-  WasmKeeper        WasmKeeper
-}
-```
-
-The wrapper implements the `WasmKeeper` interface:
-
-```go
-type WasmKeeper interface {
-  HasContractInfo(ctx sdk.Context, contractAddress sdk.AccAddress) bool
-  Sudo(ctx sdk.Context, contractAddress sdk.AccAddress, msg []byte) ([]byte, error)
-}
-```
-
 ## CosmWasm Bindings
 
-### Messages
+### ResubmitFailure Message
 
-#### ResubmitFailure
-
-Allows contracts to resubmit a failed operation:
+Allows contracts to resubmit their own failed operations:
 
 ```rust
 pub enum NeutronMsg {
@@ -105,11 +43,9 @@ pub enum NeutronMsg {
 }
 ```
 
-This message can only be called by the contract that originally experienced the failure.
+**Permissions**: Only the original contract can resubmit its own failures.
 
-### Queries
-
-#### ContractManagerFailures
+### ContractManagerFailures Query
 
 Query failures for a specific contract:
 
@@ -123,35 +59,25 @@ pub enum NeutronQuery {
 }
 ```
 
-Response structure:
-
+**Response**:
 ```rust
 pub struct FailuresResponse {
     pub failures: Vec<Failure>,
     pub pagination: Option<PageResponse>,
 }
-
-pub struct Failure {
-    pub address: String,
-    pub id: u64,
-    pub sudo_payload: Binary,
-    pub error: String,
-}
 ```
 
-## Permissions
+## Key Concepts
 
-The Contract Manager module enforces strict permissions:
+- **Sudo Gas Limit**: Sudo calls are limited to prevent infinite recursion
+- **Failure Storage**: Failed sudo calls are stored with full context for resubmission
+- **Error Redaction**: Stored errors are redacted (codespace + code only) for determinism
+- **Resubmission**: Contracts can resubmit their own failures without gas limits
+- **IBC Integration**: Primarily used for IBC acknowledgement and timeout handling
 
-1. Only the original contract can resubmit its own failures
-2. Only modules with proper authority can register failures (typically IBC modules)
-3. Query operations are unrestricted
+## SudoLimitWrapper
 
-## Gas Considerations
-
-It's important to understand gas usage in the Contract Manager context:
-
-1. Sudo calls are limited to `sudo_call_gas_limit` gas
-2. Resubmitted operations do not have this gas limit
-3. Gas used for storing failures is charged to the transaction that triggered the sudo call
-4. Querying failures uses standard query gas 
+The module provides middleware that:
+1. Limits gas usage during sudo calls
+2. Captures and stores failures for later resubmission
+3. Converts out-of-gas panics to error responses 

@@ -1,501 +1,98 @@
 ---
-sidebar_position: 5
+title: "Reference"  
+description: "Technical reference for the Token Factory module"
 ---
 
-# Reference
+The Token Factory module enables creation and management of custom tokens with configurable parameters and hooks.
 
 ## Parameters
 
-The Token Factory module manages custom token creation and administration through the following parameters:
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `denom_creation_fee` | Coins | Fee charged for creating new custom tokens |
+| `denom_creation_gas_consume` | uint64 | Additional gas consumed during token creation |
+| `fee_collector_address` | string | Address where creation fees are sent |
+| `whitelisted_hooks` | WhitelistedHook[] | List of approved before-send hook contracts |
 
-### Params
-
-```protobuf
-message Params {
-  // DenomCreationFee defines the fee to be charged on the creation of a new
-  // denom. The fee is drawn from the MsgCreateDenom's sender account, and
-  // transferred to the community pool.
-  repeated cosmos.base.v1beta1.Coin denom_creation_fee = 1 [
-    (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-  ];
-
-  // DenomCreationGasConsume defines the gas cost for creating a new denom.
-  // This is intended as a spam deterrence mechanism.
-  uint64 denom_creation_gas_consume = 2;
-
-  // FeeCollectorAddress is the address where fees collected from denom creation
-  // are sent to
-  string fee_collector_address = 3;
-
-  // whitelisted_hooks is the list of hooks which are allowed to be added and executed
-  repeated WhitelistedHook whitelisted_hooks = 4;
-}
-```
-
-### Parameter Details
-
-#### denom_creation_fee
-
-**Type:** `Coins`  
-**Description:** Fee charged for creating new custom tokens  
-**Purpose:** Prevents spam token creation and funds community pool  
-**Default:** `[]` (no fee)
-
-**Example:**
-```json
-[
-  {
-    "denom": "untrn",
-    "amount": "1000000"
-  }
-]
-```
-
-#### denom_creation_gas_consume
-
-**Type:** `uint64`  
-**Description:** Additional gas consumed during token creation  
-**Purpose:** Spam deterrence mechanism  
-**Default:** `2000000` (2M gas units)
-
-#### fee_collector_address
-
-**Type:** `string`  
-**Description:** Address where creation fees are sent  
-**Default:** Community pool address  
-**Format:** Bech32 address (neutron1...)
-
-#### whitelisted_hooks
-
-**Type:** `[]WhitelistedHook`  
-**Description:** List of approved before-send hook contracts  
-**Purpose:** Security control for hook deployment  
-
-### WhitelistedHook
-
-```protobuf
-message WhitelistedHook {
-  uint64 code_id = 1;
-  string denom_creator = 2;
-}
-```
-
-**Fields:**
-- `code_id`: CosmWasm contract code ID that can be used as hook
-- `denom_creator`: Address allowed to use this hook for their tokens
-
-## Data Structures
-
-### DenomAuthorityMetadata
-
-```protobuf
-message DenomAuthorityMetadata {
-  string admin = 1;
-}
-```
-
-**Purpose:** Tracks the admin address for each custom token denomination.
-
-### TokenMetadata
-
-```protobuf
-message TokenMetadata {
-  string name = 1;
-  string symbol = 2;
-  string description = 3;
-  uint32 decimals = 4;
-  string logo_url = 5;
-  string website = 6;
-  repeated MetadataField additional_fields = 7;
-}
-
-message MetadataField {
-  string key = 1;
-  string value = 2;
-}
-```
-
-**Fields:**
-- `name`: Human-readable token name
-- `symbol`: Trading symbol (e.g., "USDC")
-- `description`: Token description
-- `decimals`: Number of decimal places
-- `logo_url`: URL to token logo image
-- `website`: Token or project website
-- `additional_fields`: Custom metadata fields
-
-### BeforeSendHook
-
-```protobuf
-message BeforeSendHook {
-  string denom = 1;
-  string contract_addr = 2;
-}
-```
-
-**Purpose:** Associates a token denomination with its before-send hook contract.
-
-## Message Types
+## Messages
 
 ### MsgCreateDenom
-
 Create a new custom token denomination.
 
-```protobuf
-message MsgCreateDenom {
-  string sender = 1;
-  string subdenom = 2;
-}
+**Fields:**
+- `sender`: Address creating the token
+- `subdenom`: Alphanumeric identifier (1-44 characters, cannot start with numbers)
 
-message MsgCreateDenomResponse {
-  string new_token_denom = 1;
-}
-```
-
-**Validation:**
-- `subdenom` must be alphanumeric (a-z, A-Z, 0-9)
-- Maximum length: 44 characters
-- Must be unique for the sender
-- Cannot start with numbers
+**Response:**
+- `new_token_denom`: Full denomination (`factory/{creator_address}/{subdenom}`)
 
 ### MsgMint
+Mint tokens to a specified address (admin only).
 
-Mint tokens to a specified address.
-
-```protobuf
-message MsgMint {
-  string sender = 1;
-  cosmos.base.v1beta1.Coin amount = 2 [(gogoproto.nullable) = false];
-  string mint_to_address = 3;
-}
-
-message MsgMintResponse {}
-```
-
-**Authorization:** Only token admin can mint.
+**Fields:**
+- `sender`: Token admin address
+- `amount`: Coin to mint
+- `mint_to_address`: Recipient address
 
 ### MsgBurn
+Burn tokens from a specified address (admin only).
 
-Burn tokens from a specified address.
-
-```protobuf
-message MsgBurn {
-  string sender = 1;
-  cosmos.base.v1beta1.Coin amount = 2 [(gogoproto.nullable) = false];
-  string burn_from_address = 3;
-}
-
-message MsgBurnResponse {}
-```
-
-**Authorization:** Only token admin can burn.
+**Fields:**
+- `sender`: Token admin address
+- `amount`: Coin to burn
+- `burn_from_address`: Address to burn from
 
 ### MsgChangeAdmin
+Change the admin of a token denomination (admin only).
 
-Change the admin of a token denomination.
-
-```protobuf
-message MsgChangeAdmin {
-  string sender = 1;
-  string denom = 2;
-  string new_admin = 3;
-}
-
-message MsgChangeAdminResponse {}
-```
-
-**Special Cases:**
-- Set `new_admin` to empty string to renounce admin (irreversible)
-- Only current admin can change admin
+**Fields:**
+- `sender`: Current admin address
+- `denom`: Token denomination
+- `new_admin`: New admin address (empty string to renounce)
 
 ### MsgSetDenomMetadata
+Set or update token metadata (admin only).
 
-Set or update token metadata.
-
-```protobuf
-message MsgSetDenomMetadata {
-  string sender = 1;
-  bank.v1beta1.Metadata metadata = 2 [(gogoproto.nullable) = false];
-}
-
-message MsgSetDenomMetadataResponse {}
-```
-
-**Authorization:** Only token admin can set metadata.
+**Fields:**
+- `sender`: Token admin address
+- `metadata`: Token metadata (name, symbol, description, etc.)
 
 ### MsgSetBeforeSendHook
+Set or remove a before-send hook for a token (admin only).
 
-Set or remove a before-send hook for a token.
-
-```protobuf
-message MsgSetBeforeSendHook {
-  string sender = 1;
-  string denom = 2;
-  string contract_addr = 3;
-}
-
-message MsgSetBeforeSendHookResponse {}
-```
-
-**Validation:**
-- Contract must be whitelisted for the sender
-- Set `contract_addr` to empty string to remove hook
-- Only token admin can set hooks
+**Fields:**
+- `sender`: Token admin address
+- `denom`: Token denomination
+- `contract_addr`: Hook contract address (empty to remove)
 
 ### MsgForceTransfer
+Force a transfer that bypasses before-send hooks (admin only).
 
-Force a transfer that bypasses before-send hooks.
+**Fields:**
+- `sender`: Token admin address
+- `amount`: Coin to transfer
+- `transfer_from_address`: Source address
+- `transfer_to_address`: Destination address
 
-```protobuf
-message MsgForceTransfer {
-  string sender = 1;
-  cosmos.base.v1beta1.Coin amount = 2 [(gogoproto.nullable) = false];
-  string transfer_from_address = 3;
-  string transfer_to_address = 4;
-}
-
-message MsgForceTransferResponse {}
-```
-
-**Authorization:** Only token admin can force transfers.
-
-### MsgUpdateParams
-
-Update module parameters (governance only).
-
-```protobuf
-message MsgUpdateParams {
-  string authority = 1;
-  Params params = 2 [(gogoproto.nullable) = false];
-}
-
-message MsgUpdateParamsResponse {}
-```
-
-<Warning>
-This message can only be executed through governance proposals.
-</Warning>
-
-## Query Types
+## Queries
 
 ### QueryParams
-
-```protobuf
-message QueryParamsRequest {}
-
-message QueryParamsResponse {
-  Params params = 1 [(gogoproto.nullable) = false];
-}
-```
+Retrieve current module parameters.
 
 ### QueryDenomAuthorityMetadata
-
-```protobuf
-message QueryDenomAuthorityMetadataRequest {
-  string denom = 1;
-}
-
-message QueryDenomAuthorityMetadataResponse {
-  DenomAuthorityMetadata authority_metadata = 1;
-}
-```
+Retrieve admin address for a token denomination.
 
 ### QueryDenomsFromCreator
-
-```protobuf
-message QueryDenomsFromCreatorRequest {
-  string creator = 1;
-}
-
-message QueryDenomsFromCreatorResponse {
-  repeated string denoms = 1;
-}
-```
+Retrieve all tokens created by a specific address.
 
 ### QueryBeforeSendHookAddress
+Retrieve the before-send hook contract for a token.
 
-```protobuf
-message QueryBeforeSendHookAddressRequest {
-  string denom = 1;
-}
+## Key Concepts
 
-message QueryBeforeSendHookAddressResponse {
-  string contract_addr = 1;
-}
-```
-
-## Constants and Defaults
-
-### Default Parameters
-
-```go
-const (
-    // DefaultDenomCreationFee - no fee by default
-    DefaultDenomCreationFee = sdk.Coins{}
-    
-    // DefaultDenomCreationGasConsume - 2M gas units
-    DefaultDenomCreationGasConsume = uint64(2000000)
-    
-    // DefaultFeeCollectorAddress - community pool
-    DefaultFeeCollectorAddress = ""
-    
-    // DefaultWhitelistedHooks - empty list
-    DefaultWhitelistedHooks = []*WhitelistedHook{}
-)
-```
-
-### Validation Constraints
-
-#### Subdenom Validation
-
-```go
-const (
-    // MaxSubdenomLength - maximum subdenom length
-    MaxSubdenomLength = 44
-    
-    // MinSubdenomLength - minimum subdenom length
-    MinSubdenomLength = 1
-)
-
-// ValidateSubdenom checks subdenom format
-func ValidateSubdenom(subdenom string) error {
-    if len(subdenom) < MinSubdenomLength || len(subdenom) > MaxSubdenomLength {
-        return fmt.Errorf("subdenom length must be between %d and %d", MinSubdenomLength, MaxSubdenomLength)
-    }
-    
-    if !regexp.MustMatch("^[a-zA-Z0-9]+$", subdenom) {
-        return fmt.Errorf("subdenom must be alphanumeric")
-    }
-    
-    if regexp.MustMatch("^[0-9]", subdenom) {
-        return fmt.Errorf("subdenom cannot start with a number")
-    }
-    
-    return nil
-}
-```
-
-#### Denomination Format
-
-**Full Denom Format:** `factory/{creator_address}/{subdenom}`
-
-**Components:**
-- `factory/`: Required prefix (7 characters)
-- `{creator_address}`: Bech32 address (varies, ~45 characters)
-- `/`: Separator (1 character)
-- `{subdenom}`: Custom subdenom (1-44 characters)
-
-**Total Length:** ~53-97 characters
-
-## State Storage
-
-### Key Prefixes
-
-```go
-const (
-    // DenomAuthorityMetadataPrefix - stores admin for each denom
-    DenomAuthorityMetadataPrefix = "tokenfactory/denom_admin/"
-    
-    // DenomMetadataPrefix - stores metadata for each denom
-    DenomMetadataPrefix = "tokenfactory/denom_metadata/"
-    
-    // BeforeSendHookPrefix - stores hook contract for each denom
-    BeforeSendHookPrefix = "tokenfactory/before_send_hook/"
-    
-    // CreatorPrefix - maps creator to list of denoms
-    CreatorPrefix = "tokenfactory/creator/"
-    
-    // ParamsKey - stores module parameters
-    ParamsKey = "tokenfactory/params"
-)
-```
-
-### State Layout
-
-```
-TokenFactoryStore/
-├── denom_admin/{denom} → DenomAuthorityMetadata
-├── denom_metadata/{denom} → TokenMetadata
-├── before_send_hook/{denom} → BeforeSendHook
-├── creator/{creator_addr} → []string (denom list)
-└── params → Params
-```
-
-## Error Codes
-
-### Common Errors
-
-#### ErrDenomExists
-**Description:** Attempting to create a denomination that already exists  
-**Solution:** Choose a different subdenom
-
-#### ErrUnauthorized
-**Description:** Non-admin attempting admin-only operations  
-**Solution:** Use admin account or transfer admin rights
-
-#### ErrInvalidDenom
-**Description:** Invalid denomination format or characters  
-**Solution:** Follow denomination format requirements
-
-#### ErrHookNotWhitelisted
-**Description:** Attempting to set non-whitelisted hook contract  
-**Solution:** Use whitelisted contract or submit governance proposal
-
-#### ErrInsufficientFunds
-**Description:** Insufficient balance for creation fee or token operations  
-**Solution:** Ensure adequate balance before operations
-
-## Integration Notes
-
-### Hook Interface
-
-Before-send hooks must implement the following interface:
-
-```rust
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ExecuteMsg {
-    BeforeSendHook {
-        from: String,
-        to: String,
-        amount: Coin,
-    },
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct BeforeSendHookResponse {
-    pub continue_transfer: bool,
-    pub new_amount: Option<Coin>,
-}
-```
-
-### Metadata Standards
-
-**Recommended Metadata Fields:**
-- `name`: Full token name
-- `symbol`: 3-8 character symbol
-- `description`: Detailed description
-- `decimals`: 0-18 decimal places
-- `logo_url`: HTTPS URL to logo image
-- `website`: Project website URL
-
-**Optional Fields:**
-- `whitepaper`: Link to whitepaper
-- `social_links`: JSON object with social media links
-- `contract_address`: Associated contract address
-- `total_supply`: Maximum supply (if applicable)
-
-### Gas Considerations
-
-**Operation Gas Costs:**
-- `CreateDenom`: Base gas + `denom_creation_gas_consume`
-- `Mint`: Standard transaction gas
-- `Burn`: Standard transaction gas
-- `SetBeforeSendHook`: Standard transaction gas
-- `ForceTransfer`: Standard transaction gas + hook bypass cost
-
-**Hook Execution:**
-- Adds gas cost for contract execution
-- Hook complexity affects total gas usage
-- Failed hooks cause transaction failure 
+- **Token Format**: `factory/{creator_address}/{subdenom}`
+- **Admin Control**: Token creators have admin rights by default
+- **Before-Send Hooks**: Optional contracts called before every transfer
+- **Whitelisted Hooks**: Only approved contracts can be used as hooks
+- **Creation Fees**: Configurable fees to prevent spam token creation
+- **Force Transfer**: Admins can bypass hooks for emergency situations 
