@@ -1,0 +1,137 @@
+---
+title: "Launch a Token"
+description: "Deploy and manage custom tokens using Token Factory"
+---
+
+Launch your own custom token on Neutron using the Token Factory module. This powerful feature allows you to create, mint, and manage tokens with advanced controls and permissions.
+
+## What is Token Factory?
+
+Token Factory enables users to create custom tokens (denominations) on Neutron with comprehensive lifecycle management including:
+
+- **Token Creation**: Deploy new tokens with custom metadata
+- **Minting Controls**: Control who can mint new tokens
+- **Burning**: Remove tokens from circulation
+- **Administrative Controls**: Manage token permissions and metadata
+- **Hooks Integration**: Connect with smart contracts for advanced functionality
+
+## Quick Start
+
+<Steps>
+  <Step title="Prepare Your Environment">
+    You'll need:
+    - A Neutron wallet with NTRN for transaction fees
+    - Access to Neutron CLI or use a dApp interface
+    - Basic understanding of token economics
+  </Step>
+  
+  <Step title="Create Your Token">
+    Using Neutron CLI:
+    ```bash
+    # Create a new token denomination
+    neutrond tx tokenfactory create-denom mysymbol \
+      --from mykey \
+      --chain-id neutron-1 \
+      --gas auto \
+      --gas-adjustment 1.5
+    ```
+    
+    This creates a token with the format: `factory/{creator-address}/mysymbol`
+  </Step>
+  
+  <Step title="Set Token Metadata">
+    Configure your token's display information:
+    ```bash
+    # Set metadata for better UX
+    neutrond tx tokenfactory set-denom-metadata \
+      factory/{your-address}/mysymbol \
+      --description "My Custom Token" \
+      --display "My Token" \
+      --name "My Token" \
+      --symbol "MYT" \
+      --decimals 6 \
+      --from mykey
+    ```
+  </Step>
+  
+  <Step title="Mint Initial Supply">
+    Create your token's initial supply:
+    ```bash
+    # Mint tokens to your address
+    neutrond tx tokenfactory mint \
+      1000000factory/{your-address}/mysymbol \
+      --from mykey
+    ```
+  </Step>
+</Steps>
+
+## Advanced Features
+
+### Smart Contract Integration
+
+Connect your token to smart contracts for advanced functionality:
+
+```rust
+// Example: Token with custom minting logic
+use neutron_sdk::bindings::msg::NeutronMsg;
+
+let mint_msg = NeutronMsg::TokenFactory(TokenFactoryMsg::MintTokens {
+    denom: "factory/neutron1.../mysymbol".to_string(),
+    amount: Uint128::new(1000000),
+    mint_to_address: recipient.to_string(),
+});
+```
+
+### Hooks System
+
+Implement custom logic that triggers on token transfers:
+
+- **Before Send Hook**: Execute logic before token transfers
+- **After Send Hook**: Execute logic after successful transfers
+- **Custom Validation**: Implement transfer restrictions
+
+## Token Management
+
+<CardGroup cols={2}>
+  <Card title="Minting Control" icon="coins">
+    Control who can mint new tokens and under what conditions
+  </Card>
+  <Card title="Burning Mechanism" icon="fire">
+    Remove tokens from circulation permanently
+  </Card>
+  <Card title="Metadata Updates" icon="edit">
+    Update token information and display properties
+  </Card>
+  <Card title="Admin Controls" icon="shield">
+    Manage token permissions and administrative functions
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+<Tip>
+**Token Economics**: Consider your token's supply, distribution, and utility before launch. Plan for inflation, deflation, and governance mechanisms.
+</Tip>
+
+<Warning>
+**Security**: Be careful with admin controls. Consider using multi-signature wallets or governance contracts for critical operations.
+</Warning>
+
+## Examples & Use Cases
+
+- **Loyalty Programs**: Create reward tokens for customer engagement
+- **Gaming Assets**: In-game currencies and reward systems
+- **Community Tokens**: Governance and community engagement tokens
+- **Stablecoins**: Pegged tokens with custom stability mechanisms
+- **Utility Tokens**: Access tokens for specific services or features
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Token Factory Reference" icon="book" href="/developers/modules/tokenfactory/overview">
+    Complete Token Factory documentation
+  </Card>
+  <Card title="Smart Contract Integration" icon="code" href="/developers/modules/tokenfactory/reference">
+    Integrate tokens with smart contracts
+  </Card>
+</CardGroup> 

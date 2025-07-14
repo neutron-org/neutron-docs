@@ -67,8 +67,18 @@
             "icon": "book-open",
             "pages": [
               "index",
-              "home",
-              "quickstart"
+              "home"
+            ]
+          },
+          {
+            "group": "Quickstart",
+            "icon": "rocket",
+            "pages": [
+              "quickstart/overview",
+              "quickstart/build-an-app",
+              "quickstart/launch-a-token",
+              "quickstart/deploy-an-appchain",
+              "quickstart/deploy-smart-contracts"
             ]
           },
           {
