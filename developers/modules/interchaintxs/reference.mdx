@@ -325,50 +325,36 @@ type Params struct {
 
 ### State Objects
 
-The module maintains several key-value pairs in the store:
+The module stores minimal state in the blockchain:
 
-#### Port-to-Owner Mapping
+#### ICA Registration Fee First Code ID
 
-Maps a port ID to the owner address and interchain account ID.
+Stores the code ID starting from which fees are charged for ICA registration (for backward compatibility with V1 contracts).
 
-**Key Format:** `portID → {owner_address, interchain_account_id}`
+**Key:** `ICARegistrationFeeFirstCodeID`
+**Value:** `uint64` (code ID threshold)
 
-This mapping allows the module to quickly determine which contract and interchain account ID are associated with a particular IBC port.
-
-#### Channel-to-Port Mapping
-
-Maps a channel ID to its associated port ID.
-
-**Key Format:** `channelID → portID`
-
-This mapping enables the module to find the correct port ID when handling channel acknowledgements and timeouts.
-
-#### Owner-to-Interchain Account Address Mapping
-
-Maps a combination of owner address, interchain account ID, and connection ID to the remote interchain account address.
-
-**Key Format:** `{owner_address}|{interchain_account_id}|{connection_id} → remote_account_address`
-
-This mapping allows contracts to query the address of their interchain accounts on remote chains.
+<Info>
+The module itself does not store port-to-owner mappings, channel mappings, or interchain account addresses. This state is managed by the underlying IBC Interchain Accounts (ICA) controller keeper. Interchain account addresses and channel information can be queried through the ICA controller queries.
+</Info>
 
 ### State Transitions
 
-#### Interchain Account Registration
+The Interchain Transactions module performs minimal state transitions:
 
-1. A new port and channel are created for the interchain account
-2. The port-to-owner mapping is stored
-3. The channel-to-port mapping is stored
+#### ICA Registration Fee Initialization
 
-#### Channel Acknowledgement
+When the module is first deployed, the `ICARegistrationFeeFirstCodeID` is set to determine the threshold for fee charging (V1 vs V2 behavior).
 
-1. The remote interchain account address is extracted from the acknowledgement
-2. The owner-to-interchain account address mapping is stored
+#### Transaction Processing
 
-#### Transaction Submission
+1. **Registration:** The module validates the request and delegates to the ICA controller keeper for actual account creation
+2. **Transaction Submission:** The module validates the request, charges fees to the fee refunder, and delegates to the ICA controller keeper for packet creation
+3. **IBC Callbacks:** The module processes acknowledgements, timeouts, and channel events by calling the appropriate contract via sudo callbacks
 
-1. The port and channel for the specified interchain account ID are looked up
-2. The transaction is sent through the appropriate IBC channel
-3. No state changes occur in the module itself during this operation
+<Info>
+All IBC-related state (ports, channels, interchain account addresses) is managed by the underlying ICA controller keeper, not by this module directly.
+</Info>
 
 ## Contract Integration
 
