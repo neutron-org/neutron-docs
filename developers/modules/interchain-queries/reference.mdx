@@ -1,520 +1,532 @@
 ---
-title: "Interchain Queries Reference"
-description: "Technical reference for the Interchain Queries module"
+title: "Reference"
+description: "Complete technical reference for the Interchain Queries module"
 ---
 
-This page provides a comprehensive technical reference for the Interchain Queries (ICQ) module, including API specifications, message types, query endpoints, parameters, and data structures.
+This page provides comprehensive technical documentation for the Interchain Queries module, combining all API specifications, message types, query endpoints, parameters, events, state structures, and CLI commands in a single reference document.
 
-## Module Parameters
+<Info>
+This documentation is verified against the actual module code and proto definitions. All examples are provided for demonstration purposes and may not reflect the current state of the chain.
+</Info>
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `min_update_period` | uint64 | 10 | Minimum number of blocks between query updates |
-| `max_query_keys` | uint64 | 64 | Maximum number of keys in a single KV query |
-| `query_deposit` | sdk.Coins | 100untrn | Deposit required to register a query |
-| `query_submit_timeout` | uint64 | 41760 | Number of blocks after which a query can be marked as inactive if not updated |
-| `tx_query_result_max_size` | uint64 | 500000 | Maximum size in bytes for TX query results |
-| `max_tx_query_transactions` | uint64 | 100 | Maximum number of transactions that can be returned in a TX query |
-| `max_transactions_filters` | uint64 | 32 | Maximum number of filters that can be specified in a TX query |
+## Table of Contents
 
-## Msg Service
+- [Messages](#messages) - Transaction messages for interacting with the module
+- [Queries](#queries) - RPC queries for retrieving data
+- [Parameters](#parameters) - Module configuration parameters
+- [Events](#events) - Events emitted by the module
+- [State](#state) - Data structures and state management
+- [CLI Commands](#cli-commands) - Command line interface
+- [REST Endpoints](#rest-endpoints) - HTTP API endpoints
+- [Error Codes](#error-codes) - Error handling and codes
+- [Known Limitations](#known-limitations) - Important constraints
 
-The ICQ module provides the following message types for smart contracts and external clients:
+---
 
-### MsgRegisterInterchainKVQuery
+## Messages
 
-Registers a new key-value query.
+The Interchain Queries module provides the following message types for registering, updating, and managing interchain queries.
 
+### MsgRegisterInterchainQuery
+
+Registers a new Interchain Query in the `interchainqueries` module. This message should only be issued by a smart contract. The calling contract is automatically charged a query registration deposit. The deposit is refunded when the query is removed.
+
+**Proto Definition:**
 ```protobuf
-message MsgRegisterInterchainKVQuery {
-  string owner = 1;
-  string connection_id = 2;
-  string chain_id = 3;
-  KVKeys keys = 4;
-  uint64 update_period = 5;
-}
-
-message KVKeys {
-  repeated KVKey keys = 1;
+message MsgRegisterInterchainQuery {
+  string query_type = 1;                 // Either "kv" or "tx"
+  repeated KVKey keys = 2;               // KV keys (for KV queries only)
+  string transactions_filter = 3;        // TX filter (for TX queries only)
+  string connection_id = 4;              // IBC connection ID
+  uint64 update_period = 5;              // Minimum blocks between updates
+  string sender = 6;                     // Message sender address
 }
 
 message KVKey {
-  string store_prefix = 1;
-  bytes key = 2;
+  string path = 1;                       // Store path (e.g., "bank", "staking")
+  bytes key = 2;                         // Key bytes
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `owner` | string | Address that owns the query and can update/remove it |
-| `connection_id` | string | IBC connection ID to the target chain |
-| `chain_id` | string | Chain ID of the target chain |
-| `keys` | KVKeys | List of store prefix and key pairs to query |
-| `update_period` | uint64 | Minimum number of blocks between updates |
+**Fields:**
+- `query_type` - The query type identifier: `"kv"` or `"tx"`
+- `keys` - KV-storage keys for KV queries (max: `max_kv_query_keys_count` param)
+- `transactions_filter` - JSON filter for TX queries (max: `max_transactions_filters` param)
+- `connection_id` - IBC connection ID to the remote chain
+- `update_period` - Minimal delay between consecutive query executions
+- `sender` - Address of the message sender
 
-### MsgRegisterInterchainTXQuery
-
-Registers a new transaction query.
-
+**Response:**
 ```protobuf
-message MsgRegisterInterchainTXQuery {
-  string owner = 1;
-  string connection_id = 2;
-  string chain_id = 3;
-  string transactions_filter = 4;
-  uint64 update_period = 5;
+message MsgRegisterInterchainQueryResponse {
+  uint64 id = 1;                         // Assigned query ID
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `owner` | string | Address that owns the query and can update/remove it |
-| `connection_id` | string | IBC connection ID to the target chain |
-| `chain_id` | string | Chain ID of the target chain |
-| `transactions_filter` | string | JSON-encoded array of transaction filters |
-| `update_period` | uint64 | Minimum number of blocks between updates |
-
-#### Transaction Filter Format
-
-The `transactions_filter` field expects a JSON array of filter objects:
-
+**Transaction Filter Format:**
+For TX queries, the `transactions_filter` field expects a JSON array:
 ```json
 [
-  {
-    "field": "message.module",
-    "op": "eq",
-    "val": "bank"
-  },
-  {
-    "field": "transfer.amount",
-    "op": "gt",
-    "val": "1000"
-  }
+  {"field": "transfer.recipient", "op": "eq", "value": "cosmos1..."},
+  {"field": "tx.height", "op": "gte", "value": 1000000}
 ]
 ```
 
-Each filter object has the following properties:
+**Supported operators:** `eq`, `lt`, `gt`, `lte`, `gte`
 
-| Field | Description |
-|-------|-------------|
-| `field` | The event attribute to filter on, in format `{eventType}.{attributeKey}` |
-| `op` | Operator: `eq` (equals), `lt` (less than), `gt` (greater than), `lte` (less than or equal), `gte` (greater than or equal) |
-| `val` | The value to compare against |
+### MsgSubmitQueryResult
 
-### MsgUpdateInterchainKVQuery
+Submits the result of an Interchain Query execution to the chain. This message is typically sent by ICQ relayers.
 
-Updates an existing KV query.
-
+**Proto Definition:**
 ```protobuf
-message MsgUpdateInterchainKVQuery {
-  string owner = 1;
-  uint64 query_id = 2;
-  uint64 update_period = 3;
+message MsgSubmitQueryResult {
+  uint64 query_id = 1;                   // Query ID
+  string sender = 2;                     // Message sender
+  string client_id = 3;                  // IBC client ID (deprecated)
+  QueryResult result = 4;                // Query result with proofs
 }
-```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `owner` | string | Address that owns the query (must match the registered owner) |
-| `query_id` | uint64 | ID of the query to update |
-| `update_period` | uint64 | New update period value |
-
-### MsgUpdateInterchainTXQuery
-
-Updates an existing TX query.
-
-```protobuf
-message MsgUpdateInterchainTXQuery {
-  string owner = 1;
-  uint64 query_id = 2;
-  uint64 update_period = 3;
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `owner` | string | Address that owns the query (must match the registered owner) |
-| `query_id` | uint64 | ID of the query to update |
-| `update_period` | uint64 | New update period value |
-
-### MsgRemoveInterchainQuery
-
-Removes an interchain query and refunds the deposit.
-
-```protobuf
-message MsgRemoveInterchainQuery {
-  string owner = 1;
-  uint64 query_id = 2;
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `owner` | string | Address removing the query (can be query owner or anyone if query is inactive) |
-| `query_id` | uint64 | ID of the query to remove |
-
-### MsgSubmitKVResult
-
-Submits a KV query result (called by relayers).
-
-```protobuf
-message MsgSubmitKVResult {
-  string relayer = 1;
-  uint64 query_id = 2;
-  string revision_height = 3;
-  string revision_number = 4;
-  repeated StorageValue local_storage_values = 5;
-  string proof_ops = 6;
+message QueryResult {
+  repeated StorageValue kv_results = 1;  // KV results
+  Block block = 2;                       // TX block data
+  uint64 height = 3;                     // Remote chain height
+  uint64 revision = 4;                   // Chain revision
+  bool allow_kv_callbacks = 5;           // Enable KV callbacks
 }
 
 message StorageValue {
-  bytes storage_prefix = 1;
-  bytes key = 2;
-  bytes value = 3;
+  string storage_prefix = 1;             // Store name (e.g., "bank")
+  bytes key = 2;                         // Key bytes
+  bytes value = 3;                       // Value bytes
+  tendermint.crypto.ProofOps Proof = 4;  // Merkle proof
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `relayer` | string | Address of the relayer submitting the result |
-| `query_id` | uint64 | ID of the query being updated |
-| `revision_height` | string | Height of the remote chain at which the query was executed |
-| `revision_number` | string | Revision number of the remote chain |
-| `local_storage_values` | StorageValue[] | The key-value pairs retrieved from the remote chain |
-| `proof_ops` | string | JSON-encoded cryptographic proofs of the query results |
+### MsgRemoveInterchainQuery
 
-### MsgSubmitTXResult
+Removes an Interchain Query and refunds the deposit. Can only be executed by the query owner during the submit timeout, or by anyone after the timeout expires.
 
-Submits a TX query result (called by relayers).
-
+**Proto Definition:**
 ```protobuf
-message MsgSubmitTXResult {
-  string relayer = 1;
-  uint64 query_id = 2;
-  string revision_height = 3;
-  string revision_number = 4;
-  repeated string transactions = 5;
-  string proof_ops = 6;
+message MsgRemoveInterchainQueryRequest {
+  uint64 query_id = 1;                   // Query ID to remove
+  string sender = 2;                     // Message sender
 }
+
+message MsgRemoveInterchainQueryResponse {}
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `relayer` | string | Address of the relayer submitting the result |
-| `query_id` | uint64 | ID of the query being updated |
-| `revision_height` | string | Height of the remote chain at which the query was executed |
-| `revision_number` | string | Revision number of the remote chain |
-| `transactions` | string[] | JSON-encoded transactions that match the query filters |
-| `proof_ops` | string | JSON-encoded cryptographic proofs of the transactions |
+### MsgUpdateInterchainQuery
 
-## Query Service
+Updates the parameters of a registered Interchain Query. Can only be executed by the query owner.
 
-The ICQ module provides the following query endpoints:
+**Proto Definition:**
+```protobuf
+message MsgUpdateInterchainQueryRequest {
+  uint64 query_id = 1;                   // Query ID to update
+  repeated KVKey new_keys = 2;           // New KV keys
+  uint64 new_update_period = 3;          // New update period
+  string new_transactions_filter = 4;    // New TX filter
+  string sender = 5;                     // Message sender
+}
+
+message MsgUpdateInterchainQueryResponse {}
+```
+
+### MsgUpdateParams
+
+Updates the module parameters. Can only be executed by the module authority.
+
+**Proto Definition:**
+```protobuf
+message MsgUpdateParams {
+  string authority = 1;                  // Module authority address
+  Params params = 2;                     // New parameters
+}
+
+message MsgUpdateParamsResponse {}
+```
+
+---
+
+## Queries
+
+The Interchain Queries module provides the following query endpoints for retrieving information.
 
 ### Params
 
-Returns the module parameters.
+Fetches the current parameters of the `interchainqueries` module.
 
+**Proto Definition:**
 ```protobuf
 message QueryParamsRequest {}
+
 message QueryParamsResponse {
   Params params = 1;
 }
 ```
 
+**REST Endpoint:** `GET /neutron/interchainqueries/params`
+
+<details>
+<summary>Example Response</summary>
+
+```json
+{
+  "params": {
+    "query_submit_timeout": "1036800",
+    "query_deposit": [
+      {
+        "denom": "untrn",
+        "amount": "1000000"
+      }
+    ],
+    "tx_query_removal_limit": "10000",
+    "max_kv_query_keys_count": "32",
+    "max_transactions_filters": "32"
+  }
+}
+```
+</details>
+
 ### RegisteredQueries
 
-Returns all registered interchain queries.
+Retrieves all registered Interchain Queries with optional filtering.
 
+**Proto Definition:**
 ```protobuf
 message QueryRegisteredQueriesRequest {
-  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+  repeated string owners = 1;            // Filter by owners
+  string connection_id = 2;              // Filter by connection ID
+  cosmos.base.query.v1beta1.PageRequest pagination = 3;
 }
+
 message QueryRegisteredQueriesResponse {
   repeated RegisteredQuery registered_queries = 1;
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 ```
 
+**REST Endpoint:** `GET /neutron/interchainqueries/registered_queries`
+
 ### RegisteredQuery
 
-Returns a specific registered query by ID.
+Fetches details of a specific registered Interchain Query.
 
+**Proto Definition:**
 ```protobuf
 message QueryRegisteredQueryRequest {
-  uint64 query_id = 1;
+  uint64 query_id = 1;                   // Query ID
 }
+
 message QueryRegisteredQueryResponse {
   RegisteredQuery registered_query = 1;
 }
 ```
 
-### RegisteredQueryResult
-
-Returns the result of a specific registered KV query.
-
-```protobuf
-message QueryRegisteredQueryResultRequest {
-  uint64 query_id = 1;
-}
-message QueryRegisteredQueryResultResponse {
-  repeated StorageValue result = 1;
-}
-```
+**REST Endpoint:** `GET /neutron/interchainqueries/registered_query`
 
 ### QueryResult
 
-Type definition for registered query results:
+Retrieves the most recent result of a KV Interchain Query.
 
+**Proto Definition:**
 ```protobuf
-message RegisteredQuery {
-  uint64 id = 1;
-  string owner = 2;
-  string connection_id = 3;
-  string chain_id = 4;
-  oneof query_type {
-    KVKeys kv_keys = 5;
-    string transactions_filter = 6;
-  }
-  uint64 update_period = 7;
-  uint64 last_submitted_result_local_height = 8;
-  string last_submitted_result_remote_height = 9;
-  cosmos.base.v1beta1.Coin deposit = 10;
-  uint64 submitted_tx_count = 11;
-  uint64 registered_at_height = 12;
+message QueryRegisteredQueryResultRequest {
+  uint64 query_id = 1;                   // Query ID
+}
+
+message QueryRegisteredQueryResultResponse {
+  QueryResult result = 1;
 }
 ```
+
+**REST Endpoint:** `GET /neutron/interchainqueries/query_result`
+
+### LastRemoteHeight
+
+Retrieves the most recent height of a remote chain.
+
+**Proto Definition:**
+```protobuf
+message QueryLastRemoteHeight {
+  string connection_id = 1;              // IBC connection ID
+}
+
+message QueryLastRemoteHeightResponse {
+  uint64 height = 1;                     // Remote chain height
+  uint64 revision = 2;                   // Chain revision
+}
+```
+
+**REST Endpoint:** `GET /neutron/interchainqueries/remote_height`
+
+---
+
+## Parameters
+
+The module maintains the following parameters:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `query_submit_timeout` | uint64 | 1036800 | Blocks after which anyone can remove a query (~1 month) |
+| `query_deposit` | sdk.Coins | 1000000untrn | Deposit required for query registration |
+| `tx_query_removal_limit` | uint64 | 10000 | Max TX queries removed per EndBlock |
+| `max_kv_query_keys_count` | uint64 | 32 | Maximum keys in a single KV query |
+| `max_transactions_filters` | uint64 | 32 | Maximum filters in a single TX query |
+
+**Proto Definition:**
+```protobuf
+message Params {
+  uint64 query_submit_timeout = 1;
+  repeated cosmos.base.v1beta1.Coin query_deposit = 2;
+  uint64 tx_query_removal_limit = 3;
+  uint64 max_kv_query_keys_count = 4;
+  uint64 max_transactions_filters = 5;
+}
+```
+
+---
 
 ## Events
 
-The ICQ module emits the following events:
+The module emits the following events:
 
-### EventRegisteredQuery
+### EventTypeNeutronMessage
 
-Emitted when a new query is registered.
+**Event Type:** `neutron`
 
+| Attribute Key | Attribute Value | Description |
+|---------------|-----------------|-------------|
+| `module` | `interchainqueries` | Module name |
+| `action` | `query_updated` \| `query_removed` | Action performed |
+| `query_id` | `{query_id}` | Query identifier |
+| `connection_id` | `{connection_id}` | IBC connection ID |
+| `owner` | `{owner_address}` | Query owner (query_updated only) |
+| `type` | `kv` \| `tx` | Query type (query_updated only) |
+| `tx_filter` | `{filter_json}` | TX filter (query_updated only) |
+| `kv_key` | `{keys_string}` | KV keys (query_updated only) |
+
+**When Emitted:**
+- `query_updated` - When a query is registered or updated
+- `query_removed` - When a query is removed
+
+---
+
+## State
+
+The module maintains the following state structures:
+
+### RegisteredQuery
+
+The primary state object for each registered query:
+
+**Proto Definition:**
 ```protobuf
-message EventRegisteredQuery {
-  uint64 query_id = 1;
-  string owner = 2;
-  string connection_id = 3;
-  string chain_id = 4;
-  uint64 update_period = 5;
+message RegisteredQuery {
+  uint64 id = 1;                         // Unique query ID
+  string owner = 2;                      // Query owner address
+  string query_type = 3;                 // "kv" or "tx"
+  repeated KVKey keys = 4;               // KV keys
+  string transactions_filter = 5;        // TX filter
+  string connection_id = 6;              // IBC connection ID
+  uint64 update_period = 7;              // Update period
+  uint64 last_submitted_result_local_height = 8;    // Last local height
+  ibc.core.client.v1.Height last_submitted_result_remote_height = 9;  // Last remote height
+  repeated cosmos.base.v1beta1.Coin deposit = 10;   // Deposit amount
+  uint64 submit_timeout = 11;            // Submit timeout
+  uint64 registered_at_height = 12;      // Registration height
 }
 ```
 
-### EventUpdatedQuery
+### Storage Keys
 
-Emitted when a query is updated.
+The module uses the following storage keys:
 
-```protobuf
-message EventUpdatedQuery {
-  uint64 query_id = 1;
-  string owner = 2;
-  uint64 update_period = 3;
-}
-```
+- `RegisteredQueryKey` - Stores registered queries by ID
+- `RegisteredQueryResultKey` - Stores KV query results by ID
+- `SubmittedTxKey` - Stores submitted TX hashes
+- `TxQueryToRemoveKey` - Stores TX queries marked for removal
+- `LastRegisteredQueryIDKey` - Stores last assigned query ID
 
-### EventRemovedQuery
+**Note:** TX query results are not stored in state; they are passed directly to smart contracts via sudo callbacks.
 
-Emitted when a query is removed.
-
-```protobuf
-message EventRemovedQuery {
-  uint64 query_id = 1;
-  string owner = 2;
-}
-```
-
-### EventQueryResult
-
-Emitted when a query result is submitted.
-
-```protobuf
-message EventQueryResult {
-  uint64 query_id = 1;
-  string relayer = 2;
-}
-```
-
-## CosmWasm Integration
-
-The ICQ module integrates with CosmWasm contracts through the following interfaces:
-
-### Contract Sudo Callbacks
-
-When a query result is received, the ICQ module calls one of the following sudo methods on the contract that registered the query:
-
-#### sudo_kv_query_result
-
-```rust
-pub fn sudo_kv_query_result(
-    deps: DepsMut,
-    env: Env,
-    query_id: u64,
-) -> Result<Response, ContractError>
-```
-
-The contract can then query the result using the provided query ID.
-
-#### sudo_tx_query_result
-
-```rust
-pub fn sudo_tx_query_result(
-    deps: DepsMut,
-    env: Env,
-    query_id: u64,
-    response: TransactionFilterResponse,
-) -> Result<Response, ContractError>
-```
-
-The full transaction response is passed directly to the contract.
-
-### Neutron SDK Integration
-
-The Neutron SDK provides the following functions for working with the ICQ module from CosmWasm contracts:
-
-```rust
-// Registration functions
-pub fn register_kv_query(
-    deps: DepsMut<NeutronQuery>,
-    env: Env,
-    connection_id: String,
-    chain_id: String,
-    store_prefix: &str,
-    keys: Vec<Vec<u8>>,
-    update_period: u64,
-) -> NeutronResult<u64>;
-
-pub fn register_tx_query(
-    deps: DepsMut<NeutronQuery>,
-    env: Env,
-    connection_id: String,
-    chain_id: String,
-    filter: String,
-    update_period: u64,
-) -> NeutronResult<u64>;
-
-// Update functions
-pub fn update_kv_query(
-    deps: DepsMut<NeutronQuery>,
-    env: Env,
-    query_id: u64,
-    update_period: u64,
-) -> NeutronResult<()>;
-
-pub fn update_tx_query(
-    deps: DepsMut<NeutronQuery>,
-    env: Env,
-    query_id: u64,
-    update_period: u64,
-) -> NeutronResult<()>;
-
-// Remove function
-pub fn remove_interchain_query(
-    deps: DepsMut<NeutronQuery>,
-    query_id: u64,
-) -> NeutronResult<()>;
-
-// Query functions
-pub fn query_kv_result(
-    deps: Deps<NeutronQuery>,
-    query_id: u64,
-) -> NeutronResult<Vec<StorageValue>>;
-
-// Helper parsers
-pub fn parse_and_convert_to_binary_balance_response(
-    value: Vec<u8>,
-) -> NeutronResult<BalanceResponse>;
-```
-
-## Common Key Formats
-
-When querying Cosmos SDK modules, use these common key formats:
-
-### Bank Module
-
-```
-balances/{address}/{denom}
-```
-
-### Staking Module
-
-```
-validators/{validator_address}
-bonded/{validator_address}
-unbonding/{validator_address}
-```
-
-### Governance Module
-
-```
-proposals/{proposal_id}
-proposal-votes/{proposal_id}/{voter_address}
-```
-
-## Limitations and Known Issues
-
-- **Empty Values**: Due to a [bug in ICS23](https://github.com/cosmos/ics23/issues/134), it's impossible to query empty or nil values from remote chains
-- **TX Query Verification**: TX queries only verify the transaction exists, not that it matches specified filters
-- **Performance**: Large result sets may hit the `tx_query_result_max_size` limit
-- **Chain ID Mismatch**: The chain ID must exactly match the registered chain ID or verification will fail
-
-## Genesis State
-
-The ICQ module uses the following genesis state:
-
-```protobuf
-message GenesisState {
-  Params params = 1;
-  repeated RegisteredQuery registered_queries = 2;
-  uint64 last_id = 3;
-}
-```
+---
 
 ## CLI Commands
 
 <Note>
-The CLI commands below are available for testing, debugging, and simple use cases. For production applications, most developers use CosmWasm smart contracts which provide better result handling, automatic processing, and integration with application logic.
+CLI commands are available for testing and debugging. Production applications should use CosmWasm smart contracts for better result handling and integration.
 </Note>
 
+### Query Commands
+
 ```bash
-# Query module params
+# Get module parameters
 neutrond query interchainqueries params
 
-# Query all registered queries
-neutrond query interchainqueries registered-queries
+# List all registered queries
+neutrond query interchainqueries registered-queries \
+  --owners neutron1... \
+  --connection_id connection-0
 
-# Query a specific registered query
+# Get specific query details
 neutrond query interchainqueries registered-query [query-id]
 
-# Query the result of a registered KV query
-neutrond query interchainqueries registered-query-result [query-id]
+# Get query result (KV queries only)
+neutrond query interchainqueries query-result [query-id]
 
-# Register a new KV query
-neutrond tx interchainqueries register-kv-query \
-  --connection-id [connection-id] \
-  --chain-id [chain-id] \
-  --keys [keys] \
-  --update-period [update-period] \
-  --from [key-name]
+# Get last remote height
+neutrond query interchainqueries query-last-remote-height [connection-id]
+```
 
-# Register a new TX query
-neutrond tx interchainqueries register-tx-query \
-  --connection-id [connection-id] \
-  --chain-id [chain-id] \
-  --filter [filter] \
-  --update-period [update-period] \
-  --from [key-name]
+### Transaction Commands
 
-# Update a query
-neutrond tx interchainqueries update-query \
-  --query-id [query-id] \
-  --update-period [update-period] \
-  --from [key-name]
+```bash
+# Submit query result
+neutrond tx interchainqueries submit-query-result [query-id] [result-file] \
+  --from [key-name] \
+  --gas 10000000
 
-# Remove a query
-neutrond tx interchainqueries remove-query \
-  --query-id [query-id] \
+# Remove interchain query
+neutrond tx interchainqueries remove-interchain-query [query-id] \
   --from [key-name]
-``` 
+```
+
+---
+
+## REST Endpoints
+
+The module exposes the following REST endpoints:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/neutron/interchainqueries/params` | Get module parameters |
+| GET | `/neutron/interchainqueries/registered_queries` | List registered queries |
+| GET | `/neutron/interchainqueries/registered_query` | Get specific query |
+| GET | `/neutron/interchainqueries/query_result` | Get query result |
+| GET | `/neutron/interchainqueries/remote_height` | Get remote height |
+
+---
+
+## Error Codes
+
+The module returns the following error codes:
+
+| Code | Name | Description |
+|------|------|-------------|
+| 1 | `ErrInvalidQueryType` | Invalid query type specified |
+| 2 | `ErrEmptyKeys` | No keys provided for KV query |
+| 3 | `ErrEmptyTransactionsFilter` | Empty filter for TX query |
+| 4 | `ErrInvalidConnectionID` | Invalid connection ID |
+| 5 | `ErrInvalidUpdatePeriod` | Invalid update period |
+| 6 | `ErrInsufficientDeposit` | Insufficient deposit |
+| 7 | `ErrQueryNotFound` | Query not found |
+| 8 | `ErrNotQueryOwner` | Not query owner |
+| 9 | `ErrInvalidProof` | Proof verification failed |
+
+---
+
+## Known Limitations
+
+### 1. Empty Values in KV Queries
+
+**Issue:** Due to a [bug in ICS23](https://github.com/cosmos/ics23/issues/134), the module cannot verify proofs for empty or `nil` values.
+
+**Impact:** KV queries targeting keys with empty values will fail during proof verification.
+
+**Workaround:** Avoid querying keys that might have empty values, or handle missing responses gracefully.
+
+### 2. Transaction Filter Verification
+
+**Issue:** TX query filters are applied by relayers, not verified by the module.
+
+**Impact:** The module only verifies that transactions exist, not that they match your filters.
+
+**Workaround:** Always implement proper transaction validation in your smart contract's sudo callback.
+
+### 3. Query Deposit Mechanism
+
+**Issue:** Queries require a deposit to prevent spam.
+
+**Impact:** Must have sufficient funds when registering queries.
+
+**Workaround:** Ensure proper deposit management and query lifecycle handling.
+
+### 4. Chain Upgrade Compatibility
+
+**Issue:** Chain upgrades can affect consensus state and proof verification.
+
+**Impact:** Queries might temporarily fail during upgrades.
+
+**Workaround:** Implement proper error handling and retry logic.
+
+---
+
+## Smart Contract Integration
+
+### Sudo Callbacks
+
+The module sends sudo messages to smart contracts when query results are available:
+
+**For KV Queries:**
+```rust
+use neutron_sdk::sudo::msg::SudoMsg;
+
+#[entry_point]
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> StdResult<Response> {
+    match msg {
+        SudoMsg::KVQueryResult { query_id } => {
+            // Query result is available in module state
+            // Use QueryResult endpoint to retrieve it
+        }
+        // ...
+    }
+}
+```
+
+**For TX Queries:**
+```rust
+#[entry_point]
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> StdResult<Response> {
+    match msg {
+        SudoMsg::TxQueryResult { query_id, height, data } => {
+            // TX data is passed directly in the callback
+            // Verify transactions match your filter criteria
+        }
+        // ...
+    }
+}
+```
+
+### Query Registration from Contracts
+
+```rust
+use neutron_sdk::bindings::msg::NeutronMsg;
+
+// Register KV query
+let msg = NeutronMsg::RegisterInterchainQuery {
+    query_type: "kv".to_string(),
+    keys: vec![KVKey {
+        path: "bank".to_string(),
+        key: Binary::from(key_bytes),
+    }],
+    transactions_filter: "".to_string(),
+    connection_id: "connection-0".to_string(),
+    update_period: 100,
+};
+```
+
+---
+
+## Best Practices
+
+1. **Deposit Management:** Always handle query deposits properly and remove queries when no longer needed
+2. **Error Handling:** Implement comprehensive error handling for failed sudo callbacks
+3. **Gas Optimization:** Design efficient query result processing to minimize gas costs
+4. **Filter Design:** Use specific transaction filters to reduce false positives
+5. **Proof Verification:** For TX queries, always verify transactions in your contract logic
+6. **Connection Selection:** Choose stable IBC connections for reliable query execution
+
+For implementation examples and detailed guides, see the [How-to Guide](/developers/modules/interchain-queries/how-to) and [Explanation](/developers/modules/interchain-queries/explanation) sections. 
