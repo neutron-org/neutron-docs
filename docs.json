@@ -218,18 +218,7 @@
                   "developers/modules/interchaintxs/overview",
                   "developers/modules/interchaintxs/explanation",
                   "developers/modules/interchaintxs/how-to",
-                  {
-                    "group": "Reference",
-                    "icon": "book",
-                    "pages": [
-                      "developers/modules/interchaintxs/reference",
-                      "developers/modules/interchaintxs/api",
-                      "developers/modules/interchaintxs/messages",
-                      "developers/modules/interchaintxs/events",
-                      "developers/modules/interchaintxs/state",
-                      "developers/modules/interchaintxs/client"
-                    ]
-                  }
+                  "developers/modules/interchaintxs/reference"
                 ]
               },
               {
