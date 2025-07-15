@@ -207,19 +207,8 @@
                   "developers/modules/interchain-queries/overview",
                   "developers/modules/interchain-queries/explanation",
                   "developers/modules/interchain-queries/how-to",
-                  "developers/modules/interchain-queries/known-bugs",
-                  {
-                    "group": "Reference",
-                    "icon": "book",
-                    "pages": [
-                      "developers/modules/interchain-queries/reference",
-                      "developers/modules/interchain-queries/api",
-                      "developers/modules/interchain-queries/messages",
-                      "developers/modules/interchain-queries/events",
-                      "developers/modules/interchain-queries/state",
-                      "developers/modules/interchain-queries/client"
-                    ]
-                  }
+                  "developers/modules/interchain-queries/reference",
+                  "developers/modules/interchain-queries/known-bugs"
                 ]
               },
               {

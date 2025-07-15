@@ -3,8 +3,6 @@ title: "ICQ Explanation"
 description: "Detailed explanation of how Interchain Queries work and why they're designed this way"
 ---
 
-# Explanation
-
 This document provides a deep dive into the Interchain Queries module, explaining how it works internally and the underlying concepts.
 
 ## How do KV Interchain Queries work?
@@ -167,9 +165,9 @@ There are two ways to find an appropriate IBC connection ID:
 
 ## Why is there a query creation deposit?
 
-To ensure the ledger is kept clean of unused or outdated queries, a deposit mechanism is implemented. When a contract sends a [RegisterInterchainQuery](/developers/modules/interchain-queries/api#registerinterchainquery) message, the required deposit is deducted from the contract's balance as an escrow payment for the query creation. This deposit is refunded when the query is removed by issuing a [RemoveInterchainQuery](/developers/modules/interchain-queries/api#removeinterchainquery) message.
+To ensure the ledger is kept clean of unused or outdated queries, a deposit mechanism is implemented. When a contract sends a [RegisterInterchainQuery](/developers/modules/interchain-queries/reference#registerinterchainquery) message, the required deposit is deducted from the contract's balance as an escrow payment for the query creation. This deposit is refunded when the query is removed by issuing a [RemoveInterchainQuery](/developers/modules/interchain-queries/reference#removeinterchainquery) message.
 
-The amount required for the deposit is defined by the `query_deposit` [module parameter](/developers/modules/interchain-queries/api#params).
+The amount required for the deposit is defined by the `query_deposit` [module parameter](/developers/modules/interchain-queries/reference#params).
 
 In essence, query owners are expected to remove their queries once they are no longer needed. If a query is not used within the `query_submit_timeout` period and the owner does not remove it, any network user is allowed to clean up the chain by removing the unused query. As a reward, the deposited assets are transferred to the user who performs the cleanup.
 
@@ -184,17 +182,17 @@ The deposit system serves multiple purposes:
 
 ## What are the rules for creation deposit refunds?
 
-The query creation deposit is refunded when an Interchain Query is removed by issuing a [RemoveInterchainQuery](/developers/modules/interchain-queries/api#removeinterchainquery) message. This message can be sent either by the query owner or, under certain conditions, by anyone.  
+The query creation deposit is refunded when an Interchain Query is removed by issuing a [RemoveInterchainQuery](/developers/modules/interchain-queries/reference#removeinterchainquery) message. This message can be sent either by the query owner or, under certain conditions, by anyone.
 
-If the query is within its active **query service period** (recently registered or continuously updated), it is considered valuable to its owner, and only the owner can remove it and reclaim the deposit. If the query has not been updated or used for a long time (beyond the **query service period**), it is likely abandoned. In this case, anyone can remove it and claim the deposit as a reward for cleaning up the chain's state.  
+If the query is within its active **query service period** (recently registered or continuously updated), it is considered valuable to its owner, and only the owner can remove it and reclaim the deposit. If the query has not been updated or used for a long time (beyond the **query service period**), it is likely abandoned. In this case, anyone can remove it and claim the deposit as a reward for cleaning up the chain's state.
 
 Parameters Defining Removal Permissions:
 
-1. **`query_submit_timeout`**: A [registered query property](/developers/modules/interchain-queries/api#registeredquery) specifying the number of blocks that define the renewable **query service period**. This period starts when a query is registered and renews with each query update. The `query_submit_timeout` value is set based on the [module parameters](/developers/modules/interchain-queries/api#params) at the time of query registration.  
+1. **`query_submit_timeout`**: A [registered query property](/developers/modules/interchain-queries/reference#registeredquery) specifying the number of blocks that define the renewable **query service period**. This period starts when a query is registered and renews with each query update. The `query_submit_timeout` value is set based on the [module parameters](/developers/modules/interchain-queries/reference#params) at the time of query registration.
 
-2. **`last_submitted_result_local_height`**: A [registered query property](/developers/modules/interchain-queries/api#registeredquery) indicating the block height on the home chain when the query was last updated.  
+2. **`last_submitted_result_local_height`**: A [registered query property](/developers/modules/interchain-queries/reference#registeredquery) indicating the block height on the home chain when the query was last updated.
 
-3. **`registered_at_height`**: A [registered query property](/developers/modules/interchain-queries/api#registeredquery) indicating the block height on the home chain when the query was initially registered.  
+3. **`registered_at_height`**: A [registered query property](/developers/modules/interchain-queries/reference#registeredquery) indicating the block height on the home chain when the query was initially registered.  
 
 Removal Permissions:
 
@@ -250,7 +248,7 @@ The `Proof` field is present but empty because the [QueryResult](https://pkg.go.
 
 Unlike KV Interchain Queries, which store the latest result on-chain for retrieval, TX Interchain Queries involve a list of potential results (transactions that match the filter). Storing the entire list of results on-chain would require a significant amount of storage, which is impractical.  
 
-Instead of saving results on-chain, the `interchainqueries` module directly sends the full TX results to the owning smart contracts during the [TxQueryResult](/developers/modules/interchain-queries/api#messagetxqueryresult) `sudo` call. Once the `sudo` call is successfully completed, the results are discarded, minimizing storage use.
+Instead of saving results on-chain, the `interchainqueries` module directly sends the full TX results to the owning smart contracts during the [TxQueryResult](/developers/modules/interchain-queries/reference#messagetxqueryresult) `sudo` call. Once the `sudo` call is successfully completed, the results are discarded, minimizing storage use.
 
 The module stores only two things related to TX Interchain Queries:  
 
@@ -266,7 +264,7 @@ The module stores only two things related to TX Interchain Queries:
 
 ## Limited gas for sudo calls
 
-The `interchainqueries` module relies on the [contractmanager](/developers/modules/contract-manager/overview) module to handle `sudo` operations. The `contractmanager` module [enforces strict gas limits](/developers/modules/contract-manager/overview#gas-limitation) on `sudo` callbacks, defined by its `sudo_call_gas_limit` parameter, to prevent excessive gas usage.  
+The `interchainqueries` module relies on the [contractmanager](/developers/modules/contractmanager/overview) module to handle `sudo` operations. The `contractmanager` module [enforces strict gas limits](/developers/modules/contractmanager/overview#gas-limitation) on `sudo` callbacks, defined by its `sudo_call_gas_limit` parameter, to prevent excessive gas usage.  
 
 To manage cases where computations exceed the allocated gas, the `contractmanager` module recommends separating `sudo` callbacks from heavy computations. One approach is to store the `sudo` callback payload in the contract's state during the `sudo` call and then process it later in a separate external `execute` call. This method ensures that the gas limit for `sudo` calls is not exceeded, while still allowing complex logic to be executed when needed.
 
@@ -275,15 +273,15 @@ To manage cases where computations exceed the allocated gas, the `contractmanage
 
 ## What happens if a sudo callback to a smart contract owning an Interchain Query fails?
 
-If a `sudo` callback fails, the `interchainqueries` module records the failure in the [contractmanager](/developers/modules/contract-manager/overview) module. This record includes all relevant information about the query and a redacted error message (reduced to the codespace and error code). A full error message is emitted as an [event](https://docs.cosmos.network/v0.50/learn/advanced/events) to provide more context about the failure. For details, see the [message events emission](/developers/modules/interchain-queries/api#sudo) section.  
+If a `sudo` callback fails, the `interchainqueries` module records the failure in the [contractmanager](/developers/modules/contractmanager/overview) module. This record includes all relevant information about the query and a redacted error message (reduced to the codespace and error code). A full error message is emitted as an [event](https://docs.cosmos.network/v0.50/learn/advanced/events) to provide more context about the failure. For details, see the [message events emission](/developers/modules/interchain-queries/reference#sudo) section.
 
-Failures due to `out of gas` errors are also recorded.  
+Failures due to `out of gas` errors are also recorded.
 
-Failed query result submissions can be retrieved from the `contractmanager` module and resubmitted to the `interchainqueries` module. For more information about reading and resubmitting failed operations, refer to the [contractmanager documentation](/developers/modules/contract-manager/overview).
+Failed query result submissions can be retrieved from the `contractmanager` module and resubmitted to the `interchainqueries` module. For more information about reading and resubmitting failed operations, refer to the [contractmanager documentation](/developers/modules/contractmanager/overview).
 
 ## How are Interchain Query results removed?
 
-When a [RemoveInterchainQuery](/developers/modules/interchain-queries/api#removeinterchainquery) message is successfully executed, the results of the respective Interchain Query are removed from the chain's storage. The removal process depends on the type of the Interchain Query:
+When a [RemoveInterchainQuery](/developers/modules/interchain-queries/reference#removeinterchainquery) message is successfully executed, the results of the respective Interchain Query are removed from the chain's storage. The removal process depends on the type of the Interchain Query:
 
 - **KV Query Results**:  
   KV query results are single records in the store with a predictable gas consumption for removal. These records are removed immediately during the handling of the removal message.  
@@ -291,7 +289,7 @@ When a [RemoveInterchainQuery](/developers/modules/interchain-queries/api#remove
 - **TX Query Results**:  
   TX query results consist of hashes of remote chain transactions, with each hash being a separate record in the store. The gas consumption for removal depends on the number of hashes, which introduces uncertainty.  
 
-  To handle this, TX query results are removed in batches during the `EndBlock` phase. When a removal message is processed, the TX Interchain Query is marked for removal. Subsequently, in each `EndBlock`, a small batch of hashes is removed. The batch size is controlled by the `tx_query_removal_limit` [module parameter](/developers/modules/interchain-queries/api#params).  
+  To handle this, TX query results are removed in batches during the `EndBlock` phase. When a removal message is processed, the TX Interchain Query is marked for removal. Subsequently, in each `EndBlock`, a small batch of hashes is removed. The batch size is controlled by the `tx_query_removal_limit` [module parameter](/developers/modules/interchain-queries/reference#params).  
 
 This approach ensures that gas consumption remains manageable while removing large numbers of TX query results.
 

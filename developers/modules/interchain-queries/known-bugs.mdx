@@ -1,134 +1,20 @@
+---
+title: "Known Bugs"
+description: "Known issues and limitations of the ICQ module"
+---
 
-This document catalogs the known bugs, limitations, and edge cases of the Interchain Queries module. Development teams should be aware of these issues when building applications that rely on this module.
+### Impossibility to retrieve and prove KV data with nil values
 
-## Critical Issues
+Due to a [bug](https://github.com/cosmos/ics23/issues/134) in the ICS23 package, it's currently not possible to query a `nil` or empty value from a remote chain. If your KV query is registered with a key `K` and the value under this key is `nil` or empty, the submission of such a KV result will fail due to an IAVL-proof verification error:
 
-### Empty or Nil Value Querying
+```
+failed to verify proof: empty value in membership proof
+```
 
-**Issue**: It's currently impossible to query an empty or `nil` value from a remote chain.
+Additionally, because of the [nature of IAVL proofs](https://github.com/cosmos/cosmos-sdk/blob/ae77f0080a724b159233bd9b289b2e91c0de21b5/docs/interfaces/lite/specification.md), which is the mechanism used for verifying KV query results, it's also impossible to verify an [IAVL absence proof](https://github.com/cosmos/cosmos-sdk/blob/ae77f0080a724b159233bd9b289b2e91c0de21b5/docs/interfaces/lite/specification.md#iavl-absence-proof) if the proof contains a `nil` or empty value. This results in the error:
 
-**Cause**: Due to [a bug in the ICS23 package](https://github.com/cosmos/ics23/issues/134), IAVL proof verification fails when the value is empty or nil, with errors such as:
-- `failed to verify proof: empty value in membership proof`
-- `failed to verify proof: could not verify absence of key. Please ensure that the path is correct.`
+```
+failed to verify proof: could not verify absence of key. Please ensure that the path is correct.
+```
 
-**Workaround**: Avoid querying keys that might have empty or nil values. If you need to check for existence, consider alternative designs where presence is indicated by a non-empty value.
-
-**Status**: In contact with the ICS23 team for a fix.
-
-## Functional Limitations
-
-### Transaction Indexing Dependency
-
-**Issue**: TX queries require the remote chain to have transaction indexing enabled.
-
-**Impact**: If the target chain doesn't have indexing enabled or has incomplete indexing, TX queries will fail or return incomplete results.
-
-**Verification**: Before relying on TX queries for a particular chain, verify that:
-- The chain has `index_all_keys = true` in its `config.toml`
-- The indexer is set to `kv` and not `null`
-
-### Large Result Handling
-
-**Issue**: Processing large query results (especially from TX queries) can consume significant gas.
-
-**Impact**: If a query returns many results or very large results, the transaction submitting the result may run out of gas.
-
-**Workaround**: 
-- Use specific filters to minimize result size
-- For TX queries, design contracts to handle results incrementally
-
-### Chain Upgrade Disruptions
-
-**Issue**: During or immediately after chain upgrades, Merkle proof verification may temporarily fail.
-
-**Impact**: Query results may not be verifiable during this period, leading to failed submissions.
-
-**Workaround**: Implement retry logic in relayers or application logic to handle temporary failures.
-
-## Performance Considerations
-
-### Gas Usage for Complex Proofs
-
-**Issue**: Verification of Merkle proofs for deeply nested keys can consume significant gas.
-
-**Impact**: Higher gas costs for queries targeting deeply nested state.
-
-**Optimization**: 
-- Group related keys into a single query where possible
-- Prefer shallower key paths when designing state structure
-
-### Update Period Constraints
-
-**Issue**: Setting very low update periods can lead to high relayer costs and chain congestion.
-
-**Impact**: Queries with very low update periods will generate frequent transactions.
-
-**Recommendation**: Set update periods based on actual data update frequency needs rather than trying to achieve real-time updates.
-
-## Security Considerations
-
-### Transaction Filter Validation
-
-**Issue**: TX query filters are not fully enforced at the module level.
-
-**Impact**: Smart contracts must implement additional validation to ensure returned transactions meet criteria.
-
-**Required action**: Always implement proper validation in the contract's `SudoTXQueryResult` handler to verify transactions match your intent.
-
-### Resource Exhaustion Attack Vectors
-
-**Issue**: Without proper monitoring, malicious actors might register many queries to consume chain resources.
-
-**Impact**: Potential degradation of chain performance.
-
-**Mitigation**:
-- Module parameters like deposit requirements and gas limits help mitigate this
-- Network operators should monitor query registration patterns
-
-## Integration Edge Cases
-
-### Cross-Version Compatibility
-
-**Issue**: Different versions of Cosmos SDK and IAVL can cause proof verification issues.
-
-**Impact**: Queries between chains with significant version differences might fail verification.
-
-**Workaround**: Test cross-chain queries thoroughly when connecting to chains with different Cosmos SDK versions.
-
-### Module-Specific State Access Patterns
-
-**Issue**: Some Cosmos SDK modules use non-standard key encoding or store structures.
-
-**Impact**: KV queries for these modules might require specialized knowledge of their internal state layout.
-
-**Documentation**: Where possible, refer to module-specific documentation for key construction guidelines.
-
-## IBC-Related Limitations
-
-### Connection Reliability
-
-**Issue**: If an IBC connection becomes degraded or fails, queries relying on it will also fail.
-
-**Impact**: Query results cannot be submitted or verified until the connection is restored.
-
-**Monitoring**: Applications should monitor IBC connection health as part of their overall system monitoring.
-
-### Light Client Constraints
-
-**Issue**: Verification relies on IBC light clients, which have their own update schedules and limitations.
-
-**Impact**: If a light client hasn't been updated recently, proof verification may fail even with valid proofs.
-
-**Consideration**: Ensure relayer infrastructure is properly maintaining light client states.
-
-## Future Improvements
-
-The following improvements are planned or under consideration:
-
-1. **Empty Value Handling**: Fix the ICS23 issue to allow empty value querying
-2. **Batch Submission**: Enable submitting multiple query results in a single transaction
-3. **Optimized Proof Verification**: Reduce gas costs for verification operations
-4. **Enhanced Filter Capabilities**: Support more advanced filtering options for TX queries
-5. **Automatic Query Cleanup**: Provide options for automatic removal of inactive queries
-
-Please check the Neutron repositories for updates on these improvements. 
+We are in contact with the team developing ICS32 to resolve this issue as soon as possible. In the meantime, the only way to avoid this problem is to ensure that your queries do not target keys with `nil` or empty values. 
