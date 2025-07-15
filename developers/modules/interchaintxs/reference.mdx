@@ -210,6 +210,10 @@ message QueryParamsResponse {
 
 #### CLI Example
 
+<Info>
+The module only supports query CLI commands. There are no transaction CLI commands as the module is exclusively designed for CosmWasm smart contract integration.
+</Info>
+
 ```bash
 neutron query interchaintxs params
 ```
@@ -261,10 +265,7 @@ message QueryInterchainAccountAddressResponse {
 #### CLI Example
 
 ```bash
-neutron query interchaintxs interchain-account-address \
-  neutron1abcdef... \
-  myaccount \
-  connection-0
+neutron query interchaintxs interchain-account neutron1abcdef... connection-0 myaccount
 ```
 
 #### Response Example
@@ -286,127 +287,16 @@ grpcurl -plaintext \
 
 ## Events
 
-### RegisteredInterchainAccount
+<Warning>
+The Interchain Transactions module does not emit any custom events. All events related to interchain account registration and transaction submission are emitted by the underlying IBC stack (ICA controller module, channel keeper, etc.) rather than this module directly.
+</Warning>
 
-Emitted when an interchain account is successfully registered on a remote chain.
+To monitor interchain transactions, listen for IBC events from:
+- **ICA Controller module** - for account registration and transaction acknowledgements
+- **Channel keeper** - for packet send/receive events  
+- **Port keeper** - for port binding events
 
-**Type:** `register_interchain_account`
-
-#### Attributes
-
-| Attribute | Type | Description |
-|-----------|------|-------------|
-| `connection_id` | string | The ID of the IBC connection used |
-| `port_id` | string | The port ID for the interchain account |
-| `channel_id` | string | The channel ID created for the interchain account |
-| `interchain_account_id` | string | The ID of the registered interchain account |
-| `from_address` | string | The address that initiated the registration |
-
-#### Example
-
-```json
-{
-  "type": "register_interchain_account",
-  "attributes": [
-    {
-      "key": "connection_id",
-      "value": "connection-0",
-      "index": true
-    },
-    {
-      "key": "port_id",
-      "value": "icacontroller-neutron1abc...def.myaccount",
-      "index": true
-    },
-    {
-      "key": "channel_id",
-      "value": "channel-123",
-      "index": true
-    },
-    {
-      "key": "interchain_account_id",
-      "value": "myaccount",
-      "index": true
-    },
-    {
-      "key": "from_address",
-      "value": "neutron1abc...def",
-      "index": true
-    }
-  ]
-}
-```
-
-### SubmittedTx
-
-Emitted when a transaction is submitted to be executed on a remote chain.
-
-**Type:** `submit_tx`
-
-#### Attributes
-
-| Attribute | Type | Description |
-|-----------|------|-------------|
-| `connection_id` | string | The ID of the IBC connection used |
-| `interchain_account_id` | string | The ID of the interchain account |
-| `channel_id` | string | The ID of the channel used for the interchain account |
-| `sequence_id` | string | The sequence ID of the IBC packet |
-| `from_address` | string | The address that submitted the transaction |
-| `timeout` | string | The timeout value in seconds |
-
-#### Example
-
-```json
-{
-  "type": "submit_tx",
-  "attributes": [
-    {
-      "key": "connection_id",
-      "value": "connection-0",
-      "index": true
-    },
-    {
-      "key": "interchain_account_id",
-      "value": "myaccount",
-      "index": true
-    },
-    {
-      "key": "channel_id",
-      "value": "channel-123",
-      "index": true
-    },
-    {
-      "key": "sequence_id",
-      "value": "42",
-      "index": true
-    },
-    {
-      "key": "from_address",
-      "value": "neutron1abc...def",
-      "index": true
-    },
-    {
-      "key": "timeout",
-      "value": "3600",
-      "index": true
-    }
-  ]
-}
-```
-
-### UpdatedParams
-
-Emitted when module parameters are updated through governance.
-
-**Type:** `update_params`
-
-#### Attributes
-
-| Attribute | Type | Description |
-|-----------|------|-------------|
-| `authority` | string | The governance account that initiated the update |
-| `msg_submit_tx_max_messages` | string | The new maximum messages per transaction |
-| `register_fee` | string | The new registration fee requirement |
+For specific event monitoring, refer to the IBC and ICA documentation in the Cosmos SDK.
 
 ## State
 
@@ -560,21 +450,26 @@ For complete implementation examples, refer to:
 
 ## Error Codes
 
-Common error codes returned by the module:
+Error codes returned by the module:
 
-| Code | Description |
-|------|-------------|
-| `1` | Invalid account address |
-| `2` | Invalid ICA owner |
-| `3` | Invalid interchain account ID |
-| `4` | Connection not found |
-| `5` | Channel not found |
-| `6` | Insufficient fees |
-| `7` | Too many messages in transaction |
+| Code | Error | Description |
+|------|-------|-------------|
+| `1100` | `ErrInvalidICAOwner` | Invalid interchain account interchainAccountID |
+| `1101` | `ErrInvalidAccountAddress` | Invalid account address |
+| `1102` | `ErrInterchainAccountNotFound` | Interchain account not found |
+| `1103` | `ErrNotContract` | Not a contract |
+| `1104` | `ErrEmptyInterchainAccountID` | Empty interchain account id |
+| `1105` | `ErrEmptyConnectionID` | Empty connection id |
+| `1106` | `ErrNoMessages` | No messages provided |
+| `1107` | `ErrInvalidTimeout` | Invalid timeout |
+| `1108` | `ErrInvalidPayerFee` | Invalid payer feerefunder |
+| `1109` | `ErrLongInterchainAccountID` | Interchain account id is too long |
+| `1110` | `ErrInvalidType` | Invalid type |
 
 ## Constants
 
 | Constant | Value | Description |
 |----------|-------|-------------|
 | `ConsensusVersion` | `2` | Current consensus version |
-| `Delimiter` | `"."` | Delimiter used in port ID construction | 
+| `Delimiter` | `"."` | Delimiter used in port ID construction |
+| `ModuleName` | `"interchaintxs"` | Module name identifier | 
