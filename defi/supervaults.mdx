@@ -24,70 +24,6 @@ Unlike traditional yield vaults or static liquidity pools, Supervaults actively 
   </Card>
 </CardGroup>
 
-## How Supervaults Work
-
-Supervaults integrate with Neutron's core modules to enable continuous, trustless operation:
-
-### User Flows
-
-<CardGroup cols={2}>
-  <Card title="Deposit Process" icon="wallet" iconType="duotone">
-    Users deposit paired tokens (token0 and token1) and receive LP shares minted via Neutron's token factory module, representing their proportional claim on the vault's total value.
-  </Card>
-  
-  <Card title="Withdrawal Process" icon="money-bill-transfer" iconType="duotone">
-    Users redeem LP shares to withdraw their proportional share of vault assets. The vault handles complex DEX position management automatically during withdrawals.
-  </Card>
-</CardGroup>
-
-### Automated Rebalancing with Cron and Slinky Oracle
-
-<CardGroup cols={3}>
-  <Card title="Slinky Oracle Integration" icon="globe" iconType="duotone">
-    Supervaults leverage Neutron's Slinky price oracle to fetch fresh price data for precise rebalancing calculations and liquidity positioning.
-  </Card>
-  
-  <Card title="Two-Phase Rebalancing" icon="clock" iconType="duotone">
-    The Cron module triggers a two-phase rebalancing process each block: first withdrawing all active positions, then redeploying liquidity based on current market conditions.
-  </Card>
-  
-  <Card title="Multi-Tier Deployment" icon="layer-group" iconType="duotone">
-    Liquidity is strategically deployed across different price ranges and fee tiers, optimizing for both capital efficiency and fee generation.
-  </Card>
-</CardGroup>
-
-### Technical Architecture
-
-```mermaid
-graph TD
-    A[User Deposits Token0 & Token1] --> B[Supervault Contract]
-    B --> C[Mint LP Shares via Token Factory]
-    C --> D[User Receives LP Shares]
-    
-    E[Cron Module] --> F[dex_withdrawal Function]
-    F --> G[Withdraw All Active DEX Positions]
-    G --> H[dex_deposit Function]
-    
-    I[Slinky Oracle] --> H
-    H --> J[Calculate Target Tick & Fee Tiers]
-    J --> K[Deploy Liquidity via MsgDeposit]
-    K --> L[Duality DEX Positions]
-    
-    L --> M[Generate Trading Fees]
-    M --> B
-    
-    N[User Withdraws] --> O[Burn LP Shares]
-    O --> B
-    B --> P[Return Proportional Assets]
-```
-
-The complete rebalancing flow works as follows:
-
-1. **dex_withdrawal()**: Each block, Cron first triggers withdrawal of all active DEX positions owned by the vault
-2. **dex_deposit()**: Immediately after, it fetches fresh prices from Slinky oracle and recomputes optimal liquidity deployment
-3. **Strategic Positioning**: Based on fee tier allocation, token imbalance, and configured parameters, liquidity is deployed across multiple price ranges
-4. **Full Custody**: The vault maintains complete custody of all funds throughout the process
-
 ## Capital Efficiency Advantages
 
 Supervaults achieve exceptional capital efficiency through several mechanisms:
@@ -163,6 +99,45 @@ Supervaults achieve exceptional capital efficiency through several mechanisms:
   </table>
 </div>
 
+## How Supervaults Work
+
+Supervaults integrate with Neutron's core modules to enable continuous, trustless operation:
+
+### User Flows
+
+<CardGroup cols={2}>
+  <Card title="Deposit Process" icon="wallet" iconType="duotone">
+    Users deposit paired tokens (token0 and token1) and receive LP shares minted via Neutron's token factory module, representing their proportional claim on the vault's total value.
+  </Card>
+  
+  <Card title="Withdrawal Process" icon="money-bill-transfer" iconType="duotone">
+    Users redeem LP shares to withdraw their proportional share of vault assets. The vault handles complex DEX position management automatically during withdrawals.
+  </Card>
+</CardGroup>
+
+### Automated Rebalancing with Cron and Slinky Oracle
+
+<CardGroup cols={3}>
+  <Card title="Slinky Oracle Integration" icon="globe" iconType="duotone">
+    Supervaults leverage Neutron's Slinky price oracle to fetch fresh price data for precise rebalancing calculations and liquidity positioning.
+  </Card>
+  
+  <Card title="Two-Phase Rebalancing" icon="clock" iconType="duotone">
+    The Cron module triggers a two-phase rebalancing process each block: first withdrawing all active positions, then redeploying liquidity based on current market conditions.
+  </Card>
+  
+  <Card title="Multi-Tier Deployment" icon="layer-group" iconType="duotone">
+    Liquidity is strategically deployed across different price ranges and fee tiers, optimizing for both capital efficiency and fee generation.
+  </Card>
+</CardGroup>
+
+The complete rebalancing flow works as follows:
+
+1. **dex_withdrawal()**: Each block, Cron first triggers withdrawal of all active DEX positions owned by the vault
+2. **dex_deposit()**: Immediately after, it fetches fresh prices from Slinky oracle and recomputes optimal liquidity deployment
+3. **Strategic Positioning**: Based on fee tier allocation, token imbalance, and configured parameters, liquidity is deployed across multiple price ranges
+4. **Full Custody**: The vault maintains complete custody of all funds throughout the process
+
 ## Get Started with Supervaults
 
 <CardGroup cols={3}>
@@ -178,6 +153,37 @@ Supervaults achieve exceptional capital efficiency through several mechanisms:
     Execute large trades with minimal price impact thanks to concentrated liquidity
   </Card>
 </CardGroup>
+
+## Technical Architecture
+
+```mermaid
+graph TD
+    A[User Deposits Token0 & Token1] --> B[Supervault Contract]
+    B --> C[Mint LP Shares via Token Factory]
+    C --> D[User Receives LP Shares]
+    
+    E[Cron Module] --> F[dex_withdrawal Function]
+    F --> G[Withdraw All Active DEX Positions]
+    G --> H[dex_deposit Function]
+    
+    I[Slinky Oracle] --> H
+    H --> J[Calculate Target Tick & Fee Tiers]
+    J --> K[Deploy Liquidity via MsgDeposit]
+    K --> L[Duality DEX Positions]
+    
+    L --> M[Generate Trading Fees]
+    M --> B
+    
+    N[User Withdraws] --> B
+    B --> O[Burn LP Shares]
+    O --> P[Return Proportional Assets]
+    
+    classDef depositFlow fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef withdrawalFlow fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    
+    class A,C,D depositFlow
+    class N,O,P withdrawalFlow
+```
 
 <div className="p-4 border-l-4 border-primary bg-primary/5 rounded my-6">
   <strong>Technical Implementation:</strong> Supervaults represent the cutting edge of automated market making, combining Neutron's integrated modules (Cron, Slinky Oracle, Token Factory, and Duality DEX) into a unified liquidity management system that operates trustlessly without external dependencies.
