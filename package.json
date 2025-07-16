@@ -3,9 +3,14 @@
   "version": "1.0.0",
   "description": "Neutron blockchain documentation",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "mintlify dev",
-    "broken-links": "mintlify broken-links"
+    "broken-links": "mintlify broken-links",
+    "mcp-server": "node mcp-server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.4.0"
   },
   "devDependencies": {
     "mintlify": "^4.0.0"

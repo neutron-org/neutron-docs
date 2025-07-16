@@ -1,0 +1,73 @@
+NEUTRON DOCS MCP SERVER
+========================
+
+Intelligent search across all Neutron blockchain documentation via MCP.
+Access comprehensive guides, tutorials, module references, and APIs.
+
+QUICK SETUP
+-----------
+git clone https://github.com/clydenewt/docs
+cd docs && ./install-mcp.sh
+
+CLAUDE DESKTOP CONFIG
+---------------------
+Add to config file:
+• macOS: ~/Library/Application Support/Claude/claude_desktop_config.json
+• Windows: %APPDATA%/Claude/claude_desktop_config.json
+
+{
+  "mcpServers": {
+    "neutron-docs": {
+      "command": "node",
+      "args": ["/absolute/path/to/docs/mcp-server.js"],
+      "cwd": "/absolute/path/to/docs"
+    }
+  }
+}
+
+SEARCH TOOL
+-----------
+search(query, section?, max_results?)
+
+Parameters:
+• query: "your search terms" (required)
+• section: developers|operators|resources|concepts|defi|all (optional)
+• max_results: 1-50 (default: 10)
+
+COVERAGE
+--------
+✓ Developer guides & tutorials ✓ Module APIs & references
+✓ Validator & operator setup   ✓ Network resources & contracts
+✓ Core concepts & tokenomics   ✓ DeFi protocols & applications
+✓ Smart contract development   ✓ IBC & interchain features
+
+EXAMPLE QUERIES
+---------------
+"How do interchain transactions work?"
+"Setting up IBC callbacks and sudo handlers"
+"Neutron validator requirements and setup"
+"CosmWasm smart contract deployment"
+"Fee structure and gas optimization"
+"Token factory module usage"
+"Dex liquidity pools and AMM concepts"
+"Cron module for scheduled tasks"
+"Oracle integration and data feeds"
+"Governance proposals and voting"
+
+FEATURES
+--------
+• Searches 500+ documentation files
+• Intelligent relevance scoring
+• Context snippets with line numbers
+• Section-specific filtering
+• Title and content matching
+• Configurable result limits
+
+TROUBLESHOOTING
+--------------
+• No results? Try broader terms or different sections
+• Path issues? Use absolute paths in config
+• Permission errors? Run: chmod +x mcp-server.js
+• Dependencies? Run: npm install
+
+Source: https://github.com/clydenewt/docs 
