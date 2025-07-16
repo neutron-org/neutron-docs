@@ -93,17 +93,17 @@ let msg = create_submit_tx_msg(
 
 ### Ensuring Your Fees Are Sufficient
 
-The chain enforces minimum fees for IBC operations, which can be queried:
+The chain enforces minimum fees for IBC operations, which can be queried through the params endpoint:
 
 ```rust
-// Query the minimum required fees
-let min_fee: QueryMinFeeResponse = deps.querier.query(
-    &QueryRequest::Custom(NeutronQuery::FeerefunderMinFee {})
+// Query the module parameters to get minimum required fees
+let params: QueryParamsResponse = deps.querier.query(
+    &QueryRequest::Custom(NeutronQuery::FeerefunderParams {})
 )?;
 
 // Use these values to ensure your fees are sufficient
-let min_ack_fee = min_fee.min_fee.ack_fee;
-let min_timeout_fee = min_fee.min_fee.timeout_fee;
+let min_ack_fee = params.params.min_fee.ack_fee;
+let min_timeout_fee = params.params.min_fee.timeout_fee;
 ```
 
 Remember that:
@@ -158,42 +158,35 @@ Example output:
 
 ### Updating Minimum Fees
 
-To propose changing the minimum required fees:
-
-```bash
-neutrond tx gov submit-proposal param-change proposal.json --from=<key> --chain-id=<chain-id>
-```
-
-Where `proposal.json` would contain:
+To propose changing the minimum required fees through governance using `MsgUpdateParams`:
 
 ```json
 {
-  "title": "Fee Refunder Parameter Change",
-  "description": "Update the minimum IBC fees required",
-  "changes": [
-    {
-      "subspace": "feerefunder",
-      "key": "MinFee",
-      "value": {
-        "ack_fee": [
-          {
-            "denom": "untrn",
-            "amount": "2000"
-          }
-        ],
-        "timeout_fee": [
-          {
-            "denom": "untrn",
-            "amount": "1500"
-          }
-        ],
-        "recv_fee": []
-      }
+  "@type": "/neutron.feerefunder.MsgUpdateParams",
+  "authority": "neutron1...", // governance authority address
+  "params": {
+    "min_fee": {
+      "ack_fee": [
+        {
+          "denom": "untrn",
+          "amount": "2000"
+        }
+      ],
+      "timeout_fee": [
+        {
+          "denom": "untrn",
+          "amount": "1500"
+        }
+      ],
+      "recv_fee": []
     }
-  ],
-  "deposit": "1000000untrn"
+  }
 }
 ```
+
+<Note>
+This message can only be executed through governance proposals, not directly by individual users.
+</Note>
 
 ## Querying Fee Information
 
@@ -202,7 +195,7 @@ Where `proposal.json` would contain:
 To query the fees associated with a specific IBC packet:
 
 ```bash
-neutrond query feerefunder fee-info <port-id> <channel-id> <sequence>
+neutrond query feerefunder fee-info [port_id] [channel_id] [sequence]
 ```
 
 Example:
@@ -210,15 +203,7 @@ Example:
 neutrond query feerefunder fee-info transfer channel-0 123
 ```
 
-### Listing All Fee Information
 
-To list all currently stored fee information:
-
-```bash
-neutrond query feerefunder all-fee-info
-```
-
-This can be useful for monitoring locked fees and ensuring the system is functioning properly.
 
 ## Monitoring Fee Refunder Events
 

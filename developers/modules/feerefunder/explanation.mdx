@@ -1,5 +1,5 @@
 ---
-title: "Mechanism"
+title: "Explanation"
 ---
 
 This document explains the principles, architecture, and internal mechanisms of the Fee Refunder module.
@@ -76,31 +76,12 @@ When a smart contract sends an IBC packet (via `MsgTransfer` or `MsgSubmitTx`), 
 2. Locks the total fee amount (ack_fee + timeout_fee) in the module's account
 3. Stores the fee information associated with the packet ID
 
-```go
-func (k Keeper) LockFees(ctx context.Context, payer sdk.AccAddress, packetID types.PacketID, fee types.Fee) error {
-    // Validate fees against minimum required
-    if err := k.checkFees(ctx, fee); err != nil {
-        return errors.Wrapf(err, "failed to lock fees")
-    }
-
-    // Store fee information
-    feeInfo := types.FeeInfo{
-        Payer:    payer.String(),
-        Fee:      fee,
-        PacketId: packetID,
-    }
-    k.StoreFeeInfo(ctx, feeInfo)
-
-    // Transfer fees to module account
-    if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, payer, types.ModuleName, fee.Total()); err != nil {
-        return errors.Wrapf(err, "failed to send coins during fees locking")
-    }
-
-    // Emit events
-    // ...
-    return nil
-}
-```
+**Core Logic (simplified):**
+1. Validate the channel exists
+2. Check fees meet minimum requirements  
+3. Store fee information with packet ID
+4. Transfer total fees to module account
+5. Emit lock_fees event
 
 ### Fee Distribution for Acknowledgements
 
@@ -111,29 +92,12 @@ When an IBC acknowledgement is received, the module:
 3. Returns the timeout fee to the original payer (smart contract)
 4. Removes the fee information from storage
 
-```go
-func (k Keeper) DistributeAcknowledgementFee(ctx context.Context, receiver sdk.AccAddress, packetID types.PacketID) {
-    // Retrieve fee info
-    feeInfo, err := k.GetFeeInfo(ctx, packetID)
-    if err != nil {
-        panic(errors.Wrapf(err, "no fee info"))
-    }
-
-    // Distribute ack fee to relayer
-    if err := k.distributeFee(ctx, receiver, feeInfo.Fee.AckFee); err != nil {
-        panic(errors.Wrapf(err, "error distributing ack fee"))
-    }
-
-    // Return unused timeout fee to original payer
-    if err := k.distributeFee(ctx, sdk.MustAccAddressFromBech32(feeInfo.Payer), feeInfo.Fee.TimeoutFee); err != nil {
-        panic(errors.Wrapf(err, "error distributing unused timeout fee"))
-    }
-
-    // Emit events and clean up
-    // ...
-    k.removeFeeInfo(ctx, packetID)
-}
-```
+**Core Logic:**
+1. Retrieve stored fee information for the packet
+2. Send acknowledgement fee to the relayer
+3. Return unused timeout fee to original payer
+4. Emit distribute_ack_fee event
+5. Remove fee information from storage
 
 ### Fee Distribution for Timeouts
 
@@ -144,29 +108,12 @@ When an IBC timeout is received, the module:
 3. Returns the acknowledgement fee to the original payer (smart contract)
 4. Removes the fee information from storage
 
-```go
-func (k Keeper) DistributeTimeoutFee(ctx context.Context, receiver sdk.AccAddress, packetID types.PacketID) {
-    // Retrieve fee info
-    feeInfo, err := k.GetFeeInfo(ctx, packetID)
-    if err != nil {
-        panic(errors.Wrapf(err, "no fee info"))
-    }
-
-    // Distribute timeout fee to relayer
-    if err := k.distributeFee(ctx, receiver, feeInfo.Fee.TimeoutFee); err != nil {
-        panic(errors.Wrapf(err, "error distributing timeout fee"))
-    }
-
-    // Return unused ack fee to original payer
-    if err := k.distributeFee(ctx, sdk.MustAccAddressFromBech32(feeInfo.Payer), feeInfo.Fee.AckFee); err != nil {
-        panic(errors.Wrapf(err, "error distributing unused ack fee"))
-    }
-
-    // Emit events and clean up
-    // ...
-    k.removeFeeInfo(ctx, packetID)
-}
-```
+**Core Logic:**
+1. Retrieve stored fee information for the packet
+2. Send timeout fee to the relayer
+3. Return unused acknowledgement fee to original payer
+4. Emit distribute_timeout_fee event
+5. Remove fee information from storage
 
 ### Minimum Fee Enforcement
 
@@ -176,22 +123,11 @@ To prevent spam and ensure relayers are properly compensated, the module enforce
 2. The `checkFees` function validates that provided fees meet or exceed these minimums
 3. Transactions with insufficient fees are rejected
 
-```go
-func (k Keeper) checkFees(ctx sdk.Context, fees types.Fee) error {
-    params := k.GetParams(ctx)
-
-    if !fees.TimeoutFee.IsAnyGTE(params.MinFee.TimeoutFee) {
-        return errors.Wrapf(sdkerrors.ErrInsufficientFee, "provided timeout fee is less than min governance set timeout fee")
-    }
-
-    if !fees.AckFee.IsAnyGTE(params.MinFee.AckFee) {
-        return errors.Wrapf(sdkerrors.ErrInsufficientFee, "provided ack fee is less than min governance set ack fee")
-    }
-
-    // Additional validations...
-    return nil
-}
-```
+**Fee Validation:**
+1. Timeout fee must meet or exceed minimum governance-set timeout fee
+2. Acknowledgement fee must meet or exceed minimum governance-set ack fee  
+3. Fee denominations must be allowed (present in minimum fee parameters)
+4. Receive fee must be zero (not supported)
 
 ## Compatibility with ICS-29
 
