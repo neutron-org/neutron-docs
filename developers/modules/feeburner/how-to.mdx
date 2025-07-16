@@ -57,32 +57,7 @@ curl -X GET "http://localhost:1317/neutron/feeburner/total_burned_neutrons_amoun
 
 ### Updating Module Parameters
 
-The module parameters can be updated through governance proposals. Here's how to submit a parameter change proposal:
-
-```bash
-neutrond tx gov submit-proposal param-change proposal.json --from=<key> --chain-id=<chain-id>
-```
-
-Where `proposal.json` would contain:
-
-```json
-{
-  "title": "Fee Burner Parameter Change",
-  "description": "Update the treasury address for non-NTRN fee distribution",
-  "changes": [
-    {
-      "subspace": "feeburner",
-      "key": "TreasuryAddress",
-      "value": "neutron1..."
-    }
-  ],
-  "deposit": "1000000untrn"
-}
-```
-
-### Direct Governance Message
-
-Parameter updates can also be submitted as direct governance messages in proposals:
+The module parameters can be updated through governance proposals using the `MsgUpdateParams` message:
 
 ```json
 {
@@ -151,22 +126,6 @@ To monitor fee burning activities, you can:
 2. Create visualizations that show the deflationary impact on NTRN supply
 3. Build alerts for significant burning events
 
-### Example Monitoring Query
-
-Using an indexed database like PostgreSQL with a Cosmos SDK indexer:
-
-```sql
-SELECT 
-  DATE_TRUNC('day', block_timestamp) AS day,
-  SUM(amount) AS burned_amount
-FROM events
-WHERE 
-  event_type = 'burn' AND
-  attributes->>'denom' = 'untrn' AND
-  module = 'feeburner'
-GROUP BY DATE_TRUNC('day', block_timestamp)
-ORDER BY day;
-```
 
 ## Understanding Fee Impact
 
