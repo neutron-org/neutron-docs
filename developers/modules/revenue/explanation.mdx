@@ -1,5 +1,5 @@
 ---
-title: "Mechanism"
+title: "Explanation"
 ---
 
 The Revenue module provides a comprehensive system for compensating validators based on their performance. This module operates alongside the traditional staking rewards, offering additional incentives tied directly to metrics that measure validator reliability and service quality.
@@ -10,13 +10,14 @@ The Revenue module's primary responsibility is to assess validator performance, 
 
 ```mermaid
 graph TD
-    A[PreBlock Hook] --> B[Record Performance]
-    A --> C[Calculate Asset Price]
-    A --> D[Check Payment Period]
-    D -->|Period Ended| E[Distribute Rewards]
-    D -->|Period Active| F[Continue Monitoring]
-    E --> G[Reset Performance]
-    E --> H[Start New Period]
+    A[PreBlock Hook] --> B[Update Reward Asset Price]
+    A --> C[Process Extended Commit Info]
+    A --> D[Check Payment Schedule]
+    C --> E[Record Validator Participation]
+    D -->|Period Ended| F[Process Revenue Distribution]
+    D -->|Period Active| G[Continue Monitoring]
+    F --> H[Reset Validator Stats]
+    F --> I[Start New Period]
 ```
 
 ## Performance Assessment
@@ -86,7 +87,7 @@ The payment schedule is stored in two components:
 
 When a payment period ends, the module:
 1. Calculates each validator's performance rating
-2. Determines the reward amount in the compensation asset
+2. Determines the reward amount in the reward asset
 3. Transfers rewards to eligible validators
 4. Resets performance metrics for the new period
 
@@ -101,7 +102,7 @@ Rewards are defined in USD terms but paid in the token specified in module param
 The TWAP calculation follows:
 
 ```
-TWAP_N = (CumulativePrice_now - CumulativePrice_now-N) / (Timestamp_now - Timestamp_now-N)
+TWAP = (CumulativePrice_now - CumulativePrice_window_start) / (Timestamp_now - Timestamp_window_start)
 ```
 
 ## Treasury Management
