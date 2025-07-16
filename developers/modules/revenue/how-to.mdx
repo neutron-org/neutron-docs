@@ -11,13 +11,13 @@ You can query a validator's current performance metrics to understand their rewa
 ### Using CLI
 
 ```bash
-neutron query revenue validator-stats <validator_address>
+neutron query revenue validator-stats [val-oper-addr]
 ```
 
 ### Using REST
 
 ```
-GET /neutron/revenue/validator_stats
+GET /neutron/revenue/validator_stats?val_oper_address=neutronvaloper1...
 ```
 
 Example response:
@@ -26,8 +26,8 @@ Example response:
   "stats": {
     "validator_info": {
       "val_oper_address": "neutronvaloper1...",
-      "commited_blocks_in_period": 980,
-      "commited_oracle_votes_in_period": 950,
+      "committed_blocks_in_period": 980,
+      "committed_oracle_votes_in_period": 950,
       "in_active_valset_for_blocks_in_period": 1000
     },
     "total_produced_blocks_in_period": 1000,
@@ -172,7 +172,7 @@ Parameters can be updated through governance proposals using MsgUpdateParams.
 ### Using CLI to Submit a Parameter Update Proposal
 
 ```bash
-neutron tx gov submit-proposal update-params proposal.json --from=<key_name> --chain-id=<chain-id>
+neutron tx gov submit-proposal proposal.json --from=<key_name> --chain-id=<chain-id>
 ```
 
 Example proposal.json:
@@ -216,6 +216,10 @@ EVENT revenue_distribution
     validator: neutronvaloper1...
     revenue_amount: 1900000000untrn
     performance_rating: 0.950000000000000000
+    in_active_valset_for_blocks_in_period: 1000
+    committed_blocks_in_period: 980
+    committed_oracle_votes_in_period: 950
+    total_block_in_period: 1000
     effective_period_progress: 1.000000000000000000
 ```
 
