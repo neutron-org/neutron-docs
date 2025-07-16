@@ -1,27 +1,40 @@
 ---
 title: "Reference"
-description: "Technical reference for the Harpoon module"
+description: "Complete technical reference for the Harpoon module"
 ---
+
+# Harpoon Module Reference
 
 The Harpoon module allows CosmWasm smart contracts to subscribe to staking module hooks for tracking historical voting power and other staking events.
 
-## Message
+## Messages
 
 ### MsgManageHookSubscription
 
-Manages hook subscriptions for a contract address (governance only).
+Manages hook subscriptions for a contract address. Can only be executed by the module's authority (governance).
 
 ```protobuf
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // Updates hook subscriptions for a specific contract address.
+  // To remove a subscription, pass an empty array to `hook_subscription.hooks`.
+  // Can only be executed by the module's authority.
+  rpc ManageHookSubscription(MsgManageHookSubscription) returns (MsgManageHookSubscriptionResponse);
+}
+
 message MsgManageHookSubscription {
   option (cosmos.msg.v1.signer) = "authority";
   option (amino.name) = "harpoon/MsgManageHookSubscription";
 
   // Address of the governance account
-  string authority = 1;
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   
   // Hook subscription to be updated
   HookSubscription hook_subscription = 2;
 }
+
+message MsgManageHookSubscriptionResponse {}
 
 message HookSubscription {
   // Contract address to update subscriptions for
@@ -34,13 +47,25 @@ message HookSubscription {
 
 **Authority Required**: Governance only
 
-## Query
+**Behavior**: 
+- Adds the contract to specified hook types
+- Removes the contract from hook types not in the list
+- Passing an empty `hooks` array removes all subscriptions for the contract
 
-### QuerySubscribedContracts
+## Queries
+
+### SubscribedContracts
 
 Retrieves contracts subscribed to a specific hook type.
 
 ```protobuf
+service Query {
+  // Retrieves contracts subscribed to a specific hook type.
+  rpc SubscribedContracts(QuerySubscribedContractsRequest) returns (QuerySubscribedContractsResponse) {
+    option (google.api.http).get = "/neutron/harpoon/subscribed_contracts";
+  }
+}
+
 message QuerySubscribedContractsRequest {
   // The response will include only contract addresses for this hook type
   HookType hook_type = 1;
@@ -52,26 +77,208 @@ message QuerySubscribedContractsResponse {
 }
 ```
 
+**REST Endpoint**: `GET /neutron/harpoon/subscribed_contracts`
+
+## CLI Commands
+
+### Query Commands
+
+#### subscribed-contracts
+
+Lists all contracts subscribed to a given hook type.
+
+```bash
+neutrond query harpoon subscribed-contracts [hook-type]
+```
+
+**Parameters**:
+- `hook-type`: The specific hook type to query (e.g., `HOOK_TYPE_AFTER_VALIDATOR_CREATED`)
+
+**Example**:
+```bash
+neutrond query harpoon subscribed-contracts HOOK_TYPE_AFTER_VALIDATOR_CREATED
+```
+
 ## Hook Types
 
 Available staking hooks that contracts can subscribe to:
 
-- `HOOK_TYPE_AFTER_VALIDATOR_CREATED`
-- `HOOK_TYPE_BEFORE_VALIDATOR_MODIFIED`
-- `HOOK_TYPE_AFTER_VALIDATOR_REMOVED`
-- `HOOK_TYPE_AFTER_VALIDATOR_BONDED`
-- `HOOK_TYPE_AFTER_VALIDATOR_BEGIN_UNBONDING`
-- `HOOK_TYPE_BEFORE_DELEGATION_CREATED`
-- `HOOK_TYPE_BEFORE_DELEGATION_SHARES_MODIFIED`
-- `HOOK_TYPE_BEFORE_DELEGATION_REMOVED`
-- `HOOK_TYPE_AFTER_DELEGATION_MODIFIED`
-- `HOOK_TYPE_BEFORE_VALIDATOR_SLASHED`
-- `HOOK_TYPE_AFTER_UNBONDING_INITIATED`
+```protobuf
+enum HookType {
+  option (gogoproto.goproto_enum_prefix) = false;
 
-## Key Concepts
+  HOOK_TYPE_UNSPECIFIED = 0;
+  // Triggered after validator is created
+  HOOK_TYPE_AFTER_VALIDATOR_CREATED = 1;
+  // Triggered before validator is modified
+  HOOK_TYPE_BEFORE_VALIDATOR_MODIFIED = 2;
+  // Triggered after validator is removed
+  HOOK_TYPE_AFTER_VALIDATOR_REMOVED = 3;
+  // Triggered after validator is bonded
+  HOOK_TYPE_AFTER_VALIDATOR_BONDED = 4;
+  // Triggered after validator begins unbonding
+  HOOK_TYPE_AFTER_VALIDATOR_BEGIN_UNBONDING = 5;
+  // Triggered before delegation is created
+  HOOK_TYPE_BEFORE_DELEGATION_CREATED = 6;
+  // Triggered before delegation's shares are modified
+  HOOK_TYPE_BEFORE_DELEGATION_SHARES_MODIFIED = 7;
+  // Triggered before delegation is removed
+  HOOK_TYPE_BEFORE_DELEGATION_REMOVED = 8;
+  // Triggered after delegation is modified
+  HOOK_TYPE_AFTER_DELEGATION_MODIFIED = 9;
+  // Triggered before validator is slashed
+  HOOK_TYPE_BEFORE_VALIDATOR_SLASHED = 10;
+  // Triggered after unbonding is initiated
+  HOOK_TYPE_AFTER_UNBONDING_INITIATED = 11;
+}
+```
 
-- **Governance-Only Subscriptions**: Only governance can manage hook subscriptions
-- **Sudo Calls**: Subscribed contracts receive `sudo` calls when hooks trigger
-- **No Error Handling**: Contract errors can halt transactions or the chain
-- **Historical Data**: Primary use case is tracking historical voting power
-- **Storage Efficiency**: Optimized for fast hook execution 
+## Storage
+
+### Hook Subscriptions
+
+The module stores subscriptions with the following structure:
+
+```protobuf
+message HookSubscriptions {
+  // The hook type being subscribed to
+  HookType hook_type = 1;
+  // Contract addresses subscribed to this hook type
+  repeated string contract_addresses = 2;
+}
+```
+
+**Storage Layout**:
+```
+KEY: []byte("subscriptions") + BigEndian(uint32(hookType))
+VALUE: HookSubscriptions (marshaled protobuf)
+```
+
+This layout optimizes for the most frequent operation: retrieving all contracts subscribed to a specific hook type.
+
+## Genesis
+
+The module's genesis state contains all hook subscriptions:
+
+```protobuf
+message GenesisState {
+  // List of hooks
+  repeated HookSubscriptions hook_subscriptions = 1 [(gogoproto.nullable) = false];
+}
+```
+
+## Module Constants
+
+- **ModuleName**: `"harpoon"`
+- **StoreKey**: `"harpoon"`
+- **RouterKey**: `"harpoon"`
+
+## Sudo Message Formats
+
+When hooks are triggered, contracts receive specific message formats:
+
+### Validator Hooks
+
+```json
+// AfterValidatorCreated
+{
+  "after_validator_created": {
+    "val_addr": "neutronvaloper1..."
+  }
+}
+
+// BeforeValidatorModified
+{
+  "before_validator_modified": {
+    "val_addr": "neutronvaloper1..."
+  }
+}
+
+// AfterValidatorRemoved
+{
+  "after_validator_removed": {
+    "cons_addr": "neutronvalcons1...",
+    "val_addr": "neutronvaloper1..."
+  }
+}
+
+// AfterValidatorBonded
+{
+  "after_validator_bonded": {
+    "cons_addr": "neutronvalcons1...",
+    "val_addr": "neutronvaloper1..."
+  }
+}
+
+// AfterValidatorBeginUnbonding
+{
+  "after_validator_begin_unbonding": {
+    "cons_addr": "neutronvalcons1...",
+    "val_addr": "neutronvaloper1..."
+  }
+}
+
+// BeforeValidatorSlashed
+{
+  "before_validator_slashed": {
+    "val_addr": "neutronvaloper1...",
+    "fraction": "0.050000000000000000",
+    "tokens_to_burn": "1000000"
+  }
+}
+```
+
+### Delegation Hooks
+
+```json
+// BeforeDelegationCreated
+{
+  "before_delegation_created": {
+    "del_addr": "neutron1...",
+    "val_addr": "neutronvaloper1..."
+  }
+}
+
+// BeforeDelegationSharesModified
+{
+  "before_delegation_shares_modified": {
+    "del_addr": "neutron1...",
+    "val_addr": "neutronvaloper1..."
+  }
+}
+
+// BeforeDelegationRemoved
+{
+  "before_delegation_removed": {
+    "del_addr": "neutron1...",
+    "val_addr": "neutronvaloper1..."
+  }
+}
+
+// AfterDelegationModified
+{
+  "after_delegation_modified": {
+    "del_addr": "neutron1...",
+    "val_addr": "neutronvaloper1..."
+  }
+}
+```
+
+### Unbonding Hooks
+
+```json
+// AfterUnbondingInitiated
+{
+  "after_unbonding_initiated": {
+    "id": 12345
+  }
+}
+```
+
+## Key Implementation Details
+
+- **No Cached Context**: Sudo calls use the original context, ensuring state consistency
+- **Error Propagation**: Contract errors can abort transactions or halt the chain
+- **Governance-Only**: Only governance can manage hook subscriptions
+- **Special Slashing Hook**: `BeforeValidatorSlashed` panics; `BeforeValidatorSlashedWithTokensToBurn` is used instead
+- **Subscription Management**: Adding/removing hooks is done atomically per contract 

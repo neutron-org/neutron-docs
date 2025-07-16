@@ -3,7 +3,7 @@ title: "Explanation"
 description: "Technical explanation of the Harpoon module's architecture and implementation"
 ---
 
-# Harpoon Module Explained
+# Harpoon Module Explanation
 
 This document provides a technical explanation of the Harpoon module, which allows CosmWasm smart contracts to subscribe to staking module hooks.
 
@@ -13,7 +13,7 @@ The Harpoon module integrates with the Cosmos SDK staking module through its hoo
 
 ### Integration with Staking Module
 
-The Harpoon module connects to the staking module by implementing the `StakingHooks` interface defined in the Cosmos SDK. These hooks are registered in the application's initialization code (typically in `app.go`):
+The Harpoon module connects to the staking module by implementing the `StakingHooksBeforeValidatorSlashedHasTokensToBurn` interface defined in the Cosmos SDK. These hooks are registered in the application's initialization code (typically in `app.go`):
 
 ```go
 multiStakingHooks := stakingtypes.NewMultiStakingHooks(
@@ -27,115 +27,222 @@ This setup ensures that whenever the staking module executes a hook, both the sl
 
 ### Hook Types
 
-The Harpoon module supports all the hooks defined in the `StakingHooks` interface:
+The Harpoon module supports all the hooks defined in the staking interface:
 
-1. `AfterValidatorCreated`: Called after a new validator is created
-2. `BeforeValidatorModified`: Called before an existing validator is modified
-3. `AfterValidatorRemoved`: Called after a validator is removed
-4. `AfterValidatorBonded`: Called after a validator is bonded
-5. `AfterValidatorBeginUnbonding`: Called after a validator begins the unbonding process
-6. `BeforeDelegationCreated`: Called before a new delegation is created
-7. `BeforeDelegationSharesModified`: Called before an existing delegation's shares are modified
-8. `BeforeDelegationRemoved`: Called before a delegation is removed
-9. `AfterDelegationModified`: Called after a delegation is modified
-10. `BeforeValidatorSlashed`: Called before a validator is slashed
-11. `AfterUnbondingInitiated`: Called after the unbonding process is initiated
+1. **`AfterValidatorCreated`**: Called after a new validator is created
+2. **`BeforeValidatorModified`**: Called before an existing validator is modified
+3. **`AfterValidatorRemoved`**: Called after a validator is removed
+4. **`AfterValidatorBonded`**: Called after a validator is bonded
+5. **`AfterValidatorBeginUnbonding`**: Called after a validator begins the unbonding process
+6. **`BeforeDelegationCreated`**: Called before a new delegation is created
+7. **`BeforeDelegationSharesModified`**: Called before an existing delegation's shares are modified
+8. **`BeforeDelegationRemoved`**: Called before a delegation is removed
+9. **`AfterDelegationModified`**: Called after a delegation is modified
+10. **`BeforeValidatorSlashed`**: Special case - this method panics and should never be called
+11. **`BeforeValidatorSlashedWithTokensToBurn`**: The actual implementation for slashing hooks
+12. **`AfterUnbondingInitiated`**: Called after the unbonding process is initiated
+
+### Special Slashing Hook Implementation
+
+The Harpoon module implements a special version of the validator slashing hook:
+
+```go
+// BeforeValidatorSlashed is not implemented - it panics
+func (h Hooks) BeforeValidatorSlashed(_ context.Context, _ sdk.ValAddress, _ sdkmath.LegacyDec) error {
+    panic("BeforeValidatorSlashed shouldn't ever be called for neutron harpoon hooks since it has BeforeValidatorSlashedWithTokensToBurn hook")
+}
+
+// BeforeValidatorSlashedWithTokensToBurn is the actual implementation
+func (h Hooks) BeforeValidatorSlashedWithTokensToBurn(ctx context.Context, valAddr sdk.ValAddress, fraction sdkmath.LegacyDec, tokensToBurn sdkmath.Int) error {
+    // Implementation here
+}
+```
+
+This provides additional information (`tokensToBurn`) compared to the standard slashing hook.
 
 ### Contract Subscription Storage
 
-The module stores subscriptions in a way that optimizes for the most frequent operation: retrieving all contracts subscribed to a specific hook type. The storage structure is as follows:
+The module stores subscriptions in a way that optimizes for the most frequent operation: retrieving all contracts subscribed to a specific hook type. The storage structure is:
 
 ```
 KEY: []byte("subscriptions") + BigEndian(uint32(hookType))
-VALUE: HookSubscriptions (array of contract addresses)
+VALUE: HookSubscriptions {
+    hook_type: HookType,
+    contract_addresses: []string
+}
 ```
 
 This structure allows for efficient retrieval of all contracts that need to be notified when a specific hook is triggered.
 
 ## Contract Interaction
 
-When a hook is triggered, the Harpoon module calls the `sudo` method on each subscribed contract, passing the relevant data in JSON format. This approach allows contracts to implement custom logic for each hook type.
+When a hook is triggered, the Harpoon module calls the `sudo` method on each subscribed contract. Each hook type has its own specific message format.
 
-### Sudo Message Format
+### Sudo Message Formats
 
-The message sent to each contract follows this pattern:
+Each hook type uses a specific message structure. Here are the actual formats used:
+
+#### Validator Hooks
 
 ```json
+// AfterValidatorCreated
 {
-  "hook_type": "HOOK_TYPE_*",
-  "payload": {
-    // Hook-specific data
+  "after_validator_created": {
+    "val_addr": "neutronvaloper1..."
+  }
+}
+
+// BeforeValidatorModified
+{
+  "before_validator_modified": {
+    "val_addr": "neutronvaloper1..."
+  }
+}
+
+// AfterValidatorRemoved
+{
+  "after_validator_removed": {
+    "cons_addr": "neutronvalcons1...",
+    "val_addr": "neutronvaloper1..."
+  }
+}
+
+// AfterValidatorBonded
+{
+  "after_validator_bonded": {
+    "cons_addr": "neutronvalcons1...",
+    "val_addr": "neutronvaloper1..."
+  }
+}
+
+// AfterValidatorBeginUnbonding
+{
+  "after_validator_begin_unbonding": {
+    "cons_addr": "neutronvalcons1...",
+    "val_addr": "neutronvaloper1..."
+  }
+}
+
+// BeforeValidatorSlashed
+{
+  "before_validator_slashed": {
+    "val_addr": "neutronvaloper1...",
+    "fraction": "0.050000000000000000",
+    "tokens_to_burn": "1000000"
   }
 }
 ```
 
-The payload contains all relevant information about the event that triggered the hook, allowing the contract to update its state appropriately.
+#### Delegation Hooks
+
+```json
+// BeforeDelegationCreated
+{
+  "before_delegation_created": {
+    "del_addr": "neutron1...",
+    "val_addr": "neutronvaloper1..."
+  }
+}
+
+// BeforeDelegationSharesModified
+{
+  "before_delegation_shares_modified": {
+    "del_addr": "neutron1...",
+    "val_addr": "neutronvaloper1..."
+  }
+}
+
+// BeforeDelegationRemoved
+{
+  "before_delegation_removed": {
+    "del_addr": "neutron1...",
+    "val_addr": "neutronvaloper1..."
+  }
+}
+
+// AfterDelegationModified
+{
+  "after_delegation_modified": {
+    "del_addr": "neutron1...",
+    "val_addr": "neutronvaloper1..."
+  }
+}
+```
+
+#### Unbonding Hooks
+
+```json
+// AfterUnbondingInitiated
+{
+  "after_unbonding_initiated": {
+    "id": 12345
+  }
+}
+```
 
 ### Error Handling
 
-One critical aspect of the Harpoon module is its error handling approach. When a contract returns an error during a sudo call, the module does not continue execution. Instead:
+The Harpoon module implements strict error handling. When a contract returns an error during a sudo call, the module does not continue execution:
 
-- For hooks triggered during transaction processing, the error is returned, potentially aborting the transaction
-- For hooks triggered during block processing (like validator slashing), the error can potentially halt the chain
+```go
+// From the actual implementation
+for _, contractAddress := range contractAddresses {
+    // No cached context - errors affect the original operation
+    accContractAddress, err := sdk.AccAddressFromBech32(contractAddress)
+    if err != nil {
+        return errors.Wrapf(err, "could not parse acc address from bech32")
+    }
+    _, err = k.wasmKeeper.Sudo(sdkCtx, accContractAddress, msgJSONBz)
+    if err != nil {
+        return errors.Wrapf(err, "could not execute sudo call successfully")
+    }
+}
+```
 
-This design choice ensures that the contract's state remains consistent with the staking module's state. Contracts must be designed to handle all possible hook inputs without returning errors to prevent chain disruptions.
+This means:
+- **Transaction hooks**: Error aborts the transaction
+- **End-blocker hooks**: Error can halt the chain
+
+This design choice ensures that contract state remains consistent with the staking module's state.
 
 ## Governance Control
 
-The Harpoon module only allows subscription management through governance proposals. This restriction ensures that only carefully vetted contracts can subscribe to hooks, reducing the risk of chain disruption due to faulty contract code.
+The Harpoon module only allows subscription management through governance proposals. The `ManageHookSubscription` message can only be executed by the module's authority (governance).
 
-### Subscription Management
+### Subscription Management Process
 
-The `ManageHookSubscription` message, which can only be executed by the module's authority (typically governance), allows:
+The `UpdateHookSubscription` method handles subscription changes:
 
-- Adding new hook subscriptions for a contract
-- Updating existing subscriptions by adding or removing hook types
-- Removing all subscriptions for a contract by passing an empty list of hooks
+1. **Determine hooks to remove**: Any hook not in the new subscription list
+2. **Add new subscriptions**: Add the contract to each requested hook type
+3. **Remove old subscriptions**: Remove the contract from hooks no longer requested
+4. **Clean up empty subscriptions**: Delete storage entries with no subscribed contracts
 
-## Rationale for Design Choices
-
-Several key design decisions shaped the Harpoon module:
+## Design Rationale
 
 ### Why Not Direct Queries?
 
-The primary purpose of the Harpoon module is to enable contracts to track historical voting power from the staking module. This cannot be achieved through direct queries because the staking module does not store historical data. By subscribing to hooks, contracts can maintain their own historical records.
+The staking module does not store historical data. By subscribing to hooks, contracts can maintain their own historical records, enabling governance systems to calculate voting power at specific block heights.
 
 ### Why Governance-Only Subscriptions?
 
-Allowing any contract to subscribe to staking hooks would create significant security and performance risks:
-
-1. Malicious contracts could deliberately return errors to disrupt chain operations
-2. Poorly implemented contracts might unintentionally cause chain halts
-3. Too many subscribed contracts could impact performance during hook execution
-
-By requiring governance approval, the community can review contract code and ensure it meets the necessary safety standards.
+Security and performance considerations:
+- Malicious contracts could deliberately return errors to disrupt operations
+- Poorly implemented contracts might unintentionally cause chain halts
+- Too many subscribed contracts could impact performance
 
 ### Why No Cached Context?
 
-The module does not use a cached context when calling sudo on contracts, meaning any state changes or errors from the contract directly impact the original operation. This design ensures data consistency between the staking module and subscribed contracts. If a cached context were used, contract state could become inconsistent with staking state if the original transaction fails.
-
-## Use Cases
-
-The Harpoon module enables several important use cases:
-
-### Historical Voting Power Tracking
-
-The primary use case is allowing governance contracts to track historical voting power. By subscribing to delegation-related hooks, a contract can maintain a record of each account's voting power at different points in time, enabling accurate governance votes based on historical stake.
-
-### Staking Rewards Distribution
-
-Contracts can use delegation hooks to track staking activities and distribute rewards accordingly. This enables custom reward distribution mechanisms that depend on staking behavior.
-
-### Validator Monitoring
-
-By subscribing to validator-related hooks, contracts can implement custom logic for monitoring validator performance and status changes, potentially for automated decision-making.
+The module uses the original context (not cached) when calling sudo on contracts. This ensures:
+- State consistency between staking module and subscribed contracts
+- If the original transaction fails, contract state changes are also rolled back
+- Contracts can directly impact the success/failure of staking operations
 
 ## Performance Considerations
 
-The performance impact of the Harpoon module depends on:
+Performance depends on:
+1. **Number of subscribed contracts per hook**: Each hook calls sudo on all subscribed contracts
+2. **Contract complexity**: More complex contract logic increases execution time
+3. **Staking operation frequency**: More frequent operations mean more hook executions
 
-1. The number of contracts subscribed to each hook type
-2. The complexity of the logic implemented in each contract
-3. The frequency with which staking operations occur
-
-Since each hook execution requires calling the `sudo` method on all subscribed contracts, operations that trigger hooks may become more expensive in terms of gas consumption. Developers should consider this when designing systems that rely heavily on staking operations. 
+Gas consumption for staking operations increases with the number of subscribed contracts and their complexity. 

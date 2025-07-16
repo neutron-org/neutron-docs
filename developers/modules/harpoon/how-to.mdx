@@ -135,21 +135,8 @@ pub struct AfterUnbondingInitiatedMsg {
     pub id: u64,
 }
 
-// Union type for all possible sudo messages
-#[cw_serde]
-pub enum HarpoonSudoMsg {
-    AfterValidatorCreated(AfterValidatorCreatedMsg),
-    AfterValidatorBonded(AfterValidatorBondedMsg),
-    AfterValidatorRemoved(AfterValidatorRemovedMsg),
-    AfterValidatorBeginUnbonding(AfterValidatorBeginUnbondingMsg),
-    BeforeValidatorModified(BeforeValidatorModifiedMsg),
-    BeforeValidatorSlashed(BeforeValidatorSlashedMsg),
-    BeforeDelegationCreated(BeforeDelegationCreatedMsg),
-    BeforeDelegationSharesModified(BeforeDelegationSharesModifiedMsg),
-    BeforeDelegationRemoved(BeforeDelegationRemovedMsg),
-    AfterDelegationModified(AfterDelegationModifiedMsg),
-    AfterUnbondingInitiated(AfterUnbondingInitiatedMsg),
-}
+// Note: The Harpoon module sends individual message types, not a union enum.
+// Each hook type has its own specific message structure as shown above.
 ```
 
 ### Step 2: Implement Sudo Handler

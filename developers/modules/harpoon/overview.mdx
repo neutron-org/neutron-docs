@@ -5,50 +5,46 @@ description: "Subscribe to staking module hooks from CosmWasm smart contracts"
 
 # Overview
 
-This document explains the `harpoon` module for the Neutron network.
-
-Harpoon allows CosmWasm smart contracts to subscribe to staking module hooks. Its primary purpose is to enable the calculation of historical voting power from the staking module, which is essential for governance systems that rely on historical data. The module can also be used for other staking-related functionality in smart contracts.
+The Harpoon module allows CosmWasm smart contracts to subscribe to staking module hooks. Its primary purpose is to enable the calculation of historical voting power from the staking module, which is essential for governance systems that rely on historical data at specific block heights.
 
 ## Table of contents
 
 - [Overview](/developers/modules/harpoon/overview) — a high-level description of the module.
 - [Explanation](/developers/modules/harpoon/explanation) — an explanation of the module's concepts and the reasoning behind its design choices.
-- [How To](/developers/modules/harpoon/how-to) — short guides on performing basic operations with the module.
-- [Known Bugs](/developers/modules/harpoon/known-bugs) — a list of known issues in the module.
-- [API](/developers/modules/harpoon/api) — details about the module's interface, including endpoints, message models, and emitted events.
+- [How-to](/developers/modules/harpoon/how-to) — short guides on performing basic operations with the module.
+- [Reference](/developers/modules/harpoon/reference) — details about the module's interface, including messages, queries, and hook types.
 
 ## Concepts
 
-The Harpoon module acts as a bridge between the staking module's hooks and CosmWasm smart contracts. When staking-related events occur (such as delegations, unbondings, or validator changes), the module notifies subscribed contracts, allowing them to react accordingly.
+The Harpoon module acts as a bridge between the staking module's hooks and CosmWasm smart contracts. When staking-related events occur (such as delegations, unbondings, or validator changes), the module notifies subscribed contracts via `sudo` calls, allowing them to maintain historical records.
 
 ### Why Harpoon is Needed
 
 Standard CosmWasm contracts cannot directly query historical staking data. While contracts can query current staking information, they cannot access data from previous block heights. This limitation is particularly problematic for governance systems that need to determine voting power at the time a proposal was created.
 
-Harpoon solves this by allowing contracts to subscribe to staking events and maintain their own historical records, enabling accurate historical voting power calculations and other time-sensitive staking operations.
+Harpoon solves this by allowing contracts to subscribe to staking events and maintain their own historical records, enabling accurate historical voting power calculations.
 
 ### Subscription Mechanism
 
-Subscriptions to staking hooks can only be created through governance proposals. This restriction ensures that only thoroughly vetted contracts can receive these notifications, preventing potential spam or security issues.
+Subscriptions to staking hooks can **only** be created through governance proposals using the `ManageHookSubscription` message. This restriction ensures that only thoroughly vetted contracts can receive these notifications, preventing potential spam or security issues.
 
 ### Available Hooks
 
-Harpoon supports all the hooks provided by the Cosmos SDK staking module, including:
+Harpoon supports all the hooks provided by the Cosmos SDK staking module:
 
-- Validator creation, modification, and removal events
-- Validator bonding and unbonding events
-- Delegation creation, modification, and removal events
-- Slashing events
-- Unbonding initiation events
+- **Validator Hooks**: `AfterValidatorCreated`, `BeforeValidatorModified`, `AfterValidatorRemoved`, `AfterValidatorBonded`, `AfterValidatorBeginUnbonding`
+- **Delegation Hooks**: `BeforeDelegationCreated`, `BeforeDelegationSharesModified`, `BeforeDelegationRemoved`, `AfterDelegationModified`
+- **Slashing Hooks**: `BeforeValidatorSlashed` (implemented as `BeforeValidatorSlashedWithTokensToBurn`)
+- **Unbonding Hooks**: `AfterUnbondingInitiated`
 
-## Hook Execution
+## Hook Execution Model
 
-When a staking event occurs, the Harpoon module executes a `sudo` call on each subscribed contract. These calls are performed in the same context as the original operation, meaning:
+When a staking event occurs, the Harpoon module executes a `sudo` call on each subscribed contract. These calls are performed in the **same context** as the original operation (no cached context), meaning:
 
-- Hooks triggered by transactions can abort those transactions if the contract returns an error
-- Hooks triggered by end-blockers can potentially halt the chain if the contract returns an error
+- **Transaction Hooks**: Can abort the transaction if the contract returns an error
+- **End-Blocker Hooks**: Can potentially halt the chain if the contract returns an error
 
-For this reason, contracts that subscribe to Harpoon hooks must be carefully designed to handle all possible scenarios without errors.
+This design ensures state consistency between the staking module and subscribed contracts, but requires contracts to be extremely robust and error-free.
 
 ## Documentation Sections
 
@@ -63,13 +59,8 @@ For this reason, contracts that subscribe to Harpoon hooks must be carefully des
     <p className="text-sm">Step-by-step instructions for using Harpoon in your contracts</p>
   </a>
   
-  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/harpoon/api">
-    <h4 className="font-semibold mb-2">API Reference</h4>
-    <p className="text-sm">Complete API documentation for the Harpoon module</p>
-  </a>
-  
-  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/harpoon/known-bugs">
-    <h4 className="font-semibold mb-2">Known Bugs</h4>
-    <p className="text-sm">Known issues and limitations of the Harpoon module</p>
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/harpoon/reference">
+    <h4 className="font-semibold mb-2">Reference</h4>
+    <p className="text-sm">Complete reference documentation for the Harpoon module</p>
   </a>
 </div> 
