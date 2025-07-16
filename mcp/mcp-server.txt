@@ -7,7 +7,7 @@ Access comprehensive guides, tutorials, module references, and APIs.
 QUICK SETUP
 -----------
 git clone https://github.com/clydenewt/docs
-cd docs && ./install-mcp.sh
+cd docs/mcp && ./install-mcp.sh
 
 CLAUDE DESKTOP CONFIG
 ---------------------
@@ -19,7 +19,7 @@ Add to config file:
   "mcpServers": {
     "neutron-docs": {
       "command": "node",
-      "args": ["/absolute/path/to/docs/mcp-server.js"],
+      "args": ["/absolute/path/to/docs/mcp/mcp-server.js"],
       "cwd": "/absolute/path/to/docs"
     }
   }

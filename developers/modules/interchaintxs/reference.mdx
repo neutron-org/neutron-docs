@@ -327,12 +327,16 @@ type Params struct {
 
 The module stores minimal state in the blockchain:
 
-#### ICA Registration Fee First Code ID
+#### ICA Registration Fee Code ID Threshold
 
-Stores the code ID starting from which fees are charged for ICA registration (for backward compatibility with V1 contracts).
+Stores the code ID threshold for determining fee requirements during ICA registration.
 
-**Key:** `ICARegistrationFeeFirstCodeID`
+**Key:** `ICARegistrationFeeFirstCodeID`  
 **Value:** `uint64` (code ID threshold)
+
+<Info>
+The actual threshold value and its initialization depend on specific chain deployment configuration.
+</Info>
 
 <Info>
 The module itself does not store port-to-owner mappings, channel mappings, or interchain account addresses. This state is managed by the underlying IBC Interchain Accounts (ICA) controller keeper. Interchain account addresses and channel information can be queried through the ICA controller queries.
@@ -342,9 +346,9 @@ The module itself does not store port-to-owner mappings, channel mappings, or in
 
 The Interchain Transactions module performs minimal state transitions:
 
-#### ICA Registration Fee Initialization
+#### Code ID Threshold Management
 
-When the module is first deployed, the `ICARegistrationFeeFirstCodeID` is set to determine the threshold for fee charging (V1 vs V2 behavior).
+The `ICARegistrationFeeFirstCodeID` threshold is managed during chain deployment/upgrades to determine which contracts are subject to registration fees.
 
 #### Transaction Processing
 

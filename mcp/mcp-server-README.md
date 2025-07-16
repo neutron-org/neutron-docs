@@ -21,14 +21,25 @@ This MCP server enables AI assistants to search through Neutron's comprehensive 
 
 ## Installation
 
-1. **Install Dependencies**:
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/clydenewt/docs
+   cd docs/mcp
+   ```
+
+2. **Install Dependencies**:
    ```bash
    npm install
    ```
 
-2. **Make the Server Executable**:
+3. **Make the Server Executable**:
    ```bash
    chmod +x mcp-server.js
+   ```
+
+   Or use the automated installer:
+   ```bash
+   ./install-mcp.sh
    ```
 
 ## Usage
@@ -48,7 +59,8 @@ Add to your MCP client configuration:
   "mcpServers": {
     "neutron-docs": {
       "command": "node",
-      "args": ["mcp-server.js"],
+      "args": ["mcp/mcp-server.js"],
+      "cwd": "/path/to/docs",
       "env": {
         "NODE_ENV": "production"
       }
@@ -69,8 +81,8 @@ Add to your Claude Desktop configuration file:
   "mcpServers": {
     "neutron-docs": {
       "command": "node",
-      "args": ["/path/to/neutron-docs/mcp-server.js"],
-      "cwd": "/path/to/neutron-docs"
+      "args": ["/path/to/docs/mcp/mcp-server.js"],
+      "cwd": "/path/to/docs"
     }
   }
 }
@@ -145,9 +157,13 @@ Results include:
 ### Project Structure
 
 ```
-neutron-docs/
-├── mcp-server.js           # Main MCP server implementation
-├── mcp-server-config.json  # Server configuration
+docs/
+├── mcp/                    # MCP server folder
+│   ├── mcp-server.js       # Main MCP server implementation
+│   ├── mcp-server-config.json  # Server configuration
+│   ├── mcp-server-README.md    # This README file
+│   ├── mcp-server.txt      # Quick distribution guide
+│   └── install-mcp.sh      # Installation script
 ├── package.json            # Dependencies and scripts
 ├── developers/             # Developer documentation
 ├── operators/              # Operator guides
@@ -159,7 +175,14 @@ neutron-docs/
 ### Running in Development
 
 ```bash
+cd mcp
 npm run mcp-server
+```
+
+or
+
+```bash
+node mcp/mcp-server.js
 ```
 
 ### Debugging

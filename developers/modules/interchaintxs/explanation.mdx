@@ -191,13 +191,15 @@ These fees are managed by the Fee Refunder module, which ensures that relayers a
 
 ### Registration Fee Implementation
 
-As of Neutron V2, a minimum fee is required for registering new interchain accounts:
+A minimum fee is required for registering interchain accounts:
 
-- **Purpose:** Prevents spam by requiring payment to register interchain accounts
-- **Beneficiary:** Fees are paid to the `FeeCollector` (currently the Neutron DAO)
-- **Backward Compatibility:** Contracts deployed before V2 are exempt from this fee requirement
+- **Purpose:** Prevents spam by requiring payment to register interchain accounts  
+- **Fee Collection:** Fees are sent to a configurable fee collector address
+- **Threshold Mechanism:** The module includes logic to exempt contracts below a certain code ID threshold, though the specific threshold configuration depends on chain deployment
 
-The fee threshold is determined by a stored code ID value - contracts with code IDs below this threshold are exempt from the registration fee.
+<Info>
+The actual fee collection address and code ID threshold values are set during chain deployment/upgrades and may vary by network. Check your specific network's parameters for current values.
+</Info>
 
 ## Port ID Format and Account Derivation
 
