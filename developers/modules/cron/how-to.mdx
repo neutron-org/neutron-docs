@@ -37,38 +37,31 @@ To create a schedule, you need to submit a governance proposal using the DAO con
 
 ```json
 {
-  "propose": {
-    "msg": {
-      "propose": {
-        "title": "Add Daily Reward Distribution Schedule",
-        "description": "Creates a schedule to distribute rewards every 7200 blocks (approximately daily)",
-        "msgs": [
-          {
-            "custom": {
-              "add_schedule": {
-                "name": "daily_rewards",
-                "period": 7200,
-                "msgs": [
-                  {
-                    "contract": "neutron1contract...",
-                    "msg": "{\"distribute_rewards\": {\"amount\": \"1000\"}}"
-                  }
-                ],
-                "execution_stage": "EXECUTION_STAGE_END_BLOCKER"
-              }
-            }
-          }
-        ]
-      }
+  "title": "Add Daily Reward Distribution Schedule",
+  "description": "Creates a schedule to distribute rewards every 7200 blocks (approximately daily)",
+  "messages": [
+    {
+      "@type": "/neutron.cron.MsgAddSchedule",
+      "authority": "neutron1...",
+      "name": "daily_rewards",
+      "period": 7200,
+      "msgs": [
+        {
+          "contract": "neutron1contract...",
+          "msg": "{\"distribute_rewards\": {\"amount\": \"1000\"}}"
+        }
+      ],
+      "execution_stage": "EXECUTION_STAGE_END_BLOCKER"
     }
-  }
+  ]
 }
 ```
 
 ### Step 2: Understanding the Message Structure
 
-The `add_schedule` message contains:
+The `MsgAddSchedule` message contains:
 
+- **`authority`**: Address of the governance authority
 - **`name`**: Unique identifier for the schedule
 - **`period`**: Number of blocks between executions
 - **`msgs`**: Array of contract messages to execute
@@ -78,14 +71,13 @@ The `add_schedule` message contains:
 
 ### Step 3: Submit the Governance Proposal
 
-#### For Main DAO
+#### Standard Governance Proposal
 
-Submit the proposal to the Main DAO using the prePropose contract address:
+Submit the proposal using the standard governance module:
 
 ```bash
-# Submit proposal to Main DAO prePropose contract
-neutrond tx wasm execute <main-dao-prepropose-address> \
-  '{"propose": {"msg": {"propose": {...}}}}' \
+# Submit governance proposal
+neutrond tx gov submit-proposal [proposal-file.json] \
   --from=<your-key> \
   --chain-id=neutron-1 \
   --gas=auto \
@@ -94,10 +86,10 @@ neutrond tx wasm execute <main-dao-prepropose-address> \
 
 ### Step 4: Governance Voting Process
 
-Once submitted, the proposal goes through the standard DAO governance process:
+Once submitted, the proposal goes through the standard governance process:
 
 1. **Proposal Period**: Community can review the proposal
-2. **Voting Period**: DAO members vote on the proposal
+2. **Voting Period**: NTRN token holders vote on the proposal
 3. **Execution**: If passed, the schedule is automatically created
 
 ## Preparing Your Contract for Scheduled Execution
@@ -199,31 +191,23 @@ For regular protocol maintenance tasks:
 
 ```json
 {
-  "propose": {
-    "msg": {
-      "propose": {
-        "title": "Add Daily Protocol Maintenance Schedule",
-        "description": "Performs daily maintenance tasks every 7200 blocks",
-        "msgs": [
-          {
-            "custom": {
-              "add_schedule": {
-                "name": "daily_maintenance",
-                "period": 7200,
-                "msgs": [
-                  {
-                    "contract": "neutron1protocol_contract...",
-                    "msg": "{\"perform_maintenance\": {}}"
-                  }
-                ],
-                "execution_stage": "EXECUTION_STAGE_END_BLOCKER"
-              }
-            }
-          }
-        ]
-      }
+  "title": "Add Daily Protocol Maintenance Schedule",
+  "description": "Performs daily maintenance tasks every 7200 blocks",
+  "messages": [
+    {
+      "@type": "/neutron.cron.MsgAddSchedule",
+      "authority": "neutron1...",
+      "name": "daily_maintenance",
+      "period": 7200,
+      "msgs": [
+        {
+          "contract": "neutron1protocol_contract...",
+          "msg": "{\"perform_maintenance\": {}}"
+        }
+      ],
+      "execution_stage": "EXECUTION_STAGE_END_BLOCKER"
     }
-  }
+  ]
 }
 ```
 
@@ -233,31 +217,23 @@ For periodic reward distribution:
 
 ```json
 {
-  "propose": {
-    "msg": {
-      "propose": {
-        "title": "Add Weekly Reward Distribution Schedule",
-        "description": "Distributes rewards every 50400 blocks (approximately weekly)",
-        "msgs": [
-          {
-            "custom": {
-              "add_schedule": {
-                "name": "weekly_rewards",
-                "period": 50400,
-                "msgs": [
-                  {
-                    "contract": "neutron1rewards_contract...",
-                    "msg": "{\"distribute_rewards\": {\"validator\": \"channel-52\", \"recipient\": \"neutron123...\"}}"
-                  }
-                ],
-                "execution_stage": "EXECUTION_STAGE_END_BLOCKER"
-              }
-            }
-          }
-        ]
-      }
+  "title": "Add Weekly Reward Distribution Schedule",
+  "description": "Distributes rewards every 50400 blocks (approximately weekly)",
+  "messages": [
+    {
+      "@type": "/neutron.cron.MsgAddSchedule",
+      "authority": "neutron1...",
+      "name": "weekly_rewards",
+      "period": 50400,
+      "msgs": [
+        {
+          "contract": "neutron1rewards_contract...",
+          "msg": "{\"distribute_rewards\": {\"validator\": \"channel-52\", \"recipient\": \"neutron123...\"}}"
+        }
+      ],
+      "execution_stage": "EXECUTION_STAGE_END_BLOCKER"
     }
-  }
+  ]
 }
 ```
 
@@ -267,39 +243,31 @@ For complex operations requiring multiple contract calls:
 
 ```json
 {
-  "propose": {
-    "msg": {
-      "propose": {
-        "title": "Add Multi-Step Protocol Update Schedule",
-        "description": "Performs multi-step protocol update every 100800 blocks",
-        "msgs": [
-          {
-            "custom": {
-              "add_schedule": {
-                "name": "protocol_update",
-                "period": 100800,
-                "msgs": [
-                  {
-                    "contract": "neutron1contract1...",
-                    "msg": "{\"prepare_update\": {}}"
-                  },
-                  {
-                    "contract": "neutron1contract2...",
-                    "msg": "{\"apply_update\": {\"version\": \"2.0\"}}"
-                  },
-                  {
-                    "contract": "neutron1contract3...",
-                    "msg": "{\"notify_update_complete\": {}}"
-                  }
-                ],
-                "execution_stage": "EXECUTION_STAGE_END_BLOCKER"
-              }
-            }
-          }
-        ]
-      }
+  "title": "Add Multi-Step Protocol Update Schedule",
+  "description": "Performs multi-step protocol update every 100800 blocks",
+  "messages": [
+    {
+      "@type": "/neutron.cron.MsgAddSchedule",
+      "authority": "neutron1...",
+      "name": "protocol_update",
+      "period": 100800,
+      "msgs": [
+        {
+          "contract": "neutron1contract1...",
+          "msg": "{\"prepare_update\": {}}"
+        },
+        {
+          "contract": "neutron1contract2...",
+          "msg": "{\"apply_update\": {\"version\": \"2.0\"}}"
+        },
+        {
+          "contract": "neutron1contract3...",
+          "msg": "{\"notify_update_complete\": {}}"
+        }
+      ],
+      "execution_stage": "EXECUTION_STAGE_END_BLOCKER"
     }
-  }
+  ]
 }
 ```
 
@@ -311,23 +279,15 @@ To remove a schedule through Main DAO governance:
 
 ```json
 {
-  "propose": {
-    "msg": {
-      "propose": {
-        "title": "Remove Daily Reward Distribution Schedule",
-        "description": "Removes the daily rewards distribution schedule as it's no longer needed",
-        "msgs": [
-          {
-            "custom": {
-              "remove_schedule": {
-                "name": "daily_rewards"
-              }
-            }
-          }
-        ]
-      }
+  "title": "Remove Daily Reward Distribution Schedule",
+  "description": "Removes the daily rewards distribution schedule as it's no longer needed",
+  "messages": [
+    {
+      "@type": "/neutron.cron.MsgRemoveSchedule",
+      "authority": "neutron1...",
+      "name": "daily_rewards"
     }
-  }
+  ]
 }
 ```
 
@@ -337,23 +297,15 @@ The Security SubDAO can also submit `remove_schedule` proposals for emergency si
 
 ```json
 {
-  "propose": {
-    "msg": {
-      "propose": {
-        "title": "Emergency Removal of Malfunctioning Schedule",
-        "description": "Emergency removal of schedule causing network issues",
-        "msgs": [
-          {
-            "custom": {
-              "remove_schedule": {
-                "name": "problematic_schedule"
-              }
-            }
-          }
-        ]
-      }
+  "title": "Emergency Removal of Malfunctioning Schedule",
+  "description": "Emergency removal of schedule causing network issues",
+  "messages": [
+    {
+      "@type": "/neutron.cron.MsgRemoveSchedule",
+      "authority": "neutron1...",
+      "name": "problematic_schedule"
     }
-  }
+  ]
 }
 ```
 
@@ -393,10 +345,10 @@ To check existing schedules:
 
 ```bash
 # List all schedules
-neutrond query cron schedules
+neutrond query cron list-schedule
 
 # Get specific schedule
-neutrond query cron schedule <schedule-name>
+neutrond query cron show-schedule <schedule-name>
 
 # Check module parameters
 neutrond query cron params
@@ -415,17 +367,13 @@ neutrond query cron params
 
 1. **Verify Governance**: Check if the governance proposal passed and was executed
 2. **Query Schedule**: Confirm the schedule exists with correct parameters
-3. **Monitor Events**: Watch for `EventExecuteSchedule` events in block logs
+3. **Monitor Logs**: Check validator logs for schedule execution information
 4. **Test Manually**: Execute the scheduled message manually to verify contract logic
 5. **Check Limits**: Ensure the schedule isn't being skipped due to block limits
 
 ### Event Monitoring
 
-Monitor these events for schedule activity:
-
-- **`EventAddSchedule`**: Schedule was created successfully
-- **`EventRemoveSchedule`**: Schedule was removed
-- **`EventExecuteSchedule`**: Schedule execution attempt (check `success` attribute)
+The Cron module does not emit blockchain events. Schedule execution and management operations are logged internally but do not generate events that can be monitored externally. Use the query commands to check schedule status and execution history.
 
 ## Security Considerations
 

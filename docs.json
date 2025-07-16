@@ -228,18 +228,7 @@
                   "developers/modules/cron/overview",
                   "developers/modules/cron/explanation",
                   "developers/modules/cron/how-to",
-                  {
-                    "group": "Reference",
-                    "icon": "book",
-                    "pages": [
-                      "developers/modules/cron/reference",
-                      "developers/modules/cron/messages",
-                      "developers/modules/cron/events",
-                      "developers/modules/cron/state",
-                      "developers/modules/cron/client",
-                      "developers/modules/cron/api"
-                    ]
-                  }
+                  "developers/modules/cron/reference"
                 ]
               },
 

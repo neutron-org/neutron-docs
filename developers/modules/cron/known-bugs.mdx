@@ -1,0 +1,34 @@
+---
+title: "Known Bugs"
+description: "Known issues and limitations of the Cron module"
+---
+
+## Current Status
+
+The Cron module is functioning as designed with no known critical bugs at this time.
+
+## Design Limitations
+
+### Block Time Sensitivity
+
+The Cron module's execution timing is based on block heights rather than precise timestamps. This means:
+
+- If average block time changes significantly, the real-world timing of scheduled executions will be affected
+- Schedules are not guaranteed to execute at exact time intervals
+- Network congestion or validator issues can delay executions
+
+### Execution Order
+
+The order in which schedules are executed within a block is not deterministic and depends on the underlying storage implementation. Applications should not rely on specific execution ordering.
+
+### Resource Limits
+
+The module has a configurable limit on the number of schedules that can be executed per block. If many schedules are due simultaneously, some may be delayed to subsequent blocks.
+
+## Reporting Issues
+
+If you encounter any bugs or issues with the Cron module, please report them through the appropriate channels:
+
+- **GitHub Issues**: [Neutron repository](https://github.com/neutron-org/neutron)
+- **Community Discussion**: [Neutron Discord](https://discord.gg/neutron)
+- **Governance**: For critical issues requiring network-level fixes 

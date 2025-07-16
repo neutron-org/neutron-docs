@@ -1,32 +1,104 @@
 ---
 title: "Reference"
-description: "Technical reference for the Cron module"
+description: "Comprehensive technical reference for the Cron module"
 ---
 
-## Governance Messages
+## Messages
 
-The Cron module accepts messages through governance proposals.
+The Cron module accepts messages through governance proposals only.
 
-### AddSchedule
+### MsgAddSchedule
 
 Creates a new schedule through governance proposal.
 
 ```protobuf
-message AddSchedule {
-  string name = 1;                           // Unique identifier for the schedule
-  uint64 period = 2;                         // Number of blocks between executions
-  repeated MsgExecuteContract msgs = 3;      // Messages to execute
-  string execution_stage = 4;                // Execution stage
+message MsgAddSchedule {
+  string authority = 1;                      // The address of the governance account
+  string name = 2;                           // Unique identifier for the schedule
+  uint64 period = 3;                         // Number of blocks between executions
+  repeated MsgExecuteContract msgs = 4;      // Messages to execute
+  ExecutionStage execution_stage = 5;        // Execution stage (BEGIN_BLOCKER or END_BLOCKER)
 }
 ```
 
-### RemoveSchedule
+### MsgRemoveSchedule
 
 Removes an existing schedule through governance proposal.
 
 ```protobuf
-message RemoveSchedule {
-  string name = 1;                           // Name of the schedule to remove
+message MsgRemoveSchedule {
+  string authority = 1;                      // The address of the governance account
+  string name = 2;                           // Name of the schedule to remove
+}
+```
+
+### MsgUpdateParams
+
+Updates the module parameters through governance proposal.
+
+```protobuf
+message MsgUpdateParams {
+  string authority = 1;                      // The address of the governance account
+  Params params = 2;                         // New module parameters
+}
+```
+
+## State
+
+### Schedule
+
+The primary state object in the Cron module:
+
+```protobuf
+message Schedule {
+  string name = 1;                           // Unique identifier for the schedule
+  uint64 period = 2;                         // Number of blocks between executions
+  repeated MsgExecuteContract msgs = 3;      // Messages to execute when triggered
+  uint64 last_execute_height = 4;           // Last block height when executed
+  ExecutionStage execution_stage = 5;        // Execution stage
+}
+```
+
+### MsgExecuteContract
+
+Defines the contract and the message to execute:
+
+```protobuf
+message MsgExecuteContract {
+  string contract = 1;                       // The address of the smart contract
+  string msg = 2;                            // JSON encoded message to be passed to the contract
+}
+```
+
+### ExecutionStage
+
+Defines when messages will be executed in the block:
+
+```protobuf
+enum ExecutionStage {
+  EXECUTION_STAGE_END_BLOCKER = 0;          // Execution at the end of the block
+  EXECUTION_STAGE_BEGIN_BLOCKER = 1;        // Execution at the beginning of the block
+}
+```
+
+### Params
+
+Module-wide parameters:
+
+```protobuf
+message Params {
+  string security_address = 1;              // Security address that can remove schedules
+  uint64 limit = 2;                        // Limit of schedules executed in one block
+}
+```
+
+### ScheduleCount
+
+Tracks the number of current schedules:
+
+```protobuf
+message ScheduleCount {
+  int32 count = 1;                          // The number of current schedules
 }
 ```
 
@@ -41,35 +113,128 @@ Returns the module parameters.
 neutrond query cron params
 ```
 
+**gRPC Endpoint:**
+```
+/neutron/cron/params
+```
+
 ### Schedule
 
 Returns a specific schedule by name.
 
 **CLI Usage:**
 ```bash
-neutrond query cron schedule [schedule-name]
+neutrond query cron show-schedule [schedule-name]
+```
+
+**gRPC Endpoint:**
+```
+/neutron/cron/schedule/{name}
 ```
 
 ### Schedules
 
-Returns all schedules.
+Returns all schedules with pagination support.
 
 **CLI Usage:**
 ```bash
-neutrond query cron schedules
+neutrond query cron list-schedule
 ```
 
-## Module Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `security_address` | string | Address authorized to remove schedules |
-| `limit` | uint64 | Maximum number of schedules executed in one block |
+**gRPC Endpoint:**
+```
+/neutron/cron/schedule
+```
 
 ## Events
 
-The module emits events for schedule operations:
+The Cron module does not emit any custom events. Schedule execution and management operations are logged but do not generate blockchain events.
 
-- `EventAddSchedule` - When a schedule is created
-- `EventRemoveSchedule` - When a schedule is removed  
-- `EventExecuteSchedule` - When a schedule is executed 
+## Metrics
+
+The Cron module collects several metrics for monitoring:
+
+- **`execute_ready_schedules`** (histogram): Time taken to execute all ready schedules
+- **`schedule_count`** (gauge): Current number of active schedules  
+- **`schedule_executions_count`** (counter): Total schedule executions, labeled by success/failure and schedule name
+
+## Client
+
+### Query Commands
+
+The `neutrond` CLI provides commands to query the Cron module:
+
+```bash
+# Get all schedules
+neutrond query cron list-schedule
+
+# Get a specific schedule
+neutrond query cron show-schedule [schedule-name]
+
+# Get module parameters
+neutrond query cron params
+```
+
+### Governance Proposals
+
+Since the Cron module is governance-gated, schedules can only be managed through governance proposals:
+
+```bash
+# Submit a governance proposal to add a schedule
+neutrond tx gov submit-proposal [proposal-file]
+
+# Submit a governance proposal to remove a schedule
+neutrond tx gov submit-proposal [proposal-file]
+```
+
+Example proposal file to add a schedule:
+```json
+{
+  "title": "Add Cron Schedule",
+  "description": "Add a new cron schedule for periodic operations",
+  "messages": [
+    {
+      "@type": "/neutron.cron.MsgAddSchedule",
+      "authority": "neutron1...",
+      "name": "my-schedule",
+      "period": "100",
+      "msgs": [
+        {
+          "contract": "neutron1...",
+          "msg": "{\"execute_action\": {}}"
+        }
+      ],
+      "execution_stage": "EXECUTION_STAGE_END_BLOCKER"
+    }
+  ]
+}
+```
+
+## API Endpoints
+
+### gRPC Service
+
+```protobuf
+service Query {
+  // Parameters queries the parameters of the module
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/neutron/cron/params";
+  }
+
+  // Queries a Schedule by name
+  rpc Schedule(QueryGetScheduleRequest) returns (QueryGetScheduleResponse) {
+    option (google.api.http).get = "/neutron/cron/schedule/{name}";
+  }
+
+  // Queries a list of Schedule items
+  rpc Schedules(QuerySchedulesRequest) returns (QuerySchedulesResponse) {
+    option (google.api.http).get = "/neutron/cron/schedule";
+  }
+}
+```
+
+### HTTP REST Endpoints
+
+- `GET /neutron/cron/params` - Get module parameters
+- `GET /neutron/cron/schedule/{name}` - Get specific schedule
+- `GET /neutron/cron/schedule` - Get all schedules 
