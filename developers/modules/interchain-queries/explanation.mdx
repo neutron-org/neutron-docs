@@ -184,7 +184,7 @@ The deposit system serves multiple purposes:
 
 The query creation deposit is refunded when an Interchain Query is removed by issuing a [RemoveInterchainQuery](/developers/modules/interchain-queries/reference#removeinterchainquery) message. This message can be sent either by the query owner or, under certain conditions, by anyone.
 
-If the query is within its active **query service period** (recently registered or continuously updated), it is considered valuable to its owner, and only the owner can remove it and reclaim the deposit. If the query has not been updated or used for a long time (beyond the **query service period**), it is likely abandoned. In this case, anyone can remove it and claim the deposit as a reward for cleaning up the chain's state.
+If the query is within its active **query service period** (recently registered or continuously updated), it is considered valuable to its owner, and only the owner can remove it and reclaim the deposit. If the query has not been updated or used for a long time (beyond the **query service period**), it is likely abandoned. In this case, anyone can remove it and claim the deposit as a reward for cleaning up the chain's state.  
 
 Parameters Defining Removal Permissions:
 
@@ -275,7 +275,7 @@ To manage cases where computations exceed the allocated gas, the `contractmanage
 
 If a `sudo` callback fails, the `interchainqueries` module records the failure in the [contractmanager](/developers/modules/contractmanager/overview) module. This record includes all relevant information about the query and a redacted error message (reduced to the codespace and error code). A full error message is emitted as an [event](https://docs.cosmos.network/v0.50/learn/advanced/events) to provide more context about the failure. For details, see the [message events emission](/developers/modules/interchain-queries/reference#sudo) section.
 
-Failures due to `out of gas` errors are also recorded.
+Failures due to `out of gas` errors are also recorded.  
 
 Failed query result submissions can be retrieved from the `contractmanager` module and resubmitted to the `interchainqueries` module. For more information about reading and resubmitting failed operations, refer to the [contractmanager documentation](/developers/modules/contractmanager/overview).
 

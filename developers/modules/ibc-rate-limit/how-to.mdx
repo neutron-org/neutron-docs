@@ -13,7 +13,7 @@ The IBC Rate Limit module delegates all rate limiting logic to a CosmWasm contra
 To check the current contract address parameter:
 
 ```bash
-neutron query ibcratelimit params
+neutron query rate-limited-ibc params
 ```
 
 Sample response:
@@ -27,10 +27,10 @@ Sample response:
 
 ### Updating the Contract Address
 
-To update the contract address, governance must submit a parameter change proposal:
+To update the contract address, governance must submit an update-params proposal:
 
 ```bash
-neutron tx gov submit-proposal param-change proposal.json --from=<key> --chain-id=<chain-id>
+neutron tx gov submit-proposal update-params proposal.json --from=<key> --chain-id=<chain-id>
 ```
 
 Example proposal.json:
@@ -38,25 +38,26 @@ Example proposal.json:
 {
   "title": "IBC Rate Limit Contract Address Update",
   "description": "Update the contract address for the IBC Rate Limit module",
-  "changes": [
+  "messages": [
     {
-      "subspace": "ibcratelimit",
-      "key": "ContractAddress",
-      "value": "neutron1newaddress..."
+      "@type": "/neutron.ibcratelimit.v1beta1.MsgUpdateParams",
+      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j7g7ejq",
+      "params": {
+        "contract_address": "neutron1newaddress..."
+      }
     }
   ],
-  "deposit": [
-    {
-      "denom": "untrn", 
-      "amount": "10000000"
-    }
-  ]
+  "deposit": "10000000untrn"
 }
 ```
 
 ## Managing Rate Limits Through the Contract
 
 Once the contract is set up, rate limits are managed through contract messages. These examples use the Neutron CLI for interaction.
+
+<Warning>
+**Contract-Specific Messages**: The query and execute messages shown below (such as `get_quotas`, `add_path`, etc.) are specific to the rate limiting contract implementation and may vary between different contract versions. Only the core module messages (`send_packet`, `recv_packet`, `undo_send`) are standardized by the Go module.
+</Warning>
 
 ### Querying Current Quotas
 

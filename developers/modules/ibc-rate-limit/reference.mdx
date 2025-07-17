@@ -16,6 +16,16 @@ The IBC Rate Limit module provides rate limiting capabilities for IBC transfers 
 ### QueryParams
 Retrieve the current module parameters.
 
+**CLI:**
+```bash
+neutron query rate-limited-ibc params
+```
+
+**REST:**
+```
+GET /neutron/ibc-rate-limit/v1beta1/params
+```
+
 **Response:**
 - `params`: Current IBC Rate Limit parameters
 
@@ -29,6 +39,19 @@ Update module parameters through governance.
 **Fields:**
 - `authority`: Governance authority address
 - `params`: New module parameters
+
+## Events
+
+### EventBadRevert
+Emitted when there's an error during packet revert operations.
+
+**Type:** `bad_revert`
+
+**Attributes:**
+- `module`: Module name (`rate-limited-ibc`)
+- `failure_type`: Type of failure encountered (`acknowledgment` or `timeout`)
+- `packet`: The IBC packet data
+- `acknowledgement`: The acknowledgement data (only present for acknowledgment failures)
 
 ## Key Concepts
 
@@ -44,4 +67,57 @@ The module communicates with a CosmWasm contract that handles:
 - **Path Quotas**: Rate limits for specific channel/denom combinations
 - **Flow Direction**: Separate limits for inbound and outbound transfers
 - **Time Windows**: Configurable quota periods
-- **Percentage Limits**: Limits based on percentage of total token supply 
+- **Percentage Limits**: Limits based on percentage of total token supply
+
+### Contract Messages
+
+The module sends the following messages to the rate limiting contract:
+
+**send_packet**: Sent when an IBC packet is being transmitted from Neutron
+```json
+{
+  "send_packet": {
+    "packet": {
+      "sequence": 1,
+      "source_port": "transfer",
+      "source_channel": "channel-0",
+      "destination_port": "transfer", 
+      "destination_channel": "channel-0",
+      "data": {
+        "denom": "untrn",
+        "amount": "1000000",
+        "sender": "neutron1...",
+        "receiver": "cosmos1..."
+      },
+      "timeout_height": {},
+      "timeout_timestamp": 0
+    }
+  }
+}
+```
+
+**recv_packet**: Sent when an IBC packet is being received by Neutron  
+```json
+{
+  "recv_packet": {
+    "packet": {
+      // Same structure as send_packet
+    }
+  }
+}
+```
+
+**undo_send**: Sent when a packet send fails and needs to be reverted
+```json
+{
+  "undo_send": {
+    "packet": {
+      // Same structure as send_packet  
+    }
+  }
+}
+```
+
+<Tip>
+**Note**: The contract messages shown above (`send_packet`, `recv_packet`, `undo_send`) are the core messages sent by the Go module to the CosmWasm contract. Additional contract-specific query and execute messages (like `get_quotas`, `add_path`, etc.) depend on the specific contract implementation and may vary between different rate limiting contract versions.
+</Tip> 

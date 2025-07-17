@@ -155,7 +155,7 @@ Create an `execute` message handler in your contract to register the Interchain 
 <details>
 <summary>Show code</summary>
 
-```rust
+   ```rust
 use neutron_sdk::interchain_queries::v047::register_queries::new_register_balances_query_msg;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -176,18 +176,18 @@ pub fn execute(
 }
 
 pub fn register_balances_query(
-    env: Env,
-    connection_id: String,
+       env: Env,
+       connection_id: String,
     addr: String,
     denoms: Vec<String>,
-    update_period: u64,
+       update_period: u64,
 ) -> NeutronResult<Response> {
     let msg = new_register_balances_query_msg(
         env.contract.address,
-        connection_id,
+           connection_id,
         addr.clone(),
         denoms,
-        update_period,
+           update_period,
     )?;
 
     // Send the ICQ registration message as a submessage to receive a reply callback
@@ -210,7 +210,7 @@ In the reply handler, decode the submessage result as a [MsgRegisterInterchainQu
 <details>
 <summary>Show code</summary>
 
-```rust
+   ```rust
 use neutron_std::types::neutron::interchainqueries::MsgRegisterInterchainQueryResponse;
 
 #[entry_point]
@@ -249,8 +249,8 @@ Retrieve the query result from the `interchainqueries` module's storage using th
 
 <details>
 <summary>Show code</summary>
-
-```rust
+   
+   ```rust
 use neutron_sdk::interchain_queries::v047::queries::query_balance;
 use neutron_sdk::sudo::msg::SudoMsg;
 
@@ -269,11 +269,11 @@ pub fn sudo_kv_query_result(deps: DepsMut, env: Env, query_id: u64) -> NeutronRe
     let balance_resp = query_balance(deps.as_ref(), env.clone(), query_id)?;
     // Get the address that was registered for the ICQ
     let addr = ICQ_ID_TO_WATCHED_ADDR.load(deps.storage, query_id)?;
-
+       
     // Put your business logic here
     // For this example we just preserve the freshly fetched balances in the contract's state
     REMOTE_BALANCES.save(deps.storage, addr, &balance_resp.balances)?;
-
+       
     Ok(Response::default())
 }
 ```
@@ -309,7 +309,7 @@ To enable Interchain Query registration, implement an `execute` message handler 
 <details> 
 <summary>Show code</summary>
 
-```rust
+   ```rust
 use neutron_std::types::neutron::interchainqueries::MsgRegisterInterchainQuery;
 
 /// Store key for standard **auth** Cosmos-SDK module
@@ -335,15 +335,15 @@ pub fn execute(
 }
 
 pub fn register_account_query(
-    env: Env,
-    connection_id: String,
+       env: Env,
+       connection_id: String,
     addr: String,
-    update_period: u64,
+       update_period: u64,
 ) -> NeutronResult<Response> {
     // compose key as accounts store prefix + hex address representation
     let mut key: Vec<u8> = vec![ACCOUNTS_PREFIX];
     key.extend_from_slice(decode_and_convert(&addr)?.as_slice());
-
+       
     let msg = MsgRegisterInterchainQuery {
         query_type: QueryType::KV.into(),
         keys: vec![KvKey {
@@ -351,8 +351,8 @@ pub fn register_account_query(
             key: key,
         }],
         transactions_filter: String::default(),
-        connection_id,
-        update_period,
+           connection_id,
+           update_period,
         sender: env.contract.address.to_string(),
     };
 
@@ -364,8 +364,8 @@ pub fn register_account_query(
         gas_limit: None,
         reply_on: ReplyOn::Success,
     }))
-}
-```
+   }
+   ```
 [View full code here](https://github.com/neutron-org/neutron-dev-contracts/blob/07d0f1e6b4c36b8541e74530986a6baba2710cf1/contracts/docs/interchainqueries/howto/register_custom_kv_icq/src/contract.rs#L56-L102)
 </details>
 
@@ -393,7 +393,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> NeutronResult<Response> {
                     .value
                     .to_vec()
                     .as_slice(),
-            )?;
+    )?;
 
             // memorize the address that corresponds to the query id to use it later in the
             // SudoMsg::KVQueryResult handler.
@@ -561,7 +561,7 @@ pub fn register_undelegations_query(
         update_period,
         sender: env.contract.address.to_string(),
     };
-
+    
     Ok(Response::default().add_message(msg))
 }
 ```
