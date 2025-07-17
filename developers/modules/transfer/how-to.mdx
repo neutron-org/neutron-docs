@@ -2,206 +2,186 @@
 title: "How-to"
 ---
 
-This guide covers how to integrate the Neutron Transfer module into smart contracts for cross-chain token transfers.
+This guide explains how the Neutron Transfer module integrates with smart contracts for cross-chain token transfers based on its verified functionality.
 
-## Sending IBC Transfers from CosmWasm Contracts
+## Transfer Module Integration
 
-To send IBC transfers from a smart contract:
+The Transfer module automatically detects smart contracts and provides enhanced functionality for IBC transfers.
 
-```rust
-use cosmwasm_std::{
-    Coin, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult,
-    to_binary, Binary, Timestamp, Uint128, Uint64,
-};
-use neutron_sdk::bindings::{msg::NeutronMsg, types::Height};
-// Note: Fee type structure depends on neutron.feerefunder.Fee implementation
+### Contract Detection
 
-// Assuming ExecuteMsg enum has an IbcTransfer variant
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ExecuteMsg {
-    // Other messages...
-    IbcTransfer {
-        channel_id: String,
-        receiver: String,
-        amount: Coin,
-        timeout_timestamp: Option<u64>,
-    },
-}
+The module determines if a sender is a smart contract using:
 
-fn execute_ibc_transfer(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    channel_id: String,
-    receiver: String,
-    amount: Coin,
-    timeout_timestamp: Option<u64>,
-) -> StdResult<Response> {
-    // Create the IBC transfer message
-    let timeout_timestamp = timeout_timestamp.unwrap_or_else(|| 
-        env.block.time.plus_seconds(3600).nanos() // Default 1 hour timeout
-    );
-    
-    // Create the fee structure (refer to feerefunder module for fee requirements)
-    let fee = /* Fee structure as defined by neutron.feerefunder.Fee */;
-    
-    // Create the transfer message
-    let transfer_msg = NeutronMsg::IbcTransfer {
-        source_port: "transfer".to_string(),
-        source_channel: channel_id.clone(),
-        token: amount.clone(),
-        sender: env.contract.address.to_string(),
-        receiver,
-        timeout_height: Height {
-            revision_number: 0,
-            revision_height: 0,
-        },
-        timeout_timestamp,
-        memo: format!("Transfer from contract {}", env.contract.address),
-        fee,
-    };
-    
-    // Create the cosmos message
-    let cosmos_msg = CosmosMsg::Custom(transfer_msg);
-    
-    // Return the response with the message
-    Ok(Response::new()
-        .add_message(cosmos_msg)
-        .add_attribute("action", "ibc_transfer")
-        .add_attribute("sender", env.contract.address)
-        .add_attribute("channel", channel_id)
-        .add_attribute("amount", amount.amount.to_string())
-        .add_attribute("denom", amount.denom))
-}
+```go
+isContract := k.SudoKeeper.HasContractInfo(ctx, senderAddr)
+```
 
-## Handling IBC Transfer Results in Contracts
+This detection triggers contract-specific behavior throughout the transfer process.
 
-The Transfer module uses Sudo callbacks to inform contracts about the result of their IBC transfers. The specific callback message format is defined by the Contract Manager module. To handle these callbacks, implement the Sudo entry point in your contract:
+### Enhanced Transfer Response
 
-```rust
-use cosmwasm_std::{
-    to_binary, DepsMut, Env, Response, StdResult, Binary, Empty
-};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+When contracts send IBC transfers, they receive enhanced response information:
 
-// Note: Actual SudoMsg structure depends on contractmanager implementation
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum SudoMsg {
-    // Callback message types are defined by the contractmanager module
-    // Refer to contractmanager documentation for exact format
-}
-
-pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> StdResult<Response> {
-    // Handle different callback types based on contractmanager implementation
-    // The transfer module calls contractmanager.PrepareSudoCallbackMessage()
-    // which defines the actual message format and request_id structure
-    
-    // Implementation depends on the specific callback format
-    // provided by the contractmanager module
-    
-    Ok(Response::new()
-        .add_attribute("action", "sudo_callback_processed"))
-}
-
-## Tracking IBC Transfers in Contracts
-
-To correlate IBC transfer requests with their responses in your contract, use the response information provided by the Transfer module:
-
-1. **When sending an IBC transfer**, store the transfer details using the response information:
-
-```rust
-// Define a struct to store transfer information
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct TransferInfo {
-    pub channel: String,
-    pub sequence: u64,
-    pub recipient: String,
-    pub amount: Coin,
-    pub timestamp: u64,
-    // Add any other information you need to track
-}
-
-// Use this map to store transfer information
-const TRANSFERS: Map<(String, u64), TransferInfo> = Map::new("transfers");
-
-// In your execute function, after getting the response:
-fn execute_ibc_transfer(/* params */) -> StdResult<Response> {
-    // ... existing code to create and send the IBC transfer
-    
-    // Extract sequence and channel from the MsgTransferResponse
-    // (Response structure: sequence_id: u64, channel: String)
-    let res: MsgTransferResponse = // ... parse the response
-    
-    // Store the transfer information
-    let transfer_info = TransferInfo {
-        channel: res.channel.clone(),
-        sequence: res.sequence_id,
-        recipient: receiver.clone(),
-        amount: amount.clone(),
-        timestamp: env.block.time.nanos(),
-    };
-    
-    TRANSFERS.save(deps.storage, (res.channel, res.sequence_id), &transfer_info)?;
-    
-    // Return response
-    Ok(Response::new()
-        // ... existing attributes
-        .add_attribute("sequence_id", res.sequence_id.to_string()))
+```protobuf
+message MsgTransferResponse {
+  // channel's sequence_id for outgoing ibc packet. Unique per a channel.
+  uint64 sequence_id = 1;
+  // channel src channel on neutron side transaction was submitted from
+  string channel = 2;
 }
 ```
 
-2. **When handling Sudo callbacks**, correlate with stored transfers based on the callback format defined by the contractmanager module:
+These fields enable contracts to correlate transfer requests with their eventual outcomes.
 
-```rust
-pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> StdResult<Response> {
-    // Parse callback information according to contractmanager implementation
-    // Extract channel and sequence information from the callback
-    // (exact format depends on contractmanager.PrepareSudoCallbackMessage)
-    
-    // Use the extracted information to find your stored transfer:
-    // let transfer_info = TRANSFERS.may_load(deps.storage, (channel, sequence))?;
-    
-    // Process the callback with the original transfer details
-    // Remove the transfer from storage once processed if needed
-    
-    Ok(Response::new()
-        .add_attribute("action", "process_callback"))
+### Message Structure
+
+The Transfer module extends the standard IBC transfer message with fee information:
+
+```protobuf
+message MsgTransfer {
+  string source_port = 1;
+  string source_channel = 2;
+  cosmos.base.v1beta1.Coin token = 3;
+  string sender = 4;
+  string receiver = 5;
+  ibc.core.client.v1.Height timeout_height = 6;
+  uint64 timeout_timestamp = 7;
+  string memo = 8;
+  neutron.feerefunder.Fee fee = 9;
 }
 ```
 
-## IBC Transfer Fees
+## Contract-Specific Processing
 
-When sending IBC transfers from contracts, you need to specify fees for packet relaying as defined by the `neutron.feerefunder.Fee` structure. The exact fee requirements and structure are defined by the Fee Refunder module.
+### Fee Validation and Locking
 
-```rust
-// Fee structure is defined by neutron.feerefunder.Fee
-// Refer to the feerefunder module documentation for:
-// - Fee structure definition
-// - Balance requirements
-// - Fee distribution mechanism
-let fee = /* Fee structure as defined by feerefunder module */;
+For contract senders, the Transfer module:
+
+1. **Validates Fees**: Calls `msg.Fee.Validate()` to ensure proper fee structure
+2. **Locks Fees**: Uses `FeeKeeper.LockFees()` to secure fees for packet processing
+
+Non-contract senders bypass fee validation entirely.
+
+### Automatic Callbacks
+
+When IBC packets are acknowledged or timeout, the Transfer module automatically:
+
+1. **Checks Contract Status**: Verifies if the original sender was a contract
+2. **Distributes Fees**: Calls appropriate fee distribution functions
+3. **Sends Callback**: Uses `sudoKeeper.Sudo()` to notify the contract
+
+## Callback Mechanism
+
+The Transfer module implements callbacks for contract senders:
+
+### Acknowledgement Processing
+
+```go
+func (im IBCModule) HandleAcknowledgement(ctx sdk.Context, packet channeltypes.Packet, acknowledgement []byte, relayer sdk.AccAddress) error {
+    // ... packet parsing ...
+    
+    if !im.sudoKeeper.HasContractInfo(ctx, senderAddress) {
+        return nil // Skip callback for non-contracts
+    }
+    
+    // Distribute fees to relayer
+    im.wrappedKeeper.FeeKeeper.DistributeAcknowledgementFee(ctx, relayer, packetID)
+    
+    // Prepare and send callback
+    msg, err := keeper.PrepareSudoCallbackMessage(packet, &ack)
+    // ... error handling ...
+    
+    _, err = im.sudoKeeper.Sudo(ctx, senderAddress, msg)
+    if err != nil {
+        im.keeper.Logger(ctx).Debug("HandleAcknowledgement: failed to Sudo contract on packet acknowledgement", "error", err)
+    }
+    
+    return nil
+}
 ```
 
-The Transfer module validates fees for contracts only (as seen in the `Validate(isContract bool)` method). Non-contract senders do not require fee validation.
+### Timeout Processing
+
+```go
+func (im IBCModule) HandleTimeout(ctx sdk.Context, packet channeltypes.Packet, relayer sdk.AccAddress) error {
+    // ... packet parsing and contract detection ...
+    
+    // Prepare callback message
+    msg, err := keeper.PrepareSudoCallbackMessage(packet, nil)
+    // ... error handling ...
+    
+    // Distribute timeout fees
+    im.wrappedKeeper.FeeKeeper.DistributeTimeoutFee(ctx, relayer, packetID)
+    
+    // Send callback
+    _, err = im.sudoKeeper.Sudo(ctx, senderAddress, msg)
+    if err != nil {
+        im.keeper.Logger(ctx).Debug("HandleAcknowledgement: failed to Sudo contract on packet timeout", "error", err)
+    }
+    
+    return nil
+}
+```
 
 ## Error Handling
 
-When receiving callbacks via Sudo, be aware that the Transfer module:
+The Transfer module implements robust error handling:
 
-1. Calls `sudoKeeper.Sudo(ctx, senderAddress, msg)` to deliver the callback
-2. Logs any errors from the Sudo call but continues processing regardless
-3. The specific error handling, gas limits, and middleware behavior are managed by the Contract Manager module
+### Callback Failures
 
-Refer to the Contract Manager module documentation for details on Sudo call processing.
+Failed Sudo calls are logged but do not affect IBC processing:
+- Acknowledgement/timeout processing continues regardless of callback success
+- Fee distribution occurs independently of callback results
+- IBC packet processing is not blocked by contract errors
+
+### Fee Processing
+
+Fee operations are handled separately from callbacks:
+- Fee locking occurs before packet transmission
+- Fee distribution happens regardless of callback outcomes
+- Contract fee validation only applies to contract senders
+
+## Integration Requirements
+
+To integrate with the Transfer module, contracts must:
+
+### Message Format
+
+Refer to the Contract Manager module documentation for:
+- Callback message structure and format
+- Request ID handling and correlation
+- Sudo message specifications
+
+<Warning>
+**Contract Manager Dependency**: The specific format and content of callback messages are determined by the Contract Manager module's `PrepareSudoCallbackMessage()` function. Contract implementations must align with Contract Manager specifications.
+</Warning>
+
+### Fee Management
+
+Refer to the Fee Refunder module documentation for:
+- Fee structure requirements (`neutron.feerefunder.Fee`)
+- Balance requirements for fee payment
+- Fee distribution mechanisms
+
+<Warning>
+**Fee Refunder Dependency**: Fee validation, locking, and distribution behavior are implemented by the Fee Refunder module. Contract fee handling must comply with Fee Refunder specifications.
+</Warning>
+
+## Module Queries
+
+The Transfer module delegates all queries to the standard IBC Transfer implementation:
+
+- **DenomTrace**: Query denomination trace information
+- **DenomTraces**: Query all denomination traces  
+- **Params**: Query transfer module parameters
+- **DenomHash**: Query denomination hash information
+
+These queries use standard IBC Transfer endpoints and maintain full compatibility with IBC transfer functionality.
 
 ## Best Practices
 
-1. **Store minimal information**: When saving transfer details, store only what you need to correlate with callbacks
-2. **Set appropriate timeouts**: Choose timeouts that make sense for your application (e.g., 1 hour for fast operations, longer for complex flows)
-3. **Use meaningful memos**: Include transaction purposes or identifiers in memos to help with debugging and tracking
-4. **Handle all callback types**: Implement proper handling for all callback types defined by the contractmanager module
-5. **Clean up after processing**: Remove stored transfer information once you've processed the result
-6. **Consider retry logic**: Implement retry mechanisms for failed or timed-out transfers if appropriate for your application 
+1. **Handle Callback Failures**: Implement appropriate error handling for cases where callbacks may not be received
+2. **Use Response Information**: Store `sequence_id` and `channel` from transfer responses for correlation
+3. **Implement Timeouts**: Set appropriate timeout values for your use case
+4. **Fee Management**: Ensure sufficient balance for fee requirements when sending transfers
+5. **Refer to Dependencies**: Check Contract Manager and Fee Refunder module documentation for integration specifics 

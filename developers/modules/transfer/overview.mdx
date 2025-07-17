@@ -3,19 +3,19 @@ title: "Transfer Module"
 icon: "arrow-right-arrow-left"
 ---
 
-The Transfer module in Neutron is an enhanced wrapper around the standard IBC Transfer module that facilitates token transfers between IBC-connected blockchains. It extends the core functionality with contract-centric features that improve the developer experience when working with interchain token transfers.
+The Transfer module in Neutron is an enhanced wrapper around the standard IBC Transfer module that facilitates token transfers between IBC-connected blockchains. It extends the core functionality with contract detection and callback features to improve interchain token transfer reliability for smart contracts.
 
 ## Key Features
 
 <CardGroup cols={2}>
-  <Card title="Contract Callbacks" icon="reply">
-    Returns IBC transfer results directly to the sending contract via Sudo calls, enabling contracts to process acknowledgements and timeouts.
+  <Card title="Contract Detection" icon="search">
+    Automatically detects if the sender is a smart contract using HasContractInfo() to apply contract-specific handling.
   </Card>
   <Card title="Enhanced Responses" icon="circle-info">
-    Provides informative responses with sequence IDs and channel information to help contracts track their interchain transfers.
+    Provides tracking information with sequence IDs and channel information to help correlate transfers with their results.
   </Card>
-  <Card title="Fee Management" icon="money-bill-transfer">
-    Integrates with the Fee Refunder module to distribute fees for IBC packet acknowledgements and timeouts.
+  <Card title="Sudo Callbacks" icon="reply">
+    Calls back to sending contracts via Sudo mechanism when acknowledgements or timeouts are received.
   </Card>
   <Card title="IBC Compatibility" icon="link">
     Maintains full compatibility with standard IBC Transfer functionality while adding smart contract enhancements.
@@ -24,11 +24,11 @@ The Transfer module in Neutron is an enhanced wrapper around the standard IBC Tr
 
 ## Module Interactions
 
-The Transfer module interacts with several other modules in the Neutron ecosystem:
+The Transfer module integrates with other Neutron modules:
 
 - **IBC Core**: Routes packets between chains using the IBC protocol
-- **Contract Manager**: The transfer module imports and uses `contractmanager/keeper` for callback message preparation
-- **Fee Refunder**: The transfer module imports and uses `feerefunder/types` for fee handling
+- **Contract Manager**: Uses `PrepareSudoCallbackMessage()` for callback message preparation
+- **Fee Refunder**: Uses fee locking (`LockFees()`) and distribution functions for packet processing
 
 ## Architecture
 
@@ -40,27 +40,28 @@ graph TD
     D -->|Ack/Timeout| C
     C -->|Process Results| B
     B -->|Sudo Callback| A
-    B -->|Fee Distribution| E[Fee Refunder]
+    B -->|Fee Operations| E[Fee Refunder]
 ```
 
-The Transfer module encapsulates the standard IBC transfer functionality while adding contract-friendly features. It extends the base IBC Transfer module to enable smart contracts to reliably work with cross-chain token transfers.
+The Transfer module wraps the standard IBC transfer functionality, adding contract detection and callback mechanisms for smart contract integration.
 
 ## Standard IBC Transfer Features
 
-The module maintains all capabilities of the standard IBC Transfer module, including:
+The module maintains all capabilities of the standard IBC Transfer module:
 
 - Transfer of tokens between IBC-connected chains
 - Denomination trace for cross-chain tokens
 - Automatic escrowing and releasing of tokens
 - Support for transfer timeout and recovery
+- Standard queries delegated to underlying IBC transfer implementation
 
-For more details on the core IBC Transfer functionality, see the [IBC Transfer documentation](https://ibc.cosmos.network/main/apps/transfer/overview.html).
+For core IBC Transfer functionality, see the [IBC Transfer documentation](https://ibc.cosmos.network/main/apps/transfer/overview.html).
 
 ## Learn More
 
 <CardGroup cols={2}>
-  <Card title="How Interchain Transfers Work" icon="book" href="/developers/modules/transfer/how-to">
-    Learn how to implement interchain token transfers in your contracts
+  <Card title="Module Architecture" icon="book" href="/developers/modules/transfer/explanation">
+    Understand the wrapper implementation and contract integration mechanisms
   </Card>
   <Card title="Technical Reference" icon="file-code" href="/developers/modules/transfer/reference">
     View technical specifications and message formats
