@@ -1,0 +1,195 @@
+---
+title: "DEX Reference"
+description: "Technical reference for the DEX module data structures and types"
+---
+
+## Data Structures
+
+The DEX module uses the following data structures defined in the protocol buffer files:
+
+### Pool
+
+```protobuf
+message Pool {
+  uint64 id = 1;
+  PoolReserves lower_tick0 = 2;
+  PoolReserves upper_tick1 = 3;
+}
+```
+
+### PoolReserves
+
+```protobuf
+message PoolReserves {
+  PoolReservesKey key = 1;
+  string reserves_maker_denom = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string price_taker_to_maker = 3 [
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false
+  ];
+  string price_opposite_taker_to_maker = 4 [
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message PoolReservesKey {
+  TradePairID trade_pair_id = 1;
+  int64 tick_index_taker_to_maker = 2;
+  uint64 fee = 3;
+}
+```
+
+### LimitOrderTranche
+
+```protobuf
+message LimitOrderTranche {
+  LimitOrderTrancheKey key = 1;
+  string reserves_maker_denom = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string reserves_taker_denom = 3 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string total_maker_denom = 4 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string total_taker_denom = 5 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  google.protobuf.Timestamp expiration_time = 6 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = true
+  ];
+  string price_taker_to_maker = 7 [
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false,
+    deprecated = true
+  ];
+  string maker_price = 8 [
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message LimitOrderTrancheKey {
+  TradePairID trade_pair_id = 1;
+  int64 tick_index_taker_to_maker = 2;
+  string tranche_key = 3;
+}
+```
+
+### LimitOrderTrancheUser
+
+```protobuf
+message LimitOrderTrancheUser {
+  TradePairID trade_pair_id = 1;
+  int64 tick_index_taker_to_maker = 2;
+  string tranche_key = 3;
+  string address = 4;
+  string shares_owned = 5 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string shares_withdrawn = 6 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string shares_cancelled = 7 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  LimitOrderType order_type = 8;
+}
+```
+
+### DepositRecord
+
+```protobuf
+message DepositRecord {
+  PairID pair_id = 1;
+  string shares_owned = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  int64 center_tick_index = 3;
+  int64 lower_tick_index = 4;
+  int64 upper_tick_index = 5;
+  uint64 fee = 6;
+  string total_shares = 7 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = true
+  ];
+  Pool pool = 8 [(gogoproto.nullable) = true];
+}
+```
+
+### PoolMetadata
+
+```protobuf
+message PoolMetadata {
+  uint64 id = 1;
+  int64 tick = 2;
+  uint64 fee = 3;
+  PairID pair_id = 4;
+}
+```
+
+### TickLiquidity
+
+```protobuf
+message TickLiquidity {
+  oneof liquidity {
+    PoolReserves pool_reserves = 1;
+    LimitOrderTranche limit_order_tranche = 2;
+  }
+}
+```
+
+### TradePairID
+
+```protobuf
+message TradePairID {
+  string maker_denom = 1;
+  string taker_denom = 2;
+}
+```
+
+### PairID
+
+```protobuf
+message PairID {
+  string token0 = 1;
+  string token1 = 2;
+}
+```
+
+## Enums
+
+### LimitOrderType
+
+```protobuf
+enum LimitOrderType {
+  GOOD_TIL_CANCELLED = 0;
+  FILL_OR_KILL = 1;
+  IMMEDIATE_OR_CANCEL = 2;
+  JUST_IN_TIME = 3;
+  GOOD_TIL_TIME = 4;
+}
+```
+
+### TickLiquidityType
+
+```protobuf
+enum TickLiquidityType {
+  POOL_RESERVES = 0;
+  LIMIT_ORDER_TRANCHE = 1;
+}
+```

@@ -1,0 +1,308 @@
+---
+title: "SubQuery for Neutron"
+description: "Learn how to set up and use SubQuery to index Neutron data"
+---
+
+SubQuery is a leading blockchain data indexer that provides fast, flexible APIs for web3 projects. It offers multi-chain aggregation, superior performance, a GraphQL API, and an excellent developer experience with support for 100+ ecosystems including Neutron.
+
+## Key Advantages of SubQuery
+
+SubQuery offers several competitive advantages that make it ideal for building Neutron indexers:
+
+1. **Multi-chain Aggregation**: SubQuery can aggregate data not only within a chain but across multiple blockchains all within a single project. This allows the creation of feature-rich dashboard analytics, multi-chain block scanners, or projects that index IBC transactions across zones.
+
+2. **Superior Performance**: SubQuery delivers high performance through:
+   - Multiple RPC endpoint configurations
+   - Multi-worker capabilities
+   - Configurable caching architecture
+
+3. **GraphQL API**: SubQuery automatically generates a GraphQL API for your indexed data, making it easy to query exactly what you need.
+
+4. **Developer Experience**: SubQuery provides a seamless developer experience with detailed documentation, examples, and tooling.
+
+## Getting Started with SubQuery for Neutron
+
+### Prerequisites
+
+Before starting, make sure you have:
+
+- Node.js (v14 or later)
+- NPM or Yarn
+- Docker (for local development)
+- Basic JavaScript/TypeScript knowledge
+
+### Step 1: Install the SubQuery CLI
+
+```bash
+# NPM
+npm install -g @subql/cli
+
+# Yarn
+yarn global add @subql/cli
+```
+
+### Step 2: Initialize a New Project
+
+You can start with the Neutron starter project:
+
+```bash
+subql init my-neutron-indexer --starter neutron-starter
+cd my-neutron-indexer
+```
+
+This creates a project with the basic structure and configuration files needed for indexing Neutron data.
+
+### Step 3: Understanding the Project Structure
+
+A SubQuery project contains several important files:
+
+- **project.ts**: The main configuration file that defines your project, data sources, and network settings
+- **schema.graphql**: Defines the GraphQL schema for your indexed data
+- **src/mappings/**: Contains the handler functions that process blockchain data
+
+### Step 4: Configure Your Project
+
+Edit the `project.ts` file to configure your Neutron data sources. Here's an example configuration for indexing Neutron data:
+
+```typescript
+import { CosmosProjectConfig } from '@subql/types-cosmos';
+
+const config: CosmosProjectConfig = {
+  name: 'neutron-starter',
+  runner: {
+    cosmos: {
+      module: '@subql/node-cosmos',
+    },
+  },
+  dataSources: [
+    {
+      kind: 'cosmos/Runtime',
+      startBlock: 1,
+      mapping: {
+        file: './dist/index.js',
+        handlers: [
+          {
+            handler: 'handleBlock',
+            kind: 'cosmos/BlockHandler',
+          },
+          {
+            handler: 'handleTransaction',
+            kind: 'cosmos/TransactionHandler',
+          },
+          {
+            handler: 'handleEvent',
+            kind: 'cosmos/EventHandler',
+            filter: {
+              type: 'transfer',
+            },
+          },
+        ],
+      },
+    },
+  ],
+  network: {
+    chainId: 'neutron-1',
+    endpoint: ['https://neutron-rpc.polkachu.com'],
+    chaintypes: new Map([
+      [
+        'cosmos.base.tendermint.v1beta1.Block',
+        {
+          file: './proto/cosmos/base/tendermint/v1beta1/types.proto',
+          messages: ['Block'],
+        },
+      ],
+      [
+        'cosmos.tx.v1beta1.Tx',
+        {
+          file: './proto/cosmos/tx/v1beta1/tx.proto',
+          messages: ['Tx'],
+        },
+      ],
+    ]),
+  },
+};
+
+export default config;
+```
+
+### Step 5: Define Your Data Schema
+
+Edit the `schema.graphql` file to define the structure of your indexed data. Here's an example for tracking transfers:
+
+```graphql
+type Transfer @entity {
+  id: ID! # Transaction hash + event index
+  blockHeight: BigInt!
+  timestamp: Date!
+  txHash: String!
+  from: String!
+  to: String!
+  amount: String!
+  denom: String!
+}
+
+type TransactionCount @entity {
+  id: ID! # Unique identifier (e.g., "total")
+  count: Int!
+}
+```
+
+### Step 6: Implement Your Mapping Functions
+
+Create handler functions in the `src/mappings/` directory to process blockchain data and store it according to your schema:
+
+```typescript
+// src/mappings/mappingHandlers.ts
+import { Transfer, TransactionCount } from '../types';
+import { CosmosBlock, CosmosEvent, CosmosTransaction } from '@subql/types-cosmos';
+
+let txCount = 0;
+
+export async function handleBlock(block: CosmosBlock): Promise<void> {
+  // Process each block if needed
+}
+
+export async function handleTransaction(tx: CosmosTransaction): Promise<void> {
+  // Update transaction counter
+  txCount++;
+  const transactionCount = TransactionCount.create({
+    id: 'total',
+    count: txCount,
+  });
+  await transactionCount.save();
+}
+
+export async function handleEvent(event: CosmosEvent): Promise<void> {
+  // Process transfer events
+  if (event.event.type === 'transfer') {
+    // Extract transfer data from event attributes
+    const fromAttr = event.event.attributes.find((attr) => attr.key === 'sender');
+    const toAttr = event.event.attributes.find((attr) => attr.key === 'recipient');
+    const amountAttr = event.event.attributes.find((attr) => attr.key === 'amount');
+    
+    if (fromAttr && toAttr && amountAttr) {
+      // Parse amount and denom from the amount string (e.g., "1000untrn")
+      const amountStr = amountAttr.value;
+      const match = amountStr.match(/^(\d+)(.+)$/);
+      
+      if (match) {
+        const [_, amount, denom] = match;
+        
+        // Create a new Transfer entity
+        const transfer = Transfer.create({
+          id: `${event.tx.hash}-${event.idx}`,
+          blockHeight: BigInt(event.block.block.header.height),
+          timestamp: new Date(event.block.block.header.time),
+          txHash: event.tx.hash,
+          from: fromAttr.value,
+          to: toAttr.value,
+          amount: amount,
+          denom: denom,
+        });
+        
+        await transfer.save();
+      }
+    }
+  }
+}
+```
+
+### Step 7: Build and Run Your Project
+
+Build and run your SubQuery project locally:
+
+```bash
+# Install dependencies
+yarn install
+
+# Generate types from your GraphQL schema
+yarn codegen
+
+# Build the project
+yarn build
+
+# Start a local development node
+yarn start:docker
+```
+
+This will start a local SubQuery node that indexes data from the Neutron blockchain and a GraphQL server to query that data.
+
+### Step 8: Query Your Indexed Data
+
+Once the indexer is running, you can access the GraphQL playground at `http://localhost:3000/graphql` to query your indexed data:
+
+```graphql
+query {
+  transfers(first: 5, orderBy: BLOCK_HEIGHT_DESC) {
+    nodes {
+      id
+      blockHeight
+      timestamp
+      txHash
+      from
+      to
+      amount
+      denom
+    }
+  }
+  transactionCount(id: "total") {
+    count
+  }
+}
+```
+
+## Hosting Your SubQuery Project
+
+SubQuery is open-source, meaning you have the freedom to run it in several ways:
+
+1. **Locally**: Run on your own computer or cloud provider by following the [instructions for running SubQuery locally](https://academy.subquery.network/run_publish/run.html).
+
+2. **SubQuery Managed Service**: Publish to SubQuery's enterprise-level [Managed Service](https://managedservice.subquery.network/), which hosts your SubQuery project in production-ready services with zero-downtime blue/green deployments. There's even a generous free tier. [Learn how to publish your project](https://academy.subquery.network/run_publish/publish.html).
+
+3. **SubQuery Network**: Publish to the decentralized [SubQuery Network](https://subquery.network/network), which indexes and serves data to the global community in an incentivized and verifiable way. The SubQuery Network supports Neutron from launch.
+
+## Indexing Neutron-Specific Data
+
+When indexing Neutron data, you might be interested in specific modules and their events:
+
+### Interchain Queries (ICQ)
+
+To index ICQ-related events, add specific event handlers:
+
+```typescript
+{
+  handler: 'handleIcqEvent',
+  kind: 'cosmos/EventHandler',
+  filter: {
+    type: 'interchain_query',
+  },
+}
+```
+
+### Smart Contract Events
+
+To index events emitted by smart contracts:
+
+```typescript
+{
+  handler: 'handleContractEvent',
+  kind: 'cosmos/EventHandler',
+  filter: {
+    type: 'wasm',
+    messageFilter: {
+      type: 'execute',
+    },
+  },
+}
+```
+
+## Additional Resources
+
+- [SubQuery Academy Documentation](https://academy.subquery.network/)
+- [Quick Start Guide](https://academy.subquery.network/quickstart/quickstart.html)
+- [Neutron Quick Start Guide](https://academy.subquery.network/quickstart/quickstart_chains/cosmos-neutron.html#neutron-quick-start)
+- [Neutron Starter Project](https://github.com/subquery/cosmos-subql-starter/tree/main/Neutron/neutron-starter)
+
+<Note>
+  Remember that indexers need to be kept in sync with the blockchain they're indexing. Make sure to implement proper error handling and recovery mechanisms for your production indexers.
+</Note> 

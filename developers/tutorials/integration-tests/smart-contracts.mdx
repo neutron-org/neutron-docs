@@ -1,0 +1,624 @@
+---
+title: "Smart Contract Integration Tests"
+description: "Test your CosmWasm smart contracts in a realistic chain environment"
+---
+
+This tutorial covers testing smart contracts in realistic blockchain environments using `cw-multi-test` and full chain integration tests.
+
+## Prerequisites
+
+- Completed [Chain Integration Tests](/developers/tutorials/integration-tests/chain)
+- Understanding of CosmWasm contract development
+- Familiarity with Rust testing frameworks
+
+## Testing Approaches
+
+### 1. Unit Tests
+Test individual contract functions in isolation
+
+### 2. Multi-Test Integration
+Use `cw-multi-test` to simulate blockchain environment
+
+### 3. Full Chain Integration 
+Test contracts on actual Neutron testnet or local chain
+
+## Setting Up Multi-Test Environment
+
+### 1. Add Dependencies
+
+Update your `Cargo.toml`:
+
+```toml
+[dev-dependencies]
+cw-multi-test = "0.16"
+cosmwasm-std = { version = "1.0", features = ["testing"] }
+neutron-sdk = { version = "0.8", features = ["testing"] }
+```
+
+### 2. Basic Multi-Test Setup
+
+Create `src/multitest.rs`:
+
+```rust
+use cosmwasm_std::{Addr, Coin, Decimal, Uint128};
+use cw_multi_test::{App, ContractWrapper, Executor};
+use neutron_sdk::bindings::{msg::NeutronMsg, query::NeutronQuery};
+
+use crate::contract::{execute, instantiate, query};
+use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+
+pub struct TestEnv {
+    pub app: App,
+    pub owner: Addr,
+    pub user: Addr,
+    pub contract_addr: Addr,
+}
+
+impl TestEnv {
+    pub fn new() -> Self {
+        let mut app = App::default();
+        
+        let owner = Addr::unchecked("owner");
+        let user = Addr::unchecked("user");
+        
+        // Give accounts some initial balances
+        app.init_modules(|router, _, storage| {
+            router
+                .bank
+                .init_balance(storage, &owner, vec![Coin::new(1000000, "untrn")])
+                .unwrap();
+            router
+                .bank
+                .init_balance(storage, &user, vec![Coin::new(1000000, "untrn")])
+                .unwrap();
+        });
+        
+        // Store and instantiate contract
+        let contract_wrapper = ContractWrapper::new(execute, instantiate, query);
+        let code_id = app.store_code(contract_wrapper);
+        
+        let contract_addr = app
+            .instantiate_contract(
+                code_id,
+                owner.clone(),
+                &InstantiateMsg {
+                    initial_count: Uint128::zero(),
+                    price_threshold: Decimal::from_str("10.0").unwrap(),
+                    oracle_base: "ATOM".to_string(),
+                    oracle_quote: "USD".to_string(),
+                },
+                &[],
+                "test-contract",
+                None,
+            )
+            .unwrap();
+        
+        Self {
+            app,
+            owner,
+            user,
+            contract_addr,
+        }
+    }
+    
+    pub fn increment(&mut self, sender: &Addr, amount: u128) -> anyhow::Result<()> {
+        self.app.execute_contract(
+            sender.clone(),
+            self.contract_addr.clone(),
+            &ExecuteMsg::Increment {
+                amount: Uint128::new(amount),
+            },
+            &[],
+        )?;
+        Ok(())
+    }
+    
+    pub fn query_count(&self) -> u128 {
+        let resp: crate::msg::CountResponse = self
+            .app
+            .wrap()
+            .query_wasm_smart(&self.contract_addr, &QueryMsg::GetCount {})
+            .unwrap();
+        resp.count.u128()
+    }
+}
+```
+
+## Contract Testing Patterns
+
+### 1. Basic Contract Tests
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+    
+    #[test]
+    fn test_instantiate() {
+        let mut deps = mock_dependencies();
+        let env = mock_env();
+        let info = mock_info("creator", &[]);
+        
+        let msg = InstantiateMsg {
+            initial_count: Uint128::zero(),
+            price_threshold: Decimal::from_str("10.0").unwrap(),
+            oracle_base: "ATOM".to_string(),
+            oracle_quote: "USD".to_string(),
+        };
+        
+        let res = instantiate(deps.as_mut(), env, info, msg).unwrap();
+        assert_eq!(res.attributes.len(), 2);
+    }
+    
+    #[test]
+    fn test_increment() {
+        let mut deps = mock_dependencies();
+        let env = mock_env();
+        let info = mock_info("anyone", &[]);
+        
+        // Instantiate first
+        let instantiate_msg = InstantiateMsg {
+            initial_count: Uint128::zero(),
+            price_threshold: Decimal::from_str("10.0").unwrap(),
+            oracle_base: "ATOM".to_string(),
+            oracle_quote: "USD".to_string(),
+        };
+        instantiate(deps.as_mut(), env.clone(), info.clone(), instantiate_msg).unwrap();
+        
+        // Test increment
+        let execute_msg = ExecuteMsg::Increment {
+            amount: Uint128::new(5),
+        };
+        let res = execute(deps.as_mut(), env.clone(), info, execute_msg).unwrap();
+        
+        // Verify response
+        assert_eq!(res.attributes.len(), 3);
+        assert_eq!(res.attributes[1].value, "5");
+        
+        // Query the new count
+        let query_msg = QueryMsg::GetCount {};
+        let res = query(deps.as_ref(), env, query_msg).unwrap();
+        let count_response: CountResponse = from_binary(&res).unwrap();
+        assert_eq!(count_response.count, Uint128::new(5));
+    }
+    
+    #[test]
+    fn test_increment_exceeds_limit() {
+        let mut deps = mock_dependencies();
+        let env = mock_env();
+        let info = mock_info("anyone", &[]);
+        
+        // Instantiate first
+        let instantiate_msg = InstantiateMsg {
+            initial_count: Uint128::zero(),
+            price_threshold: Decimal::from_str("10.0").unwrap(),
+            oracle_base: "ATOM".to_string(),
+            oracle_quote: "USD".to_string(),
+        };
+        instantiate(deps.as_mut(), env.clone(), info.clone(), instantiate_msg).unwrap();
+        
+        // Test increment that exceeds limit
+        let execute_msg = ExecuteMsg::Increment {
+            amount: Uint128::new(150), // Exceeds limit of 100
+        };
+        let err = execute(deps.as_mut(), env, info, execute_msg).unwrap_err();
+        assert!(err.to_string().contains("Cannot increment by more than 100"));
+    }
+}
+```
+
+### 2. Multi-Test Integration Tests
+
+```rust
+#[cfg(test)]
+mod multitest {
+    use super::*;
+    
+    #[test]
+    fn test_multitest_basic_flow() {
+        let mut env = TestEnv::new();
+        
+        // Initial count should be 0
+        assert_eq!(env.query_count(), 0);
+        
+        // Increment by 5
+        env.increment(&env.user, 5).unwrap();
+        assert_eq!(env.query_count(), 5);
+        
+        // Increment by another 10
+        env.increment(&env.user, 10).unwrap();
+        assert_eq!(env.query_count(), 15);
+    }
+    
+    #[test]
+    fn test_multitest_multiple_users() {
+        let mut env = TestEnv::new();
+        
+        let user2 = Addr::unchecked("user2");
+        
+        // Give user2 some tokens
+        env.app.init_modules(|router, _, storage| {
+            router
+                .bank
+                .init_balance(storage, &user2, vec![Coin::new(1000000, "untrn")])
+                .unwrap();
+        });
+        
+        // Both users increment
+        env.increment(&env.user, 3).unwrap();
+        env.increment(&user2, 7).unwrap();
+        
+        assert_eq!(env.query_count(), 10);
+    }
+    
+    #[test]
+    fn test_multitest_with_funds() {
+        let mut env = TestEnv::new();
+        
+        // Test contract execution with funds
+        let funds = vec![Coin::new(100, "untrn")];
+        
+        let res = env.app.execute_contract(
+            env.user.clone(),
+            env.contract_addr.clone(),
+            &ExecuteMsg::Increment {
+                amount: Uint128::new(1),
+            },
+            &funds,
+        );
+        
+        assert!(res.is_ok());
+        assert_eq!(env.query_count(), 1);
+    }
+}
+```
+
+### 3. Neutron Module Integration
+
+Test contracts that interact with Neutron modules:
+
+```rust
+use neutron_sdk::bindings::{
+    msg::NeutronMsg,
+    query::NeutronQuery,
+    types::{Height, InterchainQueryResult},
+};
+
+// Mock Neutron query responses
+pub fn mock_neutron_dependencies() -> OwnedDeps<MockStorage, MockApi, NeutronMockQuerier> {
+    let custom_querier = NeutronMockQuerier::new(MockQuerier::new(&[]));
+    OwnedDeps {
+        storage: MockStorage::default(),
+        api: MockApi::default(),
+        querier: custom_querier,
+        custom_query_type: PhantomData,
+    }
+}
+
+pub struct NeutronMockQuerier {
+    base: MockQuerier,
+}
+
+impl NeutronMockQuerier {
+    pub fn new(base: MockQuerier) -> Self {
+        NeutronMockQuerier { base }
+    }
+    
+    pub fn with_oracle_price(&mut self, denom: &str, price: Decimal) {
+        // Set up mock oracle price response
+    }
+}
+
+impl Querier for NeutronMockQuerier {
+    fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
+        let request: QueryRequest<NeutronQuery> = match from_slice(bin_request) {
+            Ok(v) => v,
+            Err(e) => {
+                return SystemResult::Err(SystemError::InvalidRequest {
+                    error: format!("Parsing query request: {}", e),
+                    request: bin_request.into(),
+                });
+            }
+        };
+        
+        match &request {
+            QueryRequest::Custom(NeutronQuery::Oracle { base, quote }) => {
+                // Return mock oracle price
+                let price = Decimal::from_str("15.0").unwrap();
+                let response = OraclePriceResponse { price };
+                SystemResult::Ok(ContractResult::Ok(to_binary(&response).unwrap()))
+            }
+            _ => self.base.handle_query(&request),
+        }
+    }
+}
+
+#[test]
+fn test_oracle_integration() {
+    let mut deps = mock_neutron_dependencies();
+    deps.querier.with_oracle_price("ATOM/USD", Decimal::from_str("15.0").unwrap());
+    
+    let env = mock_env();
+    let info = mock_info("user", &[]);
+    
+    // Test price-checked increment
+    let msg = ExecuteMsg::CheckPriceAndIncrement {
+        amount: Uint128::new(5),
+    };
+    
+    let res = execute(deps.as_mut(), env, info, msg).unwrap();
+    assert!(res.attributes.iter().any(|attr| attr.value == "5"));
+}
+```
+
+## Full Chain Integration Tests
+
+### 1. Local Chain Testing
+
+```rust
+use std::process::Command;
+use tempfile::TempDir;
+
+pub struct LocalChain {
+    pub chain_dir: TempDir,
+    pub rpc_port: u16,
+    pub grpc_port: u16,
+}
+
+impl LocalChain {
+    pub fn new() -> Self {
+        let chain_dir = TempDir::new().unwrap();
+        let rpc_port = 26657;
+        let grpc_port = 9090;
+        
+        // Initialize chain
+        Command::new("neutrond")
+            .args(&[
+                "init",
+                "test-node",
+                "--chain-id",
+                "neutron-testing-1",
+                "--home",
+                chain_dir.path().to_str().unwrap(),
+            ])
+            .output()
+            .expect("Failed to initialize chain");
+        
+        // Add genesis account
+        Command::new("neutrond")
+            .args(&[
+                "add-genesis-account",
+                "neutron1...", // Test account address
+                "1000000000untrn",
+                "--home",
+                chain_dir.path().to_str().unwrap(),
+            ])
+            .output()
+            .expect("Failed to add genesis account");
+        
+        Self {
+            chain_dir,
+            rpc_port,
+            grpc_port,
+        }
+    }
+    
+    pub fn start(&self) {
+        Command::new("neutrond")
+            .args(&[
+                "start",
+                "--home",
+                self.chain_dir.path().to_str().unwrap(),
+                "--rpc.laddr",
+                &format!("tcp://0.0.0.0:{}", self.rpc_port),
+                "--grpc.address",
+                &format!("0.0.0.0:{}", self.grpc_port),
+            ])
+            .spawn()
+            .expect("Failed to start chain");
+    }
+}
+
+#[test]
+fn test_full_chain_contract_deployment() {
+    let chain = LocalChain::new();
+    chain.start();
+    
+    // Wait for chain to be ready
+    std::thread::sleep(std::time::Duration::from_secs(5));
+    
+    // Deploy contract using CLI
+    let output = Command::new("neutrond")
+        .args(&[
+            "tx",
+            "wasm",
+            "store",
+            "artifacts/contract.wasm",
+            "--from",
+            "test-key",
+            "--chain-id",
+            "neutron-testing-1",
+            "--node",
+            &format!("http://localhost:{}", chain.rpc_port),
+            "--yes",
+        ])
+        .output()
+        .expect("Failed to store contract");
+    
+    assert!(output.status.success());
+}
+```
+
+### 2. End-to-End Testing
+
+```rust
+use cosmrs::{
+    crypto::secp256k1::SigningKey,
+    tx::{self, SignerInfo, Tx},
+    AccountId, Coin,
+};
+
+#[tokio::test]
+async fn test_e2e_contract_interaction() {
+    let rpc_client = HttpClient::new("http://localhost:26657").unwrap();
+    
+    // Create signing key
+    let signing_key = SigningKey::random(&mut rand::thread_rng());
+    let account_id = AccountId::new("neutron", &signing_key.public_key()).unwrap();
+    
+    // Query account info
+    let account = rpc_client
+        .abci_query(
+            Some("account".to_string()),
+            account_id.to_bytes(),
+            None,
+            false,
+        )
+        .await
+        .unwrap();
+    
+    // Build and sign transaction
+    let msg = MsgExecuteContract {
+        sender: account_id.to_string(),
+        contract: "neutron1...".to_string(),
+        msg: br#"{"increment":{"amount":"1"}}"#.to_vec(),
+        funds: vec![],
+    };
+    
+    let tx_body = tx::Body::new(vec![msg.to_any().unwrap()], "", 0u32);
+    
+    let signer_info = SignerInfo::single_direct(Some(signing_key.public_key()), 0);
+    let auth_info = signer_info.auth_info(tx::Fee::from_amount_and_gas(
+        Coin::new(5000u128, "untrn").unwrap(),
+        200_000u64,
+    ));
+    
+    let sign_doc = tx::SignDoc::new(&tx_body, &auth_info, "neutron-testing-1", 0u64).unwrap();
+    let tx_signed = Tx::new(tx_body, auth_info, vec![signing_key.sign(&sign_doc).unwrap()]).unwrap();
+    
+    // Broadcast transaction
+    let response = rpc_client.broadcast_tx_commit(tx_signed.to_bytes().unwrap()).await.unwrap();
+    
+    assert_eq!(response.check_tx.code, 0.into());
+    assert_eq!(response.deliver_tx.code, 0.into());
+}
+```
+
+## Performance Testing
+
+### 1. Gas Usage Analysis
+
+```rust
+#[test]
+fn test_gas_usage() {
+    let mut env = TestEnv::new();
+    
+    // Track gas usage for different operations
+    let gas_before = env.app.block_info().gas_used;
+    
+    env.increment(&env.user, 1).unwrap();
+    
+    let gas_after = env.app.block_info().gas_used;
+    let gas_used = gas_after - gas_before;
+    
+    // Assert gas usage is within expected range
+    assert!(gas_used < 100_000, "Gas usage too high: {}", gas_used);
+    assert!(gas_used > 30_000, "Gas usage suspiciously low: {}", gas_used);
+}
+```
+
+### 2. Load Testing
+
+```rust
+#[test]
+fn test_load_handling() {
+    let mut env = TestEnv::new();
+    
+    // Execute many operations
+    for i in 0..1000 {
+        let user = Addr::unchecked(format!("user{}", i));
+        env.increment(&user, 1).unwrap();
+    }
+    
+    assert_eq!(env.query_count(), 1000);
+}
+```
+
+## CI/CD Integration
+
+Create `.github/workflows/contract-tests.yml`:
+
+```yaml
+name: Contract Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        target: wasm32-unknown-unknown
+        
+    - name: Run unit tests
+      run: cargo test --lib
+      
+    - name: Run integration tests
+      run: cargo test --test integration
+      
+    - name: Build contract
+      run: cargo wasm
+      
+    - name: Optimize contract
+      run: |
+        docker run --rm -v "$(pwd)":/code \
+          --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+          --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+          cosmwasm/rust-optimizer:0.12.13
+```
+
+## Best Practices
+
+1. **Test Pyramid**: More unit tests, fewer integration tests, minimal E2E tests
+2. **Isolation**: Each test should be independent
+3. **Fast Feedback**: Unit tests should run quickly
+4. **Realistic Data**: Use realistic test data and scenarios
+5. **Error Cases**: Test both success and failure paths
+6. **Documentation**: Document complex test setups
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Multi-test Setup Issues">
+    Ensure you're using compatible versions of `cw-multi-test` and `cosmwasm-std`:
+    ```toml
+    cw-multi-test = "0.16"
+    cosmwasm-std = "1.0"
+    ```
+  </Accordion>
+  
+  <Accordion title="Mock Querier Problems">
+    Implement all required query handlers in your mock querier, or use default implementations.
+  </Accordion>
+  
+  <Accordion title="Local Chain Won't Start">
+    Check port availability and ensure neutrond binary is in PATH:
+    ```bash
+    lsof -i :26657
+    which neutrond
+    ```
+  </Accordion>
+</AccordionGroup>
+
+Proper testing ensures your smart contracts work correctly and safely in production environments. Start with unit tests and gradually add integration tests for complex scenarios. 

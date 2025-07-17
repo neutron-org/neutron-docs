@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "neutron-docs": {
+      "command": "node",
+      "args": ["mcp-server.js"],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+} 

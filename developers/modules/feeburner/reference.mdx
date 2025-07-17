@@ -1,0 +1,46 @@
+---
+title: "Reference"
+description: "Basic reference for the Fee Burner module"
+---
+
+The Fee Burner module automatically burns NTRN tokens and redirects non-NTRN fees to the treasury during fee processing.
+
+## Parameters
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `neutron_denom` | string | Denomination of Neutron tokens to burn (typically "untrn") |
+| `treasury_address` | string | Address to receive non-NTRN fees |
+| `reserve_address` | string | Deprecated in v0.4.4 - no longer used |
+
+## Queries
+
+### QueryParams
+Retrieve the current module parameters.
+
+**Response:**
+- `params`: Current Fee Burner parameters
+
+### QueryTotalBurnedNeutronsAmount
+Retrieve the total amount of NTRN tokens burned since genesis.
+
+**Response:**
+- `total_burned_neutrons_amount`: Total burned amount with denomination
+
+## Messages
+
+### MsgUpdateParams
+Update module parameters through governance.
+
+**Authority Required**: Governance only
+
+**Fields:**
+- `authority`: Governance authority address  
+- `params`: New module parameters
+
+## Key Concepts
+
+- **Automatic Processing**: Fee burning happens automatically during block processing
+- **Treasury Redirect**: Non-NTRN fees are sent to the treasury address
+- **Query-Only**: Users can only query burned amounts and parameters
+- **Governance Updates**: Parameters can only be updated through governance proposals 

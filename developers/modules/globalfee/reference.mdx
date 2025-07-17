@@ -1,0 +1,58 @@
+---
+title: "Reference"
+description: "Basic reference for the Global Fee module"
+---
+
+The Global Fee module manages network-wide minimum gas prices and fee bypass mechanisms for certain transaction types.
+
+## Parameters
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `minimum_gas_prices` | DecCoin[] | Network-wide minimum gas prices |
+| `bypass_min_fee_msg_types` | string[] | Message types that can bypass minimum fees |
+| `max_total_bypass_min_fee_msg_gas_usage` | uint64 | Maximum gas usage for bypass transactions |
+
+### Key Parameter Details
+
+#### minimum_gas_prices
+- Multiple denominations accepted alternatively
+- Must be sorted by denomination
+- No duplicate denominations or zero amounts
+
+#### bypass_min_fee_msg_types
+Common bypass message types:
+- `/cosmos.gov.v1beta1.MsgVote` - Governance voting
+- `/cosmos.gov.v1beta1.MsgVoteWeighted` - Weighted voting
+- `/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward` - Claim rewards
+
+#### max_total_bypass_min_fee_msg_gas_usage
+- Prevents abuse of bypass mechanism
+- Typical value: 1,000,000 gas units
+
+## Queries
+
+### QueryParams
+Retrieve the current module parameters.
+
+**Response:**
+- `params`: Current Global Fee parameters
+
+## Messages
+
+### MsgUpdateParams
+Update module parameters through governance.
+
+**Authority Required**: Governance only
+
+**Fields:**
+- `authority`: Governance authority address
+- `params`: New module parameters
+
+## Key Concepts
+
+- **Minimum Gas Prices**: Network-wide minimum fees for all transactions
+- **Fee Bypass**: Certain message types can bypass minimum fees
+- **Gas Limits**: Bypass transactions have gas usage limits
+- **Query-Only**: Users can only query current parameters
+- **Governance Updates**: Parameters can only be updated through governance proposals 

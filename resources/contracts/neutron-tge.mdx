@@ -1,0 +1,72 @@
+---
+title: "Neutron TGE Contracts"
+description: "Addresses and information for Neutron Token Generation Event smart contracts"
+icon: "rocket-launch"
+---
+
+This page lists the smart contracts related to Neutron's Token Generation Event (TGE) on both mainnet and testnet networks.
+
+## Mainnet (neutron-1)
+
+| Name | Address | Source Code | Code ID |
+|------|---------|------------|---------|
+| Airdrop | `neutron198sxsrjvt2v2lln2ajn82ks76k97mj72mtgl7309jehd0vy8rezs7e6c56` | [cw20-merkle-airdrop](https://github.com/neutron-org/neutron-tge-contracts) | 196 |
+| Distribution | `neutron1dk9c86h7gmvuaq89cv72cjhq4c97r2wgl5gyfruv6shquwspalgq5u7sy5` | [distribution](https://github.com/neutron-org/neutron-tge-contracts) | 9 |
+| Lockdrop | `neutron1ryhxe5fzczelcfmrhmcw9x2jsqy677fw59fsctr09srk24lt93eszwlvyj` | [lockdrop](https://github.com/neutron-org/neutron-tge-contracts) | 50 |
+| Lockdrop PCL | `neutron1jm5x56f6z9n7ca7545y93runm00hd4lafqeq929w0a7ug6nwd20s4a8cfw` | [lockdrop-pcl](https://github.com/neutron-org/neutron-tge-contracts) | 1089 |
+| Reserve | `neutron13we0myxwzlpx8l5ark8elw5gj5d59dl6cjkzmt80c5q5cv5rt54qvzkv2a` | [reserve](https://github.com/neutron-org/neutron-tge-contracts) | 337 |
+| Price Feed | `neutron1lxansfc8vkujy997e3xksd3ugsppv6a9jt32pjtgaxr0zkcnkznq67z3ax` | [price-feed](https://github.com/neutron-org/neutron-tge-contracts) | 23 |
+| Factory | `neutron1hptk0k5kng7hjy35vmh009qd5m6l33609nypgf2yc6nqnewduqasxplt4e` | [factory](https://github.com/neutron-org/neutron-tge-contracts) | 698 |
+| Auction | `neutron1qj296vdrjfhuvrm96el3yhx8rcpz4k0huqcp9vwtqzhxwrduhs8s49y3p4` | [auction](https://github.com/neutron-org/neutron-tge-contracts) | 20 |
+| Credits | `neutron1h6828as2z5av0xqtlh4w9m75wxewapk8z9l2flvzc29zeyzhx6fqgp648z` | [credits](https://github.com/neutron-org/neutron-tge-contracts) | 21 |
+| Neutron Vesting LP [ATOM] | `neutron1kkwp7pd4ts6gukm3e820kyftz4vv5jqtmal8pwqezrnq2ddycqasr87x9p` | [vesting-lp](https://github.com/neutron-org/neutron-tge-contracts) | 25 |
+| Neutron Vesting LP [USDC] | `neutron1wgzzn83hhcc5asrtslqvaw2wuqqkfulgac7ze94dmqkrxu8nsensmy9dkv` | [vesting-lp](https://github.com/neutron-org/neutron-tge-contracts) | 25 |
+| Neutron Vesting LP PCL [ATOM] | `neutron1cdr9hr2fm6a4xpxkukp55de5s2d8med45nr6klhhjnccz0dh6hqsevltdk` | [vesting-lti](https://github.com/neutron-org/neutron-tge-contracts) | 29 |
+| Neutron Vesting LP PCL [USDC] | `neutron1at3qzgunxmddepew6zgc7zl76t2w2qh4p54u0k72ckfj8myxsd4qycjjkf` | [vesting-lti](https://github.com/neutron-org/neutron-tge-contracts) | 29 |
+
+## Understanding the TGE Contracts
+
+The Neutron TGE process included several mechanisms:
+
+### Airdrop
+
+The airdrop contract distributed NTRN tokens to eligible addresses using a Merkle proof verification system. Eligible addresses were determined based on their activities in the Cosmos ecosystem.
+
+### Lockdrop
+
+The Lockdrop allowed users to lock ATOM or USDC tokens for a predetermined period to receive NTRN tokens. The longer the tokens were locked, the greater the NTRN allocation received. This contract also managed the process of returning the locked tokens after the lockdrop period ended.
+
+### Auction
+
+The auction contract facilitated a batch auction phase of the TGE, allowing participants to bid on NTRN tokens with ATOM or USDC.
+
+### Credits
+
+The Credits contract managed pre-sale allocations for specific participants.
+
+### Vesting
+
+Various vesting contracts manage the gradual release of NTRN tokens to different participant categories, including liquidity providers, investors, and team members.
+
+## Interacting with the TGE Contracts
+
+Most TGE contracts have completed their primary functions, but you can still query their state:
+
+```bash
+# Check if you have an unclaimed airdrop
+neutrond query wasm contract-state smart neutron198sxsrjvt2v2lln2ajn82ks76k97mj72mtgl7309jehd0vy8rezs7e6c56 '{"is_claimed":{"address":"your-neutron-address"}}'
+
+# Check vesting contract status
+neutrond query wasm contract-state smart neutron1kkwp7pd4ts6gukm3e820kyftz4vv5jqtmal8pwqezrnq2ddycqasr87x9p '{"vesting_status":{}}'
+```
+
+## TGE Timeline
+
+The Neutron TGE occurred in phases:
+
+1. **Airdrop**: May 2023
+2. **Lockdrop**: May-June 2023
+3. **Auction**: June 2023
+4. **Mainnet Launch**: July 2023
+
+The vesting contracts continue to release tokens according to their specific schedules, which vary by contract type and participant category. 

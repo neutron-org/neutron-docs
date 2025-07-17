@@ -1,0 +1,79 @@
+---
+title: "Overview"
+---
+
+The Dynamic Fees module provides asset price management functionality that works in cooperation with the fee market module. It maintains a list of asset prices denominated in NTRN tokens to enable dynamic fee calculations and conversions.
+
+<Info>
+**Governance-Controlled Parameters**: The Dynamic Fees module's parameters (asset prices) can only be updated through governance proposals. Individual users cannot directly modify module settings.
+</Info>
+
+## Key Features
+
+- **Asset Price Management**: Maintains a registry of asset prices denominated in NTRN tokens
+
+- **Fee Market Integration**: Works cooperatively with the fee market module to enable dynamic fee calculations
+
+- **Price Conversion**: Provides data source for converting gas prices from the fee market's base denomination (untrn) into various assets
+
+- **Governance Control**: All price updates require governance approval to ensure network stability
+
+## Module Functionality
+
+The Dynamic Fees module operates through the following workflow:
+
+1. **Price Registry**: Maintains a list of asset prices (ntrn_prices) that represents the value of various tokens relative to NTRN
+
+2. **Fee Market Cooperation**: The fee market module uses these prices as a data source for dynamic fee calculations
+
+3. **Price Conversion**: Enables conversion of gas prices from the base denomination (untrn) into other supported assets
+
+4. **Governance Updates**: Price updates are managed through governance proposals to ensure community consensus
+
+## Parameters
+
+The module maintains the following parameters:
+
+### NTRN Prices
+
+```protobuf
+message Params {
+  // List of asset prices by the NTRN
+  // it's used in cooperation with feemarket module
+  // ntrn_prices is a data source to convert gas_price from feemarket's base_denom (untrn)
+  // into a given asset
+  repeated cosmos.base.v1beta1.DecCoin ntrn_prices = 1;
+}
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `ntrn_prices` | []DecCoin | List of asset prices denominated in NTRN tokens |
+
+## Integration with Fee Market
+
+The Dynamic Fees module is designed to work alongside Neutron's fee market implementation:
+
+- **Base Denomination**: The fee market uses `untrn` as its base denomination
+- **Price Source**: Dynamic Fees provides the price data needed for conversions
+- **Multi-Asset Support**: Enables fee payments in various supported assets
+- **Dynamic Pricing**: Supports real-time price adjustments through governance
+
+## Use Cases
+
+### For Network Operators
+- **Fee Optimization**: Enables more flexible fee structures
+- **Multi-Asset Support**: Allows users to pay fees in different tokens
+- **Price Stability**: Provides mechanism for maintaining stable fee costs
+
+### For Users
+- **Payment Flexibility**: Option to pay fees in various supported assets
+- **Predictable Costs**: More stable fee calculations based on asset prices
+- **Transparent Pricing**: Clear price ratios for different assets
+
+### For Governance
+- **Price Control**: Community control over asset price ratios
+- **Network Tuning**: Ability to adjust pricing for network optimization
+- **Economic Policy**: Implementation of tokenomics through price management
+
+This module is essential for Neutron's advanced fee market functionality, enabling sophisticated fee structures while maintaining community governance over critical pricing parameters. 

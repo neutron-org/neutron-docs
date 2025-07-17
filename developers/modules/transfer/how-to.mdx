@@ -1,0 +1,187 @@
+---
+title: "How-to"
+---
+
+This guide explains how the Neutron Transfer module integrates with smart contracts for cross-chain token transfers based on its verified functionality.
+
+## Transfer Module Integration
+
+The Transfer module automatically detects smart contracts and provides enhanced functionality for IBC transfers.
+
+### Contract Detection
+
+The module determines if a sender is a smart contract using:
+
+```go
+isContract := k.SudoKeeper.HasContractInfo(ctx, senderAddr)
+```
+
+This detection triggers contract-specific behavior throughout the transfer process.
+
+### Enhanced Transfer Response
+
+When contracts send IBC transfers, they receive enhanced response information:
+
+```protobuf
+message MsgTransferResponse {
+  // channel's sequence_id for outgoing ibc packet. Unique per a channel.
+  uint64 sequence_id = 1;
+  // channel src channel on neutron side transaction was submitted from
+  string channel = 2;
+}
+```
+
+These fields enable contracts to correlate transfer requests with their eventual outcomes.
+
+### Message Structure
+
+The Transfer module extends the standard IBC transfer message with fee information:
+
+```protobuf
+message MsgTransfer {
+  string source_port = 1;
+  string source_channel = 2;
+  cosmos.base.v1beta1.Coin token = 3;
+  string sender = 4;
+  string receiver = 5;
+  ibc.core.client.v1.Height timeout_height = 6;
+  uint64 timeout_timestamp = 7;
+  string memo = 8;
+  neutron.feerefunder.Fee fee = 9;
+}
+```
+
+## Contract-Specific Processing
+
+### Fee Validation and Locking
+
+For contract senders, the Transfer module:
+
+1. **Validates Fees**: Calls `msg.Fee.Validate()` to ensure proper fee structure
+2. **Locks Fees**: Uses `FeeKeeper.LockFees()` to secure fees for packet processing
+
+Non-contract senders bypass fee validation entirely.
+
+### Automatic Callbacks
+
+When IBC packets are acknowledged or timeout, the Transfer module automatically:
+
+1. **Checks Contract Status**: Verifies if the original sender was a contract
+2. **Distributes Fees**: Calls appropriate fee distribution functions
+3. **Sends Callback**: Uses `sudoKeeper.Sudo()` to notify the contract
+
+## Callback Mechanism
+
+The Transfer module implements callbacks for contract senders:
+
+### Acknowledgement Processing
+
+```go
+func (im IBCModule) HandleAcknowledgement(ctx sdk.Context, packet channeltypes.Packet, acknowledgement []byte, relayer sdk.AccAddress) error {
+    // ... packet parsing ...
+    
+    if !im.sudoKeeper.HasContractInfo(ctx, senderAddress) {
+        return nil // Skip callback for non-contracts
+    }
+    
+    // Distribute fees to relayer
+    im.wrappedKeeper.FeeKeeper.DistributeAcknowledgementFee(ctx, relayer, packetID)
+    
+    // Prepare and send callback
+    msg, err := keeper.PrepareSudoCallbackMessage(packet, &ack)
+    // ... error handling ...
+    
+    _, err = im.sudoKeeper.Sudo(ctx, senderAddress, msg)
+    if err != nil {
+        im.keeper.Logger(ctx).Debug("HandleAcknowledgement: failed to Sudo contract on packet acknowledgement", "error", err)
+    }
+    
+    return nil
+}
+```
+
+### Timeout Processing
+
+```go
+func (im IBCModule) HandleTimeout(ctx sdk.Context, packet channeltypes.Packet, relayer sdk.AccAddress) error {
+    // ... packet parsing and contract detection ...
+    
+    // Prepare callback message
+    msg, err := keeper.PrepareSudoCallbackMessage(packet, nil)
+    // ... error handling ...
+    
+    // Distribute timeout fees
+    im.wrappedKeeper.FeeKeeper.DistributeTimeoutFee(ctx, relayer, packetID)
+    
+    // Send callback
+    _, err = im.sudoKeeper.Sudo(ctx, senderAddress, msg)
+    if err != nil {
+        im.keeper.Logger(ctx).Debug("HandleAcknowledgement: failed to Sudo contract on packet timeout", "error", err)
+    }
+    
+    return nil
+}
+```
+
+## Error Handling
+
+The Transfer module implements robust error handling:
+
+### Callback Failures
+
+Failed Sudo calls are logged but do not affect IBC processing:
+- Acknowledgement/timeout processing continues regardless of callback success
+- Fee distribution occurs independently of callback results
+- IBC packet processing is not blocked by contract errors
+
+### Fee Processing
+
+Fee operations are handled separately from callbacks:
+- Fee locking occurs before packet transmission
+- Fee distribution happens regardless of callback outcomes
+- Contract fee validation only applies to contract senders
+
+## Integration Requirements
+
+To integrate with the Transfer module, contracts must:
+
+### Message Format
+
+Refer to the Contract Manager module documentation for:
+- Callback message structure and format
+- Request ID handling and correlation
+- Sudo message specifications
+
+<Warning>
+**Contract Manager Dependency**: The specific format and content of callback messages are determined by the Contract Manager module's `PrepareSudoCallbackMessage()` function. Contract implementations must align with Contract Manager specifications.
+</Warning>
+
+### Fee Management
+
+Refer to the Fee Refunder module documentation for:
+- Fee structure requirements (`neutron.feerefunder.Fee`)
+- Balance requirements for fee payment
+- Fee distribution mechanisms
+
+<Warning>
+**Fee Refunder Dependency**: Fee validation, locking, and distribution behavior are implemented by the Fee Refunder module. Contract fee handling must comply with Fee Refunder specifications.
+</Warning>
+
+## Module Queries
+
+The Transfer module delegates all queries to the standard IBC Transfer implementation:
+
+- **DenomTrace**: Query denomination trace information
+- **DenomTraces**: Query all denomination traces  
+- **Params**: Query transfer module parameters
+- **DenomHash**: Query denomination hash information
+
+These queries use standard IBC Transfer endpoints and maintain full compatibility with IBC transfer functionality.
+
+## Best Practices
+
+1. **Handle Callback Failures**: Implement appropriate error handling for cases where callbacks may not be received
+2. **Use Response Information**: Store `sequence_id` and `channel` from transfer responses for correlation
+3. **Implement Timeouts**: Set appropriate timeout values for your use case
+4. **Fee Management**: Ensure sufficient balance for fee requirements when sending transfers
+5. **Refer to Dependencies**: Check Contract Manager and Fee Refunder module documentation for integration specifics 

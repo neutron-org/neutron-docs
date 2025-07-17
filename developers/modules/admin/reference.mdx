@@ -1,0 +1,86 @@
+---
+title: "Reference"
+description: "Basic technical reference for the admin module"
+---
+
+The admin module provides governance-level administrative functions for the Neutron network.
+
+<Warning>
+**DAO-Only Access**: All admin module message types can only be executed by the Main DAO contract through WebAssembly bindings. Individual users cannot directly submit these messages via CLI or other transaction methods.
+</Warning>
+
+## Messages
+
+### MsgSubmitProposal
+Submit a proposal with multiple messages for execution.
+
+**Fields:**
+- `messages`: Array of messages to execute
+- `proposer`: Address of the proposer
+
+### MsgSubmitProposalLegacy
+Submit a proposal using legacy format for backward compatibility.
+
+**Fields:**
+- `content`: Proposal content in legacy format
+- `proposer`: Address of the proposer
+
+### MsgAddAdmin
+Add a new administrator to the network.
+
+**Fields:**
+- `creator`: Address adding the admin
+- `admin`: Address to be added as admin
+
+### MsgDeleteAdmin
+Remove an administrator from the network.
+
+**Fields:**
+- `creator`: Address removing the admin
+- `admin`: Address to be removed
+
+## Queries
+
+### QueryAdmins
+Retrieve the list of administrators.
+
+**Response:**
+- `admins`: Array of admin addresses
+
+### QueryParams
+Retrieve module parameters.
+
+**Response:**
+- `params`: Module parameters
+
+### QueryWhitelist
+Retrieve the message whitelist.
+
+**Response:**
+- `whitelisted_messages`: Array of whitelisted message types
+
+### QueryProposal
+Retrieve a specific proposal by ID.
+
+**Parameters:**
+- `proposal_id`: Unique proposal identifier
+
+**Response:**
+- `proposal`: Proposal details
+
+### QueryProposals
+Retrieve all proposals with pagination.
+
+**Parameters:**
+- `pagination`: Optional pagination parameters
+
+**Response:**
+- `proposals`: Array of proposals
+- `pagination`: Pagination response
+
+## Key Concepts
+
+- **Admin Authority**: Address authorized to manage administrators
+- **Proposal Authority**: Address authorized to submit proposals
+- **Whitelist**: Optional message type filtering
+- **Proposal Status**: Submitted, executed, or failed states 
