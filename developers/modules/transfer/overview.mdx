@@ -27,8 +27,8 @@ The Transfer module in Neutron is an enhanced wrapper around the standard IBC Tr
 The Transfer module interacts with several other modules in the Neutron ecosystem:
 
 - **IBC Core**: Routes packets between chains using the IBC protocol
-- **Contract Manager**: Provides Sudo capability for contract callbacks with gas limitation and error handling
-- **Fee Refunder**: Manages fee distribution for IBC packet processing
+- **Contract Manager**: The transfer module imports and uses `contractmanager/keeper` for callback message preparation
+- **Fee Refunder**: The transfer module imports and uses `feerefunder/types` for fee handling
 
 ## Architecture
 

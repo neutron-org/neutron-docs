@@ -24,38 +24,7 @@ This allows contracts to correlate transfers with their acknowledgements.
 
 ### 2. Contract Sudo Callbacks
 
-Transfer results are delivered to sender contracts via `Sudo` calls with these message formats:
-
-#### Success Response
-```json
-{
-  "response": {
-    "request_id": "channel-1-42",
-    "data": "base64encodeddata"
-  }
-}
-```
-
-#### Error Response
-```json
-{
-  "error": {
-    "request_id": "channel-1-42",
-    "error": "error message"
-  }
-}
-```
-
-#### Timeout Response
-```json
-{
-  "timeout": {
-    "request_id": "channel-1-42"
-  }
-}
-```
-
-The `request_id` format is `channel-{channelID}-{sequence}`.
+Transfer results are delivered to sender contracts via `Sudo` calls. The specific callback message format is defined by the Contract Manager module through the `PrepareSudoCallbackMessage` function.
 
 ### 3. Fee Integration
 
@@ -76,13 +45,27 @@ message MsgTransfer {
 }
 ```
 
-**Note:** Contracts must have `fee.ack_fee + fee.timeout_fee + fee.recv_fee` coins on balance.
+**Note:** Contracts must have sufficient coins on balance to cover the required fees.
+
+### 4. Contract-Specific Validation
+
+The Transfer module includes contract-specific validation:
+- **For contracts**: Fee validation is required (`msg.Fee.Validate()`)
+- **For non-contracts**: Fee validation is bypassed
+
+### 5. Automatic Fee Locking
+
+For contract senders, the module automatically:
+- Locks fees using `FeeKeeper.LockFees()`
+- Distributes fees on acknowledgement/timeout via `DistributeAcknowledgementFee()`/`DistributeTimeoutFee()`
 
 ## Error Handling
 
-- All sudo handler errors are suppressed by the contract manager middleware
-- Sudo handlers are limited by the contract manager gas limit
-- Failed sudo calls are recorded as failures that can be resubmitted
+The Transfer module's error handling behavior:
+
+- Failed Sudo calls are logged but do not block IBC packet processing
+- The Transfer module continues execution regardless of Sudo call outcomes
+- Specific error handling for Sudo calls is managed by the sudoKeeper implementation
 
 ## Standard IBC Transfer Features
 
@@ -91,6 +74,5 @@ For standard IBC transfer functionality (queries, denomination traces, parameter
 ## Key Concepts
 
 - **Request Correlation**: Use `sequence_id` and `channel` from response to match with sudo callbacks
-- **Fee Management**: Ensure adequate balance for IBC fees before transfers
-- **Error Recovery**: Failed sudo calls can be resubmitted via contract manager
+- **Fee Management**: Fees are validated and locked only for contract senders
 - **Contract Integration**: Implement appropriate sudo handlers for transfer results 
