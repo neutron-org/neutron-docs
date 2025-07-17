@@ -2,147 +2,142 @@
 title: "Explanation"
 ---
 
-The IBC Rate Limit module provides a safety control mechanism for IBC transfers by imposing configurable limits on the flow of tokens through IBC channels. This document explains the architecture and concepts behind the rate limiting system.
+The IBC Rate Limit module is a minimal IBC middleware that forwards packet information to a CosmWasm contract for rate limiting decisions. This document explains the module's architecture and core functionality.
 
-## Motivation
+## Module Purpose
 
-IBC Rate Limits were designed in response to observations from major bridge hacks across the blockchain ecosystem. These incidents demonstrated that even when bridge exploits occur, limits on withdrawal rates can significantly reduce the impact:
-
-- A 30% asset depeg is substantially better than a 100% depeg
-- Rate limits provide time for validators and developers to identify and respond to exploits
-- The sacrifice of liveness in high-volume scenarios is a reasonable tradeoff for improved security against catastrophic losses
+The IBC Rate Limit module provides a standardized interface between IBC transfers and external rate limiting logic implemented in CosmWasm contracts. By delegating all rate limiting decisions to a contract, the module enables flexible rate limiting strategies that can be updated without chain upgrades.
 
 ## Architecture Overview
 
-The IBC Rate Limit module employs a minimal Go middleware pattern combined with a CosmWasm contract for the rate limiting logic:
+The IBC Rate Limit module employs a minimal Go middleware pattern:
 
 ```mermaid
 graph TD
     A[IBC Transfer Module] --> B[IBC Rate Limit Middleware]
-    B --> C[CosmWasm Contract]
-    B --> D[IBC Core]
-    C --> E[Quota State Storage]
+    B --> C[IBC Core]
+    B --> D[CosmWasm Contract]
+    D --> E[Rate Limiting Logic]
 ```
 
-This architecture provides several key benefits:
+This architecture provides:
 
-1. **Governance Flexibility**: The core rate limiting logic is in a CosmWasm contract that can be updated via governance proposals without requiring a chain upgrade
-2. **Minimal Chain Code**: The Go middleware is minimal, primarily responsible for routing IBC packets to the contract
-3. **Separation of Concerns**: The middleware handles IBC packet interception, while the contract handles quota tracking and enforcement
+1. **Minimal Chain Code**: The Go middleware only handles packet forwarding and error handling
+2. **Contract Flexibility**: All rate limiting logic is delegated to the CosmWasm contract
+3. **Governance Updates**: Contract address can be updated via governance proposals
 
-## Rate Limiting Concepts
+## Core Module Functionality
 
-### Paths and Quotas
+### Parameter Management
 
-The fundamental units in the rate limiting system are:
+The module manages a single parameter:
+- **contract_address**: The address of the CosmWasm contract that handles rate limiting decisions
 
-- **Path**: A combination of token denomination and IBC channel
-- **Quota**: A percentage-based limit on token flow through a path over a specific time period
-- **Flow**: The amount of tokens that have moved through a path during the current time window
+### Packet Forwarding
 
-Each path can have multiple quotas with different time periods (e.g., daily, weekly, monthly).
+When IBC packets are processed, the module:
 
-### Time-Based Periods
+1. **On Send**: Forwards packet information to the contract via `send_packet` message
+2. **On Receive**: Forwards packet information to the contract via `recv_packet` message  
+3. **On Failure**: Calls the contract's `undo_send` function for failed packets
 
-Rate limits are defined in discrete time-based periods rather than rolling windows. Each period has:
+### Contract Message Interface
 
-- A specific duration (e.g., 6 hours, 1 day, 1 week)
-- A start time when the quota refreshes
-- A tracked amount of tokens that have flowed through the path during the period
+The module sends standardized messages to the contract:
 
-When a period ends, the quota automatically refreshes for the next period.
+#### Send Packet Message
+```json
+{
+  "send_packet": {
+    "packet": {
+      "sequence": 0,
+      "source_port": "transfer",
+      "source_channel": "channel-0",
+      "destination_port": "omitted",
+      "destination_channel": "omitted",
+      "data": {
+        "denom": "untrn",
+        "amount": "1000000",
+        "sender": "neutron1...",
+        "receiver": "cosmos1..."
+      },
+      "timeout_height": {},
+      "timeout_timestamp": 0
+    }
+  }
+}
+```
 
-### Inflow vs. Outflow
+#### Receive Packet Message
+```json
+{
+  "recv_packet": {
+    "packet": {
+      // Same structure as send_packet
+    }
+  }
+}
+```
 
-The system maintains separate quotas for:
+#### Undo Send Message
+```json
+{
+  "undo_send": {
+    "packet": {
+      // Same structure as send_packet
+    }
+  }
+}
+```
 
-- **Inflow**: Tokens coming into Neutron from other chains (protection against bugs on counterparty chains)
-- **Outflow**: Tokens leaving Neutron to other chains (protection against bugs on Neutron itself)
+### Error Handling
 
-Each direction can have different quota percentages based on the risk assessment and expected usage patterns.
+The module handles contract responses by checking the error message content:
 
-### Net Flow Tracking
+- **Success**: Packet processing continues normally
+- **Rate Limit Detection**: If contract error contains "rate limit exceeded", returns `ErrRateLimitExceeded`
+- **Other Contract Errors**: All other contract errors return `ErrContractError`
 
-A critical aspect of the system is that it tracks the **net flow** of assets rather than the gross flow. This means:
+### Failed Packet Processing
 
-- If 100 ATOM flows out of Neutron and then 60 ATOM flows back in, the net outflow is only 40 ATOM
-- This prevents denial-of-service attacks where an attacker could repeatedly send tokens back and forth to trigger rate limits
+When packets fail (timeout or error acknowledgment), the module automatically:
 
-## Processing Flow
+1. Detects the failure in `OnAcknowledgementPacket` or `OnTimeoutPacket`
+2. Calls the contract's `undo_send` function
+3. Emits a `bad_revert` event if the undo operation fails
 
-### On Token Send
+## Module Events
 
-When a token is sent via IBC from Neutron:
+The module emits events for debugging failed packet reversions:
 
-1. The IBC Transfer module prepares the outgoing packet
-2. The Rate Limit middleware intercepts the packet
-3. The middleware calls the CosmWasm contract with the packet details
-4. The contract:
-   - Identifies the path (token + channel)
-   - Calculates the current quotas
-   - Updates the outflow tracking
-   - Verifies the transaction doesn't exceed any quota
-5. If any quota is exceeded, the transaction is rejected with a rate limit error
-6. If all quotas are within limits, the packet proceeds to the IBC core for transmission
+### EventBadRevert
+- **Type**: `bad_revert`
+- **Attributes**:
+  - `module`: `rate-limited-ibc`
+  - `failure_type`: `acknowledgment` or `timeout`
+  - `packet`: The packet data
+  - `acknowledgement`: The acknowledgement data (for acknowledgment failures)
 
-### On Token Receive
+## Governance Integration
 
-When a token is received via IBC to Neutron:
+The module integrates with governance through:
 
-1. The IBC core delivers the packet to the middleware
-2. The middleware calls the CosmWasm contract with the packet details
-3. The contract:
-   - Identifies the path
-   - Calculates the current quotas
-   - Updates the inflow tracking
-   - Verifies the transaction doesn't exceed any quota
-4. If any quota is exceeded, the packet is rejected with a rate limit error
-5. If all quotas are within limits, the packet is forwarded to the IBC Transfer module
+- **MsgUpdateParams**: Allows governance to update the contract address
+- **Authority Validation**: Only the governance authority can update parameters
 
-### On Failed Send
+<Warning>
+**Contract-Specific Behavior**: The actual rate limiting logic (quotas, time periods, flow tracking, token denomination handling, etc.) is entirely contract-specific and not implemented in the Go module. Different contracts may implement completely different rate limiting strategies.
+</Warning>
 
-If a sent packet fails (timeout or error acknowledgment):
+## No Built-in Rate Limiting
 
-1. The middleware receives the error or timeout notification
-2. The middleware calls the contract's "undo send" function
-3. The contract reverses the quota accounting for the failed packet
-4. This ensures failed transfers don't consume quota unnecessarily
+Important limitations of the module:
 
-## Token Denomination Handling
+- **No Quota Management**: The module does not track or manage quotas
+- **No Time Period Logic**: No concept of time windows or periods
+- **No Flow Tracking**: Does not track token flows or calculate limits
+- **No Token Processing**: Does not handle token denomination logic
+- **No Channel Values**: Does not calculate or cache channel values
 
-The module handles different token types with specific logic:
-
-### Native Tokens
-
-For Neutron's native tokens (e.g., NTRN):
-
-- When sent: The token is tracked as-is in its native denomination
-- When received: The token is recognized by removing the IBC prefix added by the counterparty chain
-
-### Non-Native (IBC) Tokens
-
-For tokens that originated from other chains:
-
-- When sent: The token is tracked by its IBC denomination on Neutron (`ibc/...`)
-- When received: The token is tracked based on its denomination path on Neutron
-
-## Channel Value Calculation
-
-To establish meaningful percentage-based limits, the system needs to determine the total value of tokens available on each channel:
-
-- For non-native tokens (`ibc/...`), the channel value is the total supply of those tokens on Neutron
-- For native tokens, the ideal would be to track the total amount in escrow across all IBC channels
-  - Currently, due to IBC limitations, the system uses the current supply on Neutron for all denominations
-
-The channel value is cached at the beginning of each quota period to provide predictability and prevent issues if there's a sudden change in token supply.
-
-## Governance Control
-
-The rate limit system provides several governance controls:
-
-1. **Adding Paths and Quotas**: Governance can add new rate limits for specific path and time period combinations
-2. **Removing Paths**: Governance can remove rate limits from specific paths
-3. **Resetting Quotas**: If a rate limit has been reached, governance can reset it without waiting for the period to end
-4. **Updating Contract**: The contract itself can be updated through governance proposals
-
-These controls allow the system to adapt to changing security needs and market conditions without requiring chain upgrades. 
+All rate limiting functionality must be implemented in the CosmWasm contract.
+```

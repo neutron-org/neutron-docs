@@ -1,9 +1,9 @@
 ---
 title: "Reference"
-description: "Basic reference for the IBC Rate Limit module"
+description: "Technical reference for the IBC Rate Limit module"
 ---
 
-The IBC Rate Limit module provides rate limiting capabilities for IBC transfers by delegating logic to a CosmWasm contract.
+The IBC Rate Limit module provides a minimal middleware interface for forwarding IBC packet information to a CosmWasm contract.
 
 <Warning>
 **CLI Implementation Issue**: The current CLI implementation has a bug that prevents query commands from working. Use REST endpoints instead.
@@ -13,7 +13,7 @@ The IBC Rate Limit module provides rate limiting capabilities for IBC transfers 
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| `contract_address` | string | Address of the CosmWasm contract implementing rate limiting logic |
+| `contract_address` | string | Address of the CosmWasm contract that handles rate limiting decisions. Empty string disables rate limiting. |
 
 ## Queries
 
@@ -26,7 +26,13 @@ GET /neutron/ibc-rate-limit/v1beta1/params
 ```
 
 **Response:**
-- `params`: Current IBC Rate Limit parameters
+```json
+{
+  "params": {
+    "contract_address": "neutron1abcdef..."
+  }
+}
+```
 
 ## Messages
 
@@ -37,55 +43,59 @@ Update module parameters through governance.
 
 **Fields:**
 - `authority`: Governance authority address
-- `params`: New module parameters
+- `params`: New module parameters containing the contract address
+
+**Example:**
+```json
+{
+  "@type": "/neutron.ibcratelimit.v1beta1.MsgUpdateParams",
+  "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j7g7ejq",
+  "params": {
+    "contract_address": "neutron1newaddress..."
+  }
+}
+```
 
 ## Events
 
 ### EventBadRevert
-Emitted when there's an error during packet revert operations.
+Emitted when the module fails to notify the contract about a failed packet.
 
 **Type:** `bad_revert`
 
 **Attributes:**
-- `module`: Module name (`rate-limited-ibc`)
-- `failure_type`: Type of failure encountered (`acknowledgment` or `timeout`)
+- `module`: `rate-limited-ibc`
+- `failure_type`: Type of failure (`acknowledgment` or `timeout`)
 - `packet`: The IBC packet data
 - `acknowledgement`: The acknowledgement data (only present for acknowledgment failures)
 
-## Key Concepts
+## Error Types
 
-- **Contract-Based**: Rate limiting logic is implemented in a CosmWasm contract
-- **IBC Middleware**: Intercepts IBC packets to apply rate limits
-- **Automatic Processing**: Rate limits are checked automatically during IBC transfers
-- **Query-Only**: Users can only query the contract address parameter
-- **Governance Updates**: Parameters can only be updated through governance proposals
+The module defines these error types:
 
-## Contract Integration
+| Error | Code | Description |
+| --- | --- | --- |
+| `ErrRateLimitExceeded` | 2 | Returned when the contract rejects a transfer due to rate limits |
+| `ErrBadMessage` | 3 | Returned for malformed packet data |
+| `ErrContractError` | 4 | Returned for other contract execution errors |
 
-<Warning>
-**Contract-Specific Messages**: The following messages are examples based on typical rate limiting contract implementations. The actual messages depend on the specific contract deployed. Only the core module messages (`send_packet`, `recv_packet`, `undo_send`) are standardized by the Go module.
-</Warning>
+## Contract Interface
 
-The module communicates with a CosmWasm contract that handles:
-- **Path Quotas**: Rate limits for specific channel/denom combinations
-- **Flow Direction**: Separate limits for inbound and outbound transfers
-- **Time Windows**: Configurable quota periods
-- **Percentage Limits**: Limits based on percentage of total token supply
+The module sends standardized sudo messages to the configured contract:
 
-### Core Contract Messages (Standardized)
+### send_packet
+Sent when an IBC packet is being transmitted from Neutron.
 
-The module sends the following standardized messages to the rate limiting contract:
-
-**send_packet**: Sent when an IBC packet is being transmitted from Neutron
+**Message Structure:**
 ```json
 {
   "send_packet": {
     "packet": {
-      "sequence": 1,
+      "sequence": 0,
       "source_port": "transfer",
       "source_channel": "channel-0",
-      "destination_port": "transfer", 
-      "destination_channel": "channel-0",
+      "destination_port": "omitted",
+      "destination_channel": "omitted",
       "data": {
         "denom": "untrn",
         "amount": "1000000",
@@ -99,7 +109,10 @@ The module sends the following standardized messages to the rate limiting contra
 }
 ```
 
-**recv_packet**: Sent when an IBC packet is being received by Neutron  
+### recv_packet
+Sent when an IBC packet is being received by Neutron.
+
+**Message Structure:**
 ```json
 {
   "recv_packet": {
@@ -110,13 +123,28 @@ The module sends the following standardized messages to the rate limiting contra
 }
 ```
 
-**undo_send**: Sent when a packet send fails and needs to be reverted
+### undo_send
+Sent when a packet send fails and needs to be reverted.
+
+**Message Structure:**
 ```json
 {
   "undo_send": {
     "packet": {
-      // Same structure as send_packet  
+      // Same structure as send_packet
     }
   }
 }
-``` 
+```
+
+## Module Behavior
+
+- **No Contract Set**: If `contract_address` is empty, all transfers proceed without rate limiting
+- **Contract Set**: All transfers are forwarded to the contract for approval
+- **Rate Limit Detection**: Contract errors containing the substring "rate limit exceeded" return `ErrRateLimitExceeded`
+- **Other Contract Errors**: All other contract errors return `ErrContractError`
+- **Failed Packet Handling**: Automatically calls `undo_send` for timeouts and error acknowledgments
+
+<Info>
+**Contract Independence**: The module does not implement any rate limiting logic itself. All rate limiting behavior depends entirely on the CosmWasm contract implementation.
+</Info> 
