@@ -5,6 +5,10 @@ description: "Basic reference for the IBC Rate Limit module"
 
 The IBC Rate Limit module provides rate limiting capabilities for IBC transfers by delegating logic to a CosmWasm contract.
 
+<Warning>
+**CLI Implementation Issue**: The current CLI implementation has a bug that prevents query commands from working. Use REST endpoints instead.
+</Warning>
+
 ## Parameters
 
 | Parameter | Type | Description |
@@ -15,11 +19,6 @@ The IBC Rate Limit module provides rate limiting capabilities for IBC transfers 
 
 ### QueryParams
 Retrieve the current module parameters.
-
-**CLI:**
-```bash
-neutron query rate-limited-ibc params
-```
 
 **REST:**
 ```
@@ -63,15 +62,19 @@ Emitted when there's an error during packet revert operations.
 
 ## Contract Integration
 
+<Warning>
+**Contract-Specific Messages**: The following messages are examples based on typical rate limiting contract implementations. The actual messages depend on the specific contract deployed. Only the core module messages (`send_packet`, `recv_packet`, `undo_send`) are standardized by the Go module.
+</Warning>
+
 The module communicates with a CosmWasm contract that handles:
 - **Path Quotas**: Rate limits for specific channel/denom combinations
 - **Flow Direction**: Separate limits for inbound and outbound transfers
 - **Time Windows**: Configurable quota periods
 - **Percentage Limits**: Limits based on percentage of total token supply
 
-### Contract Messages
+### Core Contract Messages (Standardized)
 
-The module sends the following messages to the rate limiting contract:
+The module sends the following standardized messages to the rate limiting contract:
 
 **send_packet**: Sent when an IBC packet is being transmitted from Neutron
 ```json
@@ -116,8 +119,4 @@ The module sends the following messages to the rate limiting contract:
     }
   }
 }
-```
-
-<Tip>
-**Note**: The contract messages shown above (`send_packet`, `recv_packet`, `undo_send`) are the core messages sent by the Go module to the CosmWasm contract. Additional contract-specific query and execute messages (like `get_quotas`, `add_path`, etc.) depend on the specific contract implementation and may vary between different rate limiting contract versions.
-</Tip> 
+``` 

@@ -8,12 +8,16 @@ This guide provides practical instructions for configuring and managing the IBC 
 
 The IBC Rate Limit module delegates all rate limiting logic to a CosmWasm contract. The contract address is set through governance parameters.
 
+<Warning>
+**CLI Implementation Issue**: The current CLI implementation has a bug that prevents the `neutron query rate-limited-ibc params` command from working. Use the REST endpoint instead: `GET /neutron/ibc-rate-limit/v1beta1/params`
+</Warning>
+
 ### Checking Current Parameters
 
-To check the current contract address parameter:
+To check the current contract address parameter via REST:
 
 ```bash
-neutron query rate-limited-ibc params
+curl https://rpc.neutron.org/neutron/ibc-rate-limit/v1beta1/params
 ```
 
 Sample response:
@@ -53,11 +57,11 @@ Example proposal.json:
 
 ## Managing Rate Limits Through the Contract
 
-Once the contract is set up, rate limits are managed through contract messages. These examples use the Neutron CLI for interaction.
-
 <Warning>
-**Contract-Specific Messages**: The query and execute messages shown below (such as `get_quotas`, `add_path`, etc.) are specific to the rate limiting contract implementation and may vary between different contract versions. Only the core module messages (`send_packet`, `recv_packet`, `undo_send`) are standardized by the Go module.
+**Contract-Specific Examples**: All rate limit management examples below are specific to particular contract implementations and may not work with other rate limiting contracts. The actual queries and execute messages depend on the specific contract deployed. Only the core module messages (`send_packet`, `recv_packet`, `undo_send`) are standardized by the Go module.
 </Warning>
+
+Once the contract is set up, rate limits are managed through contract messages. These examples use the Neutron CLI for interaction with a typical rate limiting contract implementation.
 
 ### Querying Current Quotas
 
