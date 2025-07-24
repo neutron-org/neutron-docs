@@ -11,6 +11,116 @@ The Contract Manager module manages sudo call failures and provides resubmission
 | --- | --- | --- |
 | `sudo_call_gas_limit` | uint64 | Maximum gas that can be used during a sudo call to a contract |
 
+## Queries
+
+### QueryParams
+Retrieve the current module parameters.
+
+**CLI:**
+```bash
+neutrond query contractmanager params
+```
+
+**gRPC:**
+```
+/neutron/contractmanager/params
+```
+
+**Response:**
+```json
+{
+  "params": {
+    "sudo_call_gas_limit": "2000000"
+  }
+}
+```
+
+### QueryFailures
+Query failures for all contracts or a specific contract address.
+
+**CLI:**
+```bash
+# Query all failures
+neutrond query contractmanager failures
+
+# Query failures for specific contract
+neutrond query contractmanager failures [address]
+```
+
+**gRPC:**
+```
+# All failures
+GET /neutron/contractmanager/failures
+
+# Failures for specific address
+GET /neutron/contractmanager/failures/{address}
+```
+
+**Example:**
+```bash
+neutrond query contractmanager failures neutron1abcdef...
+```
+
+**Response:**
+```json
+{
+  "failures": [
+    {
+      "address": "neutron1abcdef...",
+      "id": "1",
+      "sudo_payload": "<base64-encoded-payload>",
+      "error": "codespace: wasm, code: 5"
+    }
+  ],
+  "pagination": {
+    "next_key": null,
+    "total": "1"
+  }
+}
+```
+
+### QueryAddressFailure
+Query a specific failure by contract address and failure ID.
+
+**gRPC:**
+```
+GET /neutron/contractmanager/failures/{address}/{failure_id}
+```
+
+**Response:**
+```json
+{
+  "failure": {
+    "address": "neutron1abcdef...",
+    "id": "1",
+    "sudo_payload": "<base64-encoded-payload>",
+    "error": "codespace: wasm, code: 5"
+  }
+}
+```
+
+### QueryFailureDetails
+Query detailed error information for a specific failure. This command searches transaction events for the full error message.
+
+**CLI:**
+```bash
+neutrond query contractmanager failure-details [address] [failure-id]
+```
+
+**Example:**
+```bash
+neutrond query contractmanager failure-details neutron1abcdef... 1
+```
+
+**Response:**
+```
+dispatch: submessages: Generic error: Contract execution failed
+```
+
+<Warning>
+**Node Requirements**: This query requires a node that indexes transactions and still has the relevant blocks available. If the node doesn't index transactions or has cleared the block, you'll get an error: "detailed failure error message not found in node events".
+</Warning>
+
 ## Core Data Structure
 
 ### Failure
@@ -59,11 +169,29 @@ pub enum NeutronQuery {
 }
 ```
 
-**Response**:
+**Response:**
 ```rust
 pub struct FailuresResponse {
     pub failures: Vec<Failure>,
     pub pagination: Option<PageResponse>,
+}
+```
+
+## gRPC Service Definition
+
+```protobuf
+service Query {
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse);
+  
+  // Queries a Failure by contract address and failure ID.
+  rpc AddressFailure(QueryFailureRequest) returns (QueryFailureResponse);
+  
+  // Queries Failures by contract address.
+  rpc AddressFailures(QueryFailuresRequest) returns (QueryFailuresResponse);
+  
+  // Queries a list of Failures occurred on the network.
+  rpc Failures(QueryFailuresRequest) returns (QueryFailuresResponse);
 }
 ```
 

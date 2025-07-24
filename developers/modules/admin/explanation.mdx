@@ -1,198 +1,55 @@
 ---
 title: "Explanation"
-description: "Deep dive into admin module architecture, governance mechanisms, and implementation details"
+description: "Understanding admin module governance mechanisms and the dual proposal system"
 ---
 
-This document provides an in-depth technical explanation of the admin module's architecture, governance mechanisms, and implementation details.
+This document explains the admin module's governance mechanisms and design principles based on the dual mechanism approach for proposal execution.
 
 <Warning>
-**Main DAO Exclusive Access**: The admin module can only be accessed by the Main DAO contract through WebAssembly bindings. Individual users, external contracts, and CLI commands cannot directly interact with this module. All operations must go through Neutron's DAO governance process.
+**DAO Exclusive Access**: The admin module can only be accessed by the DAO through WebAssembly bindings. Individual users and external contracts cannot directly interact with this module.
 </Warning>
 
-## Admin Module Architecture
+## Concepts
 
-The admin module serves as the central governance hub for the Neutron network, designed to handle administrative operations through a secure, controlled framework. The module architecture consists of several key components working together to ensure safe and effective network governance.
+### Network Administration and Governance
 
-### Core Components
+Being the network's admin, the DAO is empowered to execute proposals that can significantly change the network state. These proposals can encapsulate operations including:
 
-#### Message Server
-The message server acts as the primary entry point for governance operations, processing incoming administrative messages and coordinating their execution. It implements strict validation and authorization checks before allowing any operations to proceed.
+- Modifying parameters of specific modules, like adjusting transaction fees or validator incentives
+- A full spectrum of WASM proposals, leveraging WebAssembly smart contract functionalities in Cosmos
+- Upgrade proposals, enabling seamless interoperability and data transfer between distinct blockchains
+- Execution of any `sdk.Msg`, the standard message format in the Cosmos ecosystem
 
-#### Keeper
-The keeper manages the module's state and provides the core functionality for proposal execution, whitelisting, and authority verification. It serves as the interface between the message server and the underlying blockchain state.
+### Mechanism of Operation
 
-#### Authority Management
-The authority management system defines which addresses have permission to execute specific types of administrative operations. This system ensures that only authorized entities (typically the DAO) can perform critical network functions.
+Governance is achieved through a dual mechanism approach. A message, structured as per Cosmos SDK guidelines, is sent to the admin module using WebAssembly bindings from the Main DAO. This message typically contains one of two global types of proposals:
 
-## Governance Mechanisms
+#### Legacy Proposals
+Rooted in the `x/gov` module of the Cosmos SDK, certain modules like WASM can have predefined proposals. Classic examples include `MigrateContract` or `DeleteAdmin`. The intrinsic Cosmos SDK processes such proposals via a dedicated handler. The admin module on Neutron can execute such proposals if they are part of a whitelisted group. 
 
-### Dual Proposal System
-
-The admin module implements a sophisticated dual proposal system to accommodate both legacy and modern governance approaches:
-
-#### Legacy Proposal Handling
-
-Legacy proposals follow the traditional Cosmos SDK governance pattern:
-
-1. **Proposal Types**: Support for predefined proposal types such as:
-   - `ParameterChangeProposal`: Modify module parameters
-   - `CommunityPoolSpendProposal`: Allocate community funds
-   - `TextProposal`: Governance signaling proposals
-   - Custom WASM proposals for smart contract operations
-
-2. **Handler System**: Legacy proposals are processed through dedicated handlers that understand the specific proposal format and execute the appropriate state changes.
-
-3. **Backward Compatibility**: Maintained support ensures existing governance workflows continue to function during SDK transitions.
+Despite this mechanism being labeled deprecated in the recent SDK 0.47 update, its support remains due to certain modules (like IBC) not transitioning as per the SDK 0.47 guidelines.
 
 #### Message-Based Proposals
+The advent of SDK 0.47 heralded a fresh approach. Actions, rather than being bound by predefined standards, could now be executed using the versatile `sdk.Msg`. This necessitated an overhaul in permission structures across modules. Modules have now integrated an `authority` field, signifying an address (or a group of addresses) that have been permissioned to dispatch critical messages, such as UpdateParams.
 
-Modern proposals leverage the flexible message-based approach introduced in SDK 0.47+:
+### Implementation in Neutron
 
-1. **Universal Message Support**: Any valid `sdk.Msg` can be executed through governance, providing unlimited flexibility for administrative operations.
+The admin module in Neutron utilizes both the aforementioned proposal mechanisms. Specifically, these are executed within the message server of the admin module, ensuring seamless integration with the larger Neutron infrastructure.
 
-2. **Direct Execution**: Messages are executed directly within the message server context, eliminating the need for separate proposal handlers.
+## Challenges Related to Cosmos SDK 0.47 and 0.50
 
-3. **Immediate Processing**: Approved proposals execute immediately without queuing mechanisms, reducing complexity and improving efficiency.
+Transitioning to Cosmos SDK 0.47 and 0.50 introduced several hurdles:
 
-### Proposal Execution Workflow
+- **Deprecation of `x/params`**: With the new SDK version, the `x/params` module has been deprecated, pushing each Cosmos module to implement custom parameter handling logic
+- **Change in Governance Logic**: The new SDK has moved away from the `ProposalHandler` logic in modules. Instead, the `gov` module can now issue direct messages to any Cosmos module
 
-The proposal execution process follows a carefully designed workflow:
+## Enhancements & Solutions
 
-1. **Submission**: Proposals are submitted through the DAO's governance contracts or directly via the admin module's message interface.
+### ProposalExecuteMessage Binding
+A `ProposalExecuteMessage` binding was introduced, allowing the admin module to process any type of Cosmos message. Signer verification ensures authenticity.
 
-2. **Validation**: The module performs comprehensive validation:
-   - Message format verification
-   - Whitelist compliance checking
-   - Authority verification
-   - Parameter validation
+### Revamped MsgSubmitProposal
+The `MsgSubmitProposal` has been redesigned to handle any type of Cosmos message.
 
-3. **Authorization**: The system confirms that the submitting entity has the required authority to execute the proposed operation.
-
-4. **Execution**: Valid proposals are executed immediately within the current transaction context.
-
-5. **Event Emission**: Successful execution triggers events for monitoring and audit purposes.
-
-## Security Model
-
-### Whitelisting Mechanism
-
-The admin module implements a robust whitelisting system to control which operations can be executed through governance:
-
-#### Message Type Whitelisting
-- Only pre-approved message types can be executed
-- Whitelist updates require special authorization
-- Dynamic whitelist management through governance proposals
-
-#### Parameter Validation
-- All proposal parameters undergo strict validation
-- Custom validation rules for different operation types
-- Prevention of invalid or malicious parameter values
-
-#### Authority Verification
-- Multi-level authority checking
-- Role-based access control
-- Cryptographic signature verification
-
-### Signer Verification
-
-Every governance operation undergoes rigorous signer verification:
-
-1. **Cryptographic Validation**: Digital signatures are verified using the submitter's public key
-2. **Authority Matching**: The signer's address is matched against authorized governance addresses
-3. **Time-Based Validation**: Signatures include timestamp validation to prevent replay attacks
-
-## Integration with Neutron DAO
-
-### WebAssembly Bindings
-
-The admin module integrates with Neutron's DAO through specialized WASM bindings:
-
-#### ProposalExecuteMessage Binding
-- Enables smart contracts to trigger administrative operations
-- Provides type-safe interface for proposal submission
-- Includes automatic validation and error handling
-
-#### Governance Contract Interface
-- Standardized interface for DAO contract interaction
-- Support for both synchronous and asynchronous operations
-- Event-driven communication patterns
-
-### DAO Workflow Integration
-
-1. **Proposal Creation**: DAO contracts create governance proposals using standardized message formats
-2. **Voting Process**: Community voting occurs within the DAO's governance framework
-3. **Execution Trigger**: Approved proposals trigger admin module execution through WASM bindings
-4. **Result Processing**: Execution results are communicated back to the DAO contracts
-
-## State Management
-
-### Proposal State Tracking
-
-The admin module maintains minimal state for operational efficiency:
-
-- **Active Operations**: Currently executing administrative operations
-- **Whitelist State**: Current whitelist configuration
-- **Authority Registry**: Authorized governance addresses
-- **Execution History**: Historical record of governance operations (optional)
-
-### State Transitions
-
-State transitions follow strict rules to maintain consistency:
-
-1. **Atomic Operations**: All state changes occur atomically within single transactions
-2. **Validation Gates**: State transitions require validation at each step
-3. **Rollback Capability**: Failed operations trigger automatic state rollback
-4. **Event Logging**: All state changes generate appropriate events
-
-## Performance Considerations
-
-### Immediate Execution Model
-
-The admin module's immediate execution model provides several performance benefits:
-
-- **Reduced Latency**: No queuing delays for approved proposals
-- **Lower Memory Usage**: Elimination of proposal queue storage
-- **Simplified Logic**: Streamlined execution paths reduce computational overhead
-
-### Optimization Strategies
-
-1. **Minimal State Storage**: Only essential state is persisted
-2. **Efficient Validation**: Optimized validation algorithms reduce gas consumption
-3. **Batch Processing**: Support for batched proposal execution when appropriate
-
-## Error Handling and Recovery
-
-### Comprehensive Error Management
-
-The admin module implements robust error handling:
-
-1. **Validation Errors**: Clear error messages for validation failures
-2. **Authorization Errors**: Specific errors for authority violations
-3. **Execution Errors**: Detailed error reporting for execution failures
-4. **Recovery Mechanisms**: Automatic recovery for transient failures
-
-### Audit and Monitoring
-
-- **Event Emission**: Comprehensive event logging for all operations
-- **Error Tracking**: Detailed error logs for debugging and audit
-- **Performance Metrics**: Operational metrics for monitoring and optimization
-
-## SDK Compatibility
-
-### Multi-Version Support
-
-The admin module is designed to work across multiple Cosmos SDK versions:
-
-- **SDK 0.47+**: Full support for modern message-based governance
-- **SDK 0.50**: Enhanced compatibility and performance optimizations
-- **Future Versions**: Designed for forward compatibility with upcoming SDK releases
-
-### Migration Strategies
-
-The module provides migration paths for SDK upgrades:
-
-1. **Gradual Migration**: Support for gradual transition from legacy to modern proposals
-2. **Compatibility Layers**: Abstraction layers for cross-version compatibility
-3. **Upgrade Procedures**: Documented procedures for SDK version upgrades
-
-This technical foundation ensures that the admin module can serve as a reliable, secure, and efficient governance mechanism for the Neutron network while maintaining the flexibility needed for future evolution. 
+### Streamlined Logic and Execution
+Unnecessary logic and the cache context have been removed, leading to immediate proposal execution within the message server and the removal of active and inactive queues. 

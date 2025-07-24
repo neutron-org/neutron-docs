@@ -1,9 +1,9 @@
 ---
 title: "How-to"
-description: "Understanding how the Main DAO interacts with the admin module"
+description: "Understanding how the DAO interacts with the admin module"
 ---
 
-This guide explains how the admin module works within Neutron's governance system. Unlike other modules that users can interact with directly, the admin module is exclusively accessible by the **Main DAO contract**.
+This guide explains how the admin module works within Neutron's governance system. The admin module is exclusively accessible by the DAO through WebAssembly bindings.
 
 <Warning>
 The admin module cannot be used directly by individual users or external contracts. All interactions must go through Neutron's DAO governance process.
@@ -13,204 +13,49 @@ The admin module cannot be used directly by individual users or external contrac
 
 The admin module operates under a strict access control model:
 
-- **Only the Main DAO contract** can send messages to the admin module
+- Only the DAO can send messages to the admin module
 - Messages are sent using WebAssembly bindings from the Main DAO
 - Individual users cannot directly submit proposals or interact with the module
-- All administrative operations require DAO governance approval
 
-## How It Works
+## DAO Governance Process
 
-### 1. DAO Governance Process
+### Proposal Types
 
-When the Neutron community wants to execute administrative operations:
+The DAO can submit two types of proposals through the admin module:
 
-1. **Proposal Creation**: Community members create proposals through the DAO interface
-2. **Community Voting**: NTRN token holders vote on the proposal
-3. **Proposal Execution**: If approved, the Main DAO contract sends messages to the admin module
-4. **Admin Module Processing**: The admin module validates and executes the whitelisted operations
+#### Legacy Proposals
+- Based on the traditional `x/gov` module structure
+- Include predefined proposal types like `MigrateContract` or `DeleteAdmin`
+- Processed through dedicated handlers
+- Must be part of a whitelisted group for execution
 
-### 2. Message Flow
+#### Message-Based Proposals
+- Introduced with SDK 0.47
+- Allow execution of any valid `sdk.Msg`
+- Provide greater flexibility for governance operations
+- Require modules to implement an `authority` field
 
-```
-Community Proposal → DAO Voting → Main DAO Contract → Admin Module → Network Changes
-```
+### Proposal Execution
 
-The admin module receives `ProposalExecuteMessage` bindings from the Main DAO contract and processes them according to its whitelisting rules.
+When the DAO submits a proposal:
 
-## Submitting Proposals to the Main DAO
+1. **Submission**: The DAO creates a proposal using WebAssembly bindings
+2. **Validation**: The admin module validates the proposal format and content
+3. **Authorization**: The module verifies the sender is the authorized DAO
+4. **Execution**: Valid proposals are executed immediately within the message server
 
-<Warning>
-Neutron does **not** use the standard Cosmos SDK `gov` module for proposals. All governance goes through the Main DAO contract via WASM execution.
-</Warning>
+## Message Structure
 
-### Method 1: Using Governance Interfaces (Recommended)
+Proposals sent to the admin module follow Cosmos SDK guidelines and contain:
 
-The easiest way to submit proposals is through web interfaces:
+- **Proposal Content**: The specific actions or changes to be implemented
+- **Proposer**: The DAO address submitting the proposal
+- **Message Type**: Either legacy proposal format or message-based format
 
-- **[governance.neutron.org](https://governance.neutron.org)** - Official governance interface
-- **[daodao.zone](https://daodao.zone)** - Alternative DAO interface
+## Integration with Neutron Infrastructure
 
-These interfaces handle the complexity of WASM message formatting and provide user-friendly proposal creation workflows.
+The admin module integrates seamlessly with Neutron's governance infrastructure through:
 
-### Method 2: Direct WASM Execute
-
-For programmatic proposal submission, use WASM execute messages to the Main DAO contract:
-
-```bash
-# Execute a propose message on the Main DAO contract
-neutrond tx wasm execute neutron1436kxs0w2es6xlqpp9rd35e3d0cjnw4sv8j3a7483sgks29jqwgshlt6zh \
-  '{"propose": {"msg": {"propose_single": {"title": "Your Proposal Title", "description": "Your proposal description", "msgs": [/* your admin module messages */]}}}}' \
-  --from=<your-key> \
-  --chain-id=neutron-1 \
-  --gas=auto \
-  --gas-adjustment=1.5
-```
-
-### Method 3: WASM Submit Proposal (CLI)
-
-Alternative CLI method using the WASM submit-proposal command:
-
-```bash
-# Submit proposal via WASM module
-neutrond tx wasm submit-proposal proposal.json \
-  --from=<your-key> \
-  --chain-id=neutron-1 \
-  --gas=auto \
-  --gas-adjustment=1.5
-```
-
-Where `proposal.json` contains the properly formatted WASM proposal for the Main DAO contract.
-
-<Note>
-The Main DAO contract address is: `neutron1436kxs0w2es6xlqpp9rd35e3d0cjnw4sv8j3a7483sgks29jqwgshlt6zh`
-</Note>
-
-## Supported Operations
-
-The admin module can process two types of proposals:
-
-### Legacy Proposals
-
-Traditional Cosmos SDK governance proposals that are still supported for backward compatibility:
-
-- **Parameter Changes**: Updating module parameters using the legacy params system
-- **WASM Proposals**: Contract instantiation, migration, and administration
-- **IBC Proposals**: Operations for modules that haven't migrated to SDK 0.47 patterns
-
-### Message-Based Proposals
-
-Modern proposals that can execute any whitelisted `sdk.Msg`:
-
-- **Module Parameter Updates**: Using new-style `MsgUpdateParams` messages
-- **Contract Operations**: WASM contract management through direct messages
-- **Multi-Module Coordination**: Batch operations across different modules
-
-## Message Types
-
-Based on the old documentation, the admin module supports these message types:
-
-### MsgSubmitProposalLegacy
-
-For backward compatibility with legacy proposal formats:
-
-```go
-type MsgSubmitProposalLegacy struct {
-    Content  *types.Any  `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
-    Proposer string      `protobuf:"bytes,2,opt,name=proposer,proto3" json:"proposer,omitempty"`
-}
-```
-
-### MsgSubmitProposal  
-
-For modern message-based proposals:
-
-```go
-type MsgSubmitProposal struct {
-    Messages []types.Any `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
-    Proposer string      `protobuf:"bytes,2,opt,name=proposer,proto3" json:"proposer,omitempty"`
-}
-```
-
-### Admin Management Messages
-
-The module also supports admin management operations:
-
-- **MsgAddAdmin**: Add new admin addresses (if applicable)
-- **MsgDeleteAdmin**: Remove admin addresses (if applicable)
-
-<Note>
-The specific admin management functionality depends on the current network configuration and may not be actively used in Neutron's current governance model.
-</Note>
-
-## Security Features
-
-### Whitelisting
-
-The admin module implements strict whitelisting to ensure only approved operations can be executed:
-
-- Message types must be explicitly whitelisted
-- Operations are validated before execution
-- Unauthorized message types are rejected
-
-### Authority Verification
-
-The module includes signer verification to ensure that only the authorized Main DAO contract can submit proposals:
-
-- Sender address must match the expected DAO contract address
-- Messages are cryptographically verified
-- Unauthorized senders are rejected
-
-## Querying the Admin Module
-
-While you cannot submit proposals directly, you can query the admin module's state using standard query commands:
-
-```bash
-# Query module parameters (if available)
-neutrond query adminmodule params
-
-# Query admins list (if available)
-neutrond query adminmodule admins
-```
-
-<Note>
-The admin module provides query functionality but no transaction commands. All state changes must go through the Main DAO contract.
-</Note>
-
-## For DAO Developers
-
-If you're working on DAO governance contracts that need to interact with the admin module, you would use the `ProposalExecuteMessage` binding:
-
-```rust
-use neutron_sdk::bindings::msg::NeutronMsg;
-
-// This would be called from within the Main DAO contract
-let admin_msg = NeutronMsg::SubmitProposal {
-    messages: vec![/* your whitelisted messages */],
-};
-```
-
-However, this is only relevant if you're developing the core DAO infrastructure itself.
-
-## Understanding the Governance Flow
-
-For regular users and developers, here's how to participate in admin operations:
-
-1. **Community Discussion**: Discuss proposed changes in Neutron forums and Discord
-2. **Proposal Creation**: Work with the community to create formal DAO proposals
-3. **Voting**: Participate in DAO voting using your NTRN tokens
-4. **Implementation**: If approved, the DAO automatically triggers the admin module
-
-## Limitations and Considerations
-
-- **No Direct Access**: Individual users cannot interact with the admin module directly
-- **DAO Dependency**: All operations must go through the governance process
-- **Whitelisting Constraints**: Only pre-approved message types can be executed
-- **Network-Wide Impact**: Admin operations affect the entire network
-
-This architecture ensures that critical network operations maintain democratic oversight while providing the technical capability for complex administrative tasks.
-
-## Related Documentation
-
-- [Neutron DAO Overview](/concepts/modular-governance) - Learn about Neutron's governance system
-- [Admin Module Reference](/developers/modules/admin/reference) - Technical implementation details
-- [Admin Module API](/developers/modules/admin/api) - API documentation and message formats 
+- **ProposalExecuteMessage Binding**: Allows processing of any Cosmos message type
+- **Signer Verification**: Ensures only authorized DAO can submit proposals
+- **Immediate Execution**: Proposals execute directly in the message server without queuing 

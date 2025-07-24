@@ -1,95 +1,59 @@
 ---
 title: "Admin Module"
-description: "Central governance module enabling DAO-driven network administration and proposal execution"
+description: "Central governance tool enabling the DAO to propose and execute pivotal operations"
 ---
 
-The admin module serves as Neutron's central governance mechanism, empowering the **Main DAO contract** to propose and execute critical network operations. Built with Cosmos SDK compatibility and upgraded for SDK 0.50, this module enables secure, controlled administration of the entire Neutron network.
+The admin module in the Neutron network is a central governance tool, enabling the DAO to propose and execute pivotal operations. Developed using the Cosmos SDK and upgraded to align with Cosmos SDK 0.50, this module allows the DAO to execute proposals that can significantly change the network state.
 
 <Warning>
-**Main DAO Exclusive Access**: The admin module can **only** be accessed by the Main DAO contract through WebAssembly bindings. Individual users, external contracts, and CLI commands cannot directly interact with this module. All operations must go through Neutron's DAO governance process.
+**DAO Exclusive Access**: The admin module can only be accessed by the DAO through WebAssembly bindings. Individual users and external contracts cannot directly interact with this module.
 </Warning>
-
-The admin module provides a unified interface for governance operations, supporting both legacy proposal mechanisms and modern message-based execution. Through careful whitelisting and permission controls, it ensures that only authorized operations can be performed while maintaining the flexibility needed for network evolution.
 
 ## Table of contents
 
 - [Overview](/developers/modules/admin/overview) — a high-level description of the module.
-- [Explanation](/developers/modules/admin/explanation) — an explanation of the module's concepts and the reasoning behind its design choices.
-- [How To](/developers/modules/admin/how-to) — understanding how the Main DAO interacts with the module.
-- [Reference](/developers/modules/admin/reference) — comprehensive technical details.
+- [Explanation](/developers/modules/admin/explanation) — understanding the module's concepts and governance mechanisms.
+- [How-to](/developers/modules/admin/how-to) — understanding how the DAO interacts with the admin module.
+- [Reference](/developers/modules/admin/reference) — technical reference for admin module messages.
 
-## Concepts
+## Network Administration and Governance
 
-The admin module operates on the principle of controlled delegation, where the **Neutron Main DAO contract** acts as the network's administrator with the authority to execute proposals that can significantly change the network state. This includes:
+Being the network's admin, the DAO is empowered to execute proposals that can significantly change the network state. These proposals can include:
 
-- **Parameter Modifications**: Adjusting module parameters such as transaction fees, validator incentives, and governance thresholds
-- **Smart Contract Management**: Executing WebAssembly (WASM) proposals for contract instantiation, migration, and administration
-- **Network Upgrades**: Coordinating protocol upgrades and consensus parameter changes
-- **Message Execution**: Processing any valid `sdk.Msg` through the governance framework
+- Modifying parameters of specific modules, like adjusting transaction fees or validator incentives
+- WebAssembly (WASM) proposals for smart contract operations
+- Upgrade proposals for network improvements
+- Execution of any `sdk.Msg` through the governance framework
 
-### Dual Proposal Mechanism
+## Mechanism of Operation
 
-The admin module supports two distinct proposal execution paths:
+The admin module achieves governance through a dual mechanism approach. Messages are sent to the admin module using WebAssembly bindings from the Main DAO, containing one of two types of proposals:
 
-1. **Legacy Proposals**: Traditional governance proposals rooted in the Cosmos SDK's `x/gov` module, supporting predefined proposals like `MigrateContract`, `InstantiateContract`, and parameter changes. These proposals are processed through dedicated handlers and remain supported for backward compatibility with modules like IBC that haven't fully transitioned to SDK 0.47 patterns.
+### Legacy Proposals
+Rooted in the `x/gov` module of the Cosmos SDK, certain modules can have predefined proposals. Examples include `MigrateContract` or `DeleteAdmin`. The admin module can execute such proposals if they are part of a whitelisted group.
 
-2. **Message-Based Proposals**: Modern proposal execution introduced with SDK 0.47+, allowing any valid `sdk.Msg` to be executed through governance. This approach provides greater flexibility using the versatile `sdk.Msg` format and requires modules to implement an `authority` field specifying permitted addresses.
+### Message-Based Proposals  
+Introduced with SDK 0.47, actions can now be executed using the versatile `sdk.Msg` format. This requires modules to have an `authority` field specifying addresses permitted to dispatch critical messages.
 
-### Security Through Whitelisting
+## Implementation in Neutron
 
-To maintain network security while enabling governance flexibility, the admin module implements a comprehensive whitelisting system. Only pre-approved message types and operations can be executed through the governance process, preventing potential security vulnerabilities while allowing legitimate administrative functions.
+The admin module utilizes both proposal mechanisms within its message server, ensuring integration with the Neutron infrastructure. A `ProposalExecuteMessage` binding allows the admin module to process any type of Cosmos message, with signer verification ensuring authenticity.
 
-## Main DAO Integration
+## Cosmos SDK Evolution
 
-The admin module is exclusively accessible through Neutron's Main DAO contract via WebAssembly bindings. This tight integration ensures that all network administration flows through the democratic governance process while maintaining the technical capability to execute complex administrative operations.
+Transitioning to Cosmos SDK 0.47 and 0.50 introduced several considerations:
 
-The module processes `ProposalExecuteMessage` bindings from the Main DAO, enabling the governance system to trigger administrative actions. Signer verification ensures that only the authorized DAO contract can initiate these operations.
+- **Deprecation of `x/params`**: Each Cosmos module now implements custom parameter handling
+- **Change in Governance Logic**: The `gov` module can now issue direct messages to any Cosmos module
+- **Legacy Compatibility**: Support remains for modules that haven't transitioned to new SDK patterns
 
-### Administration Workflow
+## Enhancements & Solutions
 
-1. **DAO Proposal Creation**: Governance proposals are created and voted on through the Neutron DAO
-2. **Message Validation**: The admin module validates that proposed messages are whitelisted and properly formatted
-3. **Authority Verification**: The module confirms that the sender is the authorized Main DAO contract
-4. **Execution**: Approved proposals are executed immediately within the message server context
+### ProposalExecuteMessage Binding
+A `ProposalExecuteMessage` binding was introduced, allowing the admin module to process any type of Cosmos message. Signer verification ensures authenticity.
 
-## Evolution from Legacy Systems
+### Revamped MsgSubmitProposal
+The `MsgSubmitProposal` has been redesigned to handle any type of Cosmos message.
 
-The admin module represents an evolution from earlier administrative systems, incorporating lessons learned from SDK transitions and governance best practices. It maintains backward compatibility with legacy proposal types while providing a path forward for modern governance mechanisms.
-
-Key improvements include:
-- Elimination of active/inactive proposal queues for immediate execution
-- Streamlined message processing without cache contexts
-- Enhanced security through comprehensive whitelisting
-- Support for both legacy and modern proposal formats
-- Direct integration with DAO governance contracts
-
-## Access Restrictions
-
-<Warning>
-**No Direct CLI Access**: Unlike other Cosmos SDK modules, the admin module does not provide CLI transaction commands. All interactions must go through the Main DAO contract using WebAssembly bindings.
-</Warning>
-
-The admin module's restricted access model ensures:
-- **Democratic Governance**: All network changes require community approval
-- **Security**: Prevents unauthorized access to critical network functions
-- **Auditability**: All operations are traceable through DAO governance records
-- **Consistency**: Unified governance process for all administrative operations
-
-## Documentation Sections
-
-<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 mb-8">
-  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/admin/explanation">
-    <h4 className="font-semibold mb-2">Technical Details</h4>
-    <p className="text-sm">Deep dive into governance mechanisms, proposal types, and security models</p>
-  </a>
-  
-  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/admin/how-to">
-    <h4 className="font-semibold mb-2">How-to Guide</h4>
-    <p className="text-sm">Understanding how the Main DAO interacts with the admin module</p>
-  </a>
-  
-  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/admin/reference">
-    <h4 className="font-semibold mb-2">Reference</h4>
-    <p className="text-sm">Comprehensive technical reference for the admin module</p>
-  </a>
-</div> 
+### Streamlined Logic and Execution
+Unnecessary logic and the cache context have been removed, leading to immediate proposal execution within the message server and the removal of active and inactive queues. 
