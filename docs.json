@@ -186,18 +186,7 @@
                     ]
                                      },
                     "developers/modules/dex/how-to",
-                  {
-                    "group": "Reference",
-                    "icon": "book",
-                    "pages": [
-                      "developers/modules/dex/reference",
-                      "developers/modules/dex/api",
-                      "developers/modules/dex/messages",
-                      "developers/modules/dex/events",
-                      "developers/modules/dex/state",
-                      "developers/modules/dex/client"
-                    ]
-                  }
+                  "developers/modules/dex/reference"
                 ]
               },
               {
