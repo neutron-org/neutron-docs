@@ -12,10 +12,10 @@ sidebar_position: 2
 Only governance can update Global Fee module parameters. Individual users cannot directly modify these settings.
 </Warning>
 
-**Submit Parameter Change Proposal:**
+**Submit Parameter Update Proposal:**
 
 ```bash
-neutrond tx gov submit-proposal param-change proposal.json \
+neutrond tx gov submit-proposal proposal.json \
   --from validator \
   --chain-id neutron-1 \
   --gas auto \
@@ -29,11 +29,11 @@ neutrond tx gov submit-proposal param-change proposal.json \
 {
   "title": "Update Global Fee Parameters",
   "description": "Adjust minimum gas prices and bypass message types",
-  "changes": [
+  "messages": [
     {
-      "subspace": "globalfee",
-      "key": "Params",
-      "value": {
+      "@type": "/gaia.globalfee.v1beta1.MsgUpdateParams",
+      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6zn9kn",
+      "params": {
         "minimum_gas_prices": [
           {
             "denom": "untrn",
@@ -45,10 +45,11 @@ neutrond tx gov submit-proposal param-change proposal.json \
           }
         ],
         "bypass_min_fee_msg_types": [
-          "/cosmos.gov.v1beta1.MsgVote",
-          "/cosmos.gov.v1beta1.MsgVoteWeighted",
-          "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
-          "/cosmos.staking.v1beta1.MsgDelegate"
+          "/ibc.core.channel.v1.MsgRecvPacket",
+          "/ibc.core.channel.v1.MsgAcknowledgement",
+          "/ibc.core.client.v1.MsgUpdateClient",
+          "/ibc.core.channel.v1.MsgTimeout",
+          "/ibc.core.channel.v1.MsgTimeoutOnClose"
         ],
         "max_total_bypass_min_fee_msg_gas_usage": 1000000
       }
@@ -66,16 +67,26 @@ To allow certain message types to bypass minimum fees:
 {
   "title": "Add IBC Transfer to Fee Bypass",
   "description": "Allow IBC transfers to bypass minimum fee requirements",
-  "changes": [
+  "messages": [
     {
-      "subspace": "globalfee",
-      "key": "Params",
-      "value": {
+      "@type": "/gaia.globalfee.v1beta1.MsgUpdateParams",
+      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6zn9kn",
+      "params": {
+        "minimum_gas_prices": [
+          {
+            "denom": "untrn",
+            "amount": "0.025"
+          }
+        ],
         "bypass_min_fee_msg_types": [
-          "/cosmos.gov.v1beta1.MsgVote",
-          "/cosmos.gov.v1beta1.MsgVoteWeighted",
+          "/ibc.core.channel.v1.MsgRecvPacket",
+          "/ibc.core.channel.v1.MsgAcknowledgement",
+          "/ibc.core.client.v1.MsgUpdateClient",
+          "/ibc.core.channel.v1.MsgTimeout",
+          "/ibc.core.channel.v1.MsgTimeoutOnClose",
           "/ibc.applications.transfer.v1.MsgTransfer"
-        ]
+        ],
+        "max_total_bypass_min_fee_msg_gas_usage": 1000000
       }
     }
   ]
@@ -90,17 +101,25 @@ To adjust network-wide minimum gas prices:
 {
   "title": "Update Minimum Gas Prices",
   "description": "Adjust minimum gas prices for network security",
-  "changes": [
+  "messages": [
     {
-      "subspace": "globalfee",
-      "key": "Params",
-      "value": {
+      "@type": "/gaia.globalfee.v1beta1.MsgUpdateParams",
+      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6zn9kn",
+      "params": {
         "minimum_gas_prices": [
           {
             "denom": "untrn",
             "amount": "0.050"
           }
-        ]
+        ],
+        "bypass_min_fee_msg_types": [
+          "/ibc.core.channel.v1.MsgRecvPacket",
+          "/ibc.core.channel.v1.MsgAcknowledgement",
+          "/ibc.core.client.v1.MsgUpdateClient",
+          "/ibc.core.channel.v1.MsgTimeout",
+          "/ibc.core.channel.v1.MsgTimeoutOnClose"
+        ],
+        "max_total_bypass_min_fee_msg_gas_usage": 1000000
       }
     }
   ]
@@ -187,7 +206,7 @@ const minFee = calculateMinimumFee(gasEstimate, params.minimum_gas_prices);
 
 ```bash
 # Monitor bypass message types in transactions
-neutrond query txs --events 'message.action=/cosmos.gov.v1beta1.MsgVote' \
+neutrond query txs --events 'message.action=/ibc.core.channel.v1.MsgRecvPacket' \
   --page 1 --limit 100
 ```
 
@@ -195,7 +214,7 @@ neutrond query txs --events 'message.action=/cosmos.gov.v1beta1.MsgVote' \
 
 ```bash
 # Check total gas usage for bypass transactions
-neutrond query block [height] | jq '.block.data.txs[] | select(.body.messages[].type_url | contains("MsgVote"))'
+neutrond query block [height] | jq '.block.data.txs[] | select(.body.messages[].type_url | contains("MsgRecvPacket"))'
 ```
 
 ### Parameter Change Alerts
@@ -204,8 +223,7 @@ neutrond query block [height] | jq '.block.data.txs[] | select(.body.messages[].
 
 ```bash
 # Subscribe to parameter change events
-neutrond query txs --events 'message.action=/cosmos.gov.v1beta1.MsgSubmitProposal' \
-  --events 'proposal.proposal_type=ParameterChange'
+neutrond query txs --events 'message.action=/gaia.globalfee.v1beta1.MsgUpdateParams'
 ```
 
 ## Best Practices
@@ -219,7 +237,7 @@ neutrond query txs --events 'message.action=/cosmos.gov.v1beta1.MsgSubmitProposa
 
 ### Bypass Configuration
 
-1. **Essential Operations**: Only bypass critical governance and staking operations
+1. **Essential Operations**: Only bypass critical IBC protocol operations by default
 2. **Gas Limits**: Set appropriate gas limits for bypass operations
 3. **Security Review**: Regularly audit bypass message types
 4. **Community Input**: Involve community in bypass decisions

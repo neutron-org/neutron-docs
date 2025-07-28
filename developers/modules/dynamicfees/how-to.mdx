@@ -29,7 +29,7 @@ Create a governance proposal to update asset prices:
   "description": "Update NTRN-denominated prices for supported assets based on current market conditions",
   "messages": [
     {
-      "@type": "/neutron.dynamicfees.MsgUpdateParams",
+      "@type": "/neutron.dynamicfees.v1.MsgUpdateParams",
       "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6zn9kn", // governance authority
       "params": {
         "ntrn_prices": [
@@ -85,7 +85,7 @@ To add support for a new asset:
   "description": "Add JUNO token support to Dynamic Fees module",
   "messages": [
     {
-      "@type": "/neutron.dynamicfees.MsgUpdateParams", 
+      "@type": "/neutron.dynamicfees.v1.MsgUpdateParams", 
       "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6zn9kn",
       "params": {
         "ntrn_prices": [
@@ -322,7 +322,7 @@ async function monitorPriceChanges() {
   const client = await getWebSocketClient();
   
   client.subscribe({
-    query: "tm.event='Tx' AND message.action='/neutron.dynamicfees.MsgUpdateParams'"
+    query: "tm.event='Tx' AND message.action='/neutron.dynamicfees.v1.MsgUpdateParams'"
   }, (event) => {
     console.log('Dynamic Fees parameters updated:', event);
     // Handle price change
@@ -368,7 +368,7 @@ cat > $PROPOSAL_FILE << EOF
   "description": "Update asset prices based on 30-day average market data",
   "messages": [
     {
-      "@type": "/neutron.dynamicfees.MsgUpdateParams",
+      "@type": "/neutron.dynamicfees.v1.MsgUpdateParams",
       "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6zn9kn",
       "params": {
         "ntrn_prices": [

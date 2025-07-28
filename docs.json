@@ -307,7 +307,6 @@
                 "icon": "user-gear",
                 "pages": [
                   "developers/modules/admin/overview",
-                  "developers/modules/admin/explanation",
                   "developers/modules/admin/how-to",
                   "developers/modules/admin/reference"
                 ]

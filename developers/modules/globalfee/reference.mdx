@@ -21,14 +21,16 @@ The Global Fee module manages network-wide minimum gas prices and fee bypass mec
 - No duplicate denominations or zero amounts
 
 #### bypass_min_fee_msg_types
-Common bypass message types:
-- `/cosmos.gov.v1beta1.MsgVote` - Governance voting
-- `/cosmos.gov.v1beta1.MsgVoteWeighted` - Weighted voting
-- `/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward` - Claim rewards
+Default bypass message types (IBC protocol messages):
+- `/ibc.core.channel.v1.MsgRecvPacket` - IBC packet reception
+- `/ibc.core.channel.v1.MsgAcknowledgement` - IBC acknowledgement
+- `/ibc.core.client.v1.MsgUpdateClient` - IBC client updates
+- `/ibc.core.channel.v1.MsgTimeout` - IBC packet timeout
+- `/ibc.core.channel.v1.MsgTimeoutOnClose` - IBC timeout on close
 
 #### max_total_bypass_min_fee_msg_gas_usage
 - Prevents abuse of bypass mechanism
-- Typical value: 1,000,000 gas units
+- Default value: 1,000,000 gas units
 
 ## Queries
 
@@ -43,6 +45,8 @@ Retrieve the current module parameters.
 ### MsgUpdateParams
 Update module parameters through governance.
 
+**Message Type:** `/gaia.globalfee.v1beta1.MsgUpdateParams`
+
 **Authority Required**: Governance only
 
 **Fields:**
@@ -52,7 +56,7 @@ Update module parameters through governance.
 ## Key Concepts
 
 - **Minimum Gas Prices**: Network-wide minimum fees for all transactions
-- **Fee Bypass**: Certain message types can bypass minimum fees
+- **Fee Bypass**: Certain message types can bypass minimum fees (defaults to IBC protocol messages)
 - **Gas Limits**: Bypass transactions have gas usage limits
 - **Query-Only**: Users can only query current parameters
 - **Governance Updates**: Parameters can only be updated through governance proposals 
