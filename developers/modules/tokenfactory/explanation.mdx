@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Technical Explanation
 
-The Token Factory module enables users to create and manage custom tokens on Neutron. This module provides a comprehensive framework for token creation, administration, and lifecycle management with built-in security features.
+The Token Factory module enables users to create and manage custom tokens on Neutron. This module was adapted from Osmosis Labs codebase and provides a framework for token creation, administration, and lifecycle management.
 
 ## Core Concepts
 
@@ -19,7 +19,7 @@ factory/{creator_address}/{subdenom}
 **Components:**
 - `factory/`: Required prefix identifying Token Factory tokens
 - `{creator_address}`: Bech32 address of the token creator
-- `{subdenom}`: Custom subdenom chosen by creator (alphanumeric, max 44 chars)
+- `{subdenom}`: Custom subdenom chosen by creator (max 44 characters)
 
 **Examples:**
 - `factory/neutron1abc.../utoken`
@@ -31,16 +31,16 @@ factory/{creator_address}/{subdenom}
 Each token has an **admin** who controls its lifecycle:
 
 **Admin Powers:**
-- Mint new tokens
-- Burn existing tokens
+- Mint new tokens to any address
+- Burn existing tokens from any address
 - Change token admin
-- Set token metadata
+- Set token metadata via bank keeper
 - Configure before-send hooks
 - Force transfers (bypass hooks)
 
 **Admin Transfer:**
 - Admin can be transferred to another address
-- Admin can be set to empty (renouncing control)
+- Admin can be set to empty string (renouncing control)
 - Once renounced, admin powers cannot be restored
 
 ## Token Lifecycle
@@ -49,60 +49,77 @@ Each token has an **admin** who controls its lifecycle:
 
 **Process:**
 1. User submits `MsgCreateDenom` with subdenom
-2. System validates subdenom format and uniqueness
-3. Creation fee is charged and sent to fee collector
+2. System validates subdenom using `GetTokenDenom()` and SDK `ValidateDenom()`
+3. Creation fee is charged (if configured) and sent to fee collector
 4. Full denomination is generated: `factory/{creator}/{subdenom}`
 5. Creator becomes initial admin
+6. `AuthorityMetadata` is set for the denom
+7. Denom is added to `CreatorPrefixStore`
 
 **Validation Rules:**
-- Subdenom must be alphanumeric (a-z, A-Z, 0-9)
-- Maximum length: 44 characters
-- Must be unique for the creator
-- Cannot start with numbers
+- Subdenom maximum length: 44 characters
+- Creator address maximum length: 75 characters (59 + 16 HRP length)
+- Creator address cannot contain "/" characters
+- Must pass SDK denomination validation
 
 ### 2. Token Supply Management
 
 **Minting:**
-- Only admin can mint tokens
-- No maximum supply limit (unless enforced by hooks)
-- Minted tokens are sent to specified recipient
+- Only admin can mint tokens via `MsgMint`
+- Tokens minted to `mint_to_address` (defaults to sender if empty)
+- Uses bank keeper's mint functionality
 
 **Burning:**
-- Only admin can burn tokens
-- Tokens are burned from specified address
-- Reduces total supply permanently
+- Only admin can burn tokens via `MsgBurn`
+- Tokens burned from `burn_from_address` (defaults to sender if empty)
+- Cannot burn from module accounts (`ErrBurnFromModuleAccount`)
+- Uses bank keeper's burn functionality
 
 ### 3. Token Metadata
 
-**Metadata Fields:**
-- Name: Human-readable token name
-- Symbol: Trading symbol (e.g., "USDC")
-- Description: Token description
-- Decimals: Number of decimal places
-- Additional custom fields
-
-**Management:**
-- Only admin can set/update metadata
-- Metadata is stored on-chain
-- Used by wallets and exchanges for display
+**Metadata Management:**
+- Only admin can set/update metadata via `MsgSetDenomMetadata`
+- Metadata stored via bank keeper using `SetDenomMetaData()`
+- Metadata must pass bank keeper validation
 
 ### 4. Before-Send Hooks
 
 **Hook Mechanism:**
 - Custom logic executed before token transfers
 - Implemented as CosmWasm contracts
-- Can block, modify, or allow transfers
+- Two execution modes: tracking and blocking
+
+**Hook Types:**
+
+**TrackBeforeSend:**
+```go
+type TrackBeforeSendMsg struct {
+    From   string
+    To     string  
+    Amount Coin
+}
+```
+- Used for monitoring/tracking transfers
+- Has gas limit of 500,000 gas
+- Errors are suppressed (don't block transfers)
+
+**BlockBeforeSend:**
+```go
+type BlockBeforeSendMsg struct {
+    From   string
+    To     string
+    Amount Coin
+}
+```
+- Used for blocking/controlling transfers
+- Can prevent transfers by returning errors
+- No gas limit restrictions
 
 **Security:**
 - Only whitelisted contracts can be used as hooks
-- Whitelist managed through governance
+- Whitelist managed through governance parameters
 - Admin can set/remove hooks for their tokens
-
-**Use Cases:**
-- Transfer restrictions (KYC/AML)
-- Automatic fee collection
-- Staking/unstaking mechanisms
-- Governance token voting power
+- Hook validation uses `AssertIsHookWhitelisted()`
 
 ## Security Model
 
@@ -110,8 +127,8 @@ Each token has an **admin** who controls its lifecycle:
 
 **Creator Permissions:**
 - Create tokens with their address as admin
-- Pay creation fees
-- Choose subdenom (within constraints)
+- Pay creation fees (if configured)
+- Choose subdenom (within length constraints)
 
 **Admin Permissions:**
 - All token management operations
@@ -119,7 +136,7 @@ Each token has an **admin** who controls its lifecycle:
 - Can renounce admin (irreversible)
 
 **Governance Permissions:**
-- Update module parameters
+- Update module parameters via `MsgUpdateParams`
 - Manage hook whitelist
 - Set fee collector address
 
@@ -127,180 +144,58 @@ Each token has an **admin** who controls its lifecycle:
 
 **Whitelist Protection:**
 - Only approved contracts can be used as hooks
+- Whitelist entries match `CodeID` and `DenomCreator`
 - Prevents malicious hook deployment
-- Governance controls whitelist updates
 
 **Hook Validation:**
-- Contract must implement correct interface
+- Contract must exist and match whitelist entry
 - Creator and hook contract must match whitelist entry
-- Prevents unauthorized hook setting
+- Hooks are skipped (not blocked) if removed from whitelist
 
 ### Economic Security
 
 **Creation Fees:**
-- Prevents spam token creation
-- Fees sent to community pool or designated collector
-- Configurable through governance
+- Configurable through `denom_creation_fee` parameter
+- Fees sent to `fee_collector_address`
+- Both fee and collector must be set together or both unset
 
 **Gas Consumption:**
-- Additional gas cost for token creation
-- Spam deterrence mechanism
-- Configurable through parameters
+- Additional gas cost via `denom_creation_gas_consume` parameter
+- TrackBeforeSend hooks have 500,000 gas limit
+- Gas consumption prevents infinite contract calls
 
-## Integration Patterns
+## Force Transfer Capability
 
-### DeFi Integration
+**Admin Override:**
+- Admin can force transfers that bypass before-send hooks via `MsgForceTransfer`
+- Transfers tokens directly between any two addresses
+- Does not trigger hook validation or execution
 
-**Automated Market Makers:**
-```
-1. Create liquidity token: factory/neutron1.../lp-atom-usdc
-2. Set metadata for display
-3. Mint LP tokens when liquidity provided
-4. Burn LP tokens when liquidity removed
-```
-
-**Yield Farming:**
-```
-1. Create reward token: factory/neutron1.../rewards
-2. Set hook for automatic distribution
-3. Mint rewards based on staking activity
-4. Transfer admin to DAO for governance
-```
-
-### Governance Tokens
-
-**DAO Token Creation:**
-```
-1. Create governance token: factory/neutron1.../vote
-2. Set metadata with voting information
-3. Mint initial supply to founders
-4. Transfer admin to DAO contract
-5. DAO controls future minting/burning
-```
-
-### Gaming and NFT Integration
-
-**Game Currency:**
-```
-1. Create game token: factory/neutron1.../gold
-2. Set hook for game mechanics
-3. Mint rewards for achievements
-4. Burn tokens for in-game purchases
-```
-
-## Technical Implementation
+## Implementation Details
 
 ### State Storage
 
-**Token Registry:**
-- Maps full denom to admin address
-- Stores token metadata
-- Tracks before-send hooks
+**Authority Metadata:**
+- Maps denomination to admin address
+- Stored per-denom for efficient lookup
 
-**Admin Tracking:**
-- Efficient lookup of admin by denom
-- Supports admin changes and transfers
+**Hook Storage:**
+- Stores contract address for each denomination
+- Uses `BeforeSendHookAddressPrefixKey` for storage
 
-### Hook Execution
+**Creator Registry:**
+- Tracks denoms created per creator address
+- Used for `DenomsFromCreator` queries
 
-**Transfer Flow:**
-1. User initiates token transfer
-2. System checks for before-send hook
-3. If hook exists, call contract with transfer details
-4. Hook can approve, deny, or modify transfer
-5. Execute transfer based on hook response
+### Length Constraints
 
-**Hook Interface:**
-```rust
-pub enum BeforeSendHookMsg {
-    TrackBeforeSend {
-        from: String,
-        to: String,
-        amount: Coin,
-    },
-}
+Based on SDK's 128-byte maximum denom length:
+- `MaxSubdenomLength = 44`
+- `MaxHrpLength = 16` 
+- `MaxCreatorLength = 75` (59 + 16)
 
-pub struct BeforeSendHookResponse {
-    pub continue_transfer: bool,
-    pub new_amount: Option<Coin>,
-}
+**Calculation:**
 ```
-
-### Gas Optimization
-
-**Efficient Operations:**
-- Batch minting/burning support
-- Optimized state storage
-- Minimal gas overhead for transfers
-
-**Performance Considerations:**
-- Hook execution adds gas cost
-- Complex hooks may hit gas limits
-- Recommend simple, efficient hook logic
-
-## Advanced Features
-
-### Force Transfers
-
-**Admin Override:**
-- Admin can force transfers that bypass hooks
-- Useful for emergency situations
-- Should be used sparingly
-
-**Use Cases:**
-- Recovering stuck tokens
-- Emergency protocol updates
-- Regulatory compliance
-
-### Metadata Extensions
-
-**Custom Fields:**
-- Support for arbitrary metadata fields
-- JSON-compatible format
-- Extensible for future standards
-
-**Standards Compliance:**
-- Compatible with token standards
-- Supports wallet integration
-- Exchange listing friendly
-
-### Multi-Admin Patterns
-
-**DAO Administration:**
-```
-1. Create token with individual admin
-2. Deploy DAO contract
-3. Transfer admin to DAO
-4. DAO members vote on token operations
-```
-
-**Multisig Administration:**
-```
-1. Create token with multisig admin
-2. Multisig controls all operations
-3. Requires multiple signatures for actions
-4. Enhanced security for high-value tokens
-```
-
-## Best Practices
-
-### Security
-
-1. **Admin Management**: Use multisig or DAO for valuable tokens
-2. **Hook Validation**: Only use trusted, audited hook contracts
-3. **Metadata Accuracy**: Provide complete, accurate token information
-4. **Fee Planning**: Budget for creation fees and ongoing operations
-
-### Development
-
-1. **Testing**: Thoroughly test token operations before mainnet
-2. **Documentation**: Document token purpose and mechanics
-3. **Upgrades**: Plan for potential admin transfers or upgrades
-4. **Monitoring**: Track token usage and performance
-
-### User Experience
-
-1. **Clear Naming**: Use descriptive subdenoms and metadata
-2. **Standard Compliance**: Follow token naming conventions
-3. **Wallet Support**: Ensure metadata supports wallet display
-4. **Community**: Engage community for token adoption 
+Total: 128 = "factory" + 2*"/" + creator_length + subdenom_length
+128 = 7 + 2 + 75 + 44 = 128
+``` 

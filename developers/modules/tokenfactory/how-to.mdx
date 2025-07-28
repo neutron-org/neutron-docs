@@ -8,7 +8,7 @@ sidebar_position: 2
 
 ### Basic Token Creation
 
-**Create a simple token:**
+Create a simple token using the `create-denom` command:
 
 ```bash
 neutrond tx tokenfactory create-denom mytoken \
@@ -21,46 +21,39 @@ neutrond tx tokenfactory create-denom mytoken \
 
 This creates: `factory/neutron1.../mytoken`
 
-**With custom gas and fees:**
-
-```bash
-neutrond tx tokenfactory create-denom gamecoins \
-  --from creator \
-  --chain-id neutron-1 \
-  --gas 300000 \
-  --fees 2500untrn
-```
-
 ### Setting Token Metadata
 
-**Basic metadata:**
+Token metadata must be provided via a JSON file. Create a metadata file first:
 
+**metadata.json:**
+```json
+{
+  "description": "My Custom Token",
+  "denom_units": [
+    {
+      "denom": "factory/neutron1abc.../mytoken",
+      "exponent": 0,
+      "aliases": []
+    },
+    {
+      "denom": "mct",
+      "exponent": 6,
+      "aliases": []
+    }
+  ],
+  "base": "factory/neutron1abc.../mytoken",
+  "display": "mct",
+  "name": "My Custom Token",
+  "symbol": "MCT"
+}
+```
+
+**Set metadata using the file:**
 ```bash
-neutrond tx tokenfactory set-denom-metadata \
-  factory/neutron1abc.../mytoken \
-  --name "My Custom Token" \
-  --symbol "MCT" \
-  --description "A custom token for my application" \
-  --decimals 6 \
+neutrond tx tokenfactory set-denom-metadata metadata.json \
   --from creator \
   --chain-id neutron-1 \
   --gas auto \
-  --fees 1000untrn
-```
-
-**Advanced metadata with custom fields:**
-
-```bash
-neutrond tx tokenfactory set-denom-metadata \
-  factory/neutron1abc.../shares \
-  --name "Company Shares" \
-  --symbol "SHARES" \
-  --description "Tokenized company shares" \
-  --decimals 0 \
-  --website "https://company.com" \
-  --logo-url "https://company.com/logo.png" \
-  --from admin \
-  --chain-id neutron-1 \
   --fees 1000untrn
 ```
 
@@ -68,75 +61,39 @@ neutrond tx tokenfactory set-denom-metadata \
 
 ### Minting Tokens
 
-**Mint to specific address:**
-
+**Mint to sender's address:**
 ```bash
 neutrond tx tokenfactory mint \
   1000000factory/neutron1abc.../mytoken \
-  neutron1recipient... \
   --from admin \
   --chain-id neutron-1 \
   --gas auto \
   --fees 1000untrn
 ```
 
-**Mint to multiple addresses (batch):**
-
-```bash
-# Create a batch mint file: mint_batch.json
-{
-  "mint_requests": [
-    {
-      "amount": "1000000",
-      "denom": "factory/neutron1abc.../mytoken",
-      "mint_to": "neutron1recipient1..."
-    },
-    {
-      "amount": "500000", 
-      "denom": "factory/neutron1abc.../mytoken",
-      "mint_to": "neutron1recipient2..."
-    }
-  ]
-}
-
-# Execute batch mint
-neutrond tx tokenfactory batch-mint mint_batch.json \
-  --from admin \
-  --chain-id neutron-1 \
-  --gas auto \
-  --fees 1000untrn
-```
+**Mint to specific address:**
+The `mint` command only mints to the sender. To mint to a different address, you need to use the `MsgMint` transaction directly or transfer after minting.
 
 ### Burning Tokens
 
-**Burn from specific address:**
-
+**Burn from sender's address:**
 ```bash
 neutrond tx tokenfactory burn \
   500000factory/neutron1abc.../mytoken \
-  neutron1holder... \
   --from admin \
   --chain-id neutron-1 \
   --gas auto \
   --fees 1000untrn
 ```
 
-**Burn from admin's own balance:**
-
-```bash
-neutrond tx tokenfactory burn \
-  100000factory/neutron1abc.../mytoken \
-  --from admin \
-  --chain-id neutron-1 \
-  --fees 1000untrn
-```
+**Burn from specific address:**
+The `burn` command only burns from the sender. To burn from a different address, you need to use the `MsgBurn` transaction directly.
 
 ## Admin Management
 
 ### Transferring Admin Rights
 
 **Transfer to another address:**
-
 ```bash
 neutrond tx tokenfactory change-admin \
   factory/neutron1abc.../mytoken \
@@ -147,21 +104,9 @@ neutrond tx tokenfactory change-admin \
   --fees 1000untrn
 ```
 
-**Transfer to DAO contract:**
-
-```bash
-neutrond tx tokenfactory change-admin \
-  factory/neutron1abc.../mytoken \
-  neutron1dao_contract... \
-  --from current_admin \
-  --chain-id neutron-1 \
-  --fees 1000untrn
-```
-
 ### Renouncing Admin Rights
 
 **Permanently remove admin (irreversible):**
-
 ```bash
 neutrond tx tokenfactory change-admin \
   factory/neutron1abc.../mytoken \
@@ -179,28 +124,9 @@ Once admin rights are renounced by setting admin to empty string, they cannot be
 
 ### Setting Up Hooks
 
-**Deploy hook contract first:**
-
-```bash
-# Store hook contract
-neutrond tx wasm store hook_contract.wasm \
-  --from deployer \
-  --chain-id neutron-1 \
-  --gas auto \
-  --fees 5000untrn
-
-# Instantiate hook contract
-neutrond tx wasm instantiate 1 '{}' \
-  --from deployer \
-  --admin deployer \
-  --label "Token Hook" \
-  --chain-id neutron-1 \
-  --gas auto \
-  --fees 2000untrn
-```
+Before setting a hook, the contract must be whitelisted through governance. Only whitelisted contracts can be used as hooks.
 
 **Set hook for token:**
-
 ```bash
 neutrond tx tokenfactory set-before-send-hook \
   factory/neutron1abc.../mytoken \
@@ -214,7 +140,6 @@ neutrond tx tokenfactory set-before-send-hook \
 ### Removing Hooks
 
 **Remove hook from token:**
-
 ```bash
 neutrond tx tokenfactory set-before-send-hook \
   factory/neutron1abc.../mytoken \
@@ -227,7 +152,6 @@ neutrond tx tokenfactory set-before-send-hook \
 ### Force Transfers (Bypass Hooks)
 
 **Force transfer bypassing hooks:**
-
 ```bash
 neutrond tx tokenfactory force-transfer \
   1000factory/neutron1abc.../mytoken \
@@ -241,237 +165,111 @@ neutrond tx tokenfactory force-transfer \
 
 ## Querying Token Information
 
-### Basic Queries
+### Available Queries
+
+**Get module parameters:**
+```bash
+neutrond query tokenfactory params
+```
 
 **Get token admin:**
-
 ```bash
 neutrond query tokenfactory denom-authority-metadata \
   factory/neutron1abc.../mytoken
 ```
 
-**Get token metadata:**
-
-```bash
-neutrond query tokenfactory denom-metadata \
-  factory/neutron1abc.../mytoken
-```
-
 **Get before-send hook:**
-
 ```bash
 neutrond query tokenfactory before-send-hook \
   factory/neutron1abc.../mytoken
 ```
 
-### Advanced Queries
-
 **List all denoms by creator:**
-
 ```bash
 neutrond query tokenfactory denoms-from-creator \
   neutron1creator...
 ```
 
-**Get module parameters:**
-
+**Get full denom from creator and subdenom:**
 ```bash
-neutrond query tokenfactory params
+neutrond query tokenfactory full-denom \
+  neutron1creator... \
+  mytoken
 ```
 
-**Check token supply:**
+### Bank Module Queries
 
+For token supply and balance information, use bank module queries:
+
+**Check token supply:**
 ```bash
 neutrond query bank total --denom factory/neutron1abc.../mytoken
 ```
 
+**Check account balance:**
+```bash
+neutrond query bank balances neutron1account...
+```
+
+**Get token metadata (via bank module):**
+```bash
+neutrond query bank denom-metadata factory/neutron1abc.../mytoken
+```
+
 ## Integration Examples
 
-### DeFi Liquidity Pool
-
-**Create LP token for ATOM/USDC pool:**
+### Basic Token Creation Workflow
 
 ```bash
-# 1. Create LP token
-neutrond tx tokenfactory create-denom lp-atom-usdc \
-  --from pool_contract \
-  --chain-id neutron-1 \
-  --fees 1000untrn
+# 1. Create token
+neutrond tx tokenfactory create-denom mytoken --from creator --fees 1000untrn
 
-# 2. Set metadata
-neutrond tx tokenfactory set-denom-metadata \
-  factory/neutron1pool.../lp-atom-usdc \
-  --name "ATOM/USDC LP Token" \
-  --symbol "ATOM-USDC-LP" \
-  --description "Liquidity pool token for ATOM/USDC pair" \
-  --decimals 6 \
-  --from pool_contract \
-  --fees 1000untrn
-
-# 3. Mint LP tokens when liquidity provided
-neutrond tx tokenfactory mint \
-  1000000factory/neutron1pool.../lp-atom-usdc \
-  neutron1liquidity_provider... \
-  --from pool_contract \
-  --fees 1000untrn
-```
-
-### DAO Governance Token
-
-**Create and configure governance token:**
-
-```bash
-# 1. Create governance token
-neutrond tx tokenfactory create-denom vote \
-  --from dao_creator \
-  --chain-id neutron-1 \
-  --fees 1000untrn
-
-# 2. Set governance metadata
-neutrond tx tokenfactory set-denom-metadata \
-  factory/neutron1creator.../vote \
-  --name "DAO Governance Token" \
-  --symbol "VOTE" \
-  --description "Governance token for community DAO" \
-  --decimals 6 \
-  --from dao_creator \
-  --fees 1000untrn
-
-# 3. Mint initial supply
-neutrond tx tokenfactory mint \
-  1000000000factory/neutron1creator.../vote \
-  neutron1creator... \
-  --from dao_creator \
-  --fees 1000untrn
-
-# 4. Transfer admin to DAO contract
-neutrond tx tokenfactory change-admin \
-  factory/neutron1creator.../vote \
-  neutron1dao_contract... \
-  --from dao_creator \
-  --fees 1000untrn
-```
-
-### Gaming Token with Restrictions
-
-**Create game token with transfer restrictions:**
-
-```bash
-# 1. Deploy restriction hook contract
-neutrond tx wasm store game_hook.wasm \
-  --from game_dev \
-  --chain-id neutron-1 \
-  --gas auto \
-  --fees 5000untrn
-
-neutrond tx wasm instantiate 1 \
-  '{"game_contract": "neutron1game...", "allowed_transfers": true}' \
-  --from game_dev \
-  --admin game_dev \
-  --label "Game Transfer Hook" \
-  --chain-id neutron-1 \
-  --fees 2000untrn
-
-# 2. Create game token
-neutrond tx tokenfactory create-denom gold \
-  --from game_dev \
-  --chain-id neutron-1 \
-  --fees 1000untrn
-
-# 3. Set hook
-neutrond tx tokenfactory set-before-send-hook \
-  factory/neutron1game.../gold \
-  neutron1hook_contract... \
-  --from game_dev \
-  --fees 1000untrn
-
-# 4. Set metadata
-neutrond tx tokenfactory set-denom-metadata \
-  factory/neutron1game.../gold \
-  --name "Game Gold" \
-  --symbol "GOLD" \
-  --description "In-game currency with transfer restrictions" \
-  --decimals 0 \
-  --from game_dev \
-  --fees 1000untrn
-```
-
-## Governance Operations
-
-### Update Module Parameters
-
-<Warning>
-Only governance can update Token Factory module parameters. Individual users cannot directly modify these settings.
-</Warning>
-
-**Submit parameter change proposal:**
-
-```bash
-neutrond tx gov submit-proposal param-change proposal.json \
-  --from validator \
-  --chain-id neutron-1 \
-  --gas auto \
-  --gas-adjustment 1.5 \
-  --fees 1000untrn
-```
-
-**Example proposal.json:**
-
-```json
+# 2. Create metadata file
+cat > metadata.json << EOF
 {
-  "title": "Update Token Factory Parameters",
-  "description": "Adjust creation fees and add new whitelisted hooks",
-  "changes": [
+  "description": "My Project Token",
+  "denom_units": [
     {
-      "subspace": "tokenfactory",
-      "key": "Params",
-      "value": {
-        "denom_creation_fee": [
-          {
-            "denom": "untrn",
-            "amount": "1000000"
-          }
-        ],
-        "denom_creation_gas_consume": "2000000",
-        "fee_collector_address": "neutron1fee_collector...",
-        "whitelisted_hooks": [
-          {
-            "code_id": "1",
-            "denom_creator": "neutron1creator..."
-          },
-          {
-            "code_id": "5",
-            "denom_creator": "neutron1another_creator..."
-          }
-        ]
-      }
+      "denom": "factory/neutron1creator.../mytoken",
+      "exponent": 0,
+      "aliases": []
+    },
+    {
+      "denom": "mytoken",
+      "exponent": 6,
+      "aliases": []
     }
   ],
-  "deposit": "10000000untrn"
+  "base": "factory/neutron1creator.../mytoken",
+  "display": "mytoken",
+  "name": "My Project Token",
+  "symbol": "MPT"
 }
+EOF
+
+# 3. Set metadata
+neutrond tx tokenfactory set-denom-metadata metadata.json --from creator --fees 1000untrn
+
+# 4. Mint initial supply
+neutrond tx tokenfactory mint 1000000factory/neutron1creator.../mytoken --from creator --fees 1000untrn
 ```
 
-## Best Practices
+## Limitations and Notes
 
-### Security
+### CLI Command Limitations
 
-1. **Admin Management**: Use multisig or DAO for valuable tokens
-2. **Hook Validation**: Only use audited, trusted hook contracts
-3. **Metadata Completeness**: Provide comprehensive token information
-4. **Testing**: Test all operations on testnet first
+- **Mint Target**: CLI `mint` command only mints to sender address
+- **Burn Source**: CLI `burn` command only burns from sender address
+- **Metadata Format**: Metadata must be provided as JSON file, not individual flags
+- **Hook Restrictions**: Only governance-whitelisted contracts can be used as hooks
 
-### Performance
+### Important Considerations
 
-1. **Batch Operations**: Use batch minting for multiple recipients
-2. **Gas Optimization**: Monitor gas usage for hook-enabled tokens
-3. **Hook Efficiency**: Keep hook logic simple and fast
-
-### User Experience
-
-1. **Clear Naming**: Use descriptive subdenoms and symbols
-2. **Proper Decimals**: Set appropriate decimal places for use case
-3. **Rich Metadata**: Include logos, websites, and descriptions
-4. **Documentation**: Document token purpose and mechanics
+1. **Admin Authority**: All privileged operations require admin authority
+2. **Irreversible Actions**: Admin renunciation cannot be undone
+3. **Hook Dependencies**: Before-send hooks must be whitelisted by governance
+4. **Fee Requirements**: Check current creation fees via `params` query
+5. **Gas Limits**: Before-send hooks have execution gas limits
 
 ## Troubleshooting
 
@@ -481,22 +279,22 @@ neutrond tx gov submit-proposal param-change proposal.json \
 ```
 Error: insufficient fee for denom creation
 ```
-**Solution**: Ensure sufficient balance for creation fee.
+**Solution**: Check current creation fee via `neutrond query tokenfactory params`
 
 **Hook setting fails:**
 ```
-Error: hook contract not whitelisted
+Error: beforeSendHook is not whitelisted
 ```
-**Solution**: Verify hook contract is in governance whitelist.
+**Solution**: Verify contract is in governance whitelist or request governance approval
 
-**Mint/burn fails:**
+**Unauthorized operations:**
 ```
 Error: unauthorized: sender is not admin
 ```
-**Solution**: Use admin account or transfer admin rights first.
+**Solution**: Use admin account or transfer admin rights first
 
-**Force transfer fails:**
+**Invalid metadata:**
 ```
-Error: force transfer not allowed
+Error: failed to validate MsgSetDenomMetadata
 ```
-**Solution**: Only admin can perform force transfers. 
+**Solution**: Ensure metadata JSON follows proper bank metadata format 
