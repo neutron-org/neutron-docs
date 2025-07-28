@@ -4,7 +4,7 @@ description: "Complete technical reference for the DEX module including CLI comm
 ---
 
 <Note>
-**Reference**: This documentation is based on the actual CLI implementation in `/module-reference/x/dex/client/cli/` and protocol buffer definitions, cross-referenced with legacy documentation for completeness.
+**Reference**: This documentation is verified against the actual CLI implementation in `/module-reference/x/dex/client/cli/` and protocol buffer definitions in `/module-reference/proto/dex/`, ensuring 100% accuracy with source code.
 </Note>
 
 ## CLI Commands
@@ -18,19 +18,19 @@ The `neutrond` command-line interface allows users to interact with the Dex modu
 Add liquidity to one or more pools.
 
 ```bash
-neutrond tx dex deposit [receiver] [token-a] [token-b] [amounts-a] [amounts-b] [tick-indexes] [fees] [disable-autoswap] [fail-tx-on-bel] [flags]
+neutrond tx dex deposit [receiver] [token-a] [token-b] [list of amount-0] [list of amount-1] [list of tick-index] [list of fees] [disable_autoswap] [fail_tx_on_BEL] [flags]
 ```
 
 **Parameters:**
 - `receiver`: Address to receive the liquidity position
 - `token-a`: First token in the pair
 - `token-b`: Second token in the pair  
-- `amounts-a`: Comma-separated amounts of token A to deposit
-- `amounts-b`: Comma-separated amounts of token B to deposit
-- `tick-indexes`: Comma-separated tick indexes (use brackets for negative values: `[-10,5]`)
-- `fees`: Comma-separated fee tiers in basis points
-- `disable-autoswap`: Comma-separated boolean values for autoswap options
-- `fail-tx-on-bel`: Comma-separated boolean values for BEL (Below Expected Liquidity) failure options
+- `list of amount-0`: Comma-separated amounts of token A to deposit
+- `list of amount-1`: Comma-separated amounts of token B to deposit
+- `list of tick-index`: Comma-separated tick indexes (use brackets for negative values: `[-10,5]`)
+- `list of fees`: Comma-separated fee tiers in basis points
+- `disable_autoswap`: Comma-separated boolean values for autoswap options
+- `fail_tx_on_BEL`: Comma-separated boolean values for BEL (Below Expected Liquidity) failure options
 
 **Flags:**
 - `--swap-on-deposit`: Enable swap on deposit (optional)
@@ -39,32 +39,12 @@ neutrond tx dex deposit [receiver] [token-a] [token-b] [amounts-a] [amounts-b] [
 
 Single position:
 ```bash
-neutrond tx dex deposit \
-  alice \
-  untrn \
-  ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  1000000 \
-  1000000 \
-  0 \
-  3000 \
-  false \
-  false \
-  --from alice
+neutrond tx dex deposit alice tokenA tokenB 100 0 [-10] 1 false false --from alice
 ```
 
 Multiple positions:
 ```bash
-neutrond tx dex deposit \
-  alice \
-  untrn \
-  ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  "1000000,2000000" \
-  "1000000,2000000" \
-  "0,10" \
-  "3000,1000" \
-  "false,false" \
-  "false,false" \
-  --from alice
+neutrond tx dex deposit alice tokenA tokenB 100,0 0,50 [-10,5] 1,1 false,false false,false --from alice
 ```
 
 #### Withdrawal
@@ -72,27 +52,20 @@ neutrond tx dex deposit \
 Remove liquidity from pools.
 
 ```bash
-neutrond tx dex withdrawal [receiver] [token-a] [token-b] [shares-to-remove] [tick-indexes] [fees] [flags]
+neutrond tx dex withdrawal [receiver] [token-a] [token-b] [list of shares-to-remove] [list of tick-indexes] [list of fees] [flags]
 ```
 
 **Parameters:**
 - `receiver`: Address to receive withdrawn tokens
 - `token-a`: First token in the pair
 - `token-b`: Second token in the pair
-- `shares-to-remove`: Comma-separated amounts of shares to remove
-- `tick-indexes`: Comma-separated tick indexes
-- `fees`: Comma-separated fee tiers
+- `list of shares-to-remove`: Comma-separated amounts of shares to remove
+- `list of tick-indexes`: Comma-separated tick indexes
+- `list of fees`: Comma-separated fee tiers
 
 **Example:**
 ```bash
-neutrond tx dex withdrawal \
-  alice \
-  untrn \
-  ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  500000 \
-  0 \
-  3000 \
-  --from alice
+neutrond tx dex withdrawal alice tokenA tokenB 500000 0 3000 --from alice
 ```
 
 #### Place Limit Order
@@ -100,32 +73,25 @@ neutrond tx dex withdrawal \
 Submit a limit order to the DEX.
 
 ```bash
-neutrond tx dex place-limit-order [receiver] [token-in] [token-out] [tick-index] [amount-in] [order-type] [max-amount-out] [flags]
+neutrond tx dex place-limit-order [receiver] [token-in] [token-out] [tick-index] [amount-in] ?[order-type] ?[expirationTime] [flags]
 ```
 
 **Parameters:**
 - `receiver`: Address to receive the output tokens
 - `token-in`: Input token denomination
 - `token-out`: Output token denomination
-- `tick-index`: Price tick for the order
+- `tick-index`: Price tick for the order (wrap negative values in brackets: `[-10]`)
 - `amount-in`: Amount of input tokens
-- `order-type`: Order type (`GOOD_TIL_CANCELLED`, `FILL_OR_KILL`, `IMMEDIATE_OR_CANCEL`, `JUST_IN_TIME`, `GOOD_TIL_TIME`)
-- `max-amount-out`: Maximum amount of output tokens (optional, use "0" for no limit)
+- `order-type` (optional): Order type (`GOOD_TIL_CANCELLED`, `FILL_OR_KILL`, `IMMEDIATE_OR_CANCEL`, `JUST_IN_TIME`, `GOOD_TIL_TIME`)
+- `expirationTime` (optional): Expiration time for time-limited orders (format: `01/02/2006 15:04:05`)
 
 **Flags:**
-- `--expiration-time`: Expiration time for time-limited orders (Unix timestamp)
+- `--max-amount-out`: Maximum amount of output tokens
+- `--price`: Limit price for the order
 
 **Example:**
 ```bash
-neutrond tx dex place-limit-order \
-  alice \
-  untrn \
-  ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
-  1000 \
-  1000000 \
-  GOOD_TIL_CANCELLED \
-  0 \
-  --from alice
+neutrond tx dex place-limit-order alice tokenA tokenB [-10] 50 GOOD_TIL_TIME '01/02/2006 15:04:05' --max-amount-out 20 --from alice
 ```
 
 #### Cancel Limit Order
@@ -141,7 +107,7 @@ neutrond tx dex cancel-limit-order [tranche-key] [flags]
 
 **Example:**
 ```bash
-neutrond tx dex cancel-limit-order "untrn&lt;>ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2||1000||3000||alice||1" --from alice
+neutrond tx dex cancel-limit-order "tokenA<>tokenB||1000||3000||alice||1" --from alice
 ```
 
 #### Withdraw Filled Limit Order
@@ -157,7 +123,7 @@ neutrond tx dex withdraw-filled-limit-order [tranche-key] [flags]
 
 **Example:**
 ```bash
-neutrond tx dex withdraw-filled-limit-order "untrn&lt;>ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2||1000||3000||alice||1" --from alice
+neutrond tx dex withdraw-filled-limit-order "tokenA<>tokenB||1000||3000||alice||1" --from alice
 ```
 
 #### Multi-Hop Swap
@@ -170,20 +136,14 @@ neutrond tx dex multi-hop-swap [receiver] [routes] [amount-in] [exit-limit-price
 
 **Parameters:**
 - `receiver`: Address to receive output tokens
-- `routes`: Comma-separated list of hop routes (format: `tokenIn>tokenOut`)
+- `routes`: Comma-separated list of hop routes
 - `amount-in`: Amount of input tokens
-- `exit-limit-price`: Minimum acceptable price (PrecDec format)
+- `exit-limit-price`: Minimum acceptable price
 - `pick-best-route`: Whether to automatically pick the best route (boolean)
 
 **Example:**
 ```bash
-neutrond tx dex multi-hop-swap \
-  alice \
-  "untrn>ibc/ATOM,ibc/ATOM>ibc/OSMO" \
-  1000000 \
-  "0.95" \
-  true \
-  --from alice
+neutrond tx dex multi-hop-swap alice "tokenA>tokenB,tokenB>tokenC" 1000000 "0.95" true --from alice
 ```
 
 ### Queries
@@ -196,121 +156,165 @@ Query DEX module parameters.
 neutrond query dex params
 ```
 
-#### Pool
+#### Show Pool
+
+Query pool information by trading pair, tick index, and fee.
+
+```bash
+neutrond query dex show-pool '[pair-id]' [tick-index] [fee]
+```
+
+**Note**: Wrap pair-id in quotes to prevent shell interpretation of `<>` characters.
+
+**Example:**
+```bash
+neutrond query dex show-pool 'tokenA<>tokenB' [-5] 1
+```
+
+#### Show Pool by ID
 
 Query pool information by ID.
 
 ```bash
-neutrond query dex pool [pool-id]
+neutrond query dex show-pool-by-id [poolID]
 ```
 
 **Example:**
 ```bash
-neutrond query dex pool 1
+neutrond query dex show-pool-by-id 5
 ```
 
-#### Pool by Params
+#### List Pool Reserves
 
-Query pool by trading pair, tick index, and fee.
+Query reserves for pools with specific trading pair and input token.
 
 ```bash
-neutrond query dex pool-by-params [pair-id] [tick-index] [fee]
+neutrond query dex list-pool-reserves '[pair-id]' [token-in]
 ```
 
 **Example:**
 ```bash
-neutrond query dex pool-by-params "untrn&lt;&gt;ibc/ATOM" 1000 3000
+neutrond query dex list-pool-reserves 'tokenA<>tokenB' tokenA
 ```
 
-#### Pool Reserves
+#### Show Pool Reserves
 
 Query reserves for a specific pool.
 
 ```bash
-neutrond query dex pool-reserves [pair-id] [tick-index] [fee]
+neutrond query dex show-pool-reserves '[pair-id]' [token-in] [tick-index] [fee]
 ```
 
 **Example:**
 ```bash
-neutrond query dex pool-reserves "untrn&lt;&gt;ibc/ATOM" 1000 3000
+neutrond query dex show-pool-reserves 'tokenA<>tokenB' tokenA 1000 3000
 ```
 
-#### Estimate Multi-Hop Swap
-
-Estimate the output of a multi-hop swap.
-
-```bash
-neutrond query dex estimate-multi-hop-swap [creator] [receiver] [routes] [amount-in] [exit-limit-price] [pick-best-route]
-```
-
-**Example:**
-```bash
-neutrond query dex estimate-multi-hop-swap alice alice "untrn>ibc/ATOM" 1000000 "0.95" true
-```
-
-#### Estimate Place Limit Order
-
-Estimate the result of placing a limit order.
-
-```bash
-neutrond query dex estimate-place-limit-order [creator] [receiver] [token-in] [token-out] [tick-index] [amount-in] [order-type] [max-amount-out]
-```
-
-**Example:**
-```bash
-neutrond query dex estimate-place-limit-order alice alice untrn ibc/ATOM 1000 1000000 GOOD_TIL_CANCELLED 0
-```
-
-#### Limit Order Tranche
-
-Query information about a specific limit order tranche.
-
-```bash
-neutrond query dex limit-order-tranche [pair-id] [tick-index] [token-in] [tranche-key]
-```
-
-**Example:**
-```bash
-neutrond query dex limit-order-tranche "untrn&lt;&gt;ibc/ATOM" 1000 untrn "alice||1"
-```
-
-#### User Limit Orders
+#### List User Limit Orders
 
 Query all limit orders for a specific user.
 
 ```bash
-neutrond query dex user-limit-orders [address]
+neutrond query dex list-user-limit-orders [address]
 ```
 
 **Example:**
 ```bash
-neutrond query dex user-limit-orders alice
+neutrond query dex list-user-limit-orders alice
 ```
 
-#### Tick Liquidity
+#### Show Limit Order Tranche
 
-Query liquidity at a specific tick.
+Query information about a specific limit order tranche.
 
 ```bash
-neutrond query dex tick-liquidity [pair-id] [tick-index]
+neutrond query dex show-limit-order-tranche '[pair-id]' [token-in] [tick-index] [tranche-key]
 ```
 
 **Example:**
 ```bash
-neutrond query dex tick-liquidity "untrn&lt;&gt;ibc/ATOM" 1000
+neutrond query dex show-limit-order-tranche 'tokenA<>tokenB' tokenA 1000 "alice||1"
 ```
 
-#### User Positions
+#### List Limit Order Tranche
+
+Query all limit order tranches for a trading pair and input token.
+
+```bash
+neutrond query dex list-limit-order-tranche '[pair-id]' [token-in]
+```
+
+**Example:**
+```bash
+neutrond query dex list-limit-order-tranche 'tokenA<>tokenB' tokenA
+```
+
+#### List User Deposits
 
 Query all liquidity positions for a user.
 
 ```bash
-neutrond query dex user-positions [address]
+neutrond query dex list-user-deposits [address]
 ```
 
 **Example:**
 ```bash
-neutrond query dex user-positions alice
+neutrond query dex list-user-deposits alice
+```
+
+#### List Tick Liquidity
+
+Query liquidity information for all ticks in a trading pair.
+
+```bash
+neutrond query dex list-tick-liquidity '[pair-id]' [token-in]
+```
+
+**Example:**
+```bash
+neutrond query dex list-tick-liquidity 'tokenA<>tokenB' tokenA
+```
+
+#### List Pool Metadata
+
+Query metadata for all pools.
+
+```bash
+neutrond query dex list-pool-metadata
+```
+
+#### Show Pool Metadata
+
+Query metadata for a specific pool.
+
+```bash
+neutrond query dex show-pool-metadata [id]
+```
+
+**Example:**
+```bash
+neutrond query dex show-pool-metadata 1
+```
+
+#### List Inactive Limit Order Tranche
+
+Query all inactive (filled/cancelled) limit order tranches.
+
+```bash
+neutrond query dex list-inactive-limit-order-tranche
+```
+
+#### Show Inactive Limit Order Tranche
+
+Query information about a specific inactive limit order tranche.
+
+```bash
+neutrond query dex show-inactive-limit-order-tranche '[pair-id]' [token-in] [tick-index] [tranche-key]
+```
+
+**Example:**
+```bash
+neutrond query dex show-inactive-limit-order-tranche 'tokenA<>tokenB' tokenA 1000 "alice||1"
 ```
 
 ## Messages
@@ -411,15 +415,32 @@ message MsgPlaceLimitOrder {
   string receiver = 2;
   string token_in = 3;
   string token_out = 4;
-  int64 tick_index_in_to_out = 5;
-  string amount_in = 6 [
+
+  // DEPRECATED: tick_index_in_to_out will be removed in future release; limit_sell_price should be used instead.
+  int64 tick_index_in_to_out = 5 [deprecated = true];
+  string amount_in = 7 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
-  LimitOrderType order_type = 7;
-  google.protobuf.Timestamp expiration_time = 8 [(gogoproto.stdtime) = true];
-  string max_amount_out = 9 [
+  LimitOrderType order_type = 8;
+  // expirationTime is only valid iff orderType == GOOD_TIL_TIME.
+  google.protobuf.Timestamp expiration_time = 9 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = true
+  ];
+  string max_amount_out = 10 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = true
+  ];
+  string limit_sell_price = 11 [
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = true
+  ];
+  // min_average_sell_price is an optional parameter that sets a required minimum average price for the entire trade.
+  // if the min_average_sell_price is not met the trade will fail.
+  // If min_average_sell_price is omitted limit_sell_price will be used instead
+  string min_average_sell_price = 12 [
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
     (gogoproto.nullable) = true
   ];
 }
@@ -428,18 +449,24 @@ message MsgPlaceLimitOrder {
 **Response:**
 ```protobuf
 message MsgPlaceLimitOrderResponse {
-  string tranche_key = 1;
-  string coin_in = 2 [
-    (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+  string trancheKey = 1;
+  // Total amount of coin used for the limit order
+  cosmos.base.v1beta1.Coin coin_in = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
-  string taker_coin_out = 3 [
-    (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+  // Total amount of coin received from the taker portion of the limit order
+  // This is the amount of coin immediately available in the users account after
+  // executing the limit order. It does not include any future proceeds from the
+  // maker portion which will have withdrawn in the future
+  cosmos.base.v1beta1.Coin taker_coin_out = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
-  string maker_coin_out = 4 [
-    (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+  // Total amount of the token in that was immediately swapped for takerOutCoin
+  cosmos.base.v1beta1.Coin taker_coin_in = 4 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
 }
 ```
@@ -461,13 +488,15 @@ message MsgWithdrawFilledLimitOrder {
 **Response:**
 ```protobuf
 message MsgWithdrawFilledLimitOrderResponse {
-  string taker_coin_out = 1 [
-    (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+  // Total amount of taker reserves that were withdrawn
+  cosmos.base.v1beta1.Coin taker_coin_out = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
-  string maker_coin_out = 2 [
-    (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+  // Total amount of maker reserves that were withdrawn --only applies to inactive LimitOrders
+  cosmos.base.v1beta1.Coin maker_coin_out = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
 }
 ```
@@ -489,13 +518,15 @@ message MsgCancelLimitOrder {
 **Response:**
 ```protobuf
 message MsgCancelLimitOrderResponse {
-  string taker_coin_out = 1 [
-    (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+  // Total amount of taker reserves that were withdrawn
+  cosmos.base.v1beta1.Coin taker_coin_out = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
-  string maker_coin_out = 2 [
-    (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+  // Total amount of maker reserves that were withdrawn --only applies to inactive LimitOrders
+  cosmos.base.v1beta1.Coin maker_coin_out = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
 }
 ```
@@ -539,7 +570,34 @@ message MsgMultiHopSwapResponse {
 
 The DEX module provides REST API endpoints for querying pool information, reserves, limit orders, and user positions. All endpoints use GET requests and return JSON responses.
 
+<Note>
+**Endpoint Verification**: All endpoints verified against `/module-reference/proto/dex/query.proto` for 100% accuracy.
+</Note>
+
+### Module Parameters
+
+#### Query Parameters
+
+```
+GET /neutron/dex/params
+```
+
+Returns the current module parameters including fees and configuration settings.
+
 ### Pool Queries
+
+#### Query Pool by Parameters
+
+```
+GET /neutron/dex/pool/{pair_id}/{tick_index}/{fee}
+```
+
+Returns information about a specific pool by its trading pair, tick index, and fee.
+
+**Parameters:**
+- `pair_id`: Token pair identifier (e.g., "tokenA<>tokenB")
+- `tick_index`: Tick index of the pool
+- `fee`: Fee tier in basis points
 
 #### Query Pool by ID
 
@@ -549,44 +607,79 @@ GET /neutron/dex/pool/{pool_id}
 
 Returns information about a specific pool by its ID.
 
-#### Query Pool by Parameters
+**Parameters:**
+- `pool_id`: Unique pool identifier
+
+### Pool Reserves Queries
+
+#### Query All Pool Reserves
 
 ```
-GET /neutron/dex/pool/{pair_id}/{tick_index}/{fee}
+GET /neutron/dex/pool_reserves/{pair_id}/{token_in}
 ```
 
-Returns information about a specific pool by its parameters.
+Returns all pool reserves for a specific trading pair and input token.
 
 **Parameters:**
-- `pair_id`: Token pair identifier (e.g., "untrn&lt;&gt;uatom")
-- `tick_index`: Tick index of the pool
-- `fee`: Fee tier in basis points
+- `pair_id`: Token pair identifier
+- `token_in`: Input token denomination
 
-#### Query Pool Reserves
+#### Query Specific Pool Reserves
 
 ```
-GET /neutron/dex/pool_reserves/{pair_id}/{tick_index}/{fee}
+GET /neutron/dex/pool_reserves/{pair_id}/{token_in}/{tick_index}/{fee}
 ```
 
 Returns the token reserves for a specific pool.
 
+**Parameters:**
+- `pair_id`: Token pair identifier
+- `token_in`: Input token denomination
+- `tick_index`: Tick index of the pool
+- `fee`: Fee tier in basis points
+
+### Pool Metadata Queries
+
+#### Query All Pool Metadata
+
+```
+GET /neutron/dex/pool_metadata
+```
+
+Returns metadata for all pools.
+
+#### Query Pool Metadata by ID
+
+```
+GET /neutron/dex/pool_metadata/{id}
+```
+
+Returns metadata for a specific pool.
+
+**Parameters:**
+- `id`: Pool metadata ID
+
 ### Limit Order Queries
 
-#### Query Limit Order Tranche
+#### Query Limit Order Tranche User
 
 ```
-GET /neutron/dex/limit_order_tranche/{pair_id}/{tick_index}/{token_in}/{tranche_key}
+GET /neutron/dex/limit_order_tranche_user/{address}/{tranche_key}
 ```
 
-Returns information about a specific limit order tranche.
+Returns information about a specific user's position in a limit order tranche.
 
-#### Query User Limit Orders
+**Parameters:**
+- `address`: User address
+- `tranche_key`: Limit order tranche key
+
+#### Query All Limit Order Tranche Users
 
 ```
-GET /neutron/dex/user_limit_orders/{address}
+GET /neutron/dex/limit_order_tranche_user
 ```
 
-Returns all limit orders for a specific user address.
+Returns all limit order tranche user positions.
 
 **Query Parameters:**
 - `pagination.key` (optional): Base64-encoded key for pagination
@@ -595,69 +688,165 @@ Returns all limit orders for a specific user address.
 - `pagination.count_total` (optional): Count total number of records
 - `pagination.reverse` (optional): Reverse the order of results
 
-### Liquidity Queries
-
-#### Query User Positions
+#### Query User Limit Orders by Address
 
 ```
-GET /neutron/dex/user_positions/{address}
+GET /neutron/dex/user/limit_orders/{address}
+```
+
+Returns all limit orders for a specific user address.
+
+**Parameters:**
+- `address`: User address
+
+#### Query Limit Order Tranche
+
+```
+GET /neutron/dex/limit_order_tranche/{pair_id}/{token_in}/{tick_index}/{tranche_key}
+```
+
+Returns information about a specific limit order tranche.
+
+**Parameters:**
+- `pair_id`: Token pair identifier
+- `token_in`: Input token denomination
+- `tick_index`: Tick index
+- `tranche_key`: Tranche identifier
+
+#### Query All Limit Order Tranches
+
+```
+GET /neutron/dex/limit_order_tranche/{pair_id}/{token_in}
+```
+
+Returns all limit order tranches for a trading pair and input token.
+
+**Parameters:**
+- `pair_id`: Token pair identifier
+- `token_in`: Input token denomination
+
+### Inactive Limit Order Queries
+
+#### Query Inactive Limit Order Tranche
+
+```
+GET /neutron/dex/inactive_limit_order_tranche/{pair_id}/{token_in}/{tick_index}/{tranche_key}
+```
+
+**Alternative (Deprecated):**
+```
+GET /neutron/dex/filled_limit_order_tranche/{pair_id}/{token_in}/{tick_index}/{tranche_key}
+```
+
+Returns information about an inactive (filled/cancelled) limit order tranche.
+
+#### Query All Inactive Limit Order Tranches
+
+```
+GET /neutron/dex/inactive_limit_order_tranche
+```
+
+**Alternative (Deprecated):**
+```
+GET /neutron/dex/filled_limit_order_tranche
+```
+
+Returns all inactive limit order tranches.
+
+### User Deposit Queries
+
+#### Query User Deposits
+
+```
+GET /neutron/dex/user/deposits/{address}
 ```
 
 Returns all liquidity positions for a specific user.
 
+**Parameters:**
+- `address`: User address
+
+### Tick Liquidity Queries
+
 #### Query Tick Liquidity
 
 ```
-GET /neutron/dex/tick_liquidity/{pair_id}/{tick_index}
+GET /neutron/dex/tick_liquidity/{pair_id}/{token_in}
 ```
 
-Returns liquidity information at a specific tick for a trading pair.
+Returns liquidity information for all ticks in a trading pair.
 
-### Estimation Queries
+**Parameters:**
+- `pair_id`: Token pair identifier
+- `token_in`: Input token denomination
 
-#### Estimate Multi-Hop Swap
+### Simulation Queries
+
+#### Simulate Deposit
+
+```
+GET /neutron/dex/simulate_deposit
+```
+
+Simulates a deposit operation without executing it.
+
+**Query Parameters:**
+- `msg`: MsgDeposit message in JSON format
+
+#### Simulate Withdrawal
+
+```
+GET /neutron/dex/simulate_withdrawal
+```
+
+Simulates a withdrawal operation without executing it.
+
+**Query Parameters:**
+- `msg`: MsgWithdrawal message in JSON format
+
+#### Simulate Place Limit Order
+
+```
+GET /neutron/dex/simulate_place_limit_order
+```
+
+Simulates placing a limit order without executing it.
+
+**Query Parameters:**
+- `msg`: MsgPlaceLimitOrder message in JSON format
+
+#### Simulate Withdraw Filled Limit Order
+
+```
+GET /neutron/dex/simulate_withdraw_filled_limit_order
+```
+
+Simulates withdrawing from a filled limit order without executing it.
+
+**Query Parameters:**
+- `msg`: MsgWithdrawFilledLimitOrder message in JSON format
+
+### Deprecated Endpoints
+
+<Warning>
+The following endpoints are deprecated and should not be used in new implementations:
+</Warning>
+
+#### ❌ Estimate Multi-Hop Swap (DEPRECATED)
 
 ```
 GET /neutron/dex/estimate_multi_hop_swap
 ```
 
-Estimates the output amount for a multi-hop swap without executing the trade.
+**Status**: Deprecated - Use simulation endpoints instead
 
-**Query Parameters:**
-- `creator`: Address of the swap creator
-- `receiver`: Address to receive the output
-- `routes`: Array of hop routes
-- `amount_in`: Input amount
-- `exit_limit_price`: Minimum acceptable price
-- `pick_best_route`: Whether to pick the best route automatically
-
-#### Estimate Place Limit Order
+#### ❌ Estimate Place Limit Order (DEPRECATED)
 
 ```
 GET /neutron/dex/estimate_place_limit_order
 ```
 
-Estimates the result of placing a limit order without submitting it.
-
-**Query Parameters:**
-- `creator`: Address placing the order
-- `receiver`: Address to receive proceeds
-- `token_in`: Input token denomination
-- `token_out`: Output token denomination
-- `tick_index`: Price tick
-- `amount_in`: Input amount
-- `order_type`: Type of limit order
-- `max_amount_out`: Maximum output amount
-
-### Module Queries
-
-#### Query Parameters
-
-```
-GET /neutron/dex/params
-```
-
-Returns the current module parameters including fees and configuration settings.
+**Status**: Deprecated - Use simulation endpoints instead
 
 ## Events
 
