@@ -230,8 +230,8 @@ If a validator is receiving partial rewards, you can calculate their expected re
 ### Example Calculation
 
 If the reward quote is 2000 USD, and a validator has:
-- 95% blocks signed (allowed to miss is 95%)
-- 85% oracle votes provided (allowed to miss is 95%, required at least is 80%)
+- 95% blocks signed (allowed to miss is 5%)
+- 85% oracle votes provided (allowed to miss is 5%, required at least is 80%)
 
 Their performance rating would be:
 ```
@@ -243,4 +243,9 @@ rating = 0.5 * ((1 - 0²) + (1 - 0.67²))
        = 0.775
 ```
 
-Expected compensation: Based on current TWAP and rating of 0.775 
+Expected compensation: Based on current TWAP and rating of 0.775
+```
+Final reward = 2000 USD × 0.775 = 1550 USD
+```
+
+The validator would receive 1550 USD worth of the reward asset (converted using the current TWAP price). 

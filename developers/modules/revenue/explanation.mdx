@@ -71,6 +71,42 @@ Where:
 - `missedBlocksPerfQuo` is the proportion of blocks missed within the partial performance range
 - `missedOracleVotesPerfQuo` is the proportion of oracle votes missed within the partial performance range
 
+### Calculation of Performance Quotients
+
+Both `missedBlocksPerfQuo` and `missedOracleVotesPerfQuo` are calculated using the same algorithm. The module uses the `calCMissedPerfQuo` function to determine how much a validator's performance falls within the partial performance range:
+
+```go
+// calCMissedPerfQuo calculates the negative coefficient based on the missed share, allowed to miss,
+// and performance threshold. If the missed share is LTE allowed to miss, the returned value is
+// 0.0, i.e. no negative coefficient for this criteria.
+func calCMissedPerfQuo(
+	missedShare math.LegacyDec,
+	allowedToMiss math.LegacyDec,
+	perfThreshold math.LegacyDec,
+) math.LegacyDec {
+	if missedShare.LTE(allowedToMiss) {
+		return math.LegacyZeroDec()
+	}
+
+	finedMissedShare := missedShare.Sub(allowedToMiss)    // how much missed over the allowed value
+	perfEvalWindow := perfThreshold.Sub(allowedToMiss)    // span of evaluation window
+	missedPerfQuo := finedMissedShare.Quo(perfEvalWindow) // how much missed in the evaluation window
+
+	return missedPerfQuo
+}
+```
+
+**Calculation Steps:**
+
+1. **Check Full Performance**: If `missedShare <= allowedToMiss`, return 0.0 (no penalty, full rewards)
+2. **Calculate Excess Misses**: `finedMissedShare = missedShare - allowedToMiss` (how much over the allowed threshold)
+3. **Calculate Evaluation Window**: `perfEvalWindow = perfThreshold - allowedToMiss` (the range for partial performance)
+4. **Calculate Performance Quotient**: `missedPerfQuo = finedMissedShare / perfEvalWindow` (normalized position within partial range)
+
+This function returns a value between 0.0 and 1.0, where:
+- **0.0** = performance at the "allowed to miss" threshold (full rewards)
+- **1.0** = performance at the "required at least" threshold (no rewards)
+
 This quadratic approach provides a smoother penalty curve that more gently penalizes validators who miss just a few more blocks than the "allowed to miss" threshold.
 
 ## Payment Scheduling
