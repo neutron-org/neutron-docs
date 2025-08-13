@@ -1,14 +1,16 @@
 ---
 title: "Oracle Setup"
-description: "Configure the Slinky price oracle service for your Neutron validator"
+description: "Configure the Connect price oracle service for your Neutron validator"
 icon: "chart-line"
 ---
 
-Neutron's High Frequency Oracle is a critical component of the network that provides accurate price data for various assets. As a validator, you must run the Slinky price oracle service alongside your node to meet performance requirements.
+Neutron's High Frequency Oracle is a critical component of the network that provides accurate price data for various assets. As a validator, you must run the Connect price oracle service alongside your node to meet performance requirements.
 
 ## Overview
 
-Slinky is a price oracle service that fetches market prices from various providers and makes them available to the Neutron blockchain. Running Slinky properly ensures that your validator contributes accurate price data to the network, which is essential for:
+Connect is Neutron's price oracle service that fetches market prices from various providers and makes them available to the Neutron blockchain. Connect is forked from [Skip-mev's Connect oracle](https://github.com/skip-mev/connect) and maintained by the Neutron team at [neutron-org/connect](https://github.com/neutron-org/connect).
+
+Running Connect properly ensures that your validator contributes accurate price data to the network, which is essential for:
 
 - Meeting validator performance thresholds
 - Enabling DeFi applications that require accurate price feeds
@@ -22,22 +24,22 @@ Slinky is a price oracle service that fetches market prices from various provide
 
 <Tabs>
   <Tab title="Pre-built Binary">
-    Download the latest stable version of Slinky:
+    Download the latest stable version of Connect:
     
     ```bash
-    # Download Slinky v1.2.0 (or latest version)
-    wget https://github.com/skip-mev/slinky/releases/download/v1.2.0/slinky-linux-amd64
-    sudo mv slinky-linux-amd64 /usr/local/bin/slinky
-    sudo chmod +x /usr/local/bin/slinky
+    # Download Connect v1.2.1 (or latest version)
+    wget https://github.com/neutron-org/connect/releases/download/v1.2.1/connect-linux-amd64
+    sudo mv connect-linux-amd64 /usr/local/bin/connect
+    sudo chmod +x /usr/local/bin/connect
     ```
   </Tab>
   <Tab title="Build from Source">
-    Clone and build Slinky from source:
+    Clone and build Connect from source:
     
     ```bash
-    git clone https://github.com/skip-mev/slinky.git
-    cd slinky
-    git checkout v1.2.0  # Use the latest version
+    git clone https://github.com/neutron-org/connect.git
+    cd connect
+    git checkout v1.2.1  # Use the latest version
     make install
     ```
   </Tab>
@@ -45,29 +47,29 @@ Slinky is a price oracle service that fetches market prices from various provide
 
 ## Configuration
 
-You can configure Slinky using one of the following methods:
+You can configure Connect using one of the following methods:
 
 <Tabs>
   <Tab title="Method 1: SystemD Service">
-    Create a systemd service file to manage the Slinky service:
+    Create a systemd service file to manage the Connect service:
 
     ```bash
-    sudo mkdir -p /var/log/slinky
-    sudo touch /var/log/slinky/sidecar.log
-    sudo chown -R $USER:$USER /var/log/slinky
-    sudo nano /etc/systemd/system/slinky.service
+    sudo mkdir -p /var/log/connect
+    sudo touch /var/log/connect/sidecar.log
+    sudo chown -R $USER:$USER /var/log/connect
+    sudo nano /etc/systemd/system/connect.service
     ```
 
     Add the following content:
 
     ```
     [Unit]
-    Description=Slinky Price Oracle Service
+    Description=Connect Price Oracle Service
     After=network-online.target
 
     [Service]
     User=$USER
-    ExecStart=/usr/local/bin/slinky --host=0.0.0.0 --port=8080 --market-map-endpoint="127.0.0.1:9090" --log-file="/var/log/slinky/sidecar.log"
+    ExecStart=/usr/local/bin/connect --host=0.0.0.0 --port=8080 --market-map-endpoint="127.0.0.1:9090" --log-file="/var/log/connect/sidecar.log"
     Restart=always
     RestartSec=3
     LimitNOFILE=65535
@@ -77,15 +79,15 @@ You can configure Slinky using one of the following methods:
     ```
 
     <Warning>
-      Replace `$USER` with your actual username and adjust the path to the Slinky binary as needed. The `--market-map-endpoint` should point to your node's gRPC port.
+      Replace `$USER` with your actual username and adjust the path to the Connect binary as needed. The `--market-map-endpoint` should point to your node's gRPC port.
     </Warning>
   </Tab>
   <Tab title="Method 2: Configuration File">
-    Create a configuration file for Slinky:
+    Create a configuration file for Connect:
 
     ```bash
-    mkdir -p /usr/local/slinky
-    nano /usr/local/slinky/oracle.json
+    mkdir -p /usr/local/connect
+    nano /usr/local/connect/oracle.json
     ```
 
     Add the following content:
@@ -113,7 +115,7 @@ You can configure Slinky using one of the following methods:
     Then create a systemd service file to use this configuration:
 
     ```bash
-    sudo nano /etc/systemd/system/slinky.service
+    sudo nano /etc/systemd/system/connect.service
     ```
 
     Add the following content:
@@ -121,11 +123,11 @@ You can configure Slinky using one of the following methods:
     ```
     [Unit]
     After=network-online.target
-    Description=slinky service
+    Description=connect service
 
     [Service]
-    ExecStart=/usr/local/bin/slinky --oracle-config /usr/local/slinky/oracle.json
-    EnvironmentFile=-/etc/default/slinky
+    ExecStart=/usr/local/bin/connect --oracle-config /usr/local/connect/oracle.json
+    EnvironmentFile=-/etc/default/connect
     Type=simple
     RestartSec=1
     Restart=always
@@ -163,28 +165,28 @@ prometheus_server_address = "0.0.0.0:8001"
 
 ## Starting the Service
 
-Enable and start the Slinky service:
+Enable and start the Connect service:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable slinky
-sudo systemctl start slinky
+sudo systemctl enable connect
+sudo systemctl start connect
 ```
 
 Check the status:
 
 ```bash
-sudo systemctl status slinky
+sudo systemctl status connect
 ```
 
 ## Verification
 
-Verify that your Slinky oracle is working correctly:
+Verify that your Connect oracle is working correctly:
 
 <Steps>
-  <Step title="Check Slinky Logs">
+  <Step title="Check Connect Logs">
     ```bash
-    sudo journalctl -u slinky -f
+    sudo journalctl -u connect -f
     ```
     
     Look for successful connection messages and price updates.
@@ -267,8 +269,8 @@ chmod +x /usr/local/bin/check-oracle.sh
 
 ## Best Practices
 
-- **Regular Updates**: Keep your Slinky binary updated to the latest version
-- **Network Configuration**: Ensure proper firewall rules to allow Slinky to access external price providers
-- **Log Rotation**: Configure log rotation for Slinky logs to prevent disk space issues
+- **Regular Updates**: Keep your Connect binary updated to the latest version from [neutron-org/connect](https://github.com/neutron-org/connect)
+- **Network Configuration**: Ensure proper firewall rules to allow Connect to access external price providers
+- **Log Rotation**: Configure log rotation for Connect logs to prevent disk space issues
 - **Monitoring**: Set up comprehensive monitoring for oracle performance with alerting
 
