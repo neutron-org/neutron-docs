@@ -412,19 +412,32 @@ The module exposes the following REST endpoints:
 
 ## Error Codes
 
-The module returns the following error codes:
+The module returns the following error codes (from `module-reference/x/interchainqueries/types/errors.go`):
 
 | Code | Name | Description |
 |------|------|-------------|
-| 1 | `ErrInvalidQueryType` | Invalid query type specified |
-| 2 | `ErrEmptyKeys` | No keys provided for KV query |
-| 3 | `ErrEmptyTransactionsFilter` | Empty filter for TX query |
-| 4 | `ErrInvalidConnectionID` | Invalid connection ID |
-| 5 | `ErrInvalidUpdatePeriod` | Invalid update period |
-| 6 | `ErrInsufficientDeposit` | Insufficient deposit |
-| 7 | `ErrQueryNotFound` | Query not found |
-| 8 | `ErrNotQueryOwner` | Not query owner |
-| 9 | `ErrInvalidProof` | Proof verification failed |
+| 1100 | `ErrInvalidQueryID` | Invalid query id |
+| 1101 | `ErrEmptyResult` | Empty result |
+| 1102 | `ErrInvalidClientID` | Invalid client id |
+| 1103 | `ErrInvalidUpdatePeriod` | Invalid update period |
+| 1104 | `ErrInvalidConnectionID` | Invalid connection id |
+| 1105 | `ErrInvalidQueryType` | Invalid query type |
+| 1106 | `ErrInvalidTransactionsFilter` | Invalid transactions filter |
+| 1107 | `ErrInvalidSubmittedResult` | Invalid result |
+| 1108 | `ErrProtoMarshal` | Failed to marshal protobuf bytes |
+| 1109 | `ErrProtoUnmarshal` | Failed to unmarshal protobuf bytes |
+| 1110 | `ErrInvalidType` | Invalid type |
+| 1111 | `ErrInternal` | Internal error |
+| 1112 | `ErrInvalidProof` | Merkle proof is invalid |
+| 1113 | `ErrInvalidHeader` | Header is invalid |
+| 1114 | `ErrInvalidHeight` | Height is invalid |
+| 1115 | `ErrNoQueryResult` | No query result |
+| 1116 | `ErrNotContract` | Not a contract |
+| 1117 | `ErrEmptyKeys` | Keys are empty |
+| 1118 | `ErrEmptyKeyPath` | Key path is empty |
+| 1119 | `ErrEmptyKeyID` | Key id is empty |
+| 1120 | `ErrTooManyKVQueryKeys` | Too many keys |
+| 1121 | `ErrUnexpectedQueryTypeGenesis` | Unexpected query type |
 
 ---
 
