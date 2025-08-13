@@ -18,7 +18,7 @@ The `neutrond` command-line interface allows users to interact with the Dex modu
 Add liquidity to one or more pools.
 
 ```bash
-neutrond tx dex deposit [receiver] [token-a] [token-b] [list of amount-0] [list of amount-1] [list of tick-index] [list of fees] [disable_autoswap] [fail_tx_on_BEL] [flags]
+neutrond tx dex deposit [receiver] [token-a] [token-b] [list of amount-0] [list of amount-1] [list of tick-index] [list of fees] [disable_autoswap], [fail_tx_on_BEL] [flags]
 ```
 
 **Parameters:**
@@ -52,7 +52,7 @@ neutrond tx dex deposit alice tokenA tokenB 100,0 0,50 [-10,5] 1,1 false,false f
 Remove liquidity from pools.
 
 ```bash
-neutrond tx dex withdrawal [receiver] [token-a] [token-b] [list of shares-to-remove] [list of tick-indexes] [list of fees] [flags]
+neutrond tx dex withdrawal [receiver] [token-a] [token-b] [list of shares-to-remove] [list of tick-index] [list of fees] [flags]
 ```
 
 **Parameters:**
@@ -73,7 +73,7 @@ neutrond tx dex withdrawal alice tokenA tokenB 500000 0 3000 --from alice
 Submit a limit order to the DEX.
 
 ```bash
-neutrond tx dex place-limit-order [receiver] [token-in] [token-out] [tick-index] [amount-in] ?[order-type] ?[expirationTime] [flags]
+neutrond tx dex place-limit-order [receiver] [token-in] [token-out] [tick-index] [amount-in] ?[order-type] ?[expirationTime] ?(--max-amout-out) ?(--price) [flags]
 ```
 
 **Parameters:**
@@ -107,7 +107,7 @@ neutrond tx dex cancel-limit-order [tranche-key] [flags]
 
 **Example:**
 ```bash
-neutrond tx dex cancel-limit-order "tokenA<>tokenB||1000||3000||alice||1" --from alice
+neutrond tx dex cancel-limit-order "tokenA&lt;&gt;tokenB||1000||3000||alice||1" --from alice
 ```
 
 #### Withdraw Filled Limit Order
@@ -123,7 +123,7 @@ neutrond tx dex withdraw-filled-limit-order [tranche-key] [flags]
 
 **Example:**
 ```bash
-neutrond tx dex withdraw-filled-limit-order "tokenA<>tokenB||1000||3000||alice||1" --from alice
+neutrond tx dex withdraw-filled-limit-order "tokenA&lt;&gt;tokenB||1000||3000||alice||1" --from alice
 ```
 
 #### Multi-Hop Swap
@@ -136,14 +136,14 @@ neutrond tx dex multi-hop-swap [receiver] [routes] [amount-in] [exit-limit-price
 
 **Parameters:**
 - `receiver`: Address to receive output tokens
-- `routes`: Comma-separated list of hop routes
+- `routes`: Semicolon-separated list of hop routes, where each route is comma-separated hops (format: `route1;route2` where route1=`tokenA,tokenB,tokenC`)
 - `amount-in`: Amount of input tokens
 - `exit-limit-price`: Minimum acceptable price
 - `pick-best-route`: Whether to automatically pick the best route (boolean)
 
 **Example:**
 ```bash
-neutrond tx dex multi-hop-swap alice "tokenA>tokenB,tokenB>tokenC" 1000000 "0.95" true --from alice
+neutrond tx dex multi-hop-swap alice "tokenA,tokenB;tokenB,tokenC" 1000000 "0.95" true --from alice
 ```
 
 ### Queries
@@ -168,7 +168,7 @@ neutrond query dex show-pool '[pair-id]' [tick-index] [fee]
 
 **Example:**
 ```bash
-neutrond query dex show-pool 'tokenA<>tokenB' [-5] 1
+neutrond query dex show-pool 'tokenA&lt;&gt;tokenB' [-5] 1
 ```
 
 #### Show Pool by ID
@@ -194,7 +194,7 @@ neutrond query dex list-pool-reserves '[pair-id]' [token-in]
 
 **Example:**
 ```bash
-neutrond query dex list-pool-reserves 'tokenA<>tokenB' tokenA
+neutrond query dex list-pool-reserves 'tokenA&lt;&gt;tokenB' tokenA
 ```
 
 #### Show Pool Reserves
@@ -202,12 +202,12 @@ neutrond query dex list-pool-reserves 'tokenA<>tokenB' tokenA
 Query reserves for a specific pool.
 
 ```bash
-neutrond query dex show-pool-reserves '[pair-id]' [token-in] [tick-index] [fee]
+neutrond query dex show-pool-reserves '[pair-id]' [tick-index] [token-in] [fee]
 ```
 
 **Example:**
 ```bash
-neutrond query dex show-pool-reserves 'tokenA<>tokenB' tokenA 1000 3000
+neutrond query dex show-pool-reserves 'tokenA&lt;&gt;tokenB' [-5] tokenA 1
 ```
 
 #### List User Limit Orders
@@ -233,7 +233,7 @@ neutrond query dex show-limit-order-tranche '[pair-id]' [token-in] [tick-index] 
 
 **Example:**
 ```bash
-neutrond query dex show-limit-order-tranche 'tokenA<>tokenB' tokenA 1000 "alice||1"
+neutrond query dex show-limit-order-tranche 'tokenA&lt;&gt;tokenB' tokenA 1000 "alice||1"
 ```
 
 #### List Limit Order Tranche
@@ -246,7 +246,7 @@ neutrond query dex list-limit-order-tranche '[pair-id]' [token-in]
 
 **Example:**
 ```bash
-neutrond query dex list-limit-order-tranche 'tokenA<>tokenB' tokenA
+neutrond query dex list-limit-order-tranche 'tokenA&lt;&gt;tokenB' tokenA
 ```
 
 #### List User Deposits
@@ -272,7 +272,7 @@ neutrond query dex list-tick-liquidity '[pair-id]' [token-in]
 
 **Example:**
 ```bash
-neutrond query dex list-tick-liquidity 'tokenA<>tokenB' tokenA
+neutrond query dex list-tick-liquidity 'tokenA&lt;&gt;tokenB' tokenA
 ```
 
 #### List Pool Metadata
@@ -314,7 +314,7 @@ neutrond query dex show-inactive-limit-order-tranche '[pair-id]' [token-in] [tic
 
 **Example:**
 ```bash
-neutrond query dex show-inactive-limit-order-tranche 'tokenA<>tokenB' tokenA 1000 "alice||1"
+neutrond query dex show-inactive-limit-order-tranche 'tokenA&lt;&gt;tokenB' tokenA 1000 "alice||1"
 ```
 
 ## Messages
@@ -335,12 +335,16 @@ message MsgDeposit {
   string token_a = 3;
   string token_b = 4;
   repeated string amounts_a = 5 [
+    (gogoproto.moretags) = "yaml:\"amounts_a\"",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "amounts_a"
   ];
   repeated string amounts_b = 6 [
+    (gogoproto.moretags) = "yaml:\"amounts_b\"",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "amounts_b"
   ];
   repeated int64 tick_indexes_a_to_b = 7;
   repeated uint64 fees = 8;
@@ -352,17 +356,32 @@ message MsgDeposit {
 ```protobuf
 message MsgDepositResponse {
   repeated string reserve0_deposited = 1 [
+    (gogoproto.moretags) = "yaml:\"reserve0_deposited\"",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "reserve0_deposited"
   ];
   repeated string reserve1_deposited = 2 [
+    (gogoproto.moretags) = "yaml:\"reserve1_deposited\"",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "reserve1_deposited"
   ];
-  repeated string shares_issued = 3 [
-    (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+  repeated FailedDeposit failed_deposits = 3;
+  repeated cosmos.base.v1beta1.Coin shares_issued = 4 [
+    (gogoproto.moretags) = "yaml:\"shares_issued\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "shares_issued"
   ];
+}
+```
+
+**FailedDeposit Structure:**
+```protobuf
+message FailedDeposit {
+  uint64 deposit_idx = 1;
+  string error = 2;
 }
 ```
 
@@ -380,8 +399,10 @@ message MsgWithdrawal {
   string token_a = 3;
   string token_b = 4;
   repeated string shares_to_remove = 5 [
+    (gogoproto.moretags) = "yaml:\"shares_to_remove\"",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "shares_to_remove"
   ];
   repeated int64 tick_indexes_a_to_b = 6;
   repeated uint64 fees = 7;
@@ -391,13 +412,23 @@ message MsgWithdrawal {
 **Response:**
 ```protobuf
 message MsgWithdrawalResponse {
-  repeated string reserve0_withdrawn = 1 [
+  string reserve0_withdrawn = 1 [
+    (gogoproto.moretags) = "yaml:\"reserve0_withdrawn\"",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "reserve0_withdrawn"
   ];
-  repeated string reserve1_withdrawn = 2 [
+  string reserve1_withdrawn = 2 [
+    (gogoproto.moretags) = "yaml:\"reserve1_withdrawn\"",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "reserve1_withdrawn"
+  ];
+  repeated cosmos.base.v1beta1.Coin shares_burned = 3 [
+    (gogoproto.moretags) = "yaml:\"shares_burned\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "shares_burned"
   ];
 }
 ```
@@ -419,8 +450,10 @@ message MsgPlaceLimitOrder {
   // DEPRECATED: tick_index_in_to_out will be removed in future release; limit_sell_price should be used instead.
   int64 tick_index_in_to_out = 5 [deprecated = true];
   string amount_in = 7 [
+    (gogoproto.moretags) = "yaml:\"amount_in\"",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "amount_in"
   ];
   LimitOrderType order_type = 8;
   // expirationTime is only valid iff orderType == GOOD_TIL_TIME.
@@ -429,19 +462,25 @@ message MsgPlaceLimitOrder {
     (gogoproto.nullable) = true
   ];
   string max_amount_out = 10 [
+    (gogoproto.moretags) = "yaml:\"max_amount_out\"",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = true
+    (gogoproto.nullable) = true,
+    (gogoproto.jsontag) = "max_amount_out"
   ];
   string limit_sell_price = 11 [
+    (gogoproto.moretags) = "yaml:\"limit_sell_price\"",
     (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
-    (gogoproto.nullable) = true
+    (gogoproto.nullable) = true,
+    (gogoproto.jsontag) = "limit_sell_price"
   ];
   // min_average_sell_price is an optional parameter that sets a required minimum average price for the entire trade.
   // if the min_average_sell_price is not met the trade will fail.
   // If min_average_sell_price is omitted limit_sell_price will be used instead
   string min_average_sell_price = 12 [
+    (gogoproto.moretags) = "yaml:\"min_average_sell_price\"",
     (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
-    (gogoproto.nullable) = true
+    (gogoproto.nullable) = true,
+    (gogoproto.jsontag) = "min_average_sell_price"
   ];
 }
 ```
@@ -452,21 +491,27 @@ message MsgPlaceLimitOrderResponse {
   string trancheKey = 1;
   // Total amount of coin used for the limit order
   cosmos.base.v1beta1.Coin coin_in = 2 [
+    (gogoproto.moretags) = "yaml:\"coin_in\"",
     (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "coin_in"
   ];
   // Total amount of coin received from the taker portion of the limit order
   // This is the amount of coin immediately available in the users account after
   // executing the limit order. It does not include any future proceeds from the
   // maker portion which will have withdrawn in the future
   cosmos.base.v1beta1.Coin taker_coin_out = 3 [
+    (gogoproto.moretags) = "yaml:\"taker_coin_out\"",
     (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "taker_coin_out"
   ];
   // Total amount of the token in that was immediately swapped for takerOutCoin
   cosmos.base.v1beta1.Coin taker_coin_in = 4 [
+    (gogoproto.moretags) = "yaml:\"taker_coin_in\"",
     (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "taker_coin_in"
   ];
 }
 ```
@@ -490,13 +535,17 @@ message MsgWithdrawFilledLimitOrder {
 message MsgWithdrawFilledLimitOrderResponse {
   // Total amount of taker reserves that were withdrawn
   cosmos.base.v1beta1.Coin taker_coin_out = 1 [
+    (gogoproto.moretags) = "yaml:\"taker_coin_out\"",
     (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "taker_coin_out"
   ];
   // Total amount of maker reserves that were withdrawn --only applies to inactive LimitOrders
   cosmos.base.v1beta1.Coin maker_coin_out = 2 [
+    (gogoproto.moretags) = "yaml:\"maker_coin_out\"",
     (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "maker_coin_out"
   ];
 }
 ```
@@ -520,13 +569,17 @@ message MsgCancelLimitOrder {
 message MsgCancelLimitOrderResponse {
   // Total amount of taker reserves that were withdrawn
   cosmos.base.v1beta1.Coin taker_coin_out = 1 [
+    (gogoproto.moretags) = "yaml:\"taker_coin_out\"",
     (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "taker_coin_out"
   ];
-  // Total amount of maker reserves that were withdrawn --only applies to inactive LimitOrders
+  // Total amount of maker reserves that were canceled
   cosmos.base.v1beta1.Coin maker_coin_out = 2 [
+    (gogoproto.moretags) = "yaml:\"maker_coin_out\"",
     (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin"
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "maker_coin_out"
   ];
 }
 ```
@@ -544,13 +597,19 @@ message MsgMultiHopSwap {
   string receiver = 2;
   repeated MultiHopRoute routes = 3;
   string amount_in = 4 [
+    (gogoproto.moretags) = "yaml:\"amount_in\"",
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "amount_in"
   ];
   string exit_limit_price = 5 [
+    (gogoproto.moretags) = "yaml:\"exit_limit_price\"",
     (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "exit_limit_price"
   ];
+  // If pickBestRoute == true then all routes are run and the route with the
+  // best price is chosen otherwise, the first succesful route is used.
   bool pick_best_route = 6;
 }
 ```
@@ -558,11 +617,19 @@ message MsgMultiHopSwap {
 **Response:**
 ```protobuf
 message MsgMultiHopSwapResponse {
-  string coin_out = 1 [
-    (gogoproto.customtype) = "cosmossdk.io/math.Int",
-    (gogoproto.nullable) = false
+  cosmos.base.v1beta1.Coin coin_out = 1 [
+    (gogoproto.moretags) = "yaml:\"coin_out\"",
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "coin_out"
   ];
   MultiHopRoute route = 2;
+  repeated cosmos.base.v1beta1.Coin dust = 3 [
+    (gogoproto.moretags) = "yaml:\"dust\"",
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "dust"
+  ];
 }
 ```
 
@@ -595,7 +662,7 @@ GET /neutron/dex/pool/{pair_id}/{tick_index}/{fee}
 Returns information about a specific pool by its trading pair, tick index, and fee.
 
 **Parameters:**
-- `pair_id`: Token pair identifier (e.g., "tokenA<>tokenB")
+- `pair_id`: Token pair identifier (e.g., "tokenA&lt;&gt;tokenB")
 - `tick_index`: Tick index of the pool
 - `fee`: Fee tier in basis points
 
@@ -892,9 +959,7 @@ Emitted when a user withdraws liquidity from a pool.
 - `Fee`: The fee tier (in basis points) of the pool
 - `ReservesZeroWithdrawn`: Amount of token0 withdrawn from reserves
 - `ReservesOneWithdrawn`: Amount of token1 withdrawn from reserves
-- `SharesBurned`: Amount of share tokens burned
-- `AmountOutTokenZero`: Total amount of token0 received by user
-- `AmountOutTokenOne`: Total amount of token1 received by user
+- `SharesRemoved`: Amount of share tokens removed
 
 ### Limit Order Events
 
@@ -918,13 +983,13 @@ Emitted when a limit order is placed.
 - `TrancheKey`: Unique identifier for the limit order tranche
 - `ExpirationTime`: Expiration time for time-limited orders
 
-#### WithdrawFilledLimitOrder
+#### WithdrawLimitOrder
 
 Emitted when proceeds from a filled limit order are withdrawn.
 
 **Event Type:** `message`  
 **Module:** `dex`  
-**Action:** `WithdrawFilledLimitOrder`
+**Action:** `WithdrawLimitOrder`
 
 **Attributes:**
 - `Creator`: Address withdrawing the filled order
@@ -950,18 +1015,18 @@ Emitted when a limit order is cancelled.
 
 ### Trading Events
 
-#### MultiHopSwap
+#### MultihopSwap
 
 Emitted when a multi-hop swap is executed.
 
 **Event Type:** `message`  
 **Module:** `dex`  
-**Action:** `MultiHopSwap`
+**Action:** `MultihopSwap`
 
 **Attributes:**
 - `Creator`: Address initiating the swap
 - `Receiver`: Address receiving the output tokens
-- `TokenIn`: Input token denomination
+- `MakerDenom`: Input token denomination
 - `TokenOut`: Final output token denomination
 - `AmountIn`: Amount of input tokens
 - `AmountOut`: Amount of final output tokens
@@ -993,9 +1058,36 @@ Stores the actual token reserves for a pool at a specific price point.
 ```protobuf
 message PoolReserves {
   PoolReservesKey key = 1;
-  string reserves_maker_denom = 2;
-  string price_taker_to_maker = 3;
-  string price_opposite_taker_to_maker = 4;
+  string reserves_maker_denom = 2 [
+    (gogoproto.moretags) = "yaml:\"reserves_maker_denom\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "reserves_maker_denom"
+  ];
+  // DEPRECATED: price_taker_to_maker will be removed in future release, `maker_price` should always be used.
+  string price_taker_to_maker = 3 [
+    (gogoproto.moretags) = "yaml:\"price_taker_to_maker\"",
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "price_taker_to_maker",
+    deprecated = true
+  ];
+  // DEPRECATED: price_opposite_taker_maker was an internal implementation detail and will be removed in a future release.
+  // It is being kept strictly for backwards compatibility. The actual field value is unused.
+  string price_opposite_taker_to_maker = 4 [
+    (gogoproto.moretags) = "yaml:\"price_opposite_taker_to_maker\"",
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "price_opposite_taker_to_maker",
+    deprecated = true
+  ];
+  // This is the price of the PoolReserves denominated in the opposite token. (ie. 1 TokenA with a maker_price of 10 is worth 10 TokenB )
+  string maker_price = 5 [
+    (gogoproto.moretags) = "yaml:\"maker_price\"",
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "maker_price"
+  ];
 }
 
 message PoolReservesKey {
@@ -1012,12 +1104,56 @@ Represents a batch of limit orders at the same price point.
 ```protobuf
 message LimitOrderTranche {
   LimitOrderTrancheKey key = 1;
-  string reserves_maker_denom = 2;
-  string reserves_taker_denom = 3;
-  string total_maker_denom = 4;
-  string total_taker_denom = 5;
-  google.protobuf.Timestamp expiration_time = 6;
-  string price_taker_to_maker = 7;
+  string reserves_maker_denom = 2 [
+    (gogoproto.moretags) = "yaml:\"reserves_maker_denom\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "reserves_maker_denom"
+  ];
+  string reserves_taker_denom = 3 [
+    (gogoproto.moretags) = "yaml:\"reserves_taker_denom\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "reserves_taker_denom"
+  ];
+  string total_maker_denom = 4 [
+    (gogoproto.moretags) = "yaml:\"total_maker_denom\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "total_maker_denom"
+  ];
+  string total_taker_denom = 5 [
+    (gogoproto.moretags) = "yaml:\"total_taker_denom\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "total_taker_denom"
+  ];
+  // LimitOrders with expiration_time set are valid as long as blockTime <= expiration_time
+
+  // JIT orders also use expiration_time to handle deletion but represent a special case
+  // All JIT orders have a expiration_time of 0 and an exception is made to still treat these orders as live
+  // Order deletion still functions the same and the orders will be deleted at the end of the block
+  google.protobuf.Timestamp expiration_time = 6 [
+    (gogoproto.moretags) = "yaml:\"expiration_time\"",
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = true,
+    (gogoproto.jsontag) = "expiration_time"
+  ];
+  // DEPRECATED: price_taker_to_maker will be removed in future release, `maker_price` should always be used.
+  string price_taker_to_maker = 7 [
+    (gogoproto.moretags) = "yaml:\"price_taker_to_maker\"",
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "price_taker_to_maker",
+    deprecated = true
+  ];
+  // This is the price of the LimitOrder denominated in the opposite token. (ie. 1 TokenA with a maker_price of 10 is worth 10 TokenB )
+  string maker_price = 8 [
+    (gogoproto.moretags) = "yaml:\"maker_price\"",
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "maker_price"
+  ];
 }
 
 message LimitOrderTrancheKey {
@@ -1057,14 +1193,15 @@ message TickLiquidity {
 
 The DEX module uses the following key prefixes for state storage:
 
-- `0x01`: Pool storage
-- `0x02`: PoolReserves storage  
-- `0x03`: LimitOrderTranche storage
-- `0x04`: LimitOrderTrancheUser storage
-- `0x05`: TickLiquidity storage
-- `0x06`: DepositRecord storage
-- `0x07`: PoolMetadata storage
-- `0x08`: LimitOrderExpiration storage
+- `TickLiquidity/value/`: TickLiquidity storage
+- `LimitOrderTrancheUser/value`: LimitOrderTrancheUser storage  
+- `InactiveLimitOrderTranche/value/`: InactiveLimitOrderTranche storage
+- `LimitOrderExpiration/value/`: LimitOrderExpiration storage
+- `Pool/id/`: Pool storage (by ID or by pair+tick+fee)
+- `PoolMetadata/value/`: PoolMetadata storage
+- `Pool/count/`: Pool count storage
+- `Params/value/`: Module parameters storage
+- `JITsInBlock/count/`: JIT limit orders per block count
 
 ### State Transitions
 
@@ -1163,17 +1300,21 @@ The DEX module parameters configure module behavior.
 ```protobuf
 message Params {
   repeated uint64 fee_tiers = 1;
-  string paused = 2;
-  string max_jits_per_block = 3;
-  string good_til_purge_allowance = 4;
+  bool paused = 3;
+  uint64 max_jits_per_block = 4;
+  uint64 good_til_purge_allowance = 5;
+  // Whitelisted_lps have special LP privileges;
+  // currently, the only such privilege is depositing outside of the allowed fee_tiers.
+  repeated string whitelisted_lps = 6;
 }
 ```
 
 **Default Values:**
-- `fee_tiers`: [1, 5, 10, 50, 100, 150, 200, 300, 450, 500, 2000, 3000, 10000]
+- `fee_tiers`: [0, 1, 2, 3, 4, 5, 10, 20, 50, 100, 150, 200]
 - `paused`: false
-- `max_jits_per_block`: 1000
-- `good_til_purge_allowance`: 50000
+- `max_jits_per_block`: 25
+- `good_til_purge_allowance`: 540000
+- `whitelisted_lps`: [] (empty array)
 
 ### Genesis State
 

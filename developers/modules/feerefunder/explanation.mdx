@@ -38,7 +38,7 @@ This creates a sustainable economic model for both the chain and its relayers.
 
 ```mermaid
 graph TD
-    A[Smart Contract] -->|IBC Packet + Fees| B[Fee Refunder Module]
+    A[Smart Contract] -->|Send IBC transaction with Fees| B[Fee Refunder Module]
     B -->|Lock Fees| C[Escrow Account]
     D[IBC Relayer] -->|Deliver Ack| E[IBC Module]
     F[IBC Relayer] -->|Deliver Timeout| E

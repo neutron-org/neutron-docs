@@ -18,9 +18,9 @@ The Fee Refunder module implements a mechanism to reimburse IBC relayers for the
 
 The Fee Refunder module operates through the following workflow:
 
-1. **Fee Collection**: Smart contracts can lock fees for acknowledgement and timeout processing by calling the LockFees message with the IBC packet information
+1. **Fee Specification**: Smart contracts specify fees for acknowledgement and timeout processing when making interchain transactions
 
-2. **Fee Locking**: The module locks the total fees in an escrow account until the packet is resolved
+2. **Automatic Fee Locking**: The Fee Refunder module automatically locks the specified fees in an escrow account when the interchain transaction is executed, holding them until the packet is resolved
 
 3. **Fee Distribution**:
    - When an acknowledgement is received, the relayer is paid the acknowledgement fee, and the timeout fee is refunded to the contract

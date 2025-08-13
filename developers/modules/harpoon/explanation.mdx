@@ -13,7 +13,9 @@ The Harpoon module integrates with the Cosmos SDK staking module through its hoo
 
 ### Integration with Staking Module
 
-The Harpoon module connects to the staking module by implementing the `StakingHooksBeforeValidatorSlashedHasTokensToBurn` interface defined in the Cosmos SDK. These hooks are registered in the application's initialization code (typically in `app.go`):
+The Harpoon module connects to the staking module by implementing the standard `StakingHooks` interface plus the additional `BeforeValidatorSlashedWithTokensToBurn` method. This extended interface (`StakingHooksBeforeValidatorSlashedHasTokensToBurn`) exists only in Neutron's fork of the Cosmos SDK and allows contracts to receive the actual `tokensToBurn` argument during slashing events.
+
+These hooks are registered in the application's initialization code (typically in `app.go`):
 
 ```go
 multiStakingHooks := stakingtypes.NewMultiStakingHooks(

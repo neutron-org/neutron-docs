@@ -117,13 +117,25 @@ This design prioritizes IBC protocol reliability over individual contract error 
 
 ## Channel Management and Recovery
 
-### Channel Timeouts
+### Channel Timeouts and Ordering
 
-Since ICA channels use ORDERED ordering, a single packet timeout will close the entire channel. When this happens:
+Interchain Account channels can use either ORDERED or UNORDERED ordering, with different timeout behaviors:
 
-1. The contract receives a timeout callback for the failed packet
-2. The channel is automatically closed and cannot be reused
-3. To continue using interchain accounts, the contract must register a new account (which creates a new channel)
+**ORDERED Channels:**
+- A single packet timeout will close the entire channel
+- When this happens:
+  1. The contract receives a timeout callback for the failed packet
+  2. The channel is automatically closed and cannot be reused
+  3. To continue using interchain accounts, the contract must register a new account (which creates a new channel)
+
+**UNORDERED Channels (Default since ibc-go v7.5.0):**
+- Packet timeouts do not close the channel
+- Individual packets can timeout without affecting the channel's ability to process other packets
+- The channel remains active and can continue to be used for new transactions
+
+<Info>
+For more details about ICA channel ordering and active channel management, see the [IBC documentation on Active Channels](https://ibc.cosmos.network/v7/apps/interchain-accounts/active-channels/).
+</Info>
 
 ### Best Practices
 

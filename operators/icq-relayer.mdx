@@ -4,6 +4,10 @@ description: "Run interchain query relayer infrastructure for Neutron"
 icon: "link"
 ---
 
+<Warning>
+**For Protocol Developers Only**: This documentation is primarily intended for protocol developers who build applications that utilize Interchain Queries (ICQs). ICQ relayers are typically run by the same teams that develop protocols using ICQs, as there is no clear economic incentive for third parties to process expensive query operations for other protocols. General network operators should focus on [IBC relaying](/operators/ibc-relayer) instead.
+</Warning>
+
 ## Overview
 
 Interchain Queries allow smart contracts to make queries to a remote chain. An ICQ Relayer is a required component for making them possible. It acts as a facilitator between the Neutron chain and a querying chain, gathering queries that are needed to be performed from the Neutron, actually performing them, and eventually making the results available for the Neutron's smart contracts.

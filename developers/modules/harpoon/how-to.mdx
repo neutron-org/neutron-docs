@@ -139,113 +139,193 @@ pub struct AfterUnbondingInitiatedMsg {
 // Each hook type has its own specific message structure as shown above.
 ```
 
-### Step 2: Implement Sudo Handler
+### Step 2: Define the SudoMsg Enum
 
-Implement the `sudo` entry point in your contract to handle the specific message types:
+Define a comprehensive enum for all sudo message types your contract will handle:
 
 ```rust
-use cosmwasm_std::{from_binary, Binary, DepsMut, Env, Response, StdResult};
+use cosmwasm_std::{Decimal, Uint128};
 
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn sudo(deps: DepsMut, env: Env, msg: Binary) -> StdResult<Response> {
-    // Try to parse each possible sudo message type
-    if let Ok(msg) = from_binary::<AfterValidatorCreatedSudoMsg>(&msg) {
-        return handle_after_validator_created(deps, env, msg.after_validator_created);
-    }
-    
-    if let Ok(msg) = from_binary::<BeforeDelegationCreatedSudoMsg>(&msg) {
-        return handle_before_delegation_created(deps, env, msg.before_delegation_created);
-    }
-    
-    if let Ok(msg) = from_binary::<AfterDelegationModifiedSudoMsg>(&msg) {
-        return handle_after_delegation_modified(deps, env, msg.after_delegation_modified);
-    }
-    
-    // Add handlers for other message types as needed
-    
-    // If none of the expected messages match, just ignore
-    Ok(Response::new().add_attribute("action", "sudo_ignored"))
+#[cw_serde]
+pub enum SudoMsg {
+    AfterValidatorCreated {
+        val_addr: String,
+    },
+    BeforeValidatorModified {
+        val_addr: String,
+    },
+    AfterValidatorRemoved {
+        cons_addr: String,
+        val_addr: String,
+    },
+    AfterValidatorBonded {
+        cons_addr: String,
+        val_addr: String,
+    },
+    AfterValidatorBeginUnbonding {
+        cons_addr: String,
+        val_addr: String,
+    },
+    BeforeValidatorSlashed {
+        val_addr: String,
+        fraction: Decimal,
+        tokens_to_burn: Uint128,
+    },
+    BeforeDelegationCreated {
+        del_addr: String,
+        val_addr: String,
+    },
+    BeforeDelegationSharesModified {
+        del_addr: String,
+        val_addr: String,
+    },
+    BeforeDelegationRemoved {
+        del_addr: String,
+        val_addr: String,
+    },
+    AfterDelegationModified {
+        del_addr: String,
+        val_addr: String,
+    },
+    AfterUnbondingInitiated {
+        id: u64,
+    },
 }
 ```
 
-### Step 3: Implement Hook-Specific Handlers
+### Step 3: Implement Sudo Handler
+
+Implement the `sudo` entry point using pattern matching on the enum:
+
+```rust
+use cosmwasm_std::{DepsMut, Env, Response, StdResult};
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+    match msg {
+        SudoMsg::AfterValidatorCreated { val_addr } => {
+            after_validator_created(deps, env, val_addr)
+        }
+        SudoMsg::AfterValidatorRemoved { val_addr, .. } => {
+            after_validator_removed(deps, env, val_addr)
+        }
+        SudoMsg::AfterValidatorBonded { val_addr, .. } => {
+            after_validator_bonded(deps, env, val_addr)
+        }
+        SudoMsg::AfterValidatorBeginUnbonding { val_addr, .. } => {
+            after_validator_begin_unbonding(deps, env, val_addr)
+        }
+        SudoMsg::AfterDelegationModified { del_addr, val_addr } => {
+            after_delegation_modified(deps, env, del_addr, val_addr)
+        }
+        SudoMsg::BeforeDelegationRemoved { del_addr, val_addr } => {
+            before_delegation_removed(deps, env, del_addr, val_addr)
+        }
+        SudoMsg::BeforeValidatorSlashed {
+            val_addr,
+            fraction,
+            tokens_to_burn,
+        } => before_validator_slashed(deps, env, val_addr, fraction, tokens_to_burn),
+        // Add other handlers as needed
+        _ => Ok(Response::new().add_attribute("action", "sudo_ignored")),
+    }
+}
+```
+
+### Step 4: Implement Hook-Specific Handlers
 
 Create handlers for each hook type your contract needs to process:
 
 ```rust
-fn handle_after_validator_created(
+fn after_validator_created(
     deps: DepsMut,
     _env: Env,
-    msg: AfterValidatorCreatedMsg,
-) -> StdResult<Response> {
+    val_addr: String,
+) -> Result<Response, ContractError> {
     // Process the validator creation event
-    // Access validator address with msg.val_addr
     
     Ok(Response::new()
         .add_attribute("action", "validator_created_processed")
-        .add_attribute("validator", msg.val_addr))
+        .add_attribute("validator", val_addr))
 }
 
-fn handle_before_delegation_created(
+fn before_delegation_removed(
     deps: DepsMut,
     _env: Env,
-    msg: BeforeDelegationCreatedMsg,
-) -> StdResult<Response> {
-    // Process the delegation creation event
-    // Access delegator with msg.del_addr and validator with msg.val_addr
+    del_addr: String,
+    val_addr: String,
+) -> Result<Response, ContractError> {
+    // Process the delegation removal event
     
     Ok(Response::new()
-        .add_attribute("action", "delegation_created_processed")
-        .add_attribute("delegator", msg.del_addr)
-        .add_attribute("validator", msg.val_addr))
+        .add_attribute("action", "delegation_removed_processed")
+        .add_attribute("delegator", del_addr)
+        .add_attribute("validator", val_addr))
 }
 
-fn handle_after_delegation_modified(
+fn after_delegation_modified(
     deps: DepsMut,
     _env: Env,
-    msg: AfterDelegationModifiedMsg,
-) -> StdResult<Response> {
+    del_addr: String,
+    val_addr: String,
+) -> Result<Response, ContractError> {
     // Process the delegation modification event
-    // Access delegator with msg.del_addr and validator with msg.val_addr
     
     Ok(Response::new()
         .add_attribute("action", "delegation_modified_processed")
-        .add_attribute("delegator", msg.del_addr)
-        .add_attribute("validator", msg.val_addr))
+        .add_attribute("delegator", del_addr)
+        .add_attribute("validator", val_addr))
+}
+
+fn before_validator_slashed(
+    deps: DepsMut,
+    _env: Env,
+    val_addr: String,
+    fraction: Decimal,
+    tokens_to_burn: Uint128,
+) -> Result<Response, ContractError> {
+    // Process the validator slashing event
+    
+    Ok(Response::new()
+        .add_attribute("action", "validator_slashed_processed")
+        .add_attribute("validator", val_addr)
+        .add_attribute("fraction", fraction.to_string())
+        .add_attribute("tokens_to_burn", tokens_to_burn.to_string()))
 }
 ```
 
-### Step 4: Ensure Robustness
+### Step 5: Ensure Robustness
 
 Since hook errors can potentially abort transactions or halt the chain, your contract must be designed to handle all possible inputs without errors:
 
 ```rust
 // Example of a robust handler that never fails
-fn handle_before_delegation_shares_modified(
+fn before_delegation_shares_modified(
     deps: DepsMut,
     _env: Env,
-    msg: BeforeDelegationSharesModifiedMsg,
-) -> StdResult<Response> {
+    del_addr: String,
+    val_addr: String,
+) -> Result<Response, ContractError> {
     // Always return success, even if processing fails
-    match process_delegation_shares_change(&msg) {
+    match process_delegation_shares_change(&del_addr, &val_addr) {
         Ok(_) => {
             Ok(Response::new()
                 .add_attribute("action", "delegation_shares_modified_processed")
-                .add_attribute("delegator", msg.del_addr)
-                .add_attribute("validator", msg.val_addr))
+                .add_attribute("delegator", del_addr)
+                .add_attribute("validator", val_addr))
         },
         Err(_) => {
             // Log the error but don't fail
             deps.api.debug("Failed to process delegation shares modification");
             Ok(Response::new()
                 .add_attribute("action", "delegation_shares_modified_skipped")
-                .add_attribute("delegator", msg.del_addr)
-                .add_attribute("validator", msg.val_addr))
+                .add_attribute("delegator", del_addr)
+                .add_attribute("validator", val_addr))
         }
     }
 }
 
-fn process_delegation_shares_change(msg: &BeforeDelegationSharesModifiedMsg) -> StdResult<()> {
+fn process_delegation_shares_change(del_addr: &str, val_addr: &str) -> Result<(), ContractError> {
     // Your processing logic here
     Ok(())
 }
@@ -382,14 +462,15 @@ pub struct DelegationRecord {
 const DELEGATION_EVENTS: Map<u64, Vec<DelegationRecord>> = Map::new("delegation_events");
 
 // Handler for delegation creation events
-fn handle_before_delegation_created(
+fn before_delegation_created(
     deps: DepsMut,
     env: Env,
-    msg: BeforeDelegationCreatedMsg,
-) -> StdResult<Response> {
+    del_addr: String,
+    val_addr: String,
+) -> Result<Response, ContractError> {
     let record = DelegationRecord {
-        delegator: msg.del_addr.clone(),
-        validator: msg.val_addr.clone(),
+        delegator: del_addr.clone(),
+        validator: val_addr.clone(),
         height: env.block.height,
         event_type: "delegation_created".to_string(),
     };
@@ -399,20 +480,21 @@ fn handle_before_delegation_created(
     
     Ok(Response::new()
         .add_attribute("action", "delegation_created_tracked")
-        .add_attribute("delegator", msg.del_addr)
-        .add_attribute("validator", msg.val_addr)
+        .add_attribute("delegator", del_addr)
+        .add_attribute("validator", val_addr)
         .add_attribute("height", env.block.height.to_string()))
 }
 
 // Handler for delegation modification events
-fn handle_after_delegation_modified(
+fn after_delegation_modified_tracking(
     deps: DepsMut,
     env: Env,
-    msg: AfterDelegationModifiedMsg,
-) -> StdResult<Response> {
+    del_addr: String,
+    val_addr: String,
+) -> Result<Response, ContractError> {
     let record = DelegationRecord {
-        delegator: msg.del_addr.clone(),
-        validator: msg.val_addr.clone(),
+        delegator: del_addr.clone(),
+        validator: val_addr.clone(),
         height: env.block.height,
         event_type: "delegation_modified".to_string(),
     };
@@ -422,8 +504,8 @@ fn handle_after_delegation_modified(
     
     Ok(Response::new()
         .add_attribute("action", "delegation_modified_tracked")
-        .add_attribute("delegator", msg.del_addr)
-        .add_attribute("validator", msg.val_addr)
+        .add_attribute("delegator", del_addr)
+        .add_attribute("validator", val_addr)
         .add_attribute("height", env.block.height.to_string()))
 }
 
@@ -432,7 +514,7 @@ fn store_delegation_event(
     storage: &mut dyn Storage,
     height: u64,
     record: DelegationRecord,
-) -> StdResult<()> {
+) -> Result<(), ContractError> {
     let mut events = DELEGATION_EVENTS
         .may_load(storage, height)?
         .unwrap_or_default();

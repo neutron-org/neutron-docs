@@ -7,9 +7,6 @@ icon: "server"
 Neutron network operators maintain critical infrastructure including validators, oracles, relayers, and API/RPC nodes. Following the Mercury upgrade in April 2025, Neutron transitioned to a fully sovereign network with expanded opportunities for network participation.
 
 <CardGroup cols={2}>
-  <Card title="High Performance" icon="bolt" iconType="duotone">
-    The Mercury upgrade significantly improved network performance, reducing latency to ~100ms and increasing throughput by 11x.
-  </Card>
   <Card title="DAO-Driven Rewards" icon="money-bill-trend-up" iconType="duotone">
     Unlike traditional networks, Neutron rewards validators directly from the DAO treasury rather than through inflation.
   </Card>
@@ -18,6 +15,9 @@ Neutron network operators maintain critical infrastructure including validators,
   </Card>
   <Card title="Performance-Based Compensation" icon="chart-line" iconType="duotone">
     Validators receive stable monthly compensation based on their performance in block signing and oracle services.
+  </Card>
+  <Card title="High Performance" icon="bolt" iconType="duotone">
+    The Mercury upgrade significantly improved network performance, reducing latency to ~100ms and increasing throughput by 11x.
   </Card>
 </CardGroup>
 
@@ -53,12 +53,16 @@ Validators who fail to meet minimum thresholds for two consecutive months or thr
 
 ## Technical Requirements
 
-### Hardware Specifications
+### Validator Hardware Specifications
+
+<Note>
+  These specifications are for validator operations. If you only want to run a standard RPC node, the requirements are significantly lower. See [Running a Node](/operators/running-a-node) for lighter hardware requirements.
+</Note>
 
 <CardGroup cols={2}>
   <Card title="CPU" icon="microchip" iconType="duotone">
-    <strong>Minimum:</strong> 4+ cores<br />
-    <strong>Recommended:</strong> 8+ cores, AMD Ryzen 9 7950X3D or EPYC 4584PX for optimal single-thread performance
+    <strong>Minimum:</strong> 16+ cores<br />
+    <strong>Recommended:</strong> AMD Ryzen 9 7950X3D or EPYC 4584PX for optimal single-thread performance
   </Card>
   <Card title="RAM" icon="memory" iconType="duotone">
     <strong>Minimum:</strong> 64 GB<br />
@@ -76,12 +80,15 @@ Validators who fail to meet minimum thresholds for two consecutive months or thr
 
 ### Infrastructure Requirements
 
-<CardGroup cols={3}>
+<CardGroup cols={4}>
   <Card title="Dual Network Operation" icon="network-wired">
     Must run both mainnet and testnet nodes with proven reliability
   </Card>
   <Card title="Security Architecture" icon="shield-halved">
     Sentry node architecture with HSM key management and comprehensive monitoring
+  </Card>
+  <Card title="Oracle Infrastructure" icon="chart-line">
+    Slinky sidecar process for price oracle data with reliable uptime and connectivity
   </Card>
   <Card title="Operational Excellence" icon="gear">
     24/7 monitoring, automated alerting, and documented disaster recovery procedures

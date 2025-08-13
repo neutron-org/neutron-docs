@@ -4,6 +4,10 @@ title: "How To"
 
 This guide provides practical examples for implementing interchain transactions in CosmWasm smart contracts, focusing on registering interchain accounts and executing remote transactions.
 
+<Info>
+**Working Example Contract**: For a complete, working implementation, see the [neutron_interchain_txs example contract](https://github.com/neutron-org/neutron-sdk/blob/main/contracts/neutron_interchain_txs/src/contract.rs) in the neutron-sdk repository. Many developers find it easier to learn from working code.
+</Info>
+
 <Warning>
 The Interchain Transactions module is designed exclusively for CosmWasm smart contracts. Individual users cannot directly register interchain accounts or submit transactions through CLI commands. All interactions must be programmed into smart contracts.
 </Warning>
@@ -60,6 +64,10 @@ fn register_account(
         }],
         ordering: 1, // 1 corresponds to ORDERED in protobuf enum
     };
+
+    // Alternatively, you can use helper functions from the neutron-sdk
+    // See: https://github.com/neutron-org/neutron-sdk/blob/main/packages/neutron-sdk/src/interchain_txs/helpers.rs
+    // For SDK usage examples, refer to /developers/sdk/
 
     // Create CosmosMsg
     let cosmos_msg = register_msg.into_cosmos_msg()?;
@@ -237,6 +245,9 @@ fn submit_tx(
         timeout,
         fee,
     };
+
+    // Alternatively, you can use the submit_tx helper from neutron-sdk
+    // See: https://github.com/neutron-org/neutron-sdk/blob/main/packages/neutron-sdk/src/interchain_txs/helpers.rs#L62
     
     // Create CosmosMsg
     let cosmos_msg = submit_msg.into_cosmos_msg()?;
@@ -341,24 +352,37 @@ Here are examples of creating different Cosmos SDK messages for execution on rem
 ### Bank Send Message
 
 ```rust
-use cosmwasm_std::{Coin, Uint128};
-use neutron_sdk::bindings::types::cosmos::bank::v1beta1::MsgSend;
+use cosmwasm_std::StdError;
+use cosmos_sdk_proto::traits::Message;
+use neutron_std::types::cosmos::base::v1beta1::Coin;
+use neutron_std::types::cosmos::bank::v1beta1::MsgSend;
+use neutron_std::shim::Any;
+use neutron_sdk::NeutronError;
 
 fn create_bank_send_msg(
     from_address: String,
     to_address: String,
     amount: Vec<Coin>,
-) -> Result<Any, ContractError> {
+) -> Result<Any, NeutronError> {
     let bank_send_msg = MsgSend {
         from_address,
         to_address,
         amount,
     };
     
+    // Encode using protobuf
+    let mut buf = Vec::with_capacity(bank_send_msg.encoded_len());
+    if let Err(e) = bank_send_msg.encode(&mut buf) {
+        return Err(NeutronError::Std(StdError::generic_err(format!(
+            "Encode error: {}",
+            e
+        ))));
+    }
+    
     // Convert to Any
     let any_msg = Any {
         type_url: "/cosmos.bank.v1beta1.MsgSend".to_string(),
-        value: to_binary(&bank_send_msg)?.to_vec(),
+        value: buf,
     };
     
     Ok(any_msg)
@@ -368,23 +392,37 @@ fn create_bank_send_msg(
 ### Staking Delegate Message
 
 ```rust
-use neutron_sdk::bindings::types::cosmos::staking::v1beta1::MsgDelegate;
+use cosmwasm_std::StdError;
+use cosmos_sdk_proto::traits::Message;
+use neutron_std::types::cosmos::base::v1beta1::Coin;
+use neutron_std::types::cosmos::staking::v1beta1::MsgDelegate;
+use neutron_std::shim::Any;
+use neutron_sdk::NeutronError;
 
 fn create_staking_delegate_msg(
     delegator_address: String,
     validator_address: String,
     amount: Coin,
-) -> Result<Any, ContractError> {
+) -> Result<Any, NeutronError> {
     let delegate_msg = MsgDelegate {
         delegator_address,
         validator_address,
         amount: Some(amount),
     };
     
+    // Encode using protobuf
+    let mut buf = Vec::with_capacity(delegate_msg.encoded_len());
+    if let Err(e) = delegate_msg.encode(&mut buf) {
+        return Err(NeutronError::Std(StdError::generic_err(format!(
+            "Encode error: {}",
+            e
+        ))));
+    }
+    
     // Convert to Any
     let any_msg = Any {
         type_url: "/cosmos.staking.v1beta1.MsgDelegate".to_string(),
-        value: to_binary(&delegate_msg)?.to_vec(),
+        value: buf,
     };
     
     Ok(any_msg)
@@ -394,23 +432,36 @@ fn create_staking_delegate_msg(
 ### Governance Vote Message
 
 ```rust
-use neutron_sdk::bindings::types::cosmos::gov::v1beta1::{MsgVote, VoteOption};
+use cosmwasm_std::StdError;
+use cosmos_sdk_proto::traits::Message;
+use neutron_std::types::cosmos::gov::v1beta1::{MsgVote, VoteOption};
+use neutron_std::shim::Any;
+use neutron_sdk::NeutronError;
 
 fn create_governance_vote_msg(
     proposal_id: u64,
     voter: String,
     option: VoteOption,
-) -> Result<Any, ContractError> {
+) -> Result<Any, NeutronError> {
     let vote_msg = MsgVote {
         proposal_id,
         voter,
         option: option as i32,
     };
     
+    // Encode using protobuf
+    let mut buf = Vec::with_capacity(vote_msg.encoded_len());
+    if let Err(e) = vote_msg.encode(&mut buf) {
+        return Err(NeutronError::Std(StdError::generic_err(format!(
+            "Encode error: {}",
+            e
+        ))));
+    }
+    
     // Convert to Any
     let any_msg = Any {
         type_url: "/cosmos.gov.v1beta1.MsgVote".to_string(),
-        value: to_binary(&vote_msg)?.to_vec(),
+        value: buf,
     };
     
     Ok(any_msg)

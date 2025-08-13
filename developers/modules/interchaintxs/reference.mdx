@@ -56,7 +56,7 @@ message MsgRegisterInterchainAccount {
 | `connection_id` | string | ID of the IBC connection to use for the interchain account |
 | `interchain_account_id` | string | Custom identifier for the interchain account (used in port ID) |
 | `register_fee` | []Coin | Fee paid for registering the interchain account |
-| `ordering` | Order | Channel ordering (typically ORDERED for interchain accounts) |
+| `ordering` | Order | Channel ordering (ORDERED or UNORDERED; UNORDERED is default since ibc-go v7.5.0) |
 
 #### Response
 
