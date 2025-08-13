@@ -2,7 +2,286 @@
 title: "How-to"
 ---
 
-This guide explains how the Neutron Transfer module integrates with smart contracts for cross-chain token transfers based on its verified functionality.
+This guide provides practical examples for performing IBC transfers using Neutron's Transfer module, including CLI commands, CosmWasm smart contract integration, packet forwarding, and IBC hooks for contract execution.
+
+## Basic IBC Transfer Examples
+
+### CLI Transfer Command
+
+Neutron uses the standard IBC transfer CLI command structure. The Transfer module wraps the standard IBC transfer but maintains CLI compatibility:
+
+```bash
+# Standard IBC transfer command (works with Neutron's enhanced Transfer module)
+neutrond tx ibc-transfer transfer \
+  transfer \
+  channel-0 \
+  cosmos1recipient... \
+  1000untrn \
+  --from alice \
+  --timeout-height 0-0 \
+  --timeout-timestamp 1234567890 \
+  --memo "simple transfer" \
+  --fees 1000untrn
+```
+
+**Parameters:**
+- `transfer`: Source port (always "transfer" for token transfers)
+- `channel-0`: Source channel ID on Neutron
+- `cosmos1recipient...`: Recipient address on destination chain
+- `1000untrn`: Amount and denomination to transfer
+- `--timeout-height`: Block height timeout (0-0 for timestamp-only)
+- `--timeout-timestamp`: Unix timestamp for timeout (nanoseconds since unix epoch)
+- `--memo`: Optional memo field for additional data
+
+<Note>
+The CLI command uses the standard IBC transfer interface. Neutron's enhancements (contract detection, callbacks, enhanced responses) are handled automatically by the Transfer module wrapper.
+</Note>
+
+### CosmWasm Transfer Integration
+
+Send IBC transfers from a smart contract using `NeutronMsg`. The exact structure depends on the neutron-sdk version:
+
+```rust
+use neutron_sdk::bindings::msg::NeutronMsg;
+use cosmwasm_std::{CosmosMsg, Coin, Uint128, Response};
+
+// In your contract's execute function
+let transfer_msg = NeutronMsg::IbcTransfer {
+    source_port: "transfer".to_string(),
+    source_channel: "channel-0".to_string(),
+    token: Coin {
+        denom: "untrn".to_string(),
+        amount: "1000".to_string(),
+    },
+    sender: env.contract.address.to_string(),
+    receiver: "cosmos1recipient...".to_string(),
+    timeout_height: Some(neutron_sdk::bindings::types::Height {
+        revision_number: Some(2),
+        revision_height: Some(env.block.height + 1000),
+    }),
+    timeout_timestamp: Some(env.block.time.plus_seconds(3600).nanos()),
+    memo: Some("contract transfer".to_string()),
+    fee: Some(neutron_sdk::bindings::types::Fee {
+        recv_fee: vec![],
+        ack_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: "1000".to_string(),
+        }],
+        timeout_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: "1000".to_string(),
+        }],
+    }),
+};
+
+let cosmos_msg: CosmosMsg = transfer_msg.into();
+Ok(Response::new().add_message(cosmos_msg))
+```
+
+<Warning>
+The exact field names and types in `NeutronMsg::IbcTransfer` depend on your neutron-sdk version. Always refer to the neutron-sdk documentation for the correct structure. The fields shown here match the protobuf definition in `neutron.transfer.MsgTransfer`.
+</Warning>
+
+### Handling Transfer Callbacks
+
+Implement Sudo callbacks to handle transfer acknowledgments and timeouts. The Transfer module calls contracts using the Contract Manager's sudo message format:
+
+```rust
+use cosmwasm_std::{entry_point, Binary, DepsMut, Env, Response, StdResult};
+use serde::{Deserialize, Serialize};
+
+// Contract Manager sudo message structures (exact format from source code)
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum SudoMsg {
+    Response {
+        request: RequestPacket,
+        data: Binary,
+    },
+    Error {
+        request: RequestPacket,
+        details: String,
+    },
+    Timeout {
+        request: RequestPacket,
+    },
+    // ... other sudo messages
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct RequestPacket {
+    pub sequence: Option<u64>,
+    pub source_port: Option<String>,
+    pub source_channel: Option<String>,
+    pub destination_port: Option<String>,
+    pub destination_channel: Option<String>,
+    pub data: Option<Binary>,
+    pub timeout_height: Option<RequestPacketTimeoutHeight>,
+    pub timeout_timestamp: Option<u64>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct RequestPacketTimeoutHeight {
+    pub revision_number: Option<u64>,
+    pub revision_height: Option<u64>,
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+    match msg {
+        SudoMsg::Response { request, data } => handle_ibc_acknowledgement(deps, env, request, data),
+        SudoMsg::Error { request, details } => handle_ibc_error(deps, env, request, details),
+        SudoMsg::Timeout { request } => handle_ibc_timeout(deps, env, request),
+        _ => Err(ContractError::UnsupportedSudoType {}),
+    }
+}
+
+fn handle_ibc_acknowledgement(
+    deps: DepsMut,
+    env: Env,
+    request: RequestPacket,
+    data: Binary,
+) -> Result<Response, ContractError> {
+    // The 'data' field contains the acknowledgement result
+    // Parse based on your expected acknowledgement format
+    deps.api.debug("IBC transfer acknowledged successfully");
+    
+    // Store transfer result or update contract state
+    // request.sequence contains the packet sequence ID for correlation
+    
+    Ok(Response::new()
+        .add_attribute("action", "ibc_ack_received")
+        .add_attribute("sequence", request.sequence.unwrap_or(0).to_string()))
+}
+
+fn handle_ibc_error(
+    deps: DepsMut,
+    env: Env,
+    request: RequestPacket,
+    details: String,
+) -> Result<Response, ContractError> {
+    // Handle acknowledgement with error
+    deps.api.debug(&format!("IBC transfer failed: {}", details));
+    
+    Ok(Response::new()
+        .add_attribute("action", "ibc_error_received")
+        .add_attribute("error", details))
+}
+
+fn handle_ibc_timeout(
+    deps: DepsMut,
+    env: Env,
+    request: RequestPacket,
+) -> Result<Response, ContractError> {
+    // Handle timeout - tokens are automatically returned by IBC Transfer module
+    deps.api.debug("IBC transfer timed out");
+    
+    Ok(Response::new()
+        .add_attribute("action", "ibc_timeout_received")
+        .add_attribute("sequence", request.sequence.unwrap_or(0).to_string()))
+}
+```
+
+<Note>
+The sudo message structures shown here match the exact format used by Neutron's Contract Manager module. The `RequestPacket` structure corresponds to the IBC `channeltypes.Packet` that was originally sent.
+</Note>
+
+## Advanced Transfer Features
+
+### Multi-hop Transfer (Packet Forwarding)
+
+Route transfers through Neutron to other chains using packet forwarding middleware:
+
+```bash
+# Transfer from Chain A → Neutron → Chain C
+neutrond tx ibc-transfer transfer \
+  transfer \
+  channel-5 \
+  neutron1intermediate... \
+  1000uatom \
+  --from alice \
+  --memo '{"forward": {"receiver": "cosmos1final...", "port": "transfer", "channel": "channel-10"}}' \
+  --fees 1000untrn
+```
+
+**Multi-hop Flow:**
+1. Tokens sent from origin chain to Neutron
+2. Neutron automatically forwards to final destination
+3. Memo specifies the final receiver and routing information
+
+<Note>
+Packet forwarding functionality depends on packet forwarding middleware being configured in the IBC stack. The exact availability and configuration may vary by network setup.
+</Note>
+
+### IBC Hooks: Contract Execution via Transfer
+
+Call smart contracts on Neutron by sending IBC transfers with contract execution memos. The receiver address should be the contract address:
+
+```bash
+# Transfer tokens to a contract and execute a message
+neutrond tx ibc-transfer transfer \
+  transfer \
+  channel-0 \
+  neutron1contract... \
+  1000uatom \
+  --from alice \
+  --memo '{"wasm": {"contract": "neutron1contract...", "msg": {"execute_trade": {"amount": "1000"}}}}' \
+  --fees 1000untrn
+```
+
+<Note>
+The `receiver` field should be set to the contract address. The IBC hooks middleware intercepts the transfer and executes the contract with the specified message and transferred funds.
+</Note>
+
+### JavaScript Example with IBC Hooks
+
+```typescript
+const contractAddress = "neutron1contract...";
+const contractMsg = {
+  execute_trade: {
+    amount: "1000",
+    slippage: "0.01"
+  }
+};
+
+const transferMsg = MsgTransfer.fromPartial({
+  sourcePort: "transfer",
+  sourceChannel: "channel-0",
+  token: {
+    denom: "uatom",
+    amount: "1000",
+  },
+  sender: senderAddress,
+  receiver: contractAddress,
+  timeoutHeight: {
+    revisionNumber: 2n,
+    revisionHeight: 100000000n,
+  },
+  memo: JSON.stringify({
+    wasm: {
+      contract: contractAddress,
+      msg: contractMsg
+    }
+  }),
+});
+
+const result = await client.signAndBroadcast(
+  senderAddress,
+  [{ typeUrl: MsgTransfer.typeUrl, value: transferMsg }],
+  fee
+);
+```
+
+**IBC Hooks Flow:**
+1. Transfer sent to Neutron with contract address as receiver
+2. IBC hooks middleware intercepts the transfer
+3. Funds are sent to an intermediate account derived from the sender
+4. Contract is executed with the transferred funds and specified message
+5. Contract receives funds in its balance and executes the provided message
+
+<Warning>
+When using IBC hooks, the contract should be designed to handle execute messages that may come with transferred funds. The exact integration pattern depends on your specific contract logic.
+</Warning>
 
 ## Transfer Module Integration
 

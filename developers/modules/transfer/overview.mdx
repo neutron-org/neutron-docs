@@ -20,6 +20,12 @@ The Transfer module in Neutron is an enhanced wrapper around the standard IBC Tr
   <Card title="IBC Compatibility" icon="link">
     Maintains full compatibility with standard IBC Transfer functionality while adding smart contract enhancements.
   </Card>
+  <Card title="Packet Forwarding" icon="route">
+    Supports relaying transfer packets through Neutron using memo-based packet forwarding middleware for multi-hop transfers.
+  </Card>
+  <Card title="IBC Hooks" icon="webhook">
+    Enables calling smart contracts on Neutron via IBC transfers by supplying memo in the correct format for contract execution.
+  </Card>
 </CardGroup>
 
 ## Module Interactions
@@ -45,6 +51,48 @@ graph TD
 
 The Transfer module wraps the standard IBC transfer functionality, adding contract detection and callback mechanisms for smart contract integration.
 
+## Advanced Transfer Features
+
+### Packet Forwarding Middleware
+
+Neutron supports relaying transfer packets through itself using memo-based packet forwarding middleware. This enables multi-hop transfers where Neutron acts as an intermediary chain.
+
+**Example memo format for packet forwarding:**
+```json
+{
+  "forward": {
+    "receiver": "${receiver_address}",
+    "port": "transfer", 
+    "channel": "channel-0"
+  }
+}
+```
+
+<Note>
+Packet forwarding is implemented as middleware in the IBC stack. The exact implementation details may be provided by external packet forwarding middleware integrated with Neutron's IBC setup.
+</Note>
+
+### IBC Hooks Integration
+
+IBC Hooks allow you to call smart contracts on Neutron by sending IBC transfers to the chain with properly formatted memo fields. This enables cross-chain contract execution triggered by token transfers.
+
+**Example memo format for contract calls:**
+```json
+{
+  "wasm": {
+    "contract": "${contract_address}",
+    "msg": {
+      "test_msg": {
+        "return_err": false,
+        "arg": "test"
+      }
+    }
+  }
+}
+```
+
+When using IBC Hooks, the transferred tokens are sent to the specified contract address, and the contract's entry point is called with the provided message.
+
 ## Standard IBC Transfer Features
 
 The module maintains all capabilities of the standard IBC Transfer module:
@@ -55,11 +103,14 @@ The module maintains all capabilities of the standard IBC Transfer module:
 - Support for transfer timeout and recovery
 - Standard queries delegated to underlying IBC transfer implementation
 
-For core IBC Transfer functionality, see the [IBC Transfer documentation](https://ibc.cosmos.network/main/apps/transfer/overview.html).
+For core IBC Transfer functionality, see the [IBC Transfer documentation](https://ibc.cosmos.network/v7/apps/transfer/overview/).
 
 ## Learn More
 
-<CardGroup cols={2}>
+<CardGroup cols={3}>
+  <Card title="How-to Guide" icon="wrench" href="/developers/modules/transfer/how-to">
+    Learn how to integrate transfers with smart contracts and handle cross-chain token transfers
+  </Card>
   <Card title="Module Architecture" icon="book" href="/developers/modules/transfer/explanation">
     Understand the wrapper implementation and contract integration mechanisms
   </Card>
