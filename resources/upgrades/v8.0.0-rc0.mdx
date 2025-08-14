@@ -1,10 +1,10 @@
 ---
-title: "v8.0.0-rc0 (Mainnet)"
-description: "Instructions for upgrading the Neutron mainnet to v8.0.0-rc0"
+title: "v8.0.0-rc0 (Testnet)"
+description: "Instructions for upgrading the Pion testnet to Neutron v8.0.0-rc0"
 icon: "arrow-up-right-dots"
 ---
 
-This document describes the steps for validators and full node operators to upgrade to Neutron v8.0.0-rc0 on the mainnet.
+This document describes the steps for validators and full node operators to upgrade to Neutron v8.0.0-rc0 on the Pion testnet.
 
 ## Upgrade Information
 
@@ -38,11 +38,11 @@ It is critically important for validator operators to back-up the `.neutrond/dat
 
 ## Current Runtime
 
-The Neutron mainnet network, `pion-1`, is currently running [Neutron v7.0.0-rc0](https://github.com/neutron-org/neutron/releases/tag/v7.0.0-rc0). Operators who are running on v7.0.0-rc0 will be able to upgrade successfully.
+The Neutron testnet network, `pion-1`, is currently running [Neutron v7.0.0-rc0](https://github.com/neutron-org/neutron/releases/tag/v7.0.0-rc0). Operators who are running on v7.0.0-rc0 will be able to upgrade successfully.
 
 ## Target Runtime
 
-The Neutron mainnet network, `pion-1`, will run [Neutron v8.0.0-rc0](https://github.com/neutron-org/neutron/releases/tag/v8.0.0-rc0). Operators **MUST** use this version post-upgrade to remain connected to the network.
+The Neutron testnet network, `pion-1`, will run [Neutron v8.0.0-rc0](https://github.com/neutron-org/neutron/releases/tag/v8.0.0-rc0). Operators **MUST** use this version post-upgrade to remain connected to the network.
 
 ## Build v8.0.0-rc0
 
@@ -93,10 +93,10 @@ Make sure you are using the proper version of libwasm. You can check the version
 
 ```
 neutrond q wasm libwasmvm-version
-2.2.3
+2.2.4
 ```
 
-The proper version is `2.2.3`.
+The proper version is `2.2.4`.
 
 **If the version on your machine is different you MUST change it immediately!**
 
@@ -106,7 +106,7 @@ The proper version is `2.2.3`.
 - If you built the binary yourself, download the proper libwasmvm version:
 
 ```
-wget https://github.com/CosmWasm/wasmvm/releases/download/v2.2.3/libwasmvm.x86_64.so
+wget https://github.com/CosmWasm/wasmvm/releases/download/v2.2.4/libwasmvm.x86_64.so
 ```
 
 Then tell the linker where to find it:
@@ -149,8 +149,8 @@ Create the Cosmovisor directory structure:
 mkdir -p $NEUTRON_HOME/cosmovisor/genesis/bin
 cp $(which neutrond) $NEUTRON_HOME/cosmovisor/genesis/bin
 
-mkdir -p $NEUTRON_HOME/cosmovisor/upgrades/v8.0.0/bin
-cp $(which neutrond) $NEUTRON_HOME/cosmovisor/upgrades/v8.0.0/bin
+mkdir -p $NEUTRON_HOME/cosmovisor/upgrades/v8.0.0-rc0/bin
+cp $(which neutrond) $NEUTRON_HOME/cosmovisor/upgrades/v8.0.0-rc0/bin
 ```
 
 You should get this structure:
@@ -161,7 +161,7 @@ You should get this structure:
 │   └── bin
 │       └── neutrond  #v7.0.0-rc0
 └── upgrades
-    └── v8.0.0
+    └── v8.0.0-rc0
         └── bin
             └── neutrond  #v8.0.0-rc0
 ```
@@ -212,11 +212,11 @@ The riskiest thing a validator can do is discover that they made a mistake and r
 
 This release includes:
 
-1. Major core module improvements
-2. Enhanced performance for high-throughput transactions  
-3. Critical security updates and bug fixes
+1. Upgrade to libwasmvm v2.2.4
+2. Several core module improvements
+3. Enhanced performance for high-throughput transactions
 
-Mainnet validators should ensure they have thoroughly tested this upgrade process on testnet environments.
+Testnet validators should use this upgrade as a rehearsal for the upcoming mainnet upgrade.
 
 ## FAQ
 
