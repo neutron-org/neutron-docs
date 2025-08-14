@@ -5,7 +5,7 @@
 /build
 
 # Generated files
-.docusaurus
+.mintlify
 .cache-loader
 
 # Misc
@@ -20,3 +20,10 @@ yarn-debug.log*
 yarn-error.log*
 
 .idea/
+
+/concepts-reference
+/module-reference
+/old-docs
+/interchain-queries-reference
+
+CLAUDE.md

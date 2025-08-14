@@ -1,0 +1,465 @@
+---
+title: "Reference"
+description: "Complete technical reference for the Interchain Transactions module"
+---
+
+This page provides comprehensive technical documentation for the Interchain Transactions module, combining all API specifications, message types, query endpoints, parameters, events, state structures, and integration information in a single reference document.
+
+<Warning>
+The Interchain Transactions module is designed exclusively for CosmWasm smart contracts. Individual users cannot directly register interchain accounts or submit transactions through CLI commands.
+</Warning>
+
+## Parameters
+
+The Interchain Transactions module's behavior is governed by the following parameters:
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `msg_submit_tx_max_messages` | uint64 | Maximum number of messages allowed in a single MsgSubmitTx |
+| `register_fee` | []Coin | Minimum fee required to register an interchain account |
+
+### Default Values
+
+```json
+{
+  "msg_submit_tx_max_messages": "16",
+  "register_fee": [
+    {
+      "denom": "untrn",
+      "amount": "1000000"
+    }
+  ]
+}
+```
+
+## Messages
+
+### MsgRegisterInterchainAccount
+
+Registers an interchain account on a remote chain through an IBC connection.
+
+```protobuf
+message MsgRegisterInterchainAccount {
+  string from_address = 1;
+  string connection_id = 2;
+  string interchain_account_id = 3;
+  repeated cosmos.base.v1beta1.Coin register_fee = 4;
+  ibc.core.channel.v1.Order ordering = 5;
+}
+```
+
+#### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `from_address` | string | The address initiating the registration request (typically a contract address) |
+| `connection_id` | string | ID of the IBC connection to use for the interchain account |
+| `interchain_account_id` | string | Custom identifier for the interchain account (used in port ID) |
+| `register_fee` | []Coin | Fee paid for registering the interchain account |
+| `ordering` | Order | Channel ordering (ORDERED or UNORDERED; UNORDERED is default since ibc-go v7.5.0) |
+
+#### Response
+
+```protobuf
+message MsgRegisterInterchainAccountResponse {
+  string channel_id = 1;
+  string port_id = 2;
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `channel_id` | string | The ID of the newly created IBC channel |
+| `port_id` | string | The port ID associated with the interchain account |
+
+#### Processing Flow
+
+1. The module validates that the connection ID exists
+2. Creates a unique port ID in the format `icacontroller-{from_address}.{interchain_account_id}`
+3. Claims the port capability and initiates a channel opening handshake with the remote chain
+4. The register fee is charged to the sender account
+5. Channel and port information are returned immediately
+6. Once the channel is established, a callback is sent to the initiating contract
+
+#### Contract Example
+
+```rust
+use neutron_sdk::bindings::msg::NeutronMsg;
+
+let register_msg = NeutronMsg::RegisterInterchainAccount {
+    connection_id: "connection-0".to_string(),
+    interchain_account_id: "my-account".to_string(),
+    register_fee: vec![Coin {
+        denom: "untrn".to_string(),
+        amount: Uint128::from(1000000u128),
+    }],
+};
+```
+
+### MsgSubmitTx
+
+Submits a transaction for execution on a remote chain through an interchain account.
+
+```protobuf
+message MsgSubmitTx {
+  string from_address = 1;
+  string interchain_account_id = 2;
+  string connection_id = 3;
+  repeated google.protobuf.Any msgs = 4;
+  string memo = 5;
+  uint64 timeout = 6;
+  neutron.feerefunder.Fee fee = 7;
+}
+```
+
+#### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `from_address` | string | The address submitting the transaction (typically a contract address) |
+| `interchain_account_id` | string | The identifier of the interchain account to use |
+| `connection_id` | string | The ID of the IBC connection to use |
+| `msgs` | []Any | The messages to execute on the remote chain |
+| `memo` | string | An optional memo to include with the transaction |
+| `timeout` | uint64 | The timeout in seconds after which the packet times out |
+| `fee` | Fee | The fees to pay for packet relaying |
+
+#### Response
+
+```protobuf
+message MsgSubmitTxResponse {
+  uint64 sequence_id = 1;
+  string channel = 2;
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `sequence_id` | uint64 | The sequence ID of the IBC packet (unique per channel) |
+| `channel` | string | The source channel ID on Neutron from which the transaction was submitted |
+
+#### Contract Example
+
+```rust
+let submit_msg = NeutronMsg::SubmitTx {
+    connection_id: "connection-0".to_string(),
+    interchain_account_id: "my-account".to_string(),
+    msgs: vec![/* your cosmos messages */],
+    memo: "".to_string(),
+    timeout: 3600,
+    fee: Fee {
+        recv_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(2000u128),
+        }],
+        ack_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(1000u128),
+        }],
+        timeout_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(1000u128),
+        }],
+    },
+};
+```
+
+### MsgUpdateParams
+
+Updates the module parameters (governance-only message).
+
+```protobuf
+message MsgUpdateParams {
+  string authority = 1;
+  Params params = 2;
+}
+```
+
+#### Parameters
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `authority` | string | The governance account address |
+| `params` | Params | The new module parameters |
+
+#### Response
+
+```protobuf
+message MsgUpdateParamsResponse {}
+```
+
+## Query Endpoints
+
+### Params
+
+Retrieves the current parameters of the Interchain Transactions module.
+
+**Endpoint:** `/neutron/interchaintxs/params`
+
+**Request:**
+```protobuf
+message QueryParamsRequest {}
+```
+
+**Response:**
+```protobuf
+message QueryParamsResponse {
+  Params params = 1;
+}
+```
+
+#### CLI Example
+
+<Info>
+The module only supports query CLI commands. There are no transaction CLI commands as the module is exclusively designed for CosmWasm smart contract integration.
+</Info>
+
+```bash
+neutron query interchaintxs params
+```
+
+#### Response Example
+
+```json
+{
+  "params": {
+    "msg_submit_tx_max_messages": "16",
+    "register_fee": [
+      {
+        "denom": "untrn",
+        "amount": "1000000"
+      }
+    ]
+  }
+}
+```
+
+#### gRPC Example
+
+```bash
+grpcurl -plaintext localhost:9090 neutron.interchaintxs.v1.Query/Params
+```
+
+### InterchainAccountAddress
+
+Retrieves the address of an interchain account on a remote chain.
+
+**Endpoint:** `/neutron/interchaintxs/{owner_address}/{interchain_account_id}/{connection_id}/interchain_account_address`
+
+**Request:**
+```protobuf
+message QueryInterchainAccountAddressRequest {
+  string owner_address = 1;
+  string interchain_account_id = 2;
+  string connection_id = 3;
+}
+```
+
+**Response:**
+```protobuf
+message QueryInterchainAccountAddressResponse {
+  string interchain_account_address = 1;
+}
+```
+
+#### CLI Example
+
+```bash
+neutron query interchaintxs interchain-account neutron1abcdef... connection-0 myaccount
+```
+
+#### Response Example
+
+```json
+{
+  "interchain_account_address": "cosmos1xyz..."
+}
+```
+
+#### gRPC Example
+
+```bash
+grpcurl -plaintext \
+    -d '{"owner_address": "neutron1...", "interchain_account_id": "myaccount", "connection_id": "connection-0"}' \
+    localhost:9090 \
+    neutron.interchaintxs.v1.Query/InterchainAccountAddress
+```
+
+## Events
+
+<Warning>
+The Interchain Transactions module does not emit any custom events. All events related to interchain account registration and transaction submission are emitted by the underlying IBC stack (ICA controller module, channel keeper, etc.) rather than this module directly.
+</Warning>
+
+To monitor interchain transactions, listen for IBC events from:
+- **ICA Controller module** - for account registration and transaction acknowledgements
+- **Channel keeper** - for packet send/receive events  
+- **Port keeper** - for port binding events
+
+For specific event monitoring, refer to the IBC and ICA documentation in the Cosmos SDK.
+
+## State
+
+### Genesis State
+
+The module's genesis state contains the module parameters:
+
+```go
+type GenesisState struct {
+    Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
+}
+```
+
+### Module Parameters
+
+The module parameters are stored in the params subspace:
+
+```go
+type Params struct {
+    // Maximum number of messages in MsgSubmitTx
+    MsgSubmitTxMaxMessages uint64 `protobuf:"varint,1,opt,name=msg_submit_tx_max_messages,json=msgSubmitTxMaxMessages,proto3" json:"msg_submit_tx_max_messages,omitempty"`
+    // Minimum fee required to register interchain account
+    RegisterFee github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,2,rep,name=register_fee,json=registerFee,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"register_fee"`
+}
+```
+
+### State Objects
+
+The module stores minimal state in the blockchain:
+
+#### ICA Registration Fee Code ID Threshold
+
+Stores the code ID threshold for determining fee requirements during ICA registration.
+
+**Key:** `ICARegistrationFeeFirstCodeID`  
+**Value:** `uint64` (code ID threshold)
+
+<Info>
+The actual threshold value and its initialization depend on specific chain deployment configuration.
+</Info>
+
+<Info>
+The module itself does not store port-to-owner mappings, channel mappings, or interchain account addresses. This state is managed by the underlying IBC Interchain Accounts (ICA) controller keeper. Interchain account addresses and channel information can be queried through the ICA controller queries.
+</Info>
+
+### State Transitions
+
+The Interchain Transactions module performs minimal state transitions:
+
+#### Code ID Threshold Management
+
+The `ICARegistrationFeeFirstCodeID` threshold is managed during chain deployment/upgrades to determine which contracts are subject to registration fees.
+
+#### Transaction Processing
+
+1. **Registration:** The module validates the request and delegates to the ICA controller keeper for actual account creation
+2. **Transaction Submission:** The module validates the request, charges fees to the fee refunder, and delegates to the ICA controller keeper for packet creation
+3. **IBC Callbacks:** The module processes acknowledgements, timeouts, and channel events by calling the appropriate contract via sudo callbacks
+
+<Info>
+All IBC-related state (ports, channels, interchain account addresses) is managed by the underlying ICA controller keeper, not by this module directly.
+</Info>
+
+## Contract Integration
+
+### Sudo Callbacks
+
+The module sends sudo callbacks to contracts for IBC events:
+
+#### OpenAck Callback
+
+Sent when an interchain account channel is successfully opened:
+
+```rust
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct OpenAck {
+    pub port_id: String,
+    pub channel_id: String,
+    pub counterparty_channel_id: String,
+    pub counterparty_version: String,
+}
+```
+
+#### Response Callback
+
+Sent when an interchain transaction receives an acknowledgement:
+
+```rust
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct Response {
+    pub request: RequestPacket,
+    pub data: Binary,
+}
+```
+
+#### Error Callback
+
+Sent when an interchain transaction fails:
+
+```rust
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ErrorResponse {
+    pub request: RequestPacket,
+    pub details: String,
+}
+```
+
+#### Timeout Callback
+
+Sent when an interchain transaction times out:
+
+```rust
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct TimeoutResponse {
+    pub request: RequestPacket,
+}
+```
+
+### Error Handling
+
+The module uses the [Contract Manager](/developers/modules/contractmanager/overview) module for sudo callback error handling:
+
+- Sudo errors are suppressed to prevent acknowledgement resubmission
+- Gas limits are enforced on sudo callbacks
+- Failed callbacks are recorded for later resubmission
+
+### Port ID Format
+
+Interchain account port IDs follow the format:
+```
+icacontroller-{contract_address}.{interchain_account_id}
+```
+
+Example: `icacontroller-neutron1abcdef...xyz.myaccount`
+
+### Implementation Examples
+
+For complete implementation examples, refer to:
+- [How-to Guide](/developers/modules/interchaintxs/how-to) - Detailed implementation examples
+- [Explanation](/developers/modules/interchaintxs/explanation) - Concepts and design rationale
+
+## Error Codes
+
+Error codes returned by the module:
+
+| Code | Error | Description |
+|------|-------|-------------|
+| `1100` | `ErrInvalidICAOwner` | Invalid interchain account interchainAccountID |
+| `1101` | `ErrInvalidAccountAddress` | Invalid account address |
+| `1102` | `ErrInterchainAccountNotFound` | Interchain account not found |
+| `1103` | `ErrNotContract` | Not a contract |
+| `1104` | `ErrEmptyInterchainAccountID` | Empty interchain account id |
+| `1105` | `ErrEmptyConnectionID` | Empty connection id |
+| `1106` | `ErrNoMessages` | No messages provided |
+| `1107` | `ErrInvalidTimeout` | Invalid timeout |
+| `1108` | `ErrInvalidPayerFee` | Invalid payer feerefunder |
+| `1109` | `ErrLongInterchainAccountID` | Interchain account id is too long |
+| `1110` | `ErrInvalidType` | Invalid type |
+
+## Constants
+
+| Constant | Value | Description |
+|----------|-------|-------------|
+| `ConsensusVersion` | `2` | Current consensus version |
+| `Delimiter` | `"."` | Delimiter used in port ID construction |
+| `ModuleName` | `"interchaintxs"` | Module name identifier | 

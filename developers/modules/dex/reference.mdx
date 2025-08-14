@@ -1,0 +1,1335 @@
+---
+title: "DEX Reference"
+description: "Complete technical reference for the DEX module including CLI commands, messages, queries, events, state, and data structures"
+---
+
+<Note>
+**Reference**: This documentation is verified against the actual CLI implementation in `/module-reference/x/dex/client/cli/` and protocol buffer definitions in `/module-reference/proto/dex/`, ensuring 100% accuracy with source code.
+</Note>
+
+## CLI Commands
+
+The `neutrond` command-line interface allows users to interact with the Dex module using **positional arguments**.
+
+### Transactions
+
+#### Deposit
+
+Add liquidity to one or more pools.
+
+```bash
+neutrond tx dex deposit [receiver] [token-a] [token-b] [list of amount-0] [list of amount-1] [list of tick-index] [list of fees] [disable_autoswap], [fail_tx_on_BEL] [flags]
+```
+
+**Parameters:**
+- `receiver`: Address to receive the liquidity position
+- `token-a`: First token in the pair
+- `token-b`: Second token in the pair  
+- `list of amount-0`: Comma-separated amounts of token A to deposit
+- `list of amount-1`: Comma-separated amounts of token B to deposit
+- `list of tick-index`: Comma-separated tick indexes (use brackets for negative values: `[-10,5]`)
+- `list of fees`: Comma-separated fee tiers in basis points
+- `disable_autoswap`: Comma-separated boolean values for autoswap options
+- `fail_tx_on_BEL`: Comma-separated boolean values for BEL (Below Expected Liquidity) failure options
+
+**Flags:**
+- `--swap-on-deposit`: Enable swap on deposit (optional)
+
+**Examples:**
+
+Single position:
+```bash
+neutrond tx dex deposit alice tokenA tokenB 100 0 [-10] 1 false false --from alice
+```
+
+Multiple positions:
+```bash
+neutrond tx dex deposit alice tokenA tokenB 100,0 0,50 [-10,5] 1,1 false,false false,false --from alice
+```
+
+#### Withdrawal
+
+Remove liquidity from pools.
+
+```bash
+neutrond tx dex withdrawal [receiver] [token-a] [token-b] [list of shares-to-remove] [list of tick-index] [list of fees] [flags]
+```
+
+**Parameters:**
+- `receiver`: Address to receive withdrawn tokens
+- `token-a`: First token in the pair
+- `token-b`: Second token in the pair
+- `list of shares-to-remove`: Comma-separated amounts of shares to remove
+- `list of tick-indexes`: Comma-separated tick indexes
+- `list of fees`: Comma-separated fee tiers
+
+**Example:**
+```bash
+neutrond tx dex withdrawal alice tokenA tokenB 500000 0 3000 --from alice
+```
+
+#### Place Limit Order
+
+Submit a limit order to the DEX.
+
+```bash
+neutrond tx dex place-limit-order [receiver] [token-in] [token-out] [tick-index] [amount-in] ?[order-type] ?[expirationTime] ?(--max-amout-out) ?(--price) [flags]
+```
+
+**Parameters:**
+- `receiver`: Address to receive the output tokens
+- `token-in`: Input token denomination
+- `token-out`: Output token denomination
+- `tick-index`: Price tick for the order (wrap negative values in brackets: `[-10]`)
+- `amount-in`: Amount of input tokens
+- `order-type` (optional): Order type (`GOOD_TIL_CANCELLED`, `FILL_OR_KILL`, `IMMEDIATE_OR_CANCEL`, `JUST_IN_TIME`, `GOOD_TIL_TIME`)
+- `expirationTime` (optional): Expiration time for time-limited orders (format: `01/02/2006 15:04:05`)
+
+**Flags:**
+- `--max-amount-out`: Maximum amount of output tokens
+- `--price`: Limit price for the order
+
+**Example:**
+```bash
+neutrond tx dex place-limit-order alice tokenA tokenB [-10] 50 GOOD_TIL_TIME '01/02/2006 15:04:05' --max-amount-out 20 --from alice
+```
+
+#### Cancel Limit Order
+
+Cancel an existing limit order.
+
+```bash
+neutrond tx dex cancel-limit-order [tranche-key] [flags]
+```
+
+**Parameters:**
+- `tranche-key`: Key of the limit order tranche to cancel
+
+**Example:**
+```bash
+neutrond tx dex cancel-limit-order "tokenA&lt;&gt;tokenB||1000||3000||alice||1" --from alice
+```
+
+#### Withdraw Filled Limit Order
+
+Withdraw proceeds from a filled limit order.
+
+```bash
+neutrond tx dex withdraw-filled-limit-order [tranche-key] [flags]
+```
+
+**Parameters:**
+- `tranche-key`: Key of the filled limit order tranche
+
+**Example:**
+```bash
+neutrond tx dex withdraw-filled-limit-order "tokenA&lt;&gt;tokenB||1000||3000||alice||1" --from alice
+```
+
+#### Multi-Hop Swap
+
+Execute a multi-hop swap across multiple pools.
+
+```bash
+neutrond tx dex multi-hop-swap [receiver] [routes] [amount-in] [exit-limit-price] [pick-best-route] [flags]
+```
+
+**Parameters:**
+- `receiver`: Address to receive output tokens
+- `routes`: Semicolon-separated list of hop routes, where each route is comma-separated hops (format: `route1;route2` where route1=`tokenA,tokenB,tokenC`)
+- `amount-in`: Amount of input tokens
+- `exit-limit-price`: Minimum acceptable price
+- `pick-best-route`: Whether to automatically pick the best route (boolean)
+
+**Example:**
+```bash
+neutrond tx dex multi-hop-swap alice "tokenA,tokenB;tokenB,tokenC" 1000000 "0.95" true --from alice
+```
+
+### Queries
+
+#### Parameters
+
+Query DEX module parameters.
+
+```bash
+neutrond query dex params
+```
+
+#### Show Pool
+
+Query pool information by trading pair, tick index, and fee.
+
+```bash
+neutrond query dex show-pool '[pair-id]' [tick-index] [fee]
+```
+
+**Note**: Wrap pair-id in quotes to prevent shell interpretation of `<>` characters.
+
+**Example:**
+```bash
+neutrond query dex show-pool 'tokenA&lt;&gt;tokenB' [-5] 1
+```
+
+#### Show Pool by ID
+
+Query pool information by ID.
+
+```bash
+neutrond query dex show-pool-by-id [poolID]
+```
+
+**Example:**
+```bash
+neutrond query dex show-pool-by-id 5
+```
+
+#### List Pool Reserves
+
+Query reserves for pools with specific trading pair and input token.
+
+```bash
+neutrond query dex list-pool-reserves '[pair-id]' [token-in]
+```
+
+**Example:**
+```bash
+neutrond query dex list-pool-reserves 'tokenA&lt;&gt;tokenB' tokenA
+```
+
+#### Show Pool Reserves
+
+Query reserves for a specific pool.
+
+```bash
+neutrond query dex show-pool-reserves '[pair-id]' [tick-index] [token-in] [fee]
+```
+
+**Example:**
+```bash
+neutrond query dex show-pool-reserves 'tokenA&lt;&gt;tokenB' [-5] tokenA 1
+```
+
+#### List User Limit Orders
+
+Query all limit orders for a specific user.
+
+```bash
+neutrond query dex list-user-limit-orders [address]
+```
+
+**Example:**
+```bash
+neutrond query dex list-user-limit-orders alice
+```
+
+#### Show Limit Order Tranche
+
+Query information about a specific limit order tranche.
+
+```bash
+neutrond query dex show-limit-order-tranche '[pair-id]' [token-in] [tick-index] [tranche-key]
+```
+
+**Example:**
+```bash
+neutrond query dex show-limit-order-tranche 'tokenA&lt;&gt;tokenB' tokenA 1000 "alice||1"
+```
+
+#### List Limit Order Tranche
+
+Query all limit order tranches for a trading pair and input token.
+
+```bash
+neutrond query dex list-limit-order-tranche '[pair-id]' [token-in]
+```
+
+**Example:**
+```bash
+neutrond query dex list-limit-order-tranche 'tokenA&lt;&gt;tokenB' tokenA
+```
+
+#### List User Deposits
+
+Query all liquidity positions for a user.
+
+```bash
+neutrond query dex list-user-deposits [address]
+```
+
+**Example:**
+```bash
+neutrond query dex list-user-deposits alice
+```
+
+#### List Tick Liquidity
+
+Query liquidity information for all ticks in a trading pair.
+
+```bash
+neutrond query dex list-tick-liquidity '[pair-id]' [token-in]
+```
+
+**Example:**
+```bash
+neutrond query dex list-tick-liquidity 'tokenA&lt;&gt;tokenB' tokenA
+```
+
+#### List Pool Metadata
+
+Query metadata for all pools.
+
+```bash
+neutrond query dex list-pool-metadata
+```
+
+#### Show Pool Metadata
+
+Query metadata for a specific pool.
+
+```bash
+neutrond query dex show-pool-metadata [id]
+```
+
+**Example:**
+```bash
+neutrond query dex show-pool-metadata 1
+```
+
+#### List Inactive Limit Order Tranche
+
+Query all inactive (filled/cancelled) limit order tranches.
+
+```bash
+neutrond query dex list-inactive-limit-order-tranche
+```
+
+#### Show Inactive Limit Order Tranche
+
+Query information about a specific inactive limit order tranche.
+
+```bash
+neutrond query dex show-inactive-limit-order-tranche '[pair-id]' [token-in] [tick-index] [tranche-key]
+```
+
+**Example:**
+```bash
+neutrond query dex show-inactive-limit-order-tranche 'tokenA&lt;&gt;tokenB' tokenA 1000 "alice||1"
+```
+
+## Messages
+
+The Dex module exposes several message types for interacting with the decentralized exchange.
+
+### MsgDeposit
+
+`MsgDeposit` allows users to add liquidity to concentrated liquidity pools.
+
+```protobuf
+message MsgDeposit {
+  option (amino.name) = "dex/MsgDeposit";
+  option (cosmos.msg.v1.signer) = "creator";
+
+  string creator = 1;
+  string receiver = 2;
+  string token_a = 3;
+  string token_b = 4;
+  repeated string amounts_a = 5 [
+    (gogoproto.moretags) = "yaml:\"amounts_a\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "amounts_a"
+  ];
+  repeated string amounts_b = 6 [
+    (gogoproto.moretags) = "yaml:\"amounts_b\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "amounts_b"
+  ];
+  repeated int64 tick_indexes_a_to_b = 7;
+  repeated uint64 fees = 8;
+  repeated DepositOptions options = 9;
+}
+```
+
+**Response:**
+```protobuf
+message MsgDepositResponse {
+  repeated string reserve0_deposited = 1 [
+    (gogoproto.moretags) = "yaml:\"reserve0_deposited\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "reserve0_deposited"
+  ];
+  repeated string reserve1_deposited = 2 [
+    (gogoproto.moretags) = "yaml:\"reserve1_deposited\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "reserve1_deposited"
+  ];
+  repeated FailedDeposit failed_deposits = 3;
+  repeated cosmos.base.v1beta1.Coin shares_issued = 4 [
+    (gogoproto.moretags) = "yaml:\"shares_issued\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "shares_issued"
+  ];
+}
+```
+
+**FailedDeposit Structure:**
+```protobuf
+message FailedDeposit {
+  uint64 deposit_idx = 1;
+  string error = 2;
+}
+```
+
+### MsgWithdrawal
+
+`MsgWithdrawal` allows users to remove liquidity from pools.
+
+```protobuf
+message MsgWithdrawal {
+  option (amino.name) = "dex/MsgWithdrawal";
+  option (cosmos.msg.v1.signer) = "creator";
+
+  string creator = 1;
+  string receiver = 2;
+  string token_a = 3;
+  string token_b = 4;
+  repeated string shares_to_remove = 5 [
+    (gogoproto.moretags) = "yaml:\"shares_to_remove\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "shares_to_remove"
+  ];
+  repeated int64 tick_indexes_a_to_b = 6;
+  repeated uint64 fees = 7;
+}
+```
+
+**Response:**
+```protobuf
+message MsgWithdrawalResponse {
+  string reserve0_withdrawn = 1 [
+    (gogoproto.moretags) = "yaml:\"reserve0_withdrawn\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "reserve0_withdrawn"
+  ];
+  string reserve1_withdrawn = 2 [
+    (gogoproto.moretags) = "yaml:\"reserve1_withdrawn\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "reserve1_withdrawn"
+  ];
+  repeated cosmos.base.v1beta1.Coin shares_burned = 3 [
+    (gogoproto.moretags) = "yaml:\"shares_burned\"",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "shares_burned"
+  ];
+}
+```
+
+### MsgPlaceLimitOrder
+
+`MsgPlaceLimitOrder` submits a limit order to the DEX.
+
+```protobuf
+message MsgPlaceLimitOrder {
+  option (amino.name) = "dex/MsgPlaceLimitOrder";
+  option (cosmos.msg.v1.signer) = "creator";
+
+  string creator = 1;
+  string receiver = 2;
+  string token_in = 3;
+  string token_out = 4;
+
+  // DEPRECATED: tick_index_in_to_out will be removed in future release; limit_sell_price should be used instead.
+  int64 tick_index_in_to_out = 5 [deprecated = true];
+  string amount_in = 7 [
+    (gogoproto.moretags) = "yaml:\"amount_in\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "amount_in"
+  ];
+  LimitOrderType order_type = 8;
+  // expirationTime is only valid iff orderType == GOOD_TIL_TIME.
+  google.protobuf.Timestamp expiration_time = 9 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = true
+  ];
+  string max_amount_out = 10 [
+    (gogoproto.moretags) = "yaml:\"max_amount_out\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = true,
+    (gogoproto.jsontag) = "max_amount_out"
+  ];
+  string limit_sell_price = 11 [
+    (gogoproto.moretags) = "yaml:\"limit_sell_price\"",
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = true,
+    (gogoproto.jsontag) = "limit_sell_price"
+  ];
+  // min_average_sell_price is an optional parameter that sets a required minimum average price for the entire trade.
+  // if the min_average_sell_price is not met the trade will fail.
+  // If min_average_sell_price is omitted limit_sell_price will be used instead
+  string min_average_sell_price = 12 [
+    (gogoproto.moretags) = "yaml:\"min_average_sell_price\"",
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = true,
+    (gogoproto.jsontag) = "min_average_sell_price"
+  ];
+}
+```
+
+**Response:**
+```protobuf
+message MsgPlaceLimitOrderResponse {
+  string trancheKey = 1;
+  // Total amount of coin used for the limit order
+  cosmos.base.v1beta1.Coin coin_in = 2 [
+    (gogoproto.moretags) = "yaml:\"coin_in\"",
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "coin_in"
+  ];
+  // Total amount of coin received from the taker portion of the limit order
+  // This is the amount of coin immediately available in the users account after
+  // executing the limit order. It does not include any future proceeds from the
+  // maker portion which will have withdrawn in the future
+  cosmos.base.v1beta1.Coin taker_coin_out = 3 [
+    (gogoproto.moretags) = "yaml:\"taker_coin_out\"",
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "taker_coin_out"
+  ];
+  // Total amount of the token in that was immediately swapped for takerOutCoin
+  cosmos.base.v1beta1.Coin taker_coin_in = 4 [
+    (gogoproto.moretags) = "yaml:\"taker_coin_in\"",
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "taker_coin_in"
+  ];
+}
+```
+
+### MsgWithdrawFilledLimitOrder
+
+`MsgWithdrawFilledLimitOrder` withdraws proceeds from filled limit orders.
+
+```protobuf
+message MsgWithdrawFilledLimitOrder {
+  option (amino.name) = "dex/MsgWithdrawFilledLimitOrder";
+  option (cosmos.msg.v1.signer) = "creator";
+
+  string creator = 1;
+  string tranche_key = 2;
+}
+```
+
+**Response:**
+```protobuf
+message MsgWithdrawFilledLimitOrderResponse {
+  // Total amount of taker reserves that were withdrawn
+  cosmos.base.v1beta1.Coin taker_coin_out = 1 [
+    (gogoproto.moretags) = "yaml:\"taker_coin_out\"",
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "taker_coin_out"
+  ];
+  // Total amount of maker reserves that were withdrawn --only applies to inactive LimitOrders
+  cosmos.base.v1beta1.Coin maker_coin_out = 2 [
+    (gogoproto.moretags) = "yaml:\"maker_coin_out\"",
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "maker_coin_out"
+  ];
+}
+```
+
+### MsgCancelLimitOrder
+
+`MsgCancelLimitOrder` cancels an existing limit order.
+
+```protobuf
+message MsgCancelLimitOrder {
+  option (amino.name) = "dex/MsgCancelLimitOrder";
+  option (cosmos.msg.v1.signer) = "creator";
+
+  string creator = 1;
+  string tranche_key = 2;
+}
+```
+
+**Response:**
+```protobuf
+message MsgCancelLimitOrderResponse {
+  // Total amount of taker reserves that were withdrawn
+  cosmos.base.v1beta1.Coin taker_coin_out = 1 [
+    (gogoproto.moretags) = "yaml:\"taker_coin_out\"",
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "taker_coin_out"
+  ];
+  // Total amount of maker reserves that were canceled
+  cosmos.base.v1beta1.Coin maker_coin_out = 2 [
+    (gogoproto.moretags) = "yaml:\"maker_coin_out\"",
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "maker_coin_out"
+  ];
+}
+```
+
+### MsgMultiHopSwap
+
+`MsgMultiHopSwap` executes trades across multiple pools to achieve better prices.
+
+```protobuf
+message MsgMultiHopSwap {
+  option (amino.name) = "dex/MsgMultiHopSwap";
+  option (cosmos.msg.v1.signer) = "creator";
+
+  string creator = 1;
+  string receiver = 2;
+  repeated MultiHopRoute routes = 3;
+  string amount_in = 4 [
+    (gogoproto.moretags) = "yaml:\"amount_in\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "amount_in"
+  ];
+  string exit_limit_price = 5 [
+    (gogoproto.moretags) = "yaml:\"exit_limit_price\"",
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "exit_limit_price"
+  ];
+  // If pickBestRoute == true then all routes are run and the route with the
+  // best price is chosen otherwise, the first succesful route is used.
+  bool pick_best_route = 6;
+}
+```
+
+**Response:**
+```protobuf
+message MsgMultiHopSwapResponse {
+  cosmos.base.v1beta1.Coin coin_out = 1 [
+    (gogoproto.moretags) = "yaml:\"coin_out\"",
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "coin_out"
+  ];
+  MultiHopRoute route = 2;
+  repeated cosmos.base.v1beta1.Coin dust = 3 [
+    (gogoproto.moretags) = "yaml:\"dust\"",
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Coin",
+    (gogoproto.jsontag) = "dust"
+  ];
+}
+```
+
+## REST API
+
+The DEX module provides REST API endpoints for querying pool information, reserves, limit orders, and user positions. All endpoints use GET requests and return JSON responses.
+
+<Note>
+**Endpoint Verification**: All endpoints verified against `/module-reference/proto/dex/query.proto` for 100% accuracy.
+</Note>
+
+### Module Parameters
+
+#### Query Parameters
+
+```
+GET /neutron/dex/params
+```
+
+Returns the current module parameters including fees and configuration settings.
+
+### Pool Queries
+
+#### Query Pool by Parameters
+
+```
+GET /neutron/dex/pool/{pair_id}/{tick_index}/{fee}
+```
+
+Returns information about a specific pool by its trading pair, tick index, and fee.
+
+**Parameters:**
+- `pair_id`: Token pair identifier (e.g., "tokenA&lt;&gt;tokenB")
+- `tick_index`: Tick index of the pool
+- `fee`: Fee tier in basis points
+
+#### Query Pool by ID
+
+```
+GET /neutron/dex/pool/{pool_id}
+```
+
+Returns information about a specific pool by its ID.
+
+**Parameters:**
+- `pool_id`: Unique pool identifier
+
+### Pool Reserves Queries
+
+#### Query All Pool Reserves
+
+```
+GET /neutron/dex/pool_reserves/{pair_id}/{token_in}
+```
+
+Returns all pool reserves for a specific trading pair and input token.
+
+**Parameters:**
+- `pair_id`: Token pair identifier
+- `token_in`: Input token denomination
+
+#### Query Specific Pool Reserves
+
+```
+GET /neutron/dex/pool_reserves/{pair_id}/{token_in}/{tick_index}/{fee}
+```
+
+Returns the token reserves for a specific pool.
+
+**Parameters:**
+- `pair_id`: Token pair identifier
+- `token_in`: Input token denomination
+- `tick_index`: Tick index of the pool
+- `fee`: Fee tier in basis points
+
+### Pool Metadata Queries
+
+#### Query All Pool Metadata
+
+```
+GET /neutron/dex/pool_metadata
+```
+
+Returns metadata for all pools.
+
+#### Query Pool Metadata by ID
+
+```
+GET /neutron/dex/pool_metadata/{id}
+```
+
+Returns metadata for a specific pool.
+
+**Parameters:**
+- `id`: Pool metadata ID
+
+### Limit Order Queries
+
+#### Query Limit Order Tranche User
+
+```
+GET /neutron/dex/limit_order_tranche_user/{address}/{tranche_key}
+```
+
+Returns information about a specific user's position in a limit order tranche.
+
+**Parameters:**
+- `address`: User address
+- `tranche_key`: Limit order tranche key
+
+#### Query All Limit Order Tranche Users
+
+```
+GET /neutron/dex/limit_order_tranche_user
+```
+
+Returns all limit order tranche user positions.
+
+**Query Parameters:**
+- `pagination.key` (optional): Base64-encoded key for pagination
+- `pagination.offset` (optional): Numeric offset for pagination
+- `pagination.limit` (optional): Maximum number of results to return
+- `pagination.count_total` (optional): Count total number of records
+- `pagination.reverse` (optional): Reverse the order of results
+
+#### Query User Limit Orders by Address
+
+```
+GET /neutron/dex/user/limit_orders/{address}
+```
+
+Returns all limit orders for a specific user address.
+
+**Parameters:**
+- `address`: User address
+
+#### Query Limit Order Tranche
+
+```
+GET /neutron/dex/limit_order_tranche/{pair_id}/{token_in}/{tick_index}/{tranche_key}
+```
+
+Returns information about a specific limit order tranche.
+
+**Parameters:**
+- `pair_id`: Token pair identifier
+- `token_in`: Input token denomination
+- `tick_index`: Tick index
+- `tranche_key`: Tranche identifier
+
+#### Query All Limit Order Tranches
+
+```
+GET /neutron/dex/limit_order_tranche/{pair_id}/{token_in}
+```
+
+Returns all limit order tranches for a trading pair and input token.
+
+**Parameters:**
+- `pair_id`: Token pair identifier
+- `token_in`: Input token denomination
+
+### Inactive Limit Order Queries
+
+#### Query Inactive Limit Order Tranche
+
+```
+GET /neutron/dex/inactive_limit_order_tranche/{pair_id}/{token_in}/{tick_index}/{tranche_key}
+```
+
+**Alternative (Deprecated):**
+```
+GET /neutron/dex/filled_limit_order_tranche/{pair_id}/{token_in}/{tick_index}/{tranche_key}
+```
+
+Returns information about an inactive (filled/cancelled) limit order tranche.
+
+#### Query All Inactive Limit Order Tranches
+
+```
+GET /neutron/dex/inactive_limit_order_tranche
+```
+
+**Alternative (Deprecated):**
+```
+GET /neutron/dex/filled_limit_order_tranche
+```
+
+Returns all inactive limit order tranches.
+
+### User Deposit Queries
+
+#### Query User Deposits
+
+```
+GET /neutron/dex/user/deposits/{address}
+```
+
+Returns all liquidity positions for a specific user.
+
+**Parameters:**
+- `address`: User address
+
+### Tick Liquidity Queries
+
+#### Query Tick Liquidity
+
+```
+GET /neutron/dex/tick_liquidity/{pair_id}/{token_in}
+```
+
+Returns liquidity information for all ticks in a trading pair.
+
+**Parameters:**
+- `pair_id`: Token pair identifier
+- `token_in`: Input token denomination
+
+### Simulation Queries
+
+#### Simulate Deposit
+
+```
+GET /neutron/dex/simulate_deposit
+```
+
+Simulates a deposit operation without executing it.
+
+**Query Parameters:**
+- `msg`: MsgDeposit message in JSON format
+
+#### Simulate Withdrawal
+
+```
+GET /neutron/dex/simulate_withdrawal
+```
+
+Simulates a withdrawal operation without executing it.
+
+**Query Parameters:**
+- `msg`: MsgWithdrawal message in JSON format
+
+#### Simulate Place Limit Order
+
+```
+GET /neutron/dex/simulate_place_limit_order
+```
+
+Simulates placing a limit order without executing it.
+
+**Query Parameters:**
+- `msg`: MsgPlaceLimitOrder message in JSON format
+
+#### Simulate Withdraw Filled Limit Order
+
+```
+GET /neutron/dex/simulate_withdraw_filled_limit_order
+```
+
+Simulates withdrawing from a filled limit order without executing it.
+
+**Query Parameters:**
+- `msg`: MsgWithdrawFilledLimitOrder message in JSON format
+
+### Deprecated Endpoints
+
+<Warning>
+The following endpoints are deprecated and should not be used in new implementations:
+</Warning>
+
+#### ❌ Estimate Multi-Hop Swap (DEPRECATED)
+
+```
+GET /neutron/dex/estimate_multi_hop_swap
+```
+
+**Status**: Deprecated - Use simulation endpoints instead
+
+#### ❌ Estimate Place Limit Order (DEPRECATED)
+
+```
+GET /neutron/dex/estimate_place_limit_order
+```
+
+**Status**: Deprecated - Use simulation endpoints instead
+
+## Events
+
+The DEX module emits events during transaction processing to provide information about deposits, withdrawals, limit orders, and swaps. All events use the standard Cosmos SDK event format with module name "dex".
+
+### Liquidity Events
+
+#### DepositLP
+
+Emitted when a user deposits liquidity into a pool.
+
+**Event Type:** `message`  
+**Module:** `dex`  
+**Action:** `DepositLP`
+
+**Attributes:**
+- `Creator`: Address of the user who initiated the deposit
+- `Receiver`: Address that received the liquidity position
+- `TokenZero`: The denomination of token0 in the pool
+- `TokenOne`: The denomination of token1 in the pool
+- `TickIndex`: The tick index where liquidity was added
+- `Fee`: The fee tier (in basis points) of the pool
+- `ReservesZeroDeposited`: Amount of token0 deposited into reserves
+- `ReservesOneDeposited`: Amount of token1 deposited into reserves
+- `SharesMinted`: Amount of share tokens issued
+- `AmountInTokenZero`: Total amount of token0 provided by user
+- `AmountInTokenOne`: Total amount of token1 provided by user
+
+#### WithdrawLP
+
+Emitted when a user withdraws liquidity from a pool.
+
+**Event Type:** `message`  
+**Module:** `dex`  
+**Action:** `WithdrawLP`
+
+**Attributes:**
+- `Creator`: Address of the user who initiated the withdrawal
+- `Receiver`: Address that received the withdrawn tokens
+- `TokenZero`: The denomination of token0 in the pool
+- `TokenOne`: The denomination of token1 in the pool
+- `TickIndex`: The tick index where liquidity was removed
+- `Fee`: The fee tier (in basis points) of the pool
+- `ReservesZeroWithdrawn`: Amount of token0 withdrawn from reserves
+- `ReservesOneWithdrawn`: Amount of token1 withdrawn from reserves
+- `SharesRemoved`: Amount of share tokens removed
+
+### Limit Order Events
+
+#### PlaceLimitOrder
+
+Emitted when a limit order is placed.
+
+**Event Type:** `message`  
+**Module:** `dex`  
+**Action:** `PlaceLimitOrder`
+
+**Attributes:**
+- `Creator`: Address placing the limit order
+- `Receiver`: Address that will receive the output tokens
+- `TokenIn`: Input token denomination
+- `TokenOut`: Output token denomination
+- `AmountIn`: Amount of input tokens
+- `LimitTick`: Tick index representing the limit price
+- `OrderType`: Type of limit order (GTC, FOK, IOC, JIT, GTT)
+- `Shares`: Number of shares in the limit order tranche
+- `TrancheKey`: Unique identifier for the limit order tranche
+- `ExpirationTime`: Expiration time for time-limited orders
+
+#### WithdrawLimitOrder
+
+Emitted when proceeds from a filled limit order are withdrawn.
+
+**Event Type:** `message`  
+**Module:** `dex`  
+**Action:** `WithdrawLimitOrder`
+
+**Attributes:**
+- `Creator`: Address withdrawing the filled order
+- `TrancheKey`: Key of the limit order tranche
+- `TokenOut`: Output token denomination
+- `AmountOut`: Amount of tokens withdrawn
+
+#### CancelLimitOrder
+
+Emitted when a limit order is cancelled.
+
+**Event Type:** `message`  
+**Module:** `dex`  
+**Action:** `CancelLimitOrder`
+
+**Attributes:**
+- `Creator`: Address cancelling the limit order
+- `TrancheKey`: Key of the cancelled limit order tranche
+- `TokenIn`: Input token that was returned
+- `TokenOut`: Output token denomination
+- `AmountIn`: Amount of input tokens returned
+- `AmountOut`: Amount of output tokens received (for partially filled orders)
+
+### Trading Events
+
+#### MultihopSwap
+
+Emitted when a multi-hop swap is executed.
+
+**Event Type:** `message`  
+**Module:** `dex`  
+**Action:** `MultihopSwap`
+
+**Attributes:**
+- `Creator`: Address initiating the swap
+- `Receiver`: Address receiving the output tokens
+- `MakerDenom`: Input token denomination
+- `TokenOut`: Final output token denomination
+- `AmountIn`: Amount of input tokens
+- `AmountOut`: Amount of final output tokens
+- `Route`: Route taken through the pools (comma-separated hops)
+- `Dust`: Any dust amounts from intermediate swaps
+
+## State
+
+The DEX module maintains state to track pools, reserves, limit orders, and user positions. All state objects are defined in protocol buffer files and stored in the module's key-value store.
+
+### Core State Objects
+
+#### Pool
+
+Represents a liquidity pool for a specific trading pair, tick, and fee combination.
+
+```protobuf
+message Pool {
+  uint64 id = 1;
+  PoolReserves lower_tick0 = 2;
+  PoolReserves upper_tick1 = 3;
+}
+```
+
+#### PoolReserves
+
+Stores the actual token reserves for a pool at a specific price point.
+
+```protobuf
+message PoolReserves {
+  PoolReservesKey key = 1;
+  string reserves_maker_denom = 2 [
+    (gogoproto.moretags) = "yaml:\"reserves_maker_denom\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "reserves_maker_denom"
+  ];
+  // DEPRECATED: price_taker_to_maker will be removed in future release, `maker_price` should always be used.
+  string price_taker_to_maker = 3 [
+    (gogoproto.moretags) = "yaml:\"price_taker_to_maker\"",
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "price_taker_to_maker",
+    deprecated = true
+  ];
+  // DEPRECATED: price_opposite_taker_maker was an internal implementation detail and will be removed in a future release.
+  // It is being kept strictly for backwards compatibility. The actual field value is unused.
+  string price_opposite_taker_to_maker = 4 [
+    (gogoproto.moretags) = "yaml:\"price_opposite_taker_to_maker\"",
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "price_opposite_taker_to_maker",
+    deprecated = true
+  ];
+  // This is the price of the PoolReserves denominated in the opposite token. (ie. 1 TokenA with a maker_price of 10 is worth 10 TokenB )
+  string maker_price = 5 [
+    (gogoproto.moretags) = "yaml:\"maker_price\"",
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "maker_price"
+  ];
+}
+
+message PoolReservesKey {
+  TradePairID trade_pair_id = 1;
+  int64 tick_index_taker_to_maker = 2;
+  uint64 fee = 3;
+}
+```
+
+#### LimitOrderTranche
+
+Represents a batch of limit orders at the same price point.
+
+```protobuf
+message LimitOrderTranche {
+  LimitOrderTrancheKey key = 1;
+  string reserves_maker_denom = 2 [
+    (gogoproto.moretags) = "yaml:\"reserves_maker_denom\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "reserves_maker_denom"
+  ];
+  string reserves_taker_denom = 3 [
+    (gogoproto.moretags) = "yaml:\"reserves_taker_denom\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "reserves_taker_denom"
+  ];
+  string total_maker_denom = 4 [
+    (gogoproto.moretags) = "yaml:\"total_maker_denom\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "total_maker_denom"
+  ];
+  string total_taker_denom = 5 [
+    (gogoproto.moretags) = "yaml:\"total_taker_denom\"",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "total_taker_denom"
+  ];
+  // LimitOrders with expiration_time set are valid as long as blockTime <= expiration_time
+
+  // JIT orders also use expiration_time to handle deletion but represent a special case
+  // All JIT orders have a expiration_time of 0 and an exception is made to still treat these orders as live
+  // Order deletion still functions the same and the orders will be deleted at the end of the block
+  google.protobuf.Timestamp expiration_time = 6 [
+    (gogoproto.moretags) = "yaml:\"expiration_time\"",
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = true,
+    (gogoproto.jsontag) = "expiration_time"
+  ];
+  // DEPRECATED: price_taker_to_maker will be removed in future release, `maker_price` should always be used.
+  string price_taker_to_maker = 7 [
+    (gogoproto.moretags) = "yaml:\"price_taker_to_maker\"",
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "price_taker_to_maker",
+    deprecated = true
+  ];
+  // This is the price of the LimitOrder denominated in the opposite token. (ie. 1 TokenA with a maker_price of 10 is worth 10 TokenB )
+  string maker_price = 8 [
+    (gogoproto.moretags) = "yaml:\"maker_price\"",
+    (gogoproto.customtype) = "github.com/neutron-org/neutron/v6/utils/math.PrecDec",
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "maker_price"
+  ];
+}
+
+message LimitOrderTrancheKey {
+  TradePairID trade_pair_id = 1;
+  int64 tick_index_taker_to_maker = 2;
+  string tranche_key = 3;
+}
+```
+
+#### LimitOrderTrancheUser
+
+Tracks individual user positions within a limit order tranche.
+
+```protobuf
+message LimitOrderTrancheUser {
+  TradePairID trade_pair_id = 1;
+  int64 tick_index_taker_to_maker = 2;
+  string tranche_key = 3;
+  string address = 4;
+  string shares_owned = 5;
+  string shares_cancelled = 6;
+  string shares_withdrawn = 7;
+}
+```
+
+#### TickLiquidity
+
+Aggregates liquidity information at a specific tick.
+
+```protobuf
+message TickLiquidity {
+  PoolReserves liquidity = 1;
+}
+```
+
+### Storage Keys
+
+The DEX module uses the following key prefixes for state storage:
+
+- `TickLiquidity/value/`: TickLiquidity storage
+- `LimitOrderTrancheUser/value`: LimitOrderTrancheUser storage  
+- `InactiveLimitOrderTranche/value/`: InactiveLimitOrderTranche storage
+- `LimitOrderExpiration/value/`: LimitOrderExpiration storage
+- `Pool/id/`: Pool storage (by ID or by pair+tick+fee)
+- `PoolMetadata/value/`: PoolMetadata storage
+- `Pool/count/`: Pool count storage
+- `Params/value/`: Module parameters storage
+- `JITsInBlock/count/`: JIT limit orders per block count
+
+### State Transitions
+
+#### Deposit Flow
+
+1. Validate deposit parameters and token amounts
+2. Calculate tick-based liquidity positions
+3. Update or create PoolReserves entries
+4. Mint shares proportional to liquidity provided
+5. Store DepositRecord for user tracking
+6. Emit DepositLP event
+
+#### Limit Order Flow
+
+1. Validate order parameters and tick constraints
+2. Create or update LimitOrderTranche
+3. Create LimitOrderTrancheUser entry
+4. Update TickLiquidity aggregates
+5. Store expiration data if time-limited
+6. Emit PlaceLimitOrder event
+
+#### Swap Execution
+
+1. Route through available liquidity pools
+2. Execute trades against PoolReserves
+3. Handle limit order matching
+4. Update affected state objects
+5. Calculate and distribute fees
+6. Emit relevant trading events
+
+## Data Structures
+
+### Core Types
+
+#### TradePairID
+
+Represents a trading pair identifier.
+
+```protobuf
+message TradePairID {
+  string maker_denom = 1;
+  string taker_denom = 2;
+}
+```
+
+#### PairID
+
+Simplified pair identifier for internal use.
+
+```protobuf
+message PairID {
+  string token0 = 1;
+  string token1 = 2;
+}
+```
+
+#### DepositOptions
+
+Configuration options for liquidity deposits.
+
+```protobuf
+message DepositOptions {
+  bool disable_autoswap = 1;
+  bool fail_tx_on_bel = 2;
+}
+```
+
+#### MultiHopRoute
+
+Defines a route for multi-hop swaps.
+
+```protobuf
+message MultiHopRoute {
+  repeated string hops = 1;
+}
+```
+
+#### LimitOrderType
+
+Enumeration of supported limit order types.
+
+```protobuf
+enum LimitOrderType {
+  GOOD_TIL_CANCELLED = 0;
+  FILL_OR_KILL = 1;
+  IMMEDIATE_OR_CANCEL = 2;
+  JUST_IN_TIME = 3;
+  GOOD_TIL_TIME = 4;
+}
+```
+
+### Parameters
+
+The DEX module parameters configure module behavior.
+
+```protobuf
+message Params {
+  repeated uint64 fee_tiers = 1;
+  bool paused = 3;
+  uint64 max_jits_per_block = 4;
+  uint64 good_til_purge_allowance = 5;
+  // Whitelisted_lps have special LP privileges;
+  // currently, the only such privilege is depositing outside of the allowed fee_tiers.
+  repeated string whitelisted_lps = 6;
+}
+```
+
+**Default Values:**
+- `fee_tiers`: [0, 1, 2, 3, 4, 5, 10, 20, 50, 100, 150, 200]
+- `paused`: false
+- `max_jits_per_block`: 25
+- `good_til_purge_allowance`: 540000
+- `whitelisted_lps`: [] (empty array)
+
+### Genesis State
+
+The genesis state defines the initial state of the DEX module.
+
+```protobuf
+message GenesisState {
+  Params params = 1;
+  repeated TickLiquidity tick_liquidity_list = 2;
+  repeated InactiveLimitOrderTranche inactive_limit_order_tranche_list = 3;
+  repeated LimitOrderTrancheUser limit_order_tranche_user_list = 4;
+  repeated LimitOrderExpiration limit_order_expiration_list = 5;
+  repeated PoolMetadata pool_metadata_list = 6;
+  repeated DepositRecord deposit_record_list = 7;
+  repeated Pool pool_list = 8;
+  uint64 pool_count = 9;
+}
+```

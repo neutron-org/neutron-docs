@@ -1,0 +1,259 @@
+---
+title: "Technical Details"
+---
+
+This document provides an in-depth technical explanation of how the Dynamic Fees module works within the Neutron network's fee market system.
+
+## Architecture Overview
+
+The Dynamic Fees module serves as a **DenomResolver** for the fee market module, providing asset price conversion capabilities to enable multi-asset fee payments. It maintains a registry of NTRN-denominated prices for supported assets.
+
+```
+Fee Market Module ← DenomResolver Interface ← Dynamic Fees Module
+                                           ↓
+                                    NTRN Price Registry
+```
+
+## Core Functionality
+
+### DenomResolver Implementation
+
+The module implements the `feemarkettypes.DenomResolver` interface with two key methods:
+
+#### ConvertToDenom
+
+Converts between NTRN and other supported denominations:
+
+```go
+func (k Keeper) ConvertToDenom(ctx sdk.Context, fromCoin sdk.DecCoin, toDenom string) (sdk.DecCoin, error) {
+    params := k.GetParams(ctx)
+    for _, c := range params.NtrnPrices {
+        if c.Denom == toDenom && fromCoin.Denom == appparams.DefaultDenom {
+            // converts NTRN into the denom
+            return sdk.NewDecCoinFromDec(toDenom, fromCoin.Amount.Quo(c.Amount)), nil
+        } else if toDenom == appparams.DefaultDenom && fromCoin.Denom == c.Denom {
+            // converts the denom into NTRN
+            return sdk.NewDecCoinFromDec(appparams.DefaultDenom, fromCoin.Amount.Mul(c.Amount)), nil
+        }
+    }
+    return sdk.DecCoin{}, types.ErrUnknownDenom
+}
+```
+
+**Conversion Logic:**
+1. **NTRN → Other Asset**: Divide NTRN amount by the asset's NTRN price
+2. **Other Asset → NTRN**: Multiply asset amount by the asset's NTRN price
+3. **Unknown Asset**: Return `ErrUnknownDenom` error
+
+#### ExtraDenoms
+
+Returns the list of all supported denominations beyond NTRN:
+
+```go
+func (k Keeper) ExtraDenoms(ctx sdk.Context) ([]string, error) {
+    params := k.GetParams(ctx)
+    denoms := make([]string, 0, params.NtrnPrices.Len())
+    for _, coin := range params.NtrnPrices {
+        denoms = append(denoms, coin.Denom)
+    }
+    return denoms, nil
+}
+```
+
+## Parameter Management
+
+### NTRN Prices Registry
+
+The module maintains a registry of asset prices denominated in NTRN:
+
+```protobuf
+message Params {
+  repeated cosmos.base.v1beta1.DecCoin ntrn_prices = 1;
+}
+```
+
+**Structure:**
+- **DecCoin Array**: Each entry represents an asset and its NTRN-denominated price
+- **Denom Field**: Asset identifier (e.g., "uatom", "uosmo")
+- **Amount Field**: Price ratio relative to NTRN as a decimal
+
+**Example Registry:**
+```json
+{
+  "ntrn_prices": [
+    {
+      "denom": "uatom",
+      "amount": "0.150000000000000000"  // 1 ATOM = 0.15 NTRN
+    },
+    {
+      "denom": "uosmo", 
+      "amount": "0.080000000000000000"  // 1 OSMO = 0.08 NTRN
+    }
+  ]
+}
+```
+
+### Governance-Only Updates
+
+Parameter updates are restricted to governance:
+
+```go
+func (k Keeper) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+    // Validate authority
+    authority := k.GetAuthority()
+    if authority != req.Authority {
+        return nil, errors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid authority; expected %s, got %s", authority, req.Authority)
+    }
+    
+    // Update parameters
+    ctx := sdk.UnwrapSDKContext(goCtx)
+    if err := k.SetParams(ctx, req.Params); err != nil {
+        return nil, err
+    }
+    
+    return &types.MsgUpdateParamsResponse{}, nil
+}
+```
+
+## Integration with Fee Market
+
+### Price Conversion Flow
+
+1. **User Transaction**: User submits transaction with gas price in any supported asset
+2. **Fee Market Query**: Fee market module queries Dynamic Fees for conversion
+3. **Price Lookup**: Dynamic Fees looks up the asset price in NTRN registry
+4. **Conversion Calculation**: Applies conversion formula based on direction
+5. **Return Result**: Fee market receives converted amount for processing
+
+### Supported Conversion Patterns
+
+#### Pattern 1: Asset to NTRN
+```
+Input: 100 uatom (user wants to pay 100 ATOM in fees)
+Price: 1 ATOM = 0.15 NTRN
+Calculation: 100 * 0.15 = 15 NTRN
+Output: 15 untrn equivalent
+```
+
+#### Pattern 2: NTRN to Asset  
+```
+Input: 15 untrn (system needs 15 NTRN worth of fees)
+Price: 1 ATOM = 0.15 NTRN  
+Calculation: 15 / 0.15 = 100 ATOM
+Output: 100 uatom equivalent
+```
+
+## Error Handling
+
+### Unknown Denomination Error
+
+When a requested denomination is not in the registry:
+
+```go
+return sdk.DecCoin{}, types.ErrUnknownDenom
+```
+
+**Causes:**
+- Asset not configured in NTRN prices registry
+- Typo in denomination string
+- Asset removed from supported list
+
+**Handling:**
+- Fee market falls back to NTRN-only fees
+- Transaction may fail if user only has unsupported assets
+- Governance can add support through parameter updates
+
+### Authority Validation
+
+Parameter updates validate the governance authority:
+
+```go
+if authority != req.Authority {
+    return nil, errors.Wrapf(sdkerrors.ErrInvalidRequest, "invalid authority; expected %s, got %s", authority, req.Authority)
+}
+```
+
+## State Management
+
+### Parameter Storage
+
+Parameters are stored using the standard Cosmos SDK parameter store:
+
+```go
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
+    // Validation and storage logic
+}
+
+func (k Keeper) GetParams(ctx sdk.Context) types.Params {
+    // Parameter retrieval logic  
+}
+```
+
+### No Additional State
+
+The module maintains no additional state beyond parameters:
+- No historical price data
+- No transaction records
+- No user-specific information
+- Stateless conversion operations
+
+## Security Considerations
+
+### Price Manipulation Resistance
+
+**Governance Control**: Only governance can update prices, preventing individual manipulation
+
+**Atomic Updates**: All price changes happen atomically through governance proposals
+
+**Community Oversight**: Price updates require community approval through DAO voting
+
+### Precision and Accuracy
+
+**Decimal Precision**: Uses `sdk.DecCoin` for high-precision decimal calculations
+
+**Overflow Protection**: Cosmos SDK decimal types prevent arithmetic overflow
+
+**Rounding Behavior**: Follows standard decimal rounding rules
+
+## Performance Characteristics
+
+### Conversion Efficiency
+
+**Linear Search**: O(n) lookup where n is number of supported assets
+- Acceptable for small asset lists (< 100 assets)
+- Could be optimized with maps for larger registries
+
+**No External Calls**: All conversions use local parameter storage
+- No network latency
+- Deterministic execution time
+
+**Memory Usage**: Minimal - only stores price registry in memory
+
+### Optimization Opportunities
+
+**Caching**: Could cache price lookups for frequently accessed pairs
+**Indexing**: Could use maps instead of array iteration for O(1) lookups  
+**Batch Operations**: Could support batch conversions for efficiency
+
+## Future Considerations
+
+### Price Oracle Integration
+
+Currently uses static governance-set prices. Future enhancements could include:
+- Oracle price feeds for dynamic pricing
+- Time-weighted average prices (TWAP)
+- Multi-source price aggregation
+
+### Enhanced Asset Support
+
+- Automatic asset discovery from IBC channels
+- Support for LP tokens and synthetic assets
+- Cross-chain asset price relationships
+
+### Advanced Conversion Features
+
+- Conversion fee mechanisms
+- Slippage protection for large conversions
+- Historical price tracking and analytics
+
+The Dynamic Fees module provides a simple but effective foundation for multi-asset fee payments while maintaining security through governance control and precision through decimal arithmetic. 

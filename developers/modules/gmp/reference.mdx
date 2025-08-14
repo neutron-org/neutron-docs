@@ -1,0 +1,74 @@
+---
+title: "Reference"
+description: "Technical reference for the GMP module"
+---
+
+The GMP (General Message Passing) module is an IBC middleware that processes messages embedded in IBC transfer packet memo fields.
+
+## Message Format
+
+GMP messages are embedded in IBC transfer memo fields as JSON:
+
+```json
+{
+  "source_chain": "string",
+  "source_address": "string", 
+  "payload": "base64-encoded-bytes",
+  "type": "integer"
+}
+```
+
+### Field Requirements
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `source_chain` | string | Yes | Originating blockchain identifier (informational) |
+| `source_address` | string | Yes | Original sender address (informational) |
+| `payload` | string | Yes | Base64-encoded message payload (cannot be empty) |
+| `type` | integer | Yes | Message type: 1 (GeneralMessage) or 2 (GeneralMessageWithToken) |
+
+## Message Types
+
+### TypeGeneralMessage (1)
+Standard message passing without specific token coordination.
+
+**Processing**: Payload replaces memo, transfer proceeds normally.
+
+### TypeGeneralMessageWithToken (2)  
+Message passing that coordinates with token transfers.
+
+**Processing**: Payload replaces memo, indicates atomic message-token processing.
+
+### TypeUnrecognized (0)
+Invalid message type.
+
+**Processing**: Returns error acknowledgment, packet fails.
+
+## IBC Middleware Processing
+
+### OnRecvPacket Flow
+
+1. **Extract packet data** from IBC transfer packet
+2. **Parse GMP message** from memo field (if valid JSON with non-empty payload)
+3. **Process by type**:
+   - Types 1 & 2: Replace memo with payload, forward to transfer module
+   - Other types: Return error acknowledgment
+4. **Pass through** if not a valid GMP message
+
+### Error Handling
+
+- **Invalid packet data**: "cannot unmarshal ICS-20 transfer packet data"
+- **Unrecognized message type**: "unrecognized message type: X"
+- **Packet remarshaling error**: "cannot marshal ICS-20 post-processed transfer packet data"
+
+### Channel Operations
+
+All channel lifecycle methods pass through to underlying transfer module without modification.
+
+## Key Concepts
+
+- **Middleware**: Sits between IBC core and transfer module
+- **Memo Processing**: Extracts and processes messages from transfer memos
+- **Pass-through**: Non-GMP transfers work normally
+- **Error Recovery**: Invalid GMP messages return error acknowledgments
+- **Payload Replacement**: GMP payload becomes the new memo for downstream processing

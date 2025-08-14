@@ -1,0 +1,142 @@
+---
+title: "Overview"
+---
+
+The Token Factory module enables users to create and manage custom tokens (denominations) on the Neutron network. This module was adapted from Osmosis Labs codebase and provides token lifecycle management including creation, minting, burning, and administrative controls.
+
+<Info>
+**Source Code Note**: This module was adapted from Osmosis Labs. Creation fee support was removed because Neutron does not have a community pool.
+</Info>
+
+## Key Features
+
+- **Token Creation**: Create custom denominations with unique identifiers
+- **Supply Management**: Mint and burn tokens with admin controls  
+- **Administrative Controls**: Transfer admin rights and manage token permissions
+- **Metadata Support**: Set token metadata via bank keeper
+- **Before-Send Hooks**: Implement custom logic for token transfers via CosmWasm contracts
+- **Force Transfer**: Admin-controlled transfer capabilities that bypass hooks
+
+## Token Denomination Format
+
+Created tokens follow the format: `factory/{creator_address}/{subdenom}`
+
+Example: `factory/neutron1abc123.../mytoken`
+
+## Available Operations
+
+### For Token Creators
+
+#### Create Denomination
+```protobuf
+message MsgCreateDenom {
+  string sender = 1;
+  string subdenom = 2;
+}
+```
+
+#### Mint Tokens
+```protobuf
+message MsgMint {
+  string sender = 1;
+  cosmos.base.v1beta1.Coin amount = 2;
+  string mint_to_address = 3;
+}
+```
+
+#### Burn Tokens
+```protobuf
+message MsgBurn {
+  string sender = 1;
+  cosmos.base.v1beta1.Coin amount = 2;
+  string burn_from_address = 3;
+}
+```
+
+#### Change Admin
+```protobuf
+message MsgChangeAdmin {
+  string sender = 1;
+  string denom = 2;
+  string new_admin = 3;
+}
+```
+
+#### Set Metadata
+```protobuf
+message MsgSetDenomMetadata {
+  string sender = 1;
+  cosmos.bank.v1beta1.Metadata metadata = 2;
+}
+```
+
+#### Set Before-Send Hook
+```protobuf
+message MsgSetBeforeSendHook {
+  string sender = 1;
+  string denom = 2;
+  string contract_addr = 3;
+}
+```
+
+#### Force Transfer
+```protobuf
+message MsgForceTransfer {
+  string sender = 1;
+  cosmos.base.v1beta1.Coin amount = 2;
+  string transfer_from_address = 3;
+  string transfer_to_address = 4;
+}
+```
+
+## Parameters
+
+The module maintains the following governance-controlled parameters:
+
+```protobuf
+message Params {
+  repeated cosmos.base.v1beta1.Coin denom_creation_fee = 1;
+  uint64 denom_creation_gas_consume = 2;
+  string fee_collector_address = 3;
+  repeated WhitelistedHook whitelisted_hooks = 4;
+}
+
+message WhitelistedHook {
+  uint64 code_id = 1;
+  string denom_creator = 2;
+}
+```
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `denom_creation_fee` | []Coin | Fee required to create a new denomination |
+| `denom_creation_gas_consume` | uint64 | Additional gas cost for denomination creation |
+| `fee_collector_address` | string | Address receiving creation fees |
+| `whitelisted_hooks` | []WhitelistedHook | Approved contracts for before-send hooks |
+
+## Before-Send Hooks
+
+Before-send hooks allow token admins to implement custom logic that executes before token transfers:
+
+### Whitelisting Requirements
+- Hook contracts must be pre-approved through governance
+- Only specific code IDs and denom creators can set hooks
+- Provides security against malicious hook contracts
+
+### Hook Types
+- **TrackBeforeSend**: Monitoring hooks with gas limits (500,000 gas limit)
+- **BlockBeforeSend**: Blocking hooks that can prevent transfers
+
+## Administrative Model
+
+### Token Administration
+- Token creators become the initial admin with full control
+- Admin can mint, burn, set metadata, configure hooks, and force transfers
+- Admin rights can be transferred to another address
+- Admin can be set to empty string to renounce control (irreversible)
+
+### Security Features
+- **Admin Controls**: Only token admin can perform privileged operations
+- **Hook Restrictions**: Governance-controlled hook whitelisting  
+- **Module Account Protection**: Burning from module accounts is prevented
+- **Gas Limits**: Before-send hooks have gas consumption limits 

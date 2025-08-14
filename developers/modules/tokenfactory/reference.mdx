@@ -1,0 +1,125 @@
+---
+title: "Reference"  
+description: "Technical reference for the Token Factory module"
+---
+
+The Token Factory module enables creation and management of custom tokens with configurable parameters and hooks.
+
+## Parameters
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `denom_creation_fee` | Coins | Fee charged for creating new custom tokens |
+| `denom_creation_gas_consume` | uint64 | Additional gas consumed during token creation |
+| `fee_collector_address` | string | Address where creation fees are sent |
+| `whitelisted_hooks` | WhitelistedHook[] | List of approved before-send hook contracts |
+
+## Messages
+
+### MsgCreateDenom
+Create a new custom token denomination.
+
+**Fields:**
+- `sender`: Address creating the token
+- `subdenom`: Alphanumeric identifier (max 44 characters)
+
+**Response:**
+- `new_token_denom`: Full denomination (`factory/{creator_address}/{subdenom}`)
+
+### MsgMint
+Mint tokens to the sender's address or specified mint_to_address (admin only).
+
+**Fields:**
+- `sender`: Token admin address
+- `amount`: Coin to mint
+- `mint_to_address`: Recipient address (optional, defaults to sender)
+
+### MsgBurn
+Burn tokens from the sender's address or specified burn_from_address (admin only).
+
+**Fields:**
+- `sender`: Token admin address
+- `amount`: Coin to burn
+- `burn_from_address`: Address to burn from (optional, defaults to sender)
+
+### MsgChangeAdmin
+Change the admin of a token denomination (admin only).
+
+**Fields:**
+- `sender`: Current admin address
+- `denom`: Token denomination
+- `new_admin`: New admin address (empty string to renounce)
+
+### MsgSetDenomMetadata
+Set or update token metadata using a metadata file (admin only).
+
+**Fields:**
+- `sender`: Token admin address
+- `metadata`: Token metadata (bank module metadata format)
+
+### MsgSetBeforeSendHook
+Set or remove a before-send hook for a token (admin only).
+
+**Fields:**
+- `sender`: Token admin address
+- `denom`: Token denomination
+- `contract_addr`: Hook contract address (empty to remove)
+
+### MsgForceTransfer
+Force a transfer that bypasses before-send hooks (admin only).
+
+**Fields:**
+- `sender`: Token admin address
+- `amount`: Coin to transfer
+- `transfer_from_address`: Source address
+- `transfer_to_address`: Destination address
+
+## Queries
+
+### QueryParams
+Retrieve current module parameters.
+
+**CLI:**
+```bash
+neutrond query tokenfactory params
+```
+
+### QueryDenomAuthorityMetadata
+Retrieve admin address for a token denomination.
+
+**CLI:**
+```bash
+neutrond query tokenfactory denom-authority-metadata factory/creator/subdenom
+```
+
+### QueryDenomsFromCreator
+Retrieve all tokens created by a specific address.
+
+**CLI:**
+```bash
+neutrond query tokenfactory denoms-from-creator neutron1creator...
+```
+
+### QueryBeforeSendHookAddress
+Retrieve the before-send hook contract for a token.
+
+**CLI:**
+```bash
+neutrond query tokenfactory before-send-hook factory/creator/subdenom
+```
+
+### QueryFullDenom
+Construct the full denomination from creator and subdenom.
+
+**Note:** This query is available via gRPC but not implemented in CLI.
+
+## Key Concepts
+
+- **Token Format**: `factory/{creator_address}/{subdenom}`
+- **Admin Control**: Token creators have admin rights by default
+- **Before-Send Hooks**: Optional contracts called before every transfer
+- **Whitelisted Hooks**: Only governance-approved contracts can be used as hooks
+- **Creation Fees**: Configurable fees sent to fee collector address
+- **Force Transfer**: Admins can bypass hooks for emergency situations
+- **Length Limits**: Subdenom max 44 chars, creator max 75 chars
+- **Module Account Protection**: Burning from module accounts is prevented 

@@ -1,0 +1,55 @@
+---
+title: "Explanation"
+description: "Understanding admin module governance mechanisms and the dual proposal system"
+---
+
+This document explains the admin module's governance mechanisms and design principles based on the dual mechanism approach for proposal execution.
+
+<Warning>
+**DAO Exclusive Access**: The admin module can only be accessed by the DAO through WebAssembly bindings. Individual users and external contracts cannot directly interact with this module.
+</Warning>
+
+## Concepts
+
+### Network Administration and Governance
+
+Being the network's admin, the DAO is empowered to execute proposals that can significantly change the network state. These proposals can encapsulate operations including:
+
+- Modifying parameters of specific modules, like adjusting transaction fees or validator incentives
+- A full spectrum of WASM proposals, leveraging WebAssembly smart contract functionalities in Cosmos
+- Upgrade proposals, enabling seamless interoperability and data transfer between distinct blockchains
+- Execution of any `sdk.Msg`, the standard message format in the Cosmos ecosystem
+
+### Mechanism of Operation
+
+Governance is achieved through a dual mechanism approach. A message, structured as per Cosmos SDK guidelines, is sent to the admin module using WebAssembly bindings from the Main DAO. This message typically contains one of two global types of proposals:
+
+#### Legacy Proposals
+Rooted in the `x/gov` module of the Cosmos SDK, certain modules like WASM can have predefined proposals. Classic examples include `MigrateContract` or `DeleteAdmin`. The intrinsic Cosmos SDK processes such proposals via a dedicated handler. The admin module on Neutron can execute such proposals if they are part of a whitelisted group. 
+
+Despite this mechanism being labeled deprecated in the recent SDK 0.47 update, its support remains due to certain modules (like IBC) not transitioning as per the SDK 0.47 guidelines.
+
+#### Message-Based Proposals
+The advent of SDK 0.47 heralded a fresh approach. Actions, rather than being bound by predefined standards, could now be executed using the versatile `sdk.Msg`. This necessitated an overhaul in permission structures across modules. Modules have now integrated an `authority` field, signifying an address (or a group of addresses) that have been permissioned to dispatch critical messages, such as UpdateParams.
+
+### Implementation in Neutron
+
+The admin module in Neutron utilizes both the aforementioned proposal mechanisms. Specifically, these are executed within the message server of the admin module, ensuring seamless integration with the larger Neutron infrastructure.
+
+## Challenges Related to Cosmos SDK 0.47 and 0.50
+
+Transitioning to Cosmos SDK 0.47 and 0.50 introduced several hurdles:
+
+- **Deprecation of `x/params`**: With the new SDK version, the `x/params` module has been deprecated, pushing each Cosmos module to implement custom parameter handling logic
+- **Change in Governance Logic**: The new SDK has moved away from the `ProposalHandler` logic in modules. Instead, the `gov` module can now issue direct messages to any Cosmos module
+
+## Enhancements & Solutions
+
+### ProposalExecuteMessage Binding
+A `ProposalExecuteMessage` binding was introduced, allowing the admin module to process any type of Cosmos message. Signer verification ensures authenticity.
+
+### Revamped MsgSubmitProposal
+The `MsgSubmitProposal` has been redesigned to handle any type of Cosmos message.
+
+### Streamlined Logic and Execution
+Unnecessary logic and the cache context have been removed, leading to immediate proposal execution within the message server and the removal of active and inactive queues. 

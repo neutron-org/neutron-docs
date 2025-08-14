@@ -1,0 +1,552 @@
+---
+title: "How-to"
+---
+
+This guide provides practical instructions for developers who want to use the Harpoon module with their CosmWasm smart contracts.
+
+## Implementing a Contract to Receive Staking Hooks
+
+### Step 1: Define the Sudo Message Structures
+
+Based on the actual Harpoon implementation, define the sudo message structures in your contract to match the exact format sent by the module:
+
+```rust
+use cosmwasm_std::{Decimal, Uint128};
+
+// Validator-related sudo messages
+#[cw_serde]
+pub struct AfterValidatorCreatedSudoMsg {
+    pub after_validator_created: AfterValidatorCreatedMsg,
+}
+
+#[cw_serde]
+pub struct AfterValidatorCreatedMsg {
+    pub val_addr: String,
+}
+
+#[cw_serde]
+pub struct AfterValidatorBondedSudoMsg {
+    pub after_validator_bonded: AfterValidatorBondedMsg,
+}
+
+#[cw_serde]
+pub struct AfterValidatorBondedMsg {
+    pub cons_addr: String,
+    pub val_addr: String,
+}
+
+#[cw_serde]
+pub struct AfterValidatorRemovedSudoMsg {
+    pub after_validator_removed: AfterValidatorRemovedMsg,
+}
+
+#[cw_serde]
+pub struct AfterValidatorRemovedMsg {
+    pub cons_addr: String,
+    pub val_addr: String,
+}
+
+#[cw_serde]
+pub struct AfterValidatorBeginUnbondingSudoMsg {
+    pub after_validator_begin_unbonding: AfterValidatorBeginUnbondingMsg,
+}
+
+#[cw_serde]
+pub struct AfterValidatorBeginUnbondingMsg {
+    pub cons_addr: String,
+    pub val_addr: String,
+}
+
+#[cw_serde]
+pub struct BeforeValidatorModifiedSudoMsg {
+    pub before_validator_modified: BeforeValidatorModifiedMsg,
+}
+
+#[cw_serde]
+pub struct BeforeValidatorModifiedMsg {
+    pub val_addr: String,
+}
+
+#[cw_serde]
+pub struct BeforeValidatorSlashedSudoMsg {
+    pub before_validator_slashed: BeforeValidatorSlashedMsg,
+}
+
+#[cw_serde]
+pub struct BeforeValidatorSlashedMsg {
+    pub val_addr: String,
+    pub fraction: Decimal,
+    pub tokens_to_burn: Uint128,
+}
+
+// Delegation-related sudo messages
+#[cw_serde]
+pub struct BeforeDelegationCreatedSudoMsg {
+    pub before_delegation_created: BeforeDelegationCreatedMsg,
+}
+
+#[cw_serde]
+pub struct BeforeDelegationCreatedMsg {
+    pub del_addr: String,
+    pub val_addr: String,
+}
+
+#[cw_serde]
+pub struct BeforeDelegationSharesModifiedSudoMsg {
+    pub before_delegation_shares_modified: BeforeDelegationSharesModifiedMsg,
+}
+
+#[cw_serde]
+pub struct BeforeDelegationSharesModifiedMsg {
+    pub del_addr: String,
+    pub val_addr: String,
+}
+
+#[cw_serde]
+pub struct BeforeDelegationRemovedSudoMsg {
+    pub before_delegation_removed: BeforeDelegationRemovedMsg,
+}
+
+#[cw_serde]
+pub struct BeforeDelegationRemovedMsg {
+    pub del_addr: String,
+    pub val_addr: String,
+}
+
+#[cw_serde]
+pub struct AfterDelegationModifiedSudoMsg {
+    pub after_delegation_modified: AfterDelegationModifiedMsg,
+}
+
+#[cw_serde]
+pub struct AfterDelegationModifiedMsg {
+    pub del_addr: String,
+    pub val_addr: String,
+}
+
+// Unbonding-related sudo messages
+#[cw_serde]
+pub struct AfterUnbondingInitiatedSudoMsg {
+    pub after_unbonding_initiated: AfterUnbondingInitiatedMsg,
+}
+
+#[cw_serde]
+pub struct AfterUnbondingInitiatedMsg {
+    pub id: u64,
+}
+
+// Note: The Harpoon module sends individual message types, not a union enum.
+// Each hook type has its own specific message structure as shown above.
+```
+
+### Step 2: Define the SudoMsg Enum
+
+Define a comprehensive enum for all sudo message types your contract will handle:
+
+```rust
+use cosmwasm_std::{Decimal, Uint128};
+
+#[cw_serde]
+pub enum SudoMsg {
+    AfterValidatorCreated {
+        val_addr: String,
+    },
+    BeforeValidatorModified {
+        val_addr: String,
+    },
+    AfterValidatorRemoved {
+        cons_addr: String,
+        val_addr: String,
+    },
+    AfterValidatorBonded {
+        cons_addr: String,
+        val_addr: String,
+    },
+    AfterValidatorBeginUnbonding {
+        cons_addr: String,
+        val_addr: String,
+    },
+    BeforeValidatorSlashed {
+        val_addr: String,
+        fraction: Decimal,
+        tokens_to_burn: Uint128,
+    },
+    BeforeDelegationCreated {
+        del_addr: String,
+        val_addr: String,
+    },
+    BeforeDelegationSharesModified {
+        del_addr: String,
+        val_addr: String,
+    },
+    BeforeDelegationRemoved {
+        del_addr: String,
+        val_addr: String,
+    },
+    AfterDelegationModified {
+        del_addr: String,
+        val_addr: String,
+    },
+    AfterUnbondingInitiated {
+        id: u64,
+    },
+}
+```
+
+### Step 3: Implement Sudo Handler
+
+Implement the `sudo` entry point using pattern matching on the enum:
+
+```rust
+use cosmwasm_std::{DepsMut, Env, Response, StdResult};
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> Result<Response, ContractError> {
+    match msg {
+        SudoMsg::AfterValidatorCreated { val_addr } => {
+            after_validator_created(deps, env, val_addr)
+        }
+        SudoMsg::AfterValidatorRemoved { val_addr, .. } => {
+            after_validator_removed(deps, env, val_addr)
+        }
+        SudoMsg::AfterValidatorBonded { val_addr, .. } => {
+            after_validator_bonded(deps, env, val_addr)
+        }
+        SudoMsg::AfterValidatorBeginUnbonding { val_addr, .. } => {
+            after_validator_begin_unbonding(deps, env, val_addr)
+        }
+        SudoMsg::AfterDelegationModified { del_addr, val_addr } => {
+            after_delegation_modified(deps, env, del_addr, val_addr)
+        }
+        SudoMsg::BeforeDelegationRemoved { del_addr, val_addr } => {
+            before_delegation_removed(deps, env, del_addr, val_addr)
+        }
+        SudoMsg::BeforeValidatorSlashed {
+            val_addr,
+            fraction,
+            tokens_to_burn,
+        } => before_validator_slashed(deps, env, val_addr, fraction, tokens_to_burn),
+        // Add other handlers as needed
+        _ => Ok(Response::new().add_attribute("action", "sudo_ignored")),
+    }
+}
+```
+
+### Step 4: Implement Hook-Specific Handlers
+
+Create handlers for each hook type your contract needs to process:
+
+```rust
+fn after_validator_created(
+    deps: DepsMut,
+    _env: Env,
+    val_addr: String,
+) -> Result<Response, ContractError> {
+    // Process the validator creation event
+    
+    Ok(Response::new()
+        .add_attribute("action", "validator_created_processed")
+        .add_attribute("validator", val_addr))
+}
+
+fn before_delegation_removed(
+    deps: DepsMut,
+    _env: Env,
+    del_addr: String,
+    val_addr: String,
+) -> Result<Response, ContractError> {
+    // Process the delegation removal event
+    
+    Ok(Response::new()
+        .add_attribute("action", "delegation_removed_processed")
+        .add_attribute("delegator", del_addr)
+        .add_attribute("validator", val_addr))
+}
+
+fn after_delegation_modified(
+    deps: DepsMut,
+    _env: Env,
+    del_addr: String,
+    val_addr: String,
+) -> Result<Response, ContractError> {
+    // Process the delegation modification event
+    
+    Ok(Response::new()
+        .add_attribute("action", "delegation_modified_processed")
+        .add_attribute("delegator", del_addr)
+        .add_attribute("validator", val_addr))
+}
+
+fn before_validator_slashed(
+    deps: DepsMut,
+    _env: Env,
+    val_addr: String,
+    fraction: Decimal,
+    tokens_to_burn: Uint128,
+) -> Result<Response, ContractError> {
+    // Process the validator slashing event
+    
+    Ok(Response::new()
+        .add_attribute("action", "validator_slashed_processed")
+        .add_attribute("validator", val_addr)
+        .add_attribute("fraction", fraction.to_string())
+        .add_attribute("tokens_to_burn", tokens_to_burn.to_string()))
+}
+```
+
+### Step 5: Ensure Robustness
+
+Since hook errors can potentially abort transactions or halt the chain, your contract must be designed to handle all possible inputs without errors:
+
+```rust
+// Example of a robust handler that never fails
+fn before_delegation_shares_modified(
+    deps: DepsMut,
+    _env: Env,
+    del_addr: String,
+    val_addr: String,
+) -> Result<Response, ContractError> {
+    // Always return success, even if processing fails
+    match process_delegation_shares_change(&del_addr, &val_addr) {
+        Ok(_) => {
+            Ok(Response::new()
+                .add_attribute("action", "delegation_shares_modified_processed")
+                .add_attribute("delegator", del_addr)
+                .add_attribute("validator", val_addr))
+        },
+        Err(_) => {
+            // Log the error but don't fail
+            deps.api.debug("Failed to process delegation shares modification");
+            Ok(Response::new()
+                .add_attribute("action", "delegation_shares_modified_skipped")
+                .add_attribute("delegator", del_addr)
+                .add_attribute("validator", val_addr))
+        }
+    }
+}
+
+fn process_delegation_shares_change(del_addr: &str, val_addr: &str) -> Result<(), ContractError> {
+    // Your processing logic here
+    Ok(())
+}
+```
+
+## Managing Hook Subscriptions Through Governance
+
+Hook subscriptions can only be managed through governance. The approach differs depending on your environment:
+
+### For Mainnet/Testnet Deployment
+
+When deploying on Neutron mainnet or testnet, you need to go through the standard governance process:
+
+1. **Community Discussion**: Engage with the Neutron community to discuss your hook subscription needs
+2. **Governance Proposal**: Submit a formal governance proposal through the DAO
+3. **Community Voting**: Wait for the community to vote on your proposal
+
+<Info>
+For mainnet and testnet deployments, contact the Neutron team or engage with the community on Discord to discuss your hook subscription requirements before submitting a governance proposal.
+</Info>
+
+### For Local Development
+
+When working on a local Neutron instance, you have more direct control and can submit governance proposals directly:
+
+#### Step 1: Prepare the Governance Proposal
+
+Create a JSON file with the proposal content:
+
+```json
+{
+  "title": "Subscribe Contract to Staking Hooks",
+  "description": "This proposal subscribes the contract to specific staking hooks for tracking delegation events",
+  "messages": [
+    {
+      "@type": "/neutron.harpoon.MsgManageHookSubscription",
+      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6z2zm3",
+      "hook_subscription": {
+        "contract_address": "neutron1...",
+        "hooks": [
+          "HOOK_TYPE_BEFORE_DELEGATION_CREATED",
+          "HOOK_TYPE_BEFORE_DELEGATION_SHARES_MODIFIED",
+          "HOOK_TYPE_BEFORE_DELEGATION_REMOVED",
+          "HOOK_TYPE_AFTER_DELEGATION_MODIFIED"
+        ]
+      }
+    }
+  ],
+  "deposit": "1000000000untrn"
+}
+```
+
+#### Step 2: Submit the Proposal (Local Development)
+
+Use the CLI to submit the governance proposal:
+
+```bash
+neutrond tx gov submit-proposal /path/to/proposal.json \
+  --from <your-key> \
+  --chain-id <your-chain-id> \
+  --gas-prices 0.025untrn \
+  --gas auto \
+  --gas-adjustment 1.3
+```
+
+#### Step 3: Vote on the Proposal (Local Development)
+
+On your local network, vote on the proposal:
+
+```bash
+neutrond tx gov vote <proposal-id> yes \
+  --from <your-key> \
+  --chain-id <your-chain-id> \
+  --gas-prices 0.025untrn \
+  --gas auto \
+  --gas-adjustment 1.3
+```
+
+<Warning>
+The commands above are only for local development environments. Production deployments require community governance participation.
+</Warning>
+
+## Querying Hook Subscriptions
+
+You can query to see which contracts are subscribed to specific hook types.
+
+### Using the CLI
+
+```bash
+neutrond query harpoon subscribed-contracts HOOK_TYPE_BEFORE_DELEGATION_CREATED
+```
+
+### Using CosmWasm
+
+From another contract, you can query the Harpoon module to check subscriptions:
+
+```rust
+#[cw_serde]
+pub enum HarpoonQuery {
+    SubscribedContracts { hook_type: String },
+}
+
+pub fn query_subscribed_contracts(
+    querier: &QuerierWrapper,
+    hook_type: String,
+) -> StdResult<Vec<String>> {
+    let query = HarpoonQuery::SubscribedContracts { hook_type };
+    let response: SubscribedContractsResponse = querier.query(&QueryRequest::Custom(query))?;
+    Ok(response.contract_addresses)
+}
+
+#[cw_serde]
+pub struct SubscribedContractsResponse {
+    pub contract_addresses: Vec<String>,
+}
+```
+
+## Example: Tracking Delegation Events
+
+Here's a simplified example of using the Harpoon module to track delegation events:
+
+```rust
+use cw_storage_plus::Map;
+
+#[cw_serde]
+pub struct DelegationRecord {
+    pub delegator: String,
+    pub validator: String,
+    pub height: u64,
+    pub event_type: String,
+}
+
+// Storage for delegation events
+const DELEGATION_EVENTS: Map<u64, Vec<DelegationRecord>> = Map::new("delegation_events");
+
+// Handler for delegation creation events
+fn before_delegation_created(
+    deps: DepsMut,
+    env: Env,
+    del_addr: String,
+    val_addr: String,
+) -> Result<Response, ContractError> {
+    let record = DelegationRecord {
+        delegator: del_addr.clone(),
+        validator: val_addr.clone(),
+        height: env.block.height,
+        event_type: "delegation_created".to_string(),
+    };
+    
+    // Store the event
+    store_delegation_event(deps.storage, env.block.height, record)?;
+    
+    Ok(Response::new()
+        .add_attribute("action", "delegation_created_tracked")
+        .add_attribute("delegator", del_addr)
+        .add_attribute("validator", val_addr)
+        .add_attribute("height", env.block.height.to_string()))
+}
+
+// Handler for delegation modification events
+fn after_delegation_modified_tracking(
+    deps: DepsMut,
+    env: Env,
+    del_addr: String,
+    val_addr: String,
+) -> Result<Response, ContractError> {
+    let record = DelegationRecord {
+        delegator: del_addr.clone(),
+        validator: val_addr.clone(),
+        height: env.block.height,
+        event_type: "delegation_modified".to_string(),
+    };
+    
+    // Store the event
+    store_delegation_event(deps.storage, env.block.height, record)?;
+    
+    Ok(Response::new()
+        .add_attribute("action", "delegation_modified_tracked")
+        .add_attribute("delegator", del_addr)
+        .add_attribute("validator", val_addr)
+        .add_attribute("height", env.block.height.to_string()))
+}
+
+// Helper function to store delegation events
+fn store_delegation_event(
+    storage: &mut dyn Storage,
+    height: u64,
+    record: DelegationRecord,
+) -> Result<(), ContractError> {
+    let mut events = DELEGATION_EVENTS
+        .may_load(storage, height)?
+        .unwrap_or_default();
+    
+    events.push(record);
+    DELEGATION_EVENTS.save(storage, height, &events)?;
+    Ok(())
+}
+
+// Query delegation events at a specific height
+pub fn query_delegation_events_at_height(
+    deps: Deps,
+    height: u64,
+) -> StdResult<Vec<DelegationRecord>> {
+    let events = DELEGATION_EVENTS
+        .may_load(deps.storage, height)?
+        .unwrap_or_default();
+    
+    Ok(events)
+}
+```
+
+## Best Practices
+
+1. **Ensure Robust Error Handling**: Your contract should never return errors from sudo handlers, as this could disrupt chain operations.
+
+2. **Minimize Gas Usage**: Since hooks are called during staking operations, ensure your handlers are efficient to avoid excessive gas costs.
+
+3. **Handle All Hook Types**: Even if you're only interested in specific hooks, implement handlers for all types you subscribe to.
+
+4. **Test Thoroughly**: Before proposing to subscribe your contract to hooks on mainnet, test extensively on testnet to ensure it behaves correctly.
+
+5. **Document Hook Usage**: Clearly document which hooks your contract subscribes to and how it uses them, to help with the governance proposal process.
+
+By following these guidelines, you can effectively leverage the Harpoon module to create sophisticated contracts that react to staking events. 

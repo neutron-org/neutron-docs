@@ -1,0 +1,400 @@
+---
+title: "Running a Node"
+description: "Set up and configure a Neutron node for RPC access or validator operations"
+icon: "server"
+---
+
+This guide will walk you through the process of setting up and running a Neutron node. You can use this setup to operate a standard RPC node for network access or as the foundation for becoming a validator.
+
+<CardGroup cols={2}>
+  <Card title="RPC Node" icon="cloud" iconType="duotone">
+    Access the Neutron network, run applications, or provide RPC services to others
+  </Card>
+  <Card title="Validator Node" icon="server" iconType="duotone">
+    Participate in consensus, earn rewards, and help secure the Neutron network
+  </Card>
+</CardGroup>
+
+<Note>
+  This guide covers the basic node setup that serves both purposes. If you want to become a validator, refer to our [becoming a validator section](/operators/becoming-a-validator).
+</Note>
+
+## System Requirements
+
+<CardGroup cols={2}>
+  <Card title="CPU" icon="microchip" iconType="duotone">
+    <strong>Minimum:</strong> 4 or more cores<br />
+    <strong>Recommended:</strong> 8 or more cores
+  </Card>
+  <Card title="RAM" icon="memory" iconType="duotone">
+    <strong>Minimum:</strong> 16GB<br />
+    <strong>Recommended:</strong> 32GB or more
+  </Card>
+  <Card title="Storage" icon="hard-drive" iconType="duotone">
+    <strong>Minimum:</strong> 500GB SSD<br />
+    <strong>Recommended:</strong> 1TB or more NVMe SSD
+  </Card>
+  <Card title="Network" icon="network-wired" iconType="duotone">
+    <strong>Minimum:</strong> 100Mbps<br />
+    <strong>Recommended:</strong> 1Gbps or more with low latency
+  </Card>
+</CardGroup>
+
+## Installation Process
+
+<Steps>
+  <Step title="Install Dependencies">
+    ```bash
+    # Update and install required packages
+    sudo apt update && sudo apt upgrade -y
+    sudo apt install build-essential jq wget git curl -y
+    ```
+  </Step>
+  <Step title="Install Go">
+    ```bash
+    # Install Go 1.21 or higher
+    wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
+    sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.21.0.linux-amd64.tar.gz
+    rm go1.21.0.linux-amd64.tar.gz
+    ```
+
+    Add Go to your PATH:
+
+    ```bash
+    echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> ~/.profile
+    source ~/.profile
+    ```
+  </Step>
+  <Step title="Build or Download Neutron">
+    <Tabs>
+      <Tab title="Build from Source">
+        ```bash
+        git clone https://github.com/neutron-org/neutron.git
+        cd neutron
+        git checkout v6.0.2 # replace with the current version
+        make install
+        ```
+      </Tab>
+      <Tab title="Download Binary">
+        ```bash
+        wget https://github.com/neutron-org/neutron/releases/download/v6.0.2/neutrond-linux-amd64
+        chmod +x neutrond-linux-amd64
+        sudo mv neutrond-linux-amd64 /usr/local/bin/neutrond
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+  <Step title="Initialize the Node">
+    ```bash
+    neutrond init [your-moniker] --chain-id neutron-1
+    ```
+  </Step>
+</Steps>
+
+## Configuration
+
+### Download Genesis and Address Book
+
+```bash
+# Download genesis file
+wget -O $HOME/.neutrond/config/genesis.json https://snapshots.kjnodes.com/neutron/genesis.json
+
+# Download address book
+wget -O $HOME/.neutrond/config/addrbook.json https://snapshots.kjnodes.com/neutron/addrbook.json
+```
+
+## RPC and API Endpoints
+
+For connecting to the Neutron network, you can use the following official endpoints:
+
+<CardGroup cols={2}>
+  <Card title="Official Neutron RPC" icon="server" iconType="duotone">
+    **RPC:** https://rpc-lb.neutron.org<br />
+    Load-balanced RPC endpoint maintained by Neutron
+  </Card>
+  <Card title="Official Neutron REST APIs" icon="cloud" iconType="duotone">
+    **Solara:** https://rest-solara.neutron-1.neutron.org<br />
+    **Vertexa:** https://rest-vertexa.neutron-1.neutron.org<br />
+    High-availability REST API endpoints
+  </Card>
+</CardGroup>
+
+<Tip>
+  For a comprehensive list of community-maintained endpoints, visit [Cosmos Directory](https://cosmos.directory/neutron) which provides real-time status and performance metrics for various RPC and API providers.
+</Tip>
+
+### Configure Your Node
+
+Edit app.toml to set minimum gas prices:
+
+```bash
+sed -i 's/minimum-gas-prices = ""/minimum-gas-prices = "0.025untrn"/' $HOME/.neutrond/config/app.toml
+```
+
+Add seeds and peers to config.toml:
+
+```bash
+# Set up seeds
+SEEDS="24f609fb5946ca3a979f40b7f54132c00104433e@p2p-erheim.neutron-1.neutron.org:26656,20e1000e88125698264454a884812746c2eb4807@seeds.lavenderfive.com:19156"
+sed -i 's/seeds = ""/seeds = "'"$SEEDS"'"/' $HOME/.neutrond/config/config.toml
+
+# Set up persistent peers
+PEERS="e5d2743d9a3de514e4f7b9461bf3f0c1500c58d9@neutron.peer.stakewith.us:39956,982f968cd6ac567fdddf2170f7da9725ba21693d@51.210.209.49:15600"
+sed -i 's/persistent_peers = ""/persistent_peers = "'"$PEERS"'"/' $HOME/.neutrond/config/config.toml
+```
+
+<Tip>
+  For a complete list of available seeds and peers, check the [Peers](/resources/peers) page.
+</Tip>
+
+## State Sync or Snapshot (Optional)
+
+To speed up the initial sync process, you can use state sync or a snapshot.
+
+<Tabs>
+  <Tab title="State Sync">
+    ```bash
+    # Get latest block height and hash
+    LATEST_HEIGHT=$(curl -s https://rpc-lb.neutron.org/status | jq -r .result.sync_info.latest_block_height)
+    BLOCK_HEIGHT=$((LATEST_HEIGHT - 2000))
+    TRUST_HASH=$(curl -s "https://rpc-lb.neutron.org/block?height=$BLOCK_HEIGHT" | jq -r .result.block_id.hash)
+
+    # Configure state sync in config.toml
+    sed -i \
+    -e "s|^enable *=.*|enable = true|" \
+    -e "s|^rpc_servers *=.*|rpc_servers = \"https://rpc-lb.neutron.org:443,https://rest-solara.neutron-1.neutron.org:443\"|" \
+    -e "s|^trust_height *=.*|trust_height = $BLOCK_HEIGHT|" \
+    -e "s|^trust_hash *=.*|trust_hash = \"$TRUST_HASH\"|" \
+    $HOME/.neutrond/config/config.toml
+    ```
+  </Tab>
+  <Tab title="Snapshot">
+    ```bash
+    # Stop the service if it's running
+    sudo systemctl stop neutrond
+
+    # Remove existing data
+    neutrond tendermint unsafe-reset-all --home $HOME/.neutrond --keep-addr-book
+
+    # Download a snapshot
+    wget -O neutron_snapshot.tar.lz4 https://snapshots.kjnodes.com/neutron/snapshot_latest.tar.lz4
+
+    # Extract the snapshot
+    lz4 -dc neutron_snapshot.tar.lz4 | tar -xf - -C $HOME/.neutrond
+    ```
+  </Tab>
+</Tabs>
+
+## Set Up SystemD Service
+
+Create a systemd service file for Neutron:
+
+```bash
+sudo tee /etc/systemd/system/neutrond.service > /dev/null <<EOF
+[Unit]
+Description=Neutron Node
+After=network-online.target
+
+[Service]
+User=$USER
+ExecStart=$(which neutrond) start
+Restart=always
+RestartSec=3
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
+EOF
+```
+
+Start the service:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable neutrond
+sudo systemctl start neutrond
+```
+
+## Monitor Node Status
+
+<Tabs>
+  <Tab title="Check Logs">
+    ```bash
+    sudo journalctl -u neutrond -f
+    ```
+  </Tab>
+  <Tab title="Check Sync Status">
+    ```bash
+    neutrond status 2>&1 | jq .SyncInfo
+    ```
+    
+    Your node is synced when `catching_up` is `false`.
+  </Tab>
+  <Tab title="Check Peers">
+    ```bash
+    neutrond status 2>&1 | jq .NodeInfo.n_peers
+    ```
+  </Tab>
+</Tabs>
+
+## Performance Monitoring
+
+Set up comprehensive monitoring to ensure your validator meets performance requirements:
+
+### Essential Monitoring Stack
+
+<CardGroup cols={2}>
+  <Card title="Metrics Collection" icon="chart-line">
+    **Prometheus**: Collect system and validator metrics<br />
+    **Node Exporter**: System resource monitoring<br />
+    **Cosmos Exporter**: Neutron-specific metrics
+  </Card>
+  <Card title="Visualization & Alerts" icon="bell">
+    **Grafana**: Create dashboards for metrics visualization<br />
+    **Alertmanager**: Configure alerts for critical issues<br />
+    **TenderDuty**: Validator-specific monitoring tool
+  </Card>
+</CardGroup>
+
+### Key Metrics to Monitor
+
+Configure alerts for these critical metrics:
+
+- **Block Signing**: Track missed blocks and signing percentage
+- **Oracle Performance**: Monitor oracle price update success rate
+- **System Resources**: CPU, memory, disk usage, and network connectivity
+- **Node Health**: Sync status, peer count, and consensus participation
+
+### Alert Configuration
+
+Set up alerts for:
+
+<Tabs>
+  <Tab title="Critical Alerts">
+    - Validator jailed or tombstoned
+    - Node not signing blocks (greater than 5 missed blocks)
+    - Node falling behind sync (greater than 10 blocks)
+    - Oracle service failures
+  </Tab>
+  <Tab title="Warning Alerts">
+    - System resources approaching limits (greater than 80% usage)
+    - Peer count below threshold (less than 10 peers)
+    - New governance proposals requiring votes
+    - Planned network upgrades
+  </Tab>
+</Tabs>
+
+## Security Recommendations
+
+<AccordionGroup>
+  <Accordion title="Firewall Configuration">
+    Configure your firewall to only allow necessary ports:
+    
+    ```bash
+    # Install ufw
+    sudo apt install ufw -y
+    
+    # Configure ufw
+    sudo ufw default deny incoming
+    sudo ufw default allow outgoing
+    sudo ufw allow ssh
+    sudo ufw allow 26656/tcp # P2P
+    sudo ufw allow 26657/tcp # RPC (restrict to specific IPs if needed)
+    sudo ufw allow 1317/tcp  # API (restrict to specific IPs if needed)
+    sudo ufw allow 9090/tcp  # gRPC (restrict to specific IPs if needed)
+    
+    # Enable ufw
+    sudo ufw enable
+    ```
+  </Accordion>
+  <Accordion title="SSH Hardening">
+    Improve SSH security with these steps:
+    
+    ```bash
+    # Edit SSH config
+    sudo nano /etc/ssh/sshd_config
+    ```
+    
+    Make these changes:
+    ```
+    PermitRootLogin no
+    PasswordAuthentication no
+    PubkeyAuthentication yes
+    ```
+    
+    Restart SSH:
+    ```bash
+    sudo systemctl restart sshd
+    ```
+  </Accordion>
+  <Accordion title="Sentry Node Architecture">
+    For production validators, consider implementing a sentry node architecture:
+    
+    1. Set up separate sentry nodes that connect to the public network
+    2. Configure your validator to only connect to your sentry nodes
+    3. This protects your validator from DDoS attacks
+    
+    **Architecture**: `Internet <-> Sentry Nodes <-> Private Network <-> Validator`
+  </Accordion>
+  <Accordion title="Key Management">
+    Secure your validator keys:
+    
+    - Store validator keys on hardware security modules (HSM) when possible
+    - Use separate signing keys and never expose private keys
+    - Implement proper backup and recovery procedures
+    - Consider multi-signature setups for additional security
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Infrastructure Redundancy" icon="server" iconType="duotone">
+    Implement redundant systems, backup power, and multiple network providers to avoid single points of failure.
+  </Card>
+  <Card title="Upgrade Preparation" icon="arrow-up-right-dots" iconType="duotone">
+    Maintain testing infrastructure and participate in testnet upgrades to ensure smooth mainnet transitions.
+  </Card>
+  <Card title="Performance Optimization" icon="gauge-high" iconType="duotone">
+    Regularly monitor and optimize system performance to maintain greater than 99.5% uptime and greater than 98% oracle success rates.
+  </Card>
+  <Card title="Documentation" icon="book" iconType="duotone">
+    Maintain detailed operational procedures, incident response plans, and recovery documentation.
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+Choose your path based on your intended use:
+
+<CardGroup cols={2}>
+  <Card title="RPC Node Operation" icon="cloud" iconType="duotone">
+    **You're Ready!** Your node can now serve RPC requests, sync with the network, and support applications. Consider configuring:
+    - API endpoints for application access
+    - Monitoring for node health
+    - Backup and recovery procedures
+  </Card>
+  <Card title="Validator Path" icon="server" iconType="duotone">
+    To become a validator, continue with these additional steps:
+    1. Set up the [Slinky Oracle Service](/validators/oracle-setup)
+    2. Review [validator requirements](/validators/overview)
+    3. Complete [validator registration](/validators/becoming-a-validator)
+  </Card>
+</CardGroup>
+
+### Additional Configuration for RPC Nodes
+
+If you're running an RPC node for public or application use, consider these additional configurations:
+
+```bash
+# Enable API and configure CORS (in app.toml)
+sed -i 's/enable = false/enable = true/' $HOME/.neutrond/config/app.toml
+sed -i 's/enabled-unsafe-cors = false/enabled-unsafe-cors = true/' $HOME/.neutrond/config/app.toml
+
+# Configure RPC settings (in config.toml)
+sed -i 's/laddr = "tcp:\/\/127.0.0.1:26657"/laddr = "tcp:\/\/0.0.0.0:26657"/' $HOME/.neutrond/config/config.toml
+```
+
+<Note>
+  Only enable external access if you understand the security implications and have proper firewall rules in place.
+</Note> 

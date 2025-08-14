@@ -1,0 +1,304 @@
+---
+title: "How-to"
+description: "Practical guide for using Neutron's DEX module"
+---
+
+This guide provides practical examples for interacting with Neutron's DEX module through the web interface and command-line tools.
+
+## User Interfaces
+
+### Neutron App (Web Interface)
+
+The primary web interface is available at [app.neutron.org](https://app.neutron.org)
+
+#### Orderbook Interface
+
+Access the orderbook at [app.neutron.org/orderbook](https://app.neutron.org/orderbook)
+
+**Features:**
+- **Live Price Chart**: TradingView-powered charts with advanced analysis tools
+- **Order Book Table**: Real-time liquidity depth and price levels
+- **Recent Trades**: Live trade feed with transaction links
+- **Order Form**: Interface for placing limit and market orders
+- **Order History**: Track your active and completed orders
+
+**Token Pair Navigation:**
+- Use the pair selector to choose from available trading pairs
+- View pair summary with recent activity metrics
+- Access price history and volume data
+
+**Order Form Usage:**
+- **Limit Orders**: Specify exact price and expiration (optional)
+- **Market Orders**: Execute immediately with slippage protection
+- **Order Types**: Choose from GTC, GTT, FOK, IOC based on your strategy
+- **Simulation**: Preview trade outcomes before execution
+
+**Order Management:**
+- **Active Orders**: Monitor open positions in the Trades tab
+- **Order History**: Review completed trades
+- **Withdraw/Cancel**: Manage filled or active orders
+
+#### Bridge Interface
+
+Access the bridge at [app.neutron.org/bridge](https://app.neutron.org/bridge)
+
+- Transfer tokens from other chains to Neutron
+- View current token balances on Neutron
+- Withdraw tokens back to origin chains
+- Support for major IBC-enabled chains
+
+## CLI Interface
+
+All DEX functionality is available through the `neutrond` command-line interface using positional arguments.
+
+### Adding Liquidity
+
+#### Basic Single-Tick Deposit
+
+```bash
+neutrond tx dex deposit \
+  alice \
+  untrn \
+  ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  1000000 \
+  1000000 \
+  0 \
+  3000 \
+  false \
+  false \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+**Arguments:**
+1. `receiver` - Address to receive the liquidity position
+2. `token-a` - First token denomination
+3. `token-b` - Second token denomination  
+4. `amounts-a` - Comma-separated amounts of token A (e.g., "1000000,500000")
+5. `amounts-b` - Comma-separated amounts of token B (e.g., "1000000,500000")
+6. `tick-indexes` - Comma-separated tick indexes (e.g., "0,-100,100")
+7. `fees` - Comma-separated fee tiers (e.g., "3000,3000,3000")
+8. `disable-autoswap` - Comma-separated boolean values (e.g., "false,false,false")
+9. `fail-tx-on-bel` - Comma-separated boolean values (e.g., "false,false,false")
+
+#### Multi-Tick Liquidity Strategy
+
+```bash
+neutrond tx dex deposit \
+  alice \
+  untrn \
+  ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  1000000,1000000,1000000 \
+  1000000,1000000,1000000 \
+  [-100,0,100] \
+  3000,3000,3000 \
+  false,false,false \
+  false,false,false \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+### Removing Liquidity
+
+#### Basic Withdrawal
+
+```bash
+neutrond tx dex withdrawal \
+  alice \
+  untrn \
+  ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  500000 \
+  0 \
+  3000 \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+**Arguments:**
+1. `receiver` - Address to receive withdrawn tokens
+2. `token-a` - First token denomination
+3. `token-b` - Second token denomination
+4. `shares-to-remove` - Comma-separated share amounts to remove
+5. `tick-indexes-a-to-b` - Comma-separated tick indexes
+6. `fees` - Comma-separated fee tiers
+
+### Trading
+
+#### Multi-Hop Swap
+
+```bash
+neutrond tx dex multi-hop-swap \
+  alice \
+  "untrn,ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2" \
+  1000000 \
+  0.95 \
+  true \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+**Arguments:**
+1. `receiver` - Address to receive output tokens
+2. `routes` - Semicolon-separated routes, each route is comma-separated tokens
+3. `amount-in` - Amount of input tokens
+4. `exit-limit-price` - Minimum acceptable output price
+5. `pick-best-route` - Whether to pick the best route (true/false)
+
+#### Place Limit Order
+
+```bash
+neutrond tx dex place-limit-order \
+  alice \
+  untrn \
+  ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2 \
+  100 \
+  1000000 \
+  GOOD_TIL_CANCELLED \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+**Arguments:**
+1. `receiver` - Address to receive proceeds
+2. `token-in` - Token being sold
+3. `token-out` - Token being bought
+4. `tick-index` - Price tick for the order
+5. `amount-in` - Amount of input token
+6. `order-type` - Order type (GOOD_TIL_CANCELLED, GOOD_TIL_TIME, FILL_OR_KILL, IMMEDIATE_OR_CANCEL, JUST_IN_TIME)
+7. `expiration-time` - (Optional) Expiration time for GTT orders
+
+### Order Management
+
+#### Cancel Limit Order
+
+```bash
+neutrond tx dex cancel-limit-order \
+  tranche-key-here \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+#### Withdraw Filled Limit Order
+
+```bash
+neutrond tx dex withdraw-filled-limit-order \
+  tranche-key-here \
+  --from mykey \
+  --chain-id neutron-1
+```
+
+## Querying DEX State
+
+### Pool Information
+
+#### List All Pool Metadata
+
+```bash
+neutrond query dex list-pool-metadata
+```
+
+#### Get Pool by ID
+
+```bash
+neutrond query dex show-pool-by-id 1
+```
+
+#### Get Pool by Parameters
+
+```bash
+neutrond query dex show-pool "untrn<>uatom" 0 3000
+```
+
+#### Check Pool Reserves
+
+```bash
+neutrond query dex show-pool-reserves "untrn<>uatom" untrn 0 3000
+```
+
+#### List All Pool Reserves for Pair
+
+```bash
+neutrond query dex list-pool-reserves "untrn<>uatom" untrn
+```
+
+### User Positions
+
+#### Check Your Liquidity Positions
+
+```bash
+neutrond query dex list-user-deposits neutron1... --include-pool-data
+```
+
+#### Check Your Limit Orders
+
+```bash
+neutrond query dex list-user-limit-orders neutron1...
+```
+
+#### Get Specific Limit Order Tranche User
+
+```bash
+neutrond query dex show-limit-order-tranche-user neutron1... tranche-key
+```
+
+### Market Data
+
+#### View Tick Liquidity
+
+```bash
+neutrond query dex list-tick-liquidity "untrn<>uatom" untrn
+```
+
+#### List Limit Order Tranches
+
+```bash
+neutrond query dex list-limit-order-tranche "untrn<>uatom" untrn
+```
+
+#### Get Specific Limit Order Tranche
+
+```bash
+neutrond query dex show-limit-order-tranche "untrn<>uatom" untrn 100 tranche-key
+```
+
+## Simulation and Testing
+
+Use simulation queries to preview operations before executing them.
+
+### Simulate Deposit
+
+Use the simulate-deposit endpoint with a JSON message body containing the same parameters as the deposit transaction.
+
+### Simulate Withdrawal
+
+Use the simulate-withdrawal endpoint with a JSON message body containing the same parameters as the withdrawal transaction.
+
+### Simulate Multi-Hop Swap
+
+Use the simulate-multi-hop-swap endpoint with a JSON message body containing the same parameters as the swap transaction.
+
+### Simulate Limit Order
+
+Use the simulate-place-limit-order endpoint with a JSON message body containing the same parameters as the place limit order transaction.
+
+## Best Practices
+
+### For Liquidity Providers
+
+1. **Fee Tier Selection**: Choose appropriate fee tiers based on pair volatility
+2. **Position Management**: Regularly monitor and rebalance positions
+3. **Risk Assessment**: Understand impermanent loss implications
+
+### For Traders
+
+1. **Order Type Selection**: Choose the right order type for your strategy
+2. **Price Protection**: Always set reasonable exit limit prices
+3. **Gas Optimization**: Consider transaction costs vs. trade size
+
+### General
+
+1. **Testing**: Always use simulation endpoints before executing transactions
+2. **Validation**: Verify all parameters before submitting transactions
+3. **Monitoring**: Track your positions and orders regularly
+
+For complete command syntax and additional options, use `neutrond tx dex --help` and `neutrond query dex --help`.

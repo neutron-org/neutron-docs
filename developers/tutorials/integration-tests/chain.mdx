@@ -1,0 +1,453 @@
+---
+title: "Chain Integration Tests"
+description: "Learn how to write comprehensive tests for Neutron chain modules and features"
+---
+
+This tutorial covers how to write integration tests for Neutron chain functionality, including testing custom modules, IBC interactions, and complex workflows.
+
+## Prerequisites
+
+- Completed [Part 1: Minimal Smart Contract](/developers/tutorials/onboarding/part-1-minimal-application)
+- Basic understanding of Go and Rust testing frameworks
+- Familiarity with Neutron's custom modules
+
+## Setting Up the Test Environment
+
+### 1. Install Test Dependencies
+
+```bash
+# For Go-based chain tests
+go mod init neutron-integration-tests
+go get github.com/neutron-org/neutron/v4/cmd/neutrond
+go get github.com/cosmos/cosmos-sdk/testutil
+go get github.com/stretchr/testify
+
+# For Rust-based contract tests
+cargo add cosmwasm-std --features testing
+cargo add cw-multi-test
+```
+
+### 2. Basic Test Setup
+
+Create `chain_test.go`:
+
+```go
+package integration_test
+
+import (
+    "context"
+    "testing"
+    "time"
+    
+    "github.com/cosmos/cosmos-sdk/testutil/network"
+    "github.com/neutron-org/neutron/v4/app"
+    "github.com/stretchr/testify/suite"
+)
+
+type IntegrationTestSuite struct {
+    suite.Suite
+    cfg     network.Config
+    network *network.Network
+}
+
+func (s *IntegrationTestSuite) SetupSuite() {
+    s.T().Log("setting up integration test suite")
+    
+    cfg := network.DefaultConfig()
+    cfg.NumValidators = 1
+    
+    s.cfg = cfg
+    var err error
+    s.network, err = network.New(s.T(), s.T().TempDir(), cfg)
+    s.Require().NoError(err)
+    
+    s.Require().NoError(s.network.WaitForNextBlock())
+}
+
+func (s *IntegrationTestSuite) TearDownSuite() {
+    s.T().Log("tearing down integration test suite")
+    s.network.Cleanup()
+}
+
+func TestIntegrationTestSuite(t *testing.T) {
+    suite.Run(t, new(IntegrationTestSuite))
+}
+```
+
+## Testing Neutron Modules
+
+### 1. Oracle Module Tests
+
+```go
+func (s *IntegrationTestSuite) TestOracleModule() {
+    val := s.network.Validators[0]
+    
+    // Test price submission
+    priceMsg := &oracletypes.MsgAggregateExchangeRateVote{
+        ExchangeRates: "1.5uatom,2.0ubtc",
+        Feeder:        val.Address.String(),
+        Validator:     val.ValAddress.String(),
+    }
+    
+    _, err := s.network.SendMsgs(val, priceMsg)
+    s.Require().NoError(err)
+    
+    // Wait for next block
+    s.Require().NoError(s.network.WaitForNextBlock())
+    
+    // Query the price
+    queryClient := oracletypes.NewQueryClient(val.ClientCtx)
+    resp, err := queryClient.ExchangeRate(context.Background(), &oracletypes.QueryExchangeRateRequest{
+        Denom: "uatom",
+    })
+    s.Require().NoError(err)
+    s.Require().Equal("1.5", resp.ExchangeRate.String())
+}
+```
+
+### 2. Cron Module Tests
+
+```go
+func (s *IntegrationTestSuite) TestCronModule() {
+    val := s.network.Validators[0]
+    
+    // Create a cron schedule
+    scheduleMsg := &crontypes.MsgAddSchedule{
+        Authority: val.Address.String(),
+        Name:      "test-schedule",
+        Period:    60, // 1 minute
+        Msgs: []crontypes.MsgExecuteContract{
+            {
+                Contract: "neutron1...", // Contract address
+                Msg:      `{"increment":{"amount":"1"}}`,
+            },
+        },
+    }
+    
+    _, err := s.network.SendMsgs(val, scheduleMsg)
+    s.Require().NoError(err)
+    
+    // Verify schedule was created
+    queryClient := crontypes.NewQueryClient(val.ClientCtx)
+    resp, err := queryClient.Schedule(context.Background(), &crontypes.QueryScheduleRequest{
+        Name: "test-schedule",
+    })
+    s.Require().NoError(err)
+    s.Require().Equal("test-schedule", resp.Schedule.Name)
+}
+```
+
+### 3. ICQ Module Tests
+
+```go
+func (s *IntegrationTestSuite) TestICQModule() {
+    val := s.network.Validators[0]
+    
+    // Register an interchain query
+    registerMsg := &icqtypes.MsgRegisterInterchainQuery{
+        ConnectionId:        "connection-0",
+        QueryType:           "balance",
+        Keys:                [][]byte{[]byte("balances/cosmos1...")},
+        TransactionsFilter:  "",
+        UpdatePeriod:        10,
+        Sender:             val.Address.String(),
+    }
+    
+    _, err := s.network.SendMsgs(val, registerMsg)
+    s.Require().NoError(err)
+    
+    // Query registered queries
+    queryClient := icqtypes.NewQueryClient(val.ClientCtx)
+    resp, err := queryClient.RegisteredQueries(context.Background(), &icqtypes.QueryRegisteredQueriesRequest{})
+    s.Require().NoError(err)
+    s.Require().Greater(len(resp.RegisteredQueries), 0)
+}
+```
+
+## Testing IBC Functionality
+
+### 1. IBC Transfer Tests
+
+```go
+func (s *IntegrationTestSuite) TestIBCTransfer() {
+    val := s.network.Validators[0]
+    
+    // Create IBC transfer
+    transferMsg := &ibctransfertypes.MsgTransfer{
+        SourcePort:       "transfer",
+        SourceChannel:    "channel-0",
+        Token:           sdk.NewCoin("untrn", sdk.NewInt(1000)),
+        Sender:          val.Address.String(),
+        Receiver:        "cosmos1...", // Receiver on destination chain
+        TimeoutHeight:   clienttypes.NewHeight(1, 1000),
+    }
+    
+    _, err := s.network.SendMsgs(val, transferMsg)
+    s.Require().NoError(err)
+    
+    // Wait for packet to be sent
+    s.Require().NoError(s.network.WaitForNextBlock())
+    
+    // Verify packet was sent (check events)
+    // Implementation depends on your specific test setup
+}
+```
+
+### 2. Contract IBC Tests
+
+```go
+func (s *IntegrationTestSuite) TestContractIBC() {
+    val := s.network.Validators[0]
+    
+    // Deploy a contract that uses IBC
+    codeID := s.storeContract("artifacts/ibc_contract.wasm")
+    contractAddr := s.instantiateContract(codeID, `{"channel":"channel-0"}`)
+    
+    // Execute IBC action through contract
+    executeMsg := &wasmtypes.MsgExecuteContract{
+        Sender:   val.Address.String(),
+        Contract: contractAddr,
+        Msg:      []byte(`{"send_ibc_packet":{"data":"test"}}`),
+        Funds:    nil,
+    }
+    
+    _, err := s.network.SendMsgs(val, executeMsg)
+    s.Require().NoError(err)
+    
+    // Verify IBC packet was sent
+    s.Require().NoError(s.network.WaitForNextBlock())
+}
+```
+
+## Multi-Chain Integration Tests
+
+### 1. Set Up Multi-Chain Environment
+
+```go
+type MultiChainTestSuite struct {
+    suite.Suite
+    neutronChain *network.Network
+    gaiaChain    *network.Network
+    relayer      *relayer.Relayer
+}
+
+func (s *MultiChainTestSuite) SetupSuite() {
+    // Setup Neutron chain
+    neutronCfg := network.DefaultConfig()
+    neutronCfg.NumValidators = 1
+    s.neutronChain, _ = network.New(s.T(), s.T().TempDir(), neutronCfg)
+    
+    // Setup Gaia chain  
+    gaiaCfg := network.DefaultConfig()
+    gaiaCfg.NumValidators = 1
+    s.gaiaChain, _ = network.New(s.T(), s.T().TempDir(), gaiaCfg)
+    
+    // Setup relayer between chains
+    s.relayer = s.setupRelayer()
+}
+
+func (s *MultiChainTestSuite) TestCrossChainQuery() {
+    // Test ICQ functionality between chains
+    neutronVal := s.neutronChain.Validators[0]
+    gaiaVal := s.gaiaChain.Validators[0]
+    
+    // Register query on Neutron to query Gaia
+    registerMsg := &icqtypes.MsgRegisterInterchainQuery{
+        ConnectionId: "connection-0",
+        QueryType:    "balance", 
+        Keys:         [][]byte{balanceKey(gaiaVal.Address.String())},
+        UpdatePeriod: 1,
+        Sender:      neutronVal.Address.String(),
+    }
+    
+    _, err := s.neutronChain.SendMsgs(neutronVal, registerMsg)
+    s.Require().NoError(err)
+    
+    // Wait for query to be processed
+    time.Sleep(10 * time.Second)
+    
+    // Verify query results
+    queryClient := icqtypes.NewQueryClient(neutronVal.ClientCtx)
+    resp, err := queryClient.QueryResult(context.Background(), &icqtypes.QueryResultRequest{
+        QueryId: 1,
+    })
+    s.Require().NoError(err)
+    s.Require().NotNil(resp.Result)
+}
+```
+
+## Performance and Load Testing
+
+### 1. Transaction Throughput Tests
+
+```go
+func (s *IntegrationTestSuite) TestTransactionThroughput() {
+    val := s.network.Validators[0]
+    
+    // Send multiple transactions in parallel
+    numTxs := 100
+    var wg sync.WaitGroup
+    errors := make(chan error, numTxs)
+    
+    start := time.Now()
+    
+    for i := 0; i < numTxs; i++ {
+        wg.Add(1)
+        go func(i int) {
+            defer wg.Done()
+            
+            msg := &banktypes.MsgSend{
+                FromAddress: val.Address.String(),
+                ToAddress:   generateRandomAddress(),
+                Amount:      sdk.NewCoins(sdk.NewCoin("untrn", sdk.NewInt(1))),
+            }
+            
+            _, err := s.network.SendMsgs(val, msg)
+            if err != nil {
+                errors <- err
+            }
+        }(i)
+    }
+    
+    wg.Wait()
+    close(errors)
+    
+    elapsed := time.Since(start)
+    
+    // Check for errors
+    for err := range errors {
+        s.Require().NoError(err)
+    }
+    
+    // Calculate TPS
+    tps := float64(numTxs) / elapsed.Seconds()
+    s.T().Logf("Processed %d transactions in %v (%.2f TPS)", numTxs, elapsed, tps)
+    
+    // Assert minimum performance
+    s.Require().Greater(tps, 10.0, "Transaction throughput too low")
+}
+```
+
+### 2. Contract Gas Usage Tests
+
+```go
+func (s *IntegrationTestSuite) TestContractGasUsage() {
+    val := s.network.Validators[0]
+    
+    // Deploy test contract
+    codeID := s.storeContract("artifacts/test_contract.wasm")
+    contractAddr := s.instantiateContract(codeID, `{"initial_count":0}`)
+    
+    // Test different message types and their gas usage
+    testCases := []struct {
+        name string
+        msg  string
+        expectedGas uint64
+    }{
+        {"simple_increment", `{"increment":{"amount":"1"}}`, 50000},
+        {"complex_operation", `{"complex_op":{"data":"test"}}`, 100000},
+    }
+    
+    for _, tc := range testCases {
+        s.Run(tc.name, func() {
+            gasUsed := s.executeContractAndGetGas(contractAddr, tc.msg)
+            s.Require().LessOrEqual(gasUsed, tc.expectedGas, 
+                "Gas usage exceeded expected limit for %s", tc.name)
+        })
+    }
+}
+```
+
+## Running the Tests
+
+### 1. Basic Test Execution
+
+```bash
+# Run all integration tests
+go test -v ./...
+
+# Run specific test suite
+go test -v -run TestIntegrationTestSuite
+
+# Run with race detection
+go test -v -race ./...
+
+# Run with coverage
+go test -v -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+```
+
+### 2. Parallel Test Execution
+
+```bash
+# Run tests in parallel
+go test -v -parallel 4 ./...
+
+# Run specific parallel tests
+go test -v -parallel 2 -run TestMultiChain
+```
+
+### 3. Continuous Integration
+
+Create `.github/workflows/integration-tests.yml`:
+
+```yaml
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.21
+        
+    - name: Run integration tests
+      run: |
+        make test-integration
+        
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.out
+```
+
+## Best Practices
+
+1. **Isolation**: Each test should be independent and not rely on state from other tests
+2. **Cleanup**: Always clean up resources after tests complete
+3. **Deterministic**: Tests should produce consistent results across runs
+4. **Fast Feedback**: Keep test execution time reasonable
+5. **Clear Assertions**: Use descriptive error messages in assertions
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Test Network Startup Fails">
+    Check port availability and ensure no other test networks are running:
+    ```bash
+    lsof -i :26657
+    pkill -f neutrond
+    ```
+  </Accordion>
+  
+  <Accordion title="IBC Tests Timeout">
+    Increase timeout values for IBC operations and ensure relayer is properly configured.
+  </Accordion>
+  
+  <Accordion title="Flaky Tests">
+    Add proper waiting mechanisms and avoid hard-coded delays. Use event-based waiting instead.
+  </Accordion>
+</AccordionGroup>
+
+Integration testing ensures your Neutron applications work correctly in realistic blockchain environments. These tests catch issues that unit tests might miss and validate the entire system's behavior. 

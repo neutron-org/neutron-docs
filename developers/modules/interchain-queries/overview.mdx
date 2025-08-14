@@ -1,0 +1,128 @@
+---
+title: "Interchain Queries Module"
+description: "Query cross-chain data and receive verification for on-chain use"
+---
+
+This document explains the `interchainqueries` module for the Neutron network.
+
+Interchain Queries allow developers to get verifiable data from other blockchains. This feature is essential for creating secure cross-chain applications. The module uses Merkle proofs and IBC clients to confirm the accuracy of the data retrieved directly from the storage of the target blockchain. It allows any smart contract to register Interchain Queries without needing any special module on the target blockchain.
+
+<Info>
+While the Interchain Queries module supports both CLI commands and smart contract integration, most practical applications are implemented through CosmWasm smart contracts. Smart contracts provide more sophisticated handling of query results, automatic processing of updates, and integration with complex application logic.
+</Info>
+
+## Table of contents
+
+- [Overview](/developers/modules/interchain-queries/overview) — a high-level description of the module.
+- [Explanation](/developers/modules/interchain-queries/explanation) — an explanation of the module's concepts and the reasoning behind its design choices.
+- [How To](/developers/modules/interchain-queries/how-to) — short guides on performing basic operations with the module.
+- [Reference](/developers/modules/interchain-queries/reference) — complete technical reference including API endpoints, messages, events, state, and CLI commands.
+- [Known Bugs](/developers/modules/interchain-queries/known-bugs) — a list of known issues in the module.
+
+## Concepts
+
+A smart contract can register an Interchain Query to regularly fetch data from a remote chain's state and process it in any way it needs. There are two types of Interchain Queries:
+
+- **Key-Value Query (KV Query)**: This type retrieves values from the Cosmos-SDK KV-storage on a remote chain, using a set of keys. It can be used to get account balances, governance proposals, staking information, smart contract states, or any other data stored in the remote chain's KV-storage. Learn more about how KV queries work [here](/developers/modules/interchain-queries/explanation#how-do-kv-interchain-queries-work).
+
+- **Transactions Query (TX Query)**: This type finds transactions on a remote chain based on a set of parameters and conditions (called a transaction filter). For example, it can find transactions that happened before a specific block height, transactions sent to a certain recipient, or any other condition that can be defined using emitted events. Learn more about how TX queries work [here](/developers/modules/interchain-queries/explanation#how-do-tx-interchain-queries-work).
+
+Interchain Queries, like IBC, rely on an intermediary infrastructure called an [Interchain Query relayer](/developers/modules/interchain-queries/explanation#what-is-an-interchain-query-relayer) to serve smart contracts. The relayer is responsible for collecting the requested information (along with cryptographic proofs to verify its validity) based on the parameters of the Interchain Query. It then delivers this data to the `interchainqueries` module, which forwards it to the smart contracts for processing.  
+
+This entire process is called Interchain Query execution, and the step where the data is delivered is known as Interchain Query result submission. The `interchainqueries` module provides endpoints and emits specific events to make the relayer's job easier. You can find more details about these events and endpoints in the [Reference section](/developers/modules/interchain-queries/reference).
+
+An Interchain Query relayer submits a query result using the [SubmitQueryResult](/developers/modules/interchain-queries/reference#submitqueryresult) endpoint of the `interchainqueries` module. Through this endpoint, the `interchainqueries` module verifies the result and triggers the corresponding [sudo handler](/developers/modules/interchain-queries/reference#sudo) in the smart contract that owns the Interchain Query. The smart contract uses this handler to process the query result, reacting to the new data received from the target chain.
+
+Another similarity between the `interchainqueries` module and IBC is the use of IBC clients. All Interchain Queries involve reading data from a remote chain's storage, and this data is verified against the `ConsensusState` of an IBC client connected to that chain. During result submission, the `interchainqueries` module checks the submitted storage values using the provided proofs, comparing them against the `ConsensusState` of the IBC client on the Neutron side. This ensures that the authenticity of the retrieved data is guaranteed by the IBC protocol.
+
+## Types of Queries
+
+The module supports two types of queries:
+
+1. **Key-Value queries (KV-queries)**: These queries allow retrieving values stored under specific keys in the remote chain's state.
+
+2. **Transactions queries (TX-queries)**: These queries allow searching for transactions on a remote chain based on specific filters.
+
+> **Warning**: There is a known bug when querying empty or nil values with KV-queries. If the value under a key is empty or nil, the query will not return any result. This limitation should be considered when designing applications that depend on KV-queries.
+
+## ICQ Relayer
+
+The Interchain Queries module relies on a specialized component called the ICQ Relayer to function properly. 
+
+### Operation Process
+
+The ICQ Relayer continuously monitors the Neutron chain for registered interchain queries. When a new query is registered or when it's time to update an existing query (based on its update period), the relayer:
+
+1. Fetches the requested data from the remote chain
+2. Verifies the data using cryptographic proofs
+3. Submits the results back to Neutron
+
+The submitted results are then made available to the smart contract that registered the query.
+
+### Submission Mechanism
+
+Any Neutron account can submit query results, not just the ICQ Relayer. This design provides redundancy and prevents centralization. However, in practice, most result submissions are handled by dedicated relayers.
+
+## Query Creation Deposit
+
+To prevent spam and incentivize proper management of queries, the module implements a deposit system:
+
+1. When a query is registered, the creator must provide a deposit in NTRN tokens.
+2. This deposit is locked as long as the query is active.
+3. The deposit can be reclaimed by the owner when they remove the query.
+4. If a query becomes outdated (no longer needed but not removed), anyone can remove it after a certain period and claim a portion of the deposit as a reward.
+
+### Permissions for Query Removal
+
+The `RemoveInterchainQuery` message can be executed by:
+- The query owner at any time
+- Any Neutron account after the query's "service period" has ended
+
+The service period is calculated as: `latest query result submission height + (query update period) * 20`
+
+## Transaction Filters
+
+For TX-queries, the module allows specifying filters to narrow down the transactions being queried. Filters can be constructed based on:
+
+- Transaction events
+- Message types
+- Specific fields within messages
+
+### Filter Strategy
+
+- **Using fewer filters**: Results in more transactions being returned, which may increase gas costs but ensures no relevant transactions are missed.
+- **Using more specific filters**: Reduces the number of transactions returned, lowering gas costs but risking missing relevant transactions if filters are too restrictive.
+
+## Integration with Smart Contracts
+
+Smart contracts interact with the Interchain Queries module through:
+
+1. **Registration**: Contracts can register new queries by sending the appropriate messages and providing the required deposit.
+2. **Result Access**: Query results are stored in the module's state and can be accessed by contracts through query methods.
+3. **Update and Removal**: Contracts can update their queries' parameters or remove them when no longer needed.
+
+The module is designed to be easily integrated with CosmWasm contracts, providing a simple interface for cross-chain data access.
+
+## Documentation Sections
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 mb-8">
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/interchain-queries/explanation">
+    <h4 className="font-semibold mb-2">Technical Details</h4>
+    <p className="text-sm">Deep dive into how Interchain Queries work and their verification mechanisms</p>
+  </a>
+  
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/interchain-queries/how-to">
+    <h4 className="font-semibold mb-2">How-to Guide</h4>
+    <p className="text-sm">Step-by-step instructions for using Interchain Queries in your contracts</p>
+  </a>
+  
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/interchain-queries/reference">
+    <h4 className="font-semibold mb-2">Complete Reference</h4>
+    <p className="text-sm">Comprehensive technical reference including API, messages, events, state, and CLI</p>
+  </a>
+  
+  <a className="flex flex-col p-5 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900" href="/developers/modules/interchain-queries/known-bugs">
+    <h4 className="font-semibold mb-2">Known Bugs</h4>
+    <p className="text-sm">Known issues and limitations of the ICQ module</p>
+  </a>
+</div> 

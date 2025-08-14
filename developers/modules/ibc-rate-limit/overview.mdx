@@ -1,0 +1,126 @@
+---
+title: "IBC Rate Limit Module"
+icon: "gauge-high"
+---
+
+The IBC Rate Limit module is a minimal IBC middleware that enables governance-configurable rate limiting for IBC transfers. It acts as a critical safety control to protect assets on Neutron in the event of security incidents such as bugs or hacks on Neutron, counter-party chains, or in the IBC protocol itself.
+
+## Motivation
+
+The motivation for IBC rate limiting comes from empirical observations of blockchain bridge hacks where rate limits would have massively reduced the stolen amount of assets:
+
+- **Polynetwork Bridge Hack** ($611 million) - [Details](https://rekt.news/polynetwork-rekt/)
+- **BNB Bridge Hack** ($586 million) - [Details](https://rekt.news/bnb-bridge-rekt/)
+- **Wormhole Bridge Hack** ($326 million) - [Details](https://rekt.news/wormhole-rekt/)
+- **Nomad Bridge Hack** ($190 million) - [Details](https://rekt.news/nomad-rekt/)
+- **Harmony Bridge Hack** ($100 million) - [Details](https://rekt.news/harmony-rekt/)
+- **Dragonberry IBC bug** (amount at risk undisclosed, but discovered by Neutron core developers)
+
+In the presence of a software bug on Neutron, IBC itself, or on a counterparty chain, rate limits prevent the bridge from being fully depegged. The core principle: **a 30% asset depeg is infinitely better than a 100% depeg**. 
+
+It's remarkable that today these complex bridged assets can instantly go to zero in the event of a bug. The goal is to raise alerts when something has potentially gone wrong, allowing validators and developers time to analyze, react, and protect larger portions of user funds. 
+
+Rate limits sacrifice liveness in extreme transfer scenarios to prevent catastrophic full fund risks. They aren't the end-all of safety controls—they're merely the simplest automated one that can be implemented today.
+
+## Rate Limiting Architecture
+
+The system consists of two components:
+
+### 1. IBC Rate Limit Module (Go Middleware)
+- **Minimal IBC middleware** that intercepts IBC packets
+- **Contract integration** forwards packet data to CosmWasm contract
+- **Failure handling** automatically reverts failed transfers
+- **Governance management** of contract address parameter
+
+### 2. Rate Limiting Contract (CosmWasm)
+- **Rate limiting logic** implemented in upgradeable CosmWasm contract
+- **Contract-specific behavior** varies by implementation
+- **Governance upgradeable** without chain upgrades
+
+<Warning>
+**Contract-Dependent Behavior**: The actual rate limiting strategy (quotas, time periods, flow tracking, token handling, etc.) is entirely determined by the CosmWasm contract implementation. Different contracts may implement completely different approaches.
+</Warning>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Bridge Security" icon="shield">
+    Prevents catastrophic fund loss from bridge exploits by enabling rate limiting controls.
+  </Card>
+  <Card title="Minimal Middleware" icon="layers">
+    Lightweight packet forwarding without implementing rate limiting logic in consensus code.
+  </Card>
+  <Card title="Governance Managed" icon="users-gear">
+    Contract address can be updated through governance proposals without chain upgrades.
+  </Card>
+  <Card title="Flexible Implementation" icon="settings">
+    Rate limiting strategy is determined by the CosmWasm contract, enabling diverse approaches.
+  </Card>
+</CardGroup>
+
+## Module Implementation
+
+The Go module provides the minimal middleware interface:
+
+- **Packet Forwarding**: Sends packet information to the configured contract for send/receive operations
+- **Failure Handling**: Automatically calls contract's undo function when packets fail
+- **Parameter Management**: Manages the contract address parameter through governance
+- **Error Handling**: Distinguishes rate limit errors from other contract errors based on error message content
+
+<Info>
+**Separation of Concerns**: The Go module handles IBC packet interception and forwarding, while the CosmWasm contract implements all rate limiting logic. This enables flexible rate limiting strategies without consensus code changes.
+</Info>
+
+## Contract Message Interface
+
+The module sends standardized sudo messages to the contract:
+
+### send_packet
+Sent when an IBC packet is being transmitted from Neutron.
+
+### recv_packet  
+Sent when an IBC packet is being received by Neutron.
+
+### undo_send
+Sent when a packet send fails and needs to be reverted.
+
+<Info>
+**Message Structure**: The module forwards complete packet information including sequence, source/destination channels, token data, and timeout information. How the contract processes this information depends on the contract's implementation.
+</Info>
+
+## Module Behavior
+
+### When Contract Address is Set
+- All IBC transfers are forwarded to the contract for approval
+- If contract returns error containing "rate limit exceeded", transfer is blocked
+- Failed packets automatically trigger undo_send message to contract
+- Other contract errors return generic contract error
+
+### When Contract Address is Empty
+- All IBC transfers proceed normally without any rate limiting
+- Module acts as transparent pass-through middleware
+
+## Usage Strategy
+
+### Current Implementation
+- **Manual Configuration**: All rate limiting policies must be configured manually through governance
+- **Contract Deployment**: Governance must deploy and configure the CosmWasm contract separately
+
+### Future Considerations
+The thesis is that it's worthwhile to sacrifice liveness in the case of legitimate demand to send extreme amounts of funds, in order to prevent terrible long-tail full fund risks. Rate limits provide time for human assessment and reaction rather than automated resolution.
+
+Potential future enhancements could include automatic conservative backstops for new channels or assets, but these would be implemented at the contract level, not in the module itself.
+
+## Learn More
+
+<CardGroup cols={2}>
+  <Card title="Module Implementation" icon="book" href="/developers/modules/ibc-rate-limit/explanation">
+    Understand the middleware architecture and contract integration
+  </Card>
+  <Card title="Configuration Guide" icon="code" href="/developers/modules/ibc-rate-limit/how-to">
+    Learn how to configure the contract address parameter
+  </Card>
+  <Card title="Technical Reference" icon="file-code" href="/developers/modules/ibc-rate-limit/reference">
+    View module parameters and message specifications
+  </Card>
+</CardGroup> 

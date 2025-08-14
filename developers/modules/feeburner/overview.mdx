@@ -1,0 +1,31 @@
+---
+title: "Overview"
+---
+
+The Fee Burner module is a core component of Neutron's tokenomics design. It manages transaction fees by implementing a deflationary mechanism that burns NTRN tokens and redistributes other token denominations to the Treasury.
+
+<Info>
+**Governance-Controlled Parameters**: The Fee Burner module's parameters (such as treasury address) can only be updated through governance proposals. Individual users cannot directly modify module settings.
+</Info>
+
+## Key Features
+
+- **NTRN Token Burning**: Automatically burns all fees collected in NTRN tokens, creating deflationary pressure on the token supply
+  
+- **Treasury Redistribution**: Directs non-NTRN fee tokens to the Treasury address for ecosystem funding
+
+- **Automatic Execution**: Runs at the end of each block to process accumulated fees
+
+- **Accounting**: Tracks the total amount of NTRN tokens burned over time
+
+## Module Functionality
+
+The Fee Burner module operates through the following workflow:
+
+1. **Fee Processing**: At the end of each block, the Fee Burner module processes all fees in its designated module account:
+   - **100% of NTRN tokens are burned**, permanently removing them from circulation
+   - Non-NTRN tokens are sent to the Treasury address for further ecosystem management
+
+2. **Record Keeping**: The module maintains a state record of the total amount of NTRN tokens burned since genesis
+
+This mechanism ensures a sustainable tokenomics model by creating continuous deflationary pressure on the NTRN token while providing funding for ecosystem development through the Treasury. 

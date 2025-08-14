@@ -1,0 +1,704 @@
+---
+title: "Part 3: Building a Web App"
+description: "Create a modern web application that interacts with your Neutron smart contracts"
+---
+
+In this final part of the onboarding series, you'll build a React web application that provides a user-friendly interface for interacting with your smart contract. You'll learn modern Web3 frontend patterns and Neutron-specific integrations.
+
+## What You'll Build
+
+A modern React app with:
+- Wallet connection (Keplr integration)
+- Real-time contract state display
+- Transaction execution with user feedback
+- Price monitoring from Oracle module
+- Responsive, beautiful UI
+
+## Prerequisites
+
+- Completed [Part 2: Modules & Contracts](/developers/tutorials/onboarding/part-2-modules-contracts)
+- Node.js and npm installed
+- Basic React knowledge
+- Deployed contract from previous tutorials
+
+## Project Setup
+
+### 1. Initialize React App
+
+```bash
+# Create React app with TypeScript
+npx create-react-app neutron-counter-app --template typescript
+cd neutron-counter-app
+
+# Install Neutron and Cosmos dependencies
+npm install @cosmjs/stargate @cosmjs/proto-signing @keplr-wallet/types
+npm install @neutron-org/neutronjs @chakra-ui/react @emotion/react @emotion/styled framer-motion
+
+# Install development dependencies
+npm install --save-dev @types/node
+```
+
+### 2. Configure Environment
+
+Create `.env` file:
+
+```env
+REACT_APP_CHAIN_ID=neutron-testing-1
+REACT_APP_RPC_URL=http://localhost:26657
+REACT_APP_CONTRACT_ADDRESS=your_contract_address_here
+```
+
+### 3. Set Up Wallet Integration
+
+Create `src/hooks/useWallet.ts`:
+
+```typescript
+import { useState, useEffect } from 'react';
+import { Window as KeplrWindow } from '@keplr-wallet/types';
+
+declare global {
+  interface Window extends KeplrWindow {}
+}
+
+export interface WalletState {
+  address: string | null;
+  isConnected: boolean;
+  isConnecting: boolean;
+}
+
+export const useWallet = () => {
+  const [wallet, setWallet] = useState<WalletState>({
+    address: null,
+    isConnected: false,
+    isConnecting: false,
+  });
+
+  const connectWallet = async () => {
+    if (!window.keplr) {
+      alert('Please install Keplr extension');
+      return;
+    }
+
+    setWallet(prev => ({ ...prev, isConnecting: true }));
+
+    try {
+      // Enable Neutron chain
+      await window.keplr.enable(process.env.REACT_APP_CHAIN_ID!);
+      
+      // Get the offline signer
+      const offlineSigner = window.keplr.getOfflineSigner(process.env.REACT_APP_CHAIN_ID!);
+      const accounts = await offlineSigner.getAccounts();
+      
+      setWallet({
+        address: accounts[0].address,
+        isConnected: true,
+        isConnecting: false,
+      });
+    } catch (error) {
+      console.error('Failed to connect wallet:', error);
+      setWallet(prev => ({ ...prev, isConnecting: false }));
+    }
+  };
+
+  const disconnectWallet = () => {
+    setWallet({
+      address: null,
+      isConnected: false,
+      isConnecting: false,
+    });
+  };
+
+  // Check if wallet is already connected on page load
+  useEffect(() => {
+    const checkConnection = async () => {
+      if (window.keplr) {
+        try {
+          const key = await window.keplr.getKey(process.env.REACT_APP_CHAIN_ID!);
+          setWallet({
+            address: key.bech32Address,
+            isConnected: true,
+            isConnecting: false,
+          });
+        } catch (error) {
+          // Not connected, do nothing
+        }
+      }
+    };
+    
+    checkConnection();
+  }, []);
+
+  return {
+    ...wallet,
+    connectWallet,
+    disconnectWallet,
+  };
+};
+```
+
+### 4. Create Contract Interface
+
+Create `src/hooks/useContract.ts`:
+
+```typescript
+import { useState, useEffect, useCallback } from 'react';
+import { SigningStargateClient } from '@cosmjs/stargate';
+import { MsgExecuteContract } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
+import { Window as KeplrWindow } from '@keplr-wallet/types';
+
+declare global {
+  interface Window extends KeplrWindow {}
+}
+
+interface ContractState {
+  count: string;
+  lastPrice: string;
+  threshold: string;
+}
+
+interface UseContractReturn {
+  contractState: ContractState | null;
+  isLoading: boolean;
+  increment: (amount: string) => Promise<void>;
+  checkPriceAndIncrement: (amount: string) => Promise<void>;
+  refreshState: () => Promise<void>;
+}
+
+export const useContract = (address: string | null): UseContractReturn => {
+  const [contractState, setContractState] = useState<ContractState | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const queryContract = useCallback(async () => {
+    if (!address) return;
+
+    try {
+      const client = await SigningStargateClient.connectWithSigner(
+        process.env.REACT_APP_RPC_URL!,
+        window.keplr!.getOfflineSigner(process.env.REACT_APP_CHAIN_ID!)
+      );
+
+      // Query contract state
+      const countQuery = await client.queryContractSmart(
+        process.env.REACT_APP_CONTRACT_ADDRESS!,
+        { get_count: {} }
+      );
+
+      const priceQuery = await client.queryContractSmart(
+        process.env.REACT_APP_CONTRACT_ADDRESS!,
+        { get_last_price: {} }
+      );
+
+      const configQuery = await client.queryContractSmart(
+        process.env.REACT_APP_CONTRACT_ADDRESS!,
+        { get_config: {} }
+      );
+
+      setContractState({
+        count: countQuery.count,
+        lastPrice: priceQuery.price,
+        threshold: configQuery.price_threshold,
+      });
+    } catch (error) {
+      console.error('Failed to query contract:', error);
+    }
+  }, [address]);
+
+  const executeContract = useCallback(async (msg: any) => {
+    if (!address || !window.keplr) return;
+
+    setIsLoading(true);
+    try {
+      const client = await SigningStargateClient.connectWithSigner(
+        process.env.REACT_APP_RPC_URL!,
+        window.keplr.getOfflineSigner(process.env.REACT_APP_CHAIN_ID!)
+      );
+
+      const executeMsg = {
+        typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
+        value: MsgExecuteContract.fromPartial({
+          sender: address,
+          contract: process.env.REACT_APP_CONTRACT_ADDRESS!,
+          msg: new TextEncoder().encode(JSON.stringify(msg)),
+          funds: [],
+        }),
+      };
+
+      const fee = {
+        amount: [{ denom: 'untrn', amount: '2000' }],
+        gas: '200000',
+      };
+
+      const result = await client.signAndBroadcast(address, [executeMsg], fee);
+      
+      if (result.code === 0) {
+        console.log('Transaction successful:', result.transactionHash);
+        await queryContract(); // Refresh state
+      } else {
+        throw new Error(`Transaction failed: ${result.rawLog}`);
+      }
+    } catch (error) {
+      console.error('Transaction failed:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [address, queryContract]);
+
+  const increment = useCallback(async (amount: string) => {
+    await executeContract({ increment: { amount } });
+  }, [executeContract]);
+
+  const checkPriceAndIncrement = useCallback(async (amount: string) => {
+    await executeContract({ check_price_and_increment: { amount } });
+  }, [executeContract]);
+
+  const refreshState = useCallback(async () => {
+    await queryContract();
+  }, [queryContract]);
+
+  // Query contract state when address changes
+  useEffect(() => {
+    if (address) {
+      queryContract();
+    }
+  }, [address, queryContract]);
+
+  return {
+    contractState,
+    isLoading,
+    increment,
+    checkPriceAndIncrement,
+    refreshState,
+  };
+};
+```
+
+### 5. Build the UI Components
+
+Create `src/components/WalletConnect.tsx`:
+
+```tsx
+import React from 'react';
+import { Button, Box, Text } from '@chakra-ui/react';
+import { useWallet } from '../hooks/useWallet';
+
+export const WalletConnect: React.FC = () => {
+  const { address, isConnected, isConnecting, connectWallet, disconnectWallet } = useWallet();
+
+  return (
+    <Box p={4} borderWidth={1} borderRadius="md" mb={4}>
+      <Text fontSize="lg" mb={2}>Wallet Connection</Text>
+      {isConnected ? (
+        <Box>
+          <Text fontSize="sm" color="gray.600" mb={2}>
+            Connected: {address?.slice(0, 10)}...{address?.slice(-8)}
+          </Text>
+          <Button colorScheme="red" size="sm" onClick={disconnectWallet}>
+            Disconnect
+          </Button>
+        </Box>
+      ) : (
+        <Button 
+          colorScheme="blue" 
+          onClick={connectWallet}
+          isLoading={isConnecting}
+          loadingText="Connecting..."
+        >
+          Connect Keplr Wallet
+        </Button>
+      )}
+    </Box>
+  );
+};
+```
+
+Create `src/components/ContractInterface.tsx`:
+
+```tsx
+import React, { useState } from 'react';
+import {
+  Box,
+  Text,
+  Button,
+  Input,
+  VStack,
+  HStack,
+  useToast,
+  Badge,
+  Divider,
+} from '@chakra-ui/react';
+import { useWallet } from '../hooks/useWallet';
+import { useContract } from '../hooks/useContract';
+
+export const ContractInterface: React.FC = () => {
+  const { address, isConnected } = useWallet();
+  const { contractState, isLoading, increment, checkPriceAndIncrement, refreshState } = useContract(address);
+  const [incrementAmount, setIncrementAmount] = useState('1');
+  const toast = useToast();
+
+  const handleIncrement = async () => {
+    try {
+      await increment(incrementAmount);
+      toast({
+        title: 'Success!',
+        description: `Incremented counter by ${incrementAmount}`,
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to increment counter',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handlePriceIncrement = async () => {
+    try {
+      await checkPriceAndIncrement(incrementAmount);
+      toast({
+        title: 'Success!',
+        description: 'Price check passed, counter incremented',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Price check failed or increment failed',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  if (!isConnected) {
+    return (
+      <Box p={4} borderWidth={1} borderRadius="md" textAlign="center">
+        <Text>Please connect your wallet to interact with the contract</Text>
+      </Box>
+    );
+  }
+
+  return (
+    <Box p={6} borderWidth={1} borderRadius="lg" shadow="md">
+      <Text fontSize="xl" mb={4} fontWeight="bold">Smart Contract Interface</Text>
+      
+      {contractState && (
+        <VStack align="stretch" spacing={4}>
+          {/* Contract State Display */}
+          <Box p={4} bg="gray.50" borderRadius="md">
+            <Text fontSize="lg" mb={2}>Contract State</Text>
+            <HStack justify="space-between">
+              <Text>Current Count:</Text>
+              <Badge colorScheme="blue" fontSize="md">{contractState.count}</Badge>
+            </HStack>
+            <HStack justify="space-between" mt={2}>
+              <Text>Last ATOM Price:</Text>
+              <Badge colorScheme="green" fontSize="md">${contractState.lastPrice}</Badge>
+            </HStack>
+            <HStack justify="space-between" mt={2}>
+              <Text>Price Threshold:</Text>
+              <Badge colorScheme="orange" fontSize="md">${contractState.threshold}</Badge>
+            </HStack>
+          </Box>
+
+          <Divider />
+
+          {/* Controls */}
+          <VStack spacing={3}>
+            <HStack width="100%">
+              <Text>Amount to increment:</Text>
+              <Input
+                value={incrementAmount}
+                onChange={(e) => setIncrementAmount(e.target.value)}
+                placeholder="Enter amount"
+                size="sm"
+                width="100px"
+                type="number"
+                min="1"
+                max="100"
+              />
+            </HStack>
+
+            <VStack width="100%" spacing={2}>
+              <Button
+                colorScheme="blue"
+                onClick={handleIncrement}
+                isLoading={isLoading}
+                loadingText="Processing..."
+                width="100%"
+              >
+                Simple Increment
+              </Button>
+              
+              <Button
+                colorScheme="green"
+                onClick={handlePriceIncrement}
+                isLoading={isLoading}
+                loadingText="Checking Price..."
+                width="100%"
+              >
+                Price-Checked Increment
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={refreshState}
+                width="100%"
+                size="sm"
+              >
+                Refresh State
+              </Button>
+            </VStack>
+          </VStack>
+        </VStack>
+      )}
+    </Box>
+  );
+};
+```
+
+### 6. Main App Component
+
+Update `src/App.tsx`:
+
+```tsx
+import React from 'react';
+import { ChakraProvider, Container, VStack, Heading, Text } from '@chakra-ui/react';
+import { WalletConnect } from './components/WalletConnect';
+import { ContractInterface } from './components/ContractInterface';
+
+function App() {
+  return (
+    <ChakraProvider>
+      <Container maxW="md" py={8}>
+        <VStack spacing={6}>
+          <VStack textAlign="center">
+            <Heading size="lg">Neutron Counter DApp</Heading>
+            <Text color="gray.600">
+              A decentralized counter with Oracle price integration
+            </Text>
+          </VStack>
+          
+          <WalletConnect />
+          <ContractInterface />
+          
+          <Text fontSize="sm" color="gray.500" textAlign="center">
+            Built with React, CosmJS, and Neutron
+          </Text>
+        </VStack>
+      </Container>
+    </ChakraProvider>
+  );
+}
+
+export default App;
+```
+
+## Advanced Features
+
+### 1. Transaction History
+
+Add transaction monitoring:
+
+```typescript
+// In useContract hook
+const [transactions, setTransactions] = useState<Array<{
+  hash: string;
+  type: string;
+  timestamp: number;
+  status: 'pending' | 'success' | 'failed';
+}>>([]);
+
+const executeContract = useCallback(async (msg: any, type: string) => {
+  // ... existing code ...
+  
+  const txId = Date.now().toString();
+  setTransactions(prev => [...prev, {
+    hash: txId,
+    type,
+    timestamp: Date.now(),
+    status: 'pending'
+  }]);
+
+  try {
+    const result = await client.signAndBroadcast(address, [executeMsg], fee);
+    
+    setTransactions(prev => 
+      prev.map(tx => 
+        tx.hash === txId 
+          ? { ...tx, hash: result.transactionHash, status: 'success' }
+          : tx
+      )
+    );
+  } catch (error) {
+    setTransactions(prev => 
+      prev.map(tx => 
+        tx.hash === txId 
+          ? { ...tx, status: 'failed' }
+          : tx
+      )
+    );
+    throw error;
+  }
+}, [address, queryContract]);
+```
+
+### 2. Real-time Updates
+
+Add WebSocket connection for real-time updates:
+
+```typescript
+useEffect(() => {
+  const ws = new WebSocket('ws://localhost:26657/websocket');
+  
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.result?.events?.some((e: any) => 
+      e.type === 'wasm' && 
+      e.attributes?.some((a: any) => 
+        a.key === 'contract_address' && 
+        a.value === process.env.REACT_APP_CONTRACT_ADDRESS
+      )
+    )) {
+      queryContract(); // Refresh on contract events
+    }
+  };
+  
+  return () => ws.close();
+}, [queryContract]);
+```
+
+### 3. Error Boundaries
+
+Create `src/components/ErrorBoundary.tsx`:
+
+```tsx
+import React, { Component, ReactNode } from 'react';
+import { Box, Text, Button } from '@chakra-ui/react';
+
+interface Props {
+  children: ReactNode;
+}
+
+interface State {
+  hasError: boolean;
+  error?: Error;
+}
+
+export class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Box p={6} textAlign="center">
+          <Text fontSize="xl" mb={4}>Something went wrong</Text>
+          <Text fontSize="sm" color="gray.600" mb={4}>
+            {this.state.error?.message}
+          </Text>
+          <Button onClick={() => this.setState({ hasError: false })}>
+            Try Again
+          </Button>
+        </Box>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+```
+
+## Deployment
+
+### 1. Build for Production
+
+```bash
+# Build the app
+npm run build
+
+# Serve locally to test
+npx serve -s build
+```
+
+### 2. Deploy to IPFS
+
+```bash
+# Install IPFS CLI
+npm install -g ipfs-http-client
+
+# Add build folder to IPFS
+ipfs add -r build/
+
+# Pin the hash for persistence
+ipfs pin add YOUR_HASH_HERE
+```
+
+### 3. Configure for Mainnet
+
+Update `.env` for mainnet:
+
+```env
+REACT_APP_CHAIN_ID=neutron-1
+REACT_APP_RPC_URL=https://rpc-neutron.cosmos.directory
+REACT_APP_CONTRACT_ADDRESS=your_mainnet_contract_address
+```
+
+## Key Features Implemented
+
+- **Wallet Integration**: Seamless Keplr wallet connection
+- **Contract Interaction**: Execute and query smart contract functions
+- **Real-time Updates**: Live contract state monitoring
+- **Error Handling**: Comprehensive error boundaries and user feedback
+- **Responsive Design**: Modern, mobile-friendly interface
+- **Oracle Integration**: Display live price data from Neutron's Oracle module
+
+## Security Best Practices
+
+1. **Input Validation**: Always validate user inputs
+2. **Error Handling**: Never expose sensitive error details
+3. **State Management**: Keep sensitive data out of global state
+4. **Environment Variables**: Use environment variables for configuration
+5. **HTTPS**: Always serve over HTTPS in production
+
+## Next Steps
+
+Congratulations! You've built a complete DApp on Neutron. Consider exploring:
+
+- **Advanced UI**: Add charts, animations, and better UX
+- **Multi-contract Integration**: Interact with multiple contracts
+- **Cross-chain Features**: Use ICQ to display data from other chains
+- **Testing**: Add comprehensive unit and integration tests
+- **Mobile App**: Build a React Native version
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Keplr Not Detected">
+    Ensure Keplr extension is installed and enabled. Handle the case where Keplr is not available.
+  </Accordion>
+  
+  <Accordion title="Transaction Fails">
+    Check gas limits, fee amounts, and contract message format. Use browser dev tools to debug.
+  </Accordion>
+  
+  <Accordion title="State Not Updating">
+    Ensure you're calling `refreshState()` after successful transactions and handling async operations properly.
+  </Accordion>
+</AccordionGroup>
+
+You've now completed the full Neutron development journey from smart contract to web app! 🎉 

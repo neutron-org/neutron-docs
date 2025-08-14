@@ -1,0 +1,201 @@
+---
+sidebar_position: 1
+---
+
+# Technical Explanation
+
+The Token Factory module enables users to create and manage custom tokens on Neutron. This module was adapted from Osmosis Labs codebase and provides a framework for token creation, administration, and lifecycle management.
+
+## Core Concepts
+
+### Token Denomination Format
+
+Token Factory creates tokens with a standardized denomination format:
+
+```
+factory/{creator_address}/{subdenom}
+```
+
+**Components:**
+- `factory/`: Required prefix identifying Token Factory tokens
+- `{creator_address}`: Bech32 address of the token creator
+- `{subdenom}`: Custom subdenom chosen by creator (max 44 characters)
+
+**Examples:**
+- `factory/neutron1abc.../utoken`
+- `factory/neutron1xyz.../shares`
+- `factory/neutron1def.../points`
+
+### Token Administration
+
+Each token has an **admin** who controls its lifecycle:
+
+**Admin Powers:**
+- Mint new tokens to any address
+- Burn existing tokens from any address
+- Change token admin
+- Set token metadata via bank keeper
+- Configure before-send hooks
+- Force transfers (bypass hooks)
+
+**Admin Transfer:**
+- Admin can be transferred to another address
+- Admin can be set to empty string (renouncing control)
+- Once renounced, admin powers cannot be restored
+
+## Token Lifecycle
+
+### 1. Token Creation
+
+**Process:**
+1. User submits `MsgCreateDenom` with subdenom
+2. System validates subdenom using `GetTokenDenom()` and SDK `ValidateDenom()`
+3. Creation fee is charged (if configured) and sent to fee collector
+4. Full denomination is generated: `factory/{creator}/{subdenom}`
+5. Creator becomes initial admin
+6. `AuthorityMetadata` is set for the denom
+7. Denom is added to `CreatorPrefixStore`
+
+**Validation Rules:**
+- Subdenom maximum length: 44 characters
+- Creator address maximum length: 75 characters (59 + 16 HRP length)
+- Creator address cannot contain "/" characters
+- Must pass SDK denomination validation
+
+### 2. Token Supply Management
+
+**Minting:**
+- Only admin can mint tokens via `MsgMint`
+- Tokens minted to `mint_to_address` (defaults to sender if empty)
+- Uses bank keeper's mint functionality
+
+**Burning:**
+- Only admin can burn tokens via `MsgBurn`
+- Tokens burned from `burn_from_address` (defaults to sender if empty)
+- Cannot burn from module accounts (`ErrBurnFromModuleAccount`)
+- Uses bank keeper's burn functionality
+
+### 3. Token Metadata
+
+**Metadata Management:**
+- Only admin can set/update metadata via `MsgSetDenomMetadata`
+- Metadata stored via bank keeper using `SetDenomMetaData()`
+- Metadata must pass bank keeper validation
+
+### 4. Before-Send Hooks
+
+**Hook Mechanism:**
+- Custom logic executed before token transfers
+- Implemented as CosmWasm contracts
+- Two execution modes: tracking and blocking
+
+**Hook Types:**
+
+**TrackBeforeSend:**
+```go
+type TrackBeforeSendMsg struct {
+    From   string
+    To     string  
+    Amount Coin
+}
+```
+- Used for monitoring/tracking transfers
+- Has gas limit of 500,000 gas
+- Errors are suppressed (don't block transfers)
+
+**BlockBeforeSend:**
+```go
+type BlockBeforeSendMsg struct {
+    From   string
+    To     string
+    Amount Coin
+}
+```
+- Used for blocking/controlling transfers
+- Can prevent transfers by returning errors
+- No gas limit restrictions
+
+**Security:**
+- Only whitelisted contracts can be used as hooks
+- Whitelist managed through governance parameters
+- Admin can set/remove hooks for their tokens
+- Hook validation uses `AssertIsHookWhitelisted()`
+
+## Security Model
+
+### Permission System
+
+**Creator Permissions:**
+- Create tokens with their address as admin
+- Pay creation fees (if configured)
+- Choose subdenom (within length constraints)
+
+**Admin Permissions:**
+- All token management operations
+- Can delegate admin to another address
+- Can renounce admin (irreversible)
+
+**Governance Permissions:**
+- Update module parameters via `MsgUpdateParams`
+- Manage hook whitelist
+- Set fee collector address
+
+### Hook Security
+
+**Whitelist Protection:**
+- Only approved contracts can be used as hooks
+- Whitelist entries match `CodeID` and `DenomCreator`
+- Prevents malicious hook deployment
+
+**Hook Validation:**
+- Contract must exist and match whitelist entry
+- Creator and hook contract must match whitelist entry
+- Hooks are skipped (not blocked) if removed from whitelist
+
+### Economic Security
+
+**Creation Fees:**
+- Configurable through `denom_creation_fee` parameter
+- Fees sent to `fee_collector_address`
+- Both fee and collector must be set together or both unset
+
+**Gas Consumption:**
+- Additional gas cost via `denom_creation_gas_consume` parameter
+- TrackBeforeSend hooks have 500,000 gas limit
+- Gas consumption prevents infinite contract calls
+
+## Force Transfer Capability
+
+**Admin Override:**
+- Admin can force transfers that bypass before-send hooks via `MsgForceTransfer`
+- Transfers tokens directly between any two addresses
+- Does not trigger hook validation or execution
+
+## Implementation Details
+
+### State Storage
+
+**Authority Metadata:**
+- Maps denomination to admin address
+- Stored per-denom for efficient lookup
+
+**Hook Storage:**
+- Stores contract address for each denomination
+- Uses `BeforeSendHookAddressPrefixKey` for storage
+
+**Creator Registry:**
+- Tracks denoms created per creator address
+- Used for `DenomsFromCreator` queries
+
+### Length Constraints
+
+Based on SDK's 128-byte maximum denom length:
+- `MaxSubdenomLength = 44`
+- `MaxHrpLength = 16` 
+- `MaxCreatorLength = 75` (59 + 16)
+
+**Calculation:**
+```
+Total: 128 = "factory" + 2*"/" + creator_length + subdenom_length
+128 = 7 + 2 + 75 + 44 = 128
+``` 

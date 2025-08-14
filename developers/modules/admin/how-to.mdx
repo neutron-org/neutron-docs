@@ -1,0 +1,61 @@
+---
+title: "How-to"
+description: "Understanding how the DAO interacts with the admin module"
+---
+
+This guide explains how the admin module works within Neutron's governance system. The admin module is exclusively accessible by the DAO through WebAssembly bindings.
+
+<Warning>
+The admin module cannot be used directly by individual users or external contracts. All interactions must go through Neutron's DAO governance process.
+</Warning>
+
+## Understanding Admin Module Access
+
+The admin module operates under a strict access control model:
+
+- Only the DAO can send messages to the admin module
+- Messages are sent using WebAssembly bindings from the Main DAO
+- Individual users cannot directly submit proposals or interact with the module
+
+## DAO Governance Process
+
+### Proposal Types
+
+The DAO can submit two types of proposals through the admin module:
+
+#### Legacy Proposals
+- Based on the traditional `x/gov` module structure
+- Include predefined proposal types like `MigrateContract` or `DeleteAdmin`
+- Processed through dedicated handlers
+- Must be part of a whitelisted group for execution
+
+#### Message-Based Proposals
+- Introduced with SDK 0.47
+- Allow execution of any valid `sdk.Msg`
+- Provide greater flexibility for governance operations
+- Require modules to implement an `authority` field
+
+### Proposal Execution
+
+When the DAO submits a proposal:
+
+1. **Submission**: The DAO creates a proposal using WebAssembly bindings
+2. **Validation**: The admin module validates the proposal format and content
+3. **Authorization**: The module verifies the sender is the authorized DAO
+4. **Execution**: Valid proposals are executed immediately within the message server
+
+## Message Structure
+
+Proposals sent to the admin module follow Cosmos SDK guidelines and contain:
+
+- **Proposal Content**: The specific actions or changes to be implemented
+- **Proposer**: The DAO address submitting the proposal
+- **Message Type**: Either legacy proposal format or message-based format
+
+## Integration with Neutron Infrastructure
+
+The admin module integrates seamlessly with Neutron's governance infrastructure through:
+
+- **ProposalExecuteMessage Binding**: Allows processing of any Cosmos message type
+- **Signer Verification**: Ensures only authorized DAO can submit proposals
+- **Immediate Execution**: Proposals execute directly in the message server without queuing 

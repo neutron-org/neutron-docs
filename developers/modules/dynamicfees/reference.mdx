@@ -1,0 +1,50 @@
+---
+title: "Reference"
+description: "Basic reference for the Dynamic Fees module"
+---
+
+The Dynamic Fees module provides asset price conversion capabilities for the fee market by maintaining NTRN-denominated prices for supported assets.
+
+## Parameters
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `ntrn_prices` | DecCoin[] | Array of asset prices denominated in NTRN |
+
+### Price Format
+Each price entry contains:
+- `denom`: Asset denomination (e.g., "uatom", "uosmo")
+- `amount`: Price in NTRN (e.g., "0.150000000000000000")
+
+## Queries
+
+### QueryParams
+Retrieve the current asset price registry.
+
+**Response:**
+- `params`: Current Dynamic Fees parameters with asset prices
+
+## Messages
+
+### MsgUpdateParams
+Update asset prices through governance.
+
+**Authority Required**: Governance only
+
+**Fields:**
+- `authority`: Governance authority address
+- `params`: New module parameters with updated prices
+
+## Key Concepts
+
+- **Price Registry**: Maintains NTRN-denominated prices for supported assets
+- **Fee Market Integration**: Enables multi-asset fee payments
+- **Conversion Interface**: Provides denomination conversion capabilities
+- **Query-Only**: Users can only query current asset prices
+- **Governance Updates**: Prices can only be updated through governance proposals
+
+## Example Usage
+
+If 1 ATOM = 0.15 NTRN:
+- **Asset to NTRN**: 100 uatom → 15 untrn
+- **NTRN to Asset**: 15 untrn → 100 uatom 
