@@ -84,11 +84,9 @@ The choice of execution stage is important for dependencies between operations. 
 
 ### Governance-Based Management
 
-Schedules can only be managed through governance mechanisms:
-
-- **Main DAO**: Can create and remove any schedule
-- **Security SubDAO**: Can remove schedules (emergency situations)
-- **Individual users/contracts**: Cannot directly interact with the module
+- Schedule creation is controlled through governance (Main DAO or Cron SubDAO)
+- Contracts cannot directly create schedules
+- Schedule management requires governance proposals
 
 This governance-gated approach ensures that critical automated processes cannot be tampered with by unauthorized parties and maintains the security and integrity of the network.
 
