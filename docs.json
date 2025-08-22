@@ -91,6 +91,13 @@
               "defi/bull-vs-bear",
               "defi/drop"
             ]
+          },
+          {
+            "group": "BTC Summer",
+            "icon": "bitcoin",
+            "pages": [
+              "btc-summer/overview"
+            ]
           }
         ]
       },
