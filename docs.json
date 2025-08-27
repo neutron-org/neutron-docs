@@ -97,7 +97,9 @@
             "icon": "bitcoin",
             "pages": [
               "btc-summer/overview",
-              "btc-summer/vaults"
+              "btc-summer/campaign",
+              "btc-summer/vaults",
+              "btc-summer/technical"
             ]
           }
         ]
