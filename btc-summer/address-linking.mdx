@@ -1,0 +1,220 @@
+---
+title: "Address Linking"
+description: "Cross-chain address coordination system for connecting Ethereum deposits with Neutron-based boosts"
+icon: "link"
+---
+
+
+The BTC Summer campaign faces a unique cross-chain coordination challenge: users can deposit on two different networks, but all boost mechanisms exist only on Neutron.
+
+## The Challenge
+
+**Deposit Networks:**
+- **Ethereum**: Via automated campaign vaults
+- **Neutron**: Direct deposits to Supervaults or Amber Protocol
+
+**Boost Mechanisms:**
+- **NTRN Locking**: Only available on Neutron
+- **NFT Collections**: Only Superbolt collections on Neutron count
+
+**The Problem:** How do we connect deposits on Ethereum with boosts generated on Neutron for accurate reward calculations?
+
+## Technical Solution
+
+Instead of complex backend address matching, we implement a user-controlled **"pointing"** system where users explicitly designate which address should receive boost benefits.
+
+### System Architecture
+
+The campaign separates **deposits** from **boost logic**:
+
+- **Deposits**: Can occur on Ethereum (vaults) or Neutron (direct protocols)
+- **Boosts**: Only generated on Neutron via NTRN locking or NFT collections  
+- **Boost Pointer Contract**: Links Neutron-based boosts to any deposit address
+- **Pointing Operation**: User explicitly connects their boost to their deposit address
+
+### Core Components
+
+**Boost Pointer Contract**
+- Simple staking contract accepting NFT deposits
+- Accepts both Ethereum and Neutron address formats
+- No unbonding periods - purely accounting mechanism
+- Maps boost sources to target deposit addresses
+
+**Lock Receipt NFTs**
+- Functional NFTs representing locked NTRN positions
+- Store lock duration and amount information
+- Transferable on secondary markets (Superbolt)
+- Must be staked to Pointer Contract to activate boost
+
+## User Flows
+
+### NTRN Locking Boost Flow
+1. Acquire NTRN tokens
+2. Access Bitcoin Summer app at [app.neutron.org](https://app.neutron.org)
+3. Select lock amount and duration (up to 4 years)
+4. **Specify target address** where your BTC deposits are located
+5. Sign transaction to lock NTRN and point boost to selected address
+
+### NFT Collection Boost Flow  
+1. Acquire collection NFTs on Superbolt
+2. Access Bitcoin Summer app
+3. Select NFTs to stake for boost rewards
+4. **Specify target address** where your BTC deposits are located
+5. Sign transaction to stake NFTs and point boost to selected address
+
+## Address Resolution Logic
+
+The campaign interface handles multiple wallet connections using this priority system:
+
+### Single Wallet Connection
+- **Ethereum only**: Shows Ethereum deposits + any boosts pointed to Ethereum address
+- **Neutron only**: Shows Neutron deposits + any boosts pointed to Neutron address
+
+### Dual Wallet Connection
+The system favors the network with the most complete campaign information:
+1. **Deposit + Boost info** > **Deposit or Boost only** > **No info**
+2. Displays data from the "dominant network"
+3. Shows warnings for conflicting configurations
+
+## Scenario Matrix
+
+<div className="overflow-x-auto my-8">
+  <table className="min-w-full border border-gray-300 dark:border-gray-700">
+    <thead>
+      <tr className="bg-gray-100 dark:bg-gray-800">
+        <th className="p-3 text-left">Scenario</th>
+        <th className="p-3 text-left">ETH Connected</th>
+        <th className="p-3 text-left">Neutron Connected</th>
+        <th className="p-3 text-left">Both Connected</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr className="border-t border-gray-300 dark:border-gray-700">
+        <td className="p-3 font-medium">ETH deposits, no boost</td>
+        <td className="p-3">✅ Shows deposits</td>
+        <td className="p-3">❌ Empty</td>
+        <td className="p-3">✅ Shows deposits</td>
+      </tr>
+      <tr className="border-t border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+        <td className="p-3 font-medium">Neutron deposits, no boost</td>
+        <td className="p-3">❌ Empty</td>
+        <td className="p-3">✅ Shows deposits</td>
+        <td className="p-3">✅ Shows deposits</td>
+      </tr>
+      <tr className="border-t border-gray-300 dark:border-gray-700">
+        <td className="p-3 font-medium">ETH deposits + ETH-pointed boost</td>
+        <td className="p-3">✅ Complete view</td>
+        <td className="p-3">❌ Empty</td>
+        <td className="p-3">✅ Complete view</td>
+      </tr>
+      <tr className="border-t border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+        <td className="p-3 font-medium">ETH deposits + Neutron-pointed boost</td>
+        <td className="p-3">✅ Deposits only</td>
+        <td className="p-3">✅ Boost only</td>
+        <td className="p-3">⚠️ <strong>Conflict</strong></td>
+      </tr>
+      <tr className="border-t border-gray-300 dark:border-gray-700">
+        <td className="p-3 font-medium">Neutron deposits + ETH-pointed boost</td>
+        <td className="p-3">✅ Boost only</td>
+        <td className="p-3">✅ Deposits only</td>
+        <td className="p-3">⚠️ <strong>Conflict</strong></td>
+      </tr>
+      <tr className="border-t border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+        <td className="p-3 font-medium">Neutron deposits + Neutron-pointed boost</td>
+        <td className="p-3">❌ Empty</td>
+        <td className="p-3">✅ Complete view</td>
+        <td className="p-3">✅ Complete view</td>
+      </tr>
+      <tr className="border-t border-gray-300 dark:border-gray-700">
+        <td className="p-3 font-medium">Both networks deposits, no boost</td>
+        <td className="p-3">✅ ETH balance</td>
+        <td className="p-3">✅ Neutron balance</td>
+        <td className="p-3">⚠️ <strong>Conflict</strong></td>
+      </tr>
+      <tr className="border-t border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+        <td className="p-3 font-medium">Both networks deposits + ETH boost</td>
+        <td className="p-3">✅ Complete ETH</td>
+        <td className="p-3">✅ Neutron only</td>
+        <td className="p-3">⚠️ <strong>Conflict</strong></td>
+      </tr>
+      <tr className="border-t border-gray-300 dark:border-gray-700">
+        <td className="p-3 font-medium">Both networks deposits + Neutron boost</td>
+        <td className="p-3">✅ ETH only</td>
+        <td className="p-3">✅ Complete Neutron</td>
+        <td className="p-3">⚠️ <strong>Conflict</strong></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+## Error Cases & Resolution
+
+### 1. Conflicting Networks
+**Problem**: Deposits on one network, boost pointed to another  
+**Resolution**: Display warning suggesting single wallet connection
+
+### 2. Conflicting Balances
+**Problem**: Deposits on both networks simultaneously  
+**Resolution**: Show dominant network data with conflict warning
+
+### 3. Dominant Network Conflict
+**Problem**: Multiple networks with partial information  
+**Resolution**: Display dominant network info with warning toast for switching
+
+### 4. Total Conflict
+**Problem**: Boosts pointed to both networks  
+**Resolution**: Request user to disconnect one wallet
+
+## Best Practices
+
+### For Users
+- **Choose one primary network** for all campaign activities
+- **Ethereum strategy**: Deposit via vaults, point all boosts to ETH address
+- **Neutron strategy**: Deposit directly to protocols, point boosts to Neutron address  
+- **Avoid cross-network splitting** to prevent UI conflicts
+
+### Communication Guidelines
+- Focus on single address usage throughout the campaign
+- If depositing on Ethereum, point all boosts to your ETH address
+- If depositing directly on Neutron, point all boosts to your Neutron address
+- Generally encourage direct Neutron deposits for simplicity
+
+## Technical Implementation
+
+### Reward Claims (In Progress)
+For users claiming rewards from Ethereum deposits:
+
+1. **Sign Message**: User signs their Neutron address with Ethereum wallet
+2. **Submit Transaction**: Include signature in Neutron transaction for verification
+3. **Address Recovery**: Contract uses `ecrecover` to verify Ethereum address
+4. **One-Time Signatures**: Implement sequence numbers to prevent replay attacks
+
+### Boost Transfer Mechanics
+- Boost benefits only apply to current NFT holder
+- Transferring boost NFT transfers the boost benefits
+- Receiver must stake transferred NFT to activate boost
+- System designed for majority use cases with simple UX
+
+## Technical Glossary
+
+| Term | Definition |
+|------|------------|
+| **Collection NFTs** | Artsy NFTs from Superbolt marketplace used for boost rewards |
+| **Lock Receipt NFTs** | Functional NFTs representing locked NTRN positions |
+| **Boost Pointer Contract** | Smart contract mapping boost sources to target addresses |
+| **Pointing** | Operation of designating which address receives boost benefits |
+| **Dominant Network** | Network with both deposit and boost information in conflict scenarios |
+
+<Warning>
+This system prioritizes simplicity and user control over automatic backend matching. Complex edge cases are handled through clear error messaging and user guidance.
+</Warning>
+
+<Note>
+The address linking system ensures that users maintain control over their cross-chain reward coordination while providing a robust foundation for the campaign's technical infrastructure.
+</Note>
+
+## See Also
+
+- [Technical](/btc-summer/technical) - Detailed implementation specifications
+- [Reference](/btc-summer/reference) - Contract addresses and token denominations
+- [Rewards](/btc-summer/rewards) - High-level explanation of reward mechanisms

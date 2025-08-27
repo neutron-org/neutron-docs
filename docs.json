@@ -98,9 +98,11 @@
             "pages": [
               "btc-summer/overview",
               "btc-summer/campaign",
+              "btc-summer/vaults",
               "btc-summer/rewards",
               "btc-summer/technical",
-              "btc-summer/vaults"
+              "btc-summer/address-linking",
+              "btc-summer/reference"
             ]
           }
         ]

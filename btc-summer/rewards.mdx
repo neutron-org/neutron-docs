@@ -4,7 +4,6 @@ description: "Understanding BTC Summer reward mechanisms, multipliers, and how t
 icon: "gift"
 ---
 
-# Reward System Overview
 
 The BTC Summer campaign distributes **up to $10M in NTRN rewards** to participants through a sophisticated points-based system that rewards both deposit size and ecosystem engagement.
 
@@ -42,9 +41,11 @@ $$
 $$
 
 **Key Benefits:**
-- Up to **2x multiplier** on all rewards
-- Receipt NFTs are transferable (tradeable on secondary markets)
-- Locked NTRN is liquid staked with Drop for additional yield
+- Up to **triple your reward rate** (2x boost, 3x total) based on locked NTRN vs deposits
+- Earn **3% APR** on locked NTRN through liquid staking with Drop
+- Receipt NFTs are transferable, but boost benefits only apply to the current holder
+- Secondary markets may develop on platforms like Superbolt
+- Locked positions appear on [app.neutron.org/staking](https://app.neutron.org/staking)
 - Long-term alignment with Neutron ecosystem
 
 <Note>
@@ -71,8 +72,19 @@ Own NFTs from Neutron-based collections listed on Superbolt to earn additional m
 - Rarity within collections doesn't affect boost amount
 
 **Example:**
-If you hold 600 CEWTs (>30% of collection), 50 Quarks (1% of collection), and 1 each of three other collections, you'd receive:
-- +5% (CEWTs) + 2% (Quarks) + 1% + 1% + 1% = **+10% total boost**
+Bob holds 600 CEWTs, enough Quarks for 1% of collection, 1 Neutrinos, 1 Stonerneuts, 1 Dr Ank, and 10 Bad Kids:
+- Bad Kids don't count (not on Neutron)
+- 600 CEWTs > 30% of collection → +5% boost (Platinum)
+- Quarks ≥ 1% of collection → +2% boost (Bronze)
+- 1 Neutrinos → +1% boost (Wooden)  
+- 1 Stonerneuts → +1% boost (Wooden)
+- 1 Dr Ank → +1% boost (Wooden)
+- **Total: +10% boost**
+
+If Bob buys 400 Meme Ducks (100% of collection):
+- Top 5 boosts: +5% (CEWTs) + 5% (Ducks) + 2% (Quarks) + 1% + 1% = **+14% total boost**
+
+Note: Exact threshold numbers depend on each collection's max supply (e.g., 414 CEWTs needed for 30% of CEWT's 1,379 total supply).
 
 ## Wallet Linking
 
@@ -92,6 +104,8 @@ Since deposits can happen on Ethereum (via vaults) or Neutron (direct), but boos
 <Warning>
 Splitting deposits across Ethereum and Neutron addresses can create complications in reward calculations. Choose one primary address for the best experience.
 </Warning>
+
+For detailed technical information about the cross-chain coordination system, see [Address Linking](/btc-summer/address-linking).
 
 ## Multiplier Stacking
 
@@ -117,10 +131,10 @@ Users often buy and lock NTRN specifically to dilute other participants' rewards
 ## Technical Implementation
 
 The reward system integrates seamlessly with Neutron's infrastructure:
-- **NTRN locking** uses liquid staking with Drop for yield optimization
-- **NFT verification** connects with Superbolt marketplace data
-- **Cross-chain tracking** handles deposits from both Ethereum and Neutron
-- **Real-time calculations** provide live reward projections
+- **NTRN locking** sends tokens to escrow, which liquid stakes with Drop for Droplets and ease of rewards management
+- **NFT verification** connects with Superbolt marketplace data for Neutron-based collections only
+- **Cross-chain tracking** handles deposits from both Ethereum vaults and direct Neutron protocols
+- **Real-time calculations** provide live reward projections in the campaign interface
 
 <Note>
 Receipt NFTs from NTRN locking are fully transferable, creating potential secondary markets for locked positions on platforms like Superbolt.

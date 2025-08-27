@@ -10,7 +10,7 @@ This document provides detailed, semi-technical behavior of the different vault 
 
 # What are the vaults and how do they behave?
 
-## 0. Structured's KYC Vaults
+## 1. Structured's KYC Vaults
 
 ### A. Just Mint
 
@@ -73,7 +73,7 @@ Funds are locked into the vault until the full launch of the Structured protocol
   </Step>
 </Steps>
 
-## 1. LST Vaults: Single-Sided Deposits to wBTC pairs + Lending
+## 2. LST Vaults: Single-Sided Deposits to wBTC pairs + Lending
 
 These vaults provide single-sided deposits to wBTC pairs combined with lending opportunities.
 
@@ -111,9 +111,9 @@ When withdrawing from vaults with lending positions on Mars or Amber, users rece
   </Step>
 </Steps>
 
-## 2. wBTC "Mirror" Vaults
+## 3. wBTC Vaults
 
-These vaults mirror the `xBTC` vaults, with the only difference being that the deposit asset is wBTC.
+These vaults provide wBTC deposits with split allocation between lending and liquidity provision.
 
 ### Deposits
 <Steps>
@@ -145,7 +145,7 @@ These vaults mirror the `xBTC` vaults, with the only difference being that the d
   </Step>
 </Steps>
 
-## 3. wBTC "Just Lend" Vaults
+## 4. wBTC "Just Lend" Vaults
 
 These vaults are simplified options for risk-averse liquidity providers who prefer lending-only exposure.
 
@@ -175,9 +175,9 @@ These vaults are simplified options for risk-averse liquidity providers who pref
   </Step>
 </Steps>
 
-## 4. LST Vaults: Single Sided Deposits to maxBTC pairs + Lending
+## 5. LST Vaults: Single Sided Deposits to maxBTC pairs + Lending
 
-These vaults function identically to the LST vaults in section 1, except they deposit to maxBTC pairs instead of wBTC pairs.
+These vaults function identically to the LST vaults in section 2, except they deposit to maxBTC pairs instead of wBTC pairs.
 
 ### Deposits
 <Steps>
@@ -209,7 +209,7 @@ These vaults function identically to the LST vaults in section 1, except they de
   </Step>
 </Steps>
 
-## 5. USDC Vaults: Single Sided Deposits + Lending
+## 6. USDC - MaxBTC Vault
 
 ### Deposits
 <Steps>
@@ -220,7 +220,7 @@ These vaults function identically to the LST vaults in section 1, except they de
     Bridge deposit USDC token via Noble
   </Step>
   <Step title="Route to Strategy">
-    Route 100% to lending on Mars ("Just Lend") or single-sided provide to the relevant pool ("Just LP")
+    Route 100% to single-sided provide to the maxBTC-USDC Supervault
   </Step>
 </Steps>
 
@@ -230,9 +230,7 @@ These vaults function identically to the LST vaults in section 1, except they de
     User burns Ethereum vault share to create USDC-denominated voucher
   </Step>
   <Step title="Receive Assets">
-    Voucher is sent over ZK bridge and the user receives:
-    - **Just Lend**: Pro-rata amount of USDC after withdrawing from Mars
-    - **Just LP**: Pro-rata amount of Supervault LP shares to the user account
+    Voucher is sent over ZK bridge and the user receives the pro-rata amount of Supervault LP shares to the user account
   </Step>
 </Steps>
 
