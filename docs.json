@@ -99,7 +99,10 @@
               "btc-summer/overview",
               "btc-summer/campaign",
               "btc-summer/vaults",
-              "btc-summer/technical"
+              "btc-summer/rewards",
+              "btc-summer/technical",
+              "btc-summer/address-linking",
+              "btc-summer/reference"
             ]
           }
         ]

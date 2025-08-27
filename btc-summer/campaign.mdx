@@ -15,18 +15,23 @@ The Bitcoin Summer campaign is Neutron's comprehensive incentive program designe
 The campaign is structured in successive **2-month epochs**, with at least 6 epochs planned (12+ months total duration). Each epoch has predetermined parameters set before launch:
 
 - **Epoch Budget**: Dollar value distributed as incentives (e.g., Epoch 1: $250,000)
-- **Eligible Vaults**: List of participating vault strategies
+- **Eligible Vaults**: List of participating vault strategies  
 - **DeFi Opportunities**: Qualifying protocols and their reward multipliers
 
-Earlier epochs have smaller budgets to account for initial adoption, while later epochs scale up to drive broader participation.
+Earlier epochs have smaller budgets to account for initial visibility, while later epochs scale up to drive broader participation.
 
 ![Epoch Timeline](/images/epoch.png)
 
 ### Total Budget & Distribution
 
 - **Total Allocation**: $10M or up to 10% of NTRN supply (whichever is lower)
+<<<<<<< HEAD
 - **Duration**: 6-12 epochs over 12-24 months
 - **Budget Growth**: Later epochs receive larger allocations based on campaign success
+=======
+- **Duration**: 6-12 epochs over 12-24 months  
+- **Budget Growth**: Later epochs receive larger allocations to scale the campaign
+>>>>>>> main
 
 ## How Rewards Work
 
@@ -49,9 +54,16 @@ $$
 \text{Points} = \text{USD Value of Deposit} \times \text{Days Staked} \times (1 + \text{Bonus Multipliers})
 $$
 
+<<<<<<< HEAD
 - **Daily Calculation**: Points accrue daily based on USD deposit value
 - **Pro-rata Distribution**: Epoch budget distributed proportionally to total points earned
 - **Bonus Multipliers**: Additional rewards for advanced strategies (detailed in Advanced Rewards)
+=======
+- **Daily Calculation**: Points accrue daily based on USD deposit value  
+- **Pro-rata Distribution**: Epoch budget distributed proportionally to total points earned
+- **Bonus Multipliers**: Additional rewards for advanced strategies (detailed in Rewards section)
+- **Protection from Dilution**: Daily calculation locks in dollar-denominated rewards
+>>>>>>> main
 
 
 
@@ -59,6 +71,17 @@ $$
 
 The campaign rewards users who participate in DeFi both **directly** on Neutron and **indirectly** via campaign vaults on Ethereum.
 
+<<<<<<< HEAD
+=======
+### Reward Distribution Model
+
+The reward system distributes incentives directly to **DeFi positions on Neutron**, not to vaults themselves. This means:
+
+- **Direct participants** earn rewards by depositing into eligible Neutron protocols
+- **Vault participants** receive pro-rata shares of rewards earned by their vault's underlying positions
+- **Tiered accounting** ensures fair distribution across multiple layers of deposits
+
+>>>>>>> main
 ### Ethereum Vaults Path
 
 **Best for**: Users wanting simple exposure with familiar wallets
@@ -93,6 +116,19 @@ The vesting mechanism promotes long-term ecosystem participation and prevents su
 
 Campaign vaults accept deposits on Ethereum, bridge assets to Neutron, and deploy them to optimized DeFi strategies. Most vaults maintain exposure to the same asset class to prevent impermanent loss and offer flexible withdrawals.
 
+<<<<<<< HEAD
+=======
+### Soft-Lock Incentive Model
+
+Campaign vaults use a "forfeitable" reward structure:
+
+- **No Principal Lock**: Users can withdraw at any time
+- **Reward Forfeiture**: Early withdrawal forfeits pro-rata share of accrued rewards for that epoch
+- **Full Epoch Participation**: To lock in rewards, maintain deposits throughout the entire 2-month epoch
+
+**Example**: If you deposit 10 BTC at epoch start but withdraw 5 BTC mid-epoch, you forfeit rewards corresponding to the withdrawn amount.
+
+>>>>>>> main
 <Note>
 For detailed vault behaviors and technical specifications, see [BTC Summer Vaults](/btc-summer/vaults).
 </Note>
