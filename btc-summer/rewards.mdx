@@ -1,0 +1,127 @@
+---
+title: "Rewards & Boosts"
+description: "Understanding BTC Summer reward mechanisms, multipliers, and how to maximize your earnings"
+icon: "gift"
+---
+
+# Reward System Overview
+
+The BTC Summer campaign distributes **up to $10M in NTRN rewards** to participants through a sophisticated points-based system that rewards both deposit size and ecosystem engagement.
+
+## Base Rewards
+
+All participants earn base rewards calculated using this formula:
+
+$$
+\text{Points} = \text{USD Value of Deposit} × \text{Days Staked} × (1 + \text{Bonus Boost})
+$$
+
+Where:
+- **USD Value of Deposit** = token amount × USD price each day
+- **Days Staked** = number of full days the deposit remained in the vault
+- **Bonus Boost** = any additional multipliers from advanced mechanisms
+
+Your final reward share is calculated as: `(Your Points / Total Points) × Total Rewards`
+
+## Advanced Reward Mechanisms
+
+Beyond base rewards, participants can significantly increase their earnings through two advanced mechanisms:
+
+### 1. NTRN Locking Boost
+
+Lock NTRN tokens for up to 4 years to earn substantial reward multipliers:
+
+**How it works:**
+- Choose your lock amount and duration (up to 4 years)
+- Receive a transferable receipt NFT representing your locked position
+- Your boost is calculated based on your locked NTRN relative to your BTC deposits
+
+**Boost Formula:**
+$$
+\text{Boost} = \min(2, \frac{\text{NTRN}_{\text{Locked}}}{\text{TVL}_{\text{Deposited}}} × \frac{\text{Duration}_{\text{user}}}{\text{Duration}_{\text{max}}} × 2)
+$$
+
+**Key Benefits:**
+- Up to **2x multiplier** on all rewards
+- Receipt NFTs are transferable (tradeable on secondary markets)
+- Locked NTRN is liquid staked with Drop for additional yield
+- Long-term alignment with Neutron ecosystem
+
+<Note>
+The boost calculation ensures that larger stakes relative to deposits and longer lock periods provide maximum multipliers.
+</Note>
+
+### 2. NFT Collection Boosts
+
+Own NFTs from Neutron-based collections listed on Superbolt to earn additional multipliers:
+
+**Boost Tiers:**
+| Threshold | Multiplier | Tier |
+|-----------|------------|------|
+| 1 NFT | +1% | Wooden |
+| 1% of collection | +2% | Bronze |
+| 5% of collection | +3% | Silver |
+| 15% of collection | +4% | Gold |
+| 30% of collection | +5% | Platinum |
+
+**Collection Rules:**
+- Only NFTs from collections listed on **Superbolt on Neutron** count
+- Users can earn boosts from up to **5 collections**
+- If eligible for more than 5 collections, the highest boosts are selected
+- Rarity within collections doesn't affect boost amount
+
+**Example:**
+If you hold 600 CEWTs (>30% of collection), 50 Quarks (1% of collection), and 1 each of three other collections, you'd receive:
+- +5% (CEWTs) + 2% (Quarks) + 1% + 1% + 1% = **+10% total boost**
+
+## Wallet Linking
+
+Since deposits can happen on Ethereum (via vaults) or Neutron (direct), but boosts only apply on Neutron, users must "link" their addresses:
+
+**The Process:**
+1. When activating NTRN or NFT boosts, specify which address holds your BTC deposits
+2. This creates a "pointer" connecting your Neutron-based boosts to your deposit address
+3. The system calculates your total rewards using both deposit and boost information
+
+**Best Practices:**
+- **Consistency is key**: Use the same deposit address throughout the campaign
+- **Ethereum deposits**: Point all boosts to your Ethereum address
+- **Neutron deposits**: Point all boosts to your Neutron address
+- **Avoid splitting**: Don't deposit on both networks unless necessary
+
+<Warning>
+Splitting deposits across Ethereum and Neutron addresses can create complications in reward calculations. Choose one primary address for the best experience.
+</Warning>
+
+## Multiplier Stacking
+
+All eligible boosts stack together for maximum rewards:
+
+**Example Calculation:**
+- Bob locks NTRN for a +100% multiplier
+- Bob holds NFTs providing +4% total boost
+- Bob's final multiplier: **+104%**
+- This doubles his share of the total reward pool
+
+## Maximizing Your Rewards
+
+**For Maximum Efficiency:**
+1. **Lock NTRN early** - The earlier you lock, the more days you benefit from the multiplier
+2. **Acquire strategic NFTs** - Focus on collections where you can reach higher percentage thresholds
+3. **Maintain consistent deposits** - Keep your BTC derivatives deposited throughout epochs
+4. **Use one primary address** - Avoid complications by consolidating on either Ethereum or Neutron
+
+**Advanced Strategy:**
+Users often buy and lock NTRN specifically to dilute other participants' rewards while maximizing their own share of the pool.
+
+## Technical Implementation
+
+The reward system integrates seamlessly with Neutron's infrastructure:
+- **NTRN locking** uses liquid staking with Drop for yield optimization
+- **NFT verification** connects with Superbolt marketplace data
+- **Cross-chain tracking** handles deposits from both Ethereum and Neutron
+- **Real-time calculations** provide live reward projections
+
+<Note>
+Receipt NFTs from NTRN locking are fully transferable, creating potential secondary markets for locked positions on platforms like Superbolt.
+</Note>
