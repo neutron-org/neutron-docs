@@ -8,8 +8,37 @@ This document provides detailed, semi-technical behavior of the different vault 
 
 "Amber Protocol" refers to the isolated deployment of Mars protocol dedicated to BTC derivatives. Visit [amberfi.io](https://www.amberfi.io/) for more information.
 
+## Vault Overview
+
+<CardGroup cols={2}>
+  <Card title="Structured KYC Vaults" icon="shield-check" href="#structured-kyc-vaults">
+    **Just Mint** and **Just LP** vaults for maxBTC exposure and liquidity provision. KYC required, deposit caps apply.
+  </Card>
+
+  <Card title="LST Vaults (wBTC pairs)" icon="coins" href="#lst-vaults-wbtc">
+    Single-sided deposits of BTC LSTs to wBTC pairs, split between Amber lending and Supervault liquidity.
+  </Card>
+
+  <Card title="wBTC Vaults" icon="bitcoin" href="#3-wbtc-vaults">
+    Direct wBTC deposits with allocation split between Amber lending and Supervault liquidity provision.
+  </Card>
+
+  <Card title="wBTC Just Lend" icon="hand-holding-dollar" href="#wbtc-just-lend">
+    Simplified lending-only exposure for risk-averse LPs. Routes 100% to Amber or Mars lending.
+  </Card>
+
+  <Card title="LST Vaults (maxBTC pairs)" icon="layer-group" href="#lst-vaults-maxbtc">
+    Single-sided BTC LST deposits to maxBTC pairs, combining Amber lending with maxBTC liquidity.
+  </Card>
+
+  <Card title="USDC - MaxBTC Vault" icon="dollar-sign" href="#usdc-maxbtc-vault">
+    Single-sided USDC deposits to the maxBTC-USDC Supervault for stablecoin exposure.
+  </Card>
+</CardGroup>
+
 # What are the vaults and how do they behave?
 
+<a id="structured-kyc-vaults"></a>
 ## 1. Structured's KYC Vaults
 
 ### A. Just Mint
@@ -73,6 +102,7 @@ Funds are locked into the vault until the full launch of the Structured protocol
   </Step>
 </Steps>
 
+<a id="lst-vaults-wbtc"></a>
 ## 2. LST Vaults: Single-Sided Deposits to wBTC pairs + Lending
 
 These vaults provide single-sided deposits to wBTC pairs combined with lending opportunities.
@@ -145,6 +175,7 @@ These vaults provide wBTC deposits with split allocation between lending and liq
   </Step>
 </Steps>
 
+<a id="wbtc-just-lend"></a>
 ## 4. wBTC "Just Lend" Vaults
 
 These vaults are simplified options for risk-averse liquidity providers who prefer lending-only exposure.
@@ -175,6 +206,7 @@ These vaults are simplified options for risk-averse liquidity providers who pref
   </Step>
 </Steps>
 
+<a id="lst-vaults-maxbtc"></a>
 ## 5. LST Vaults: Single Sided Deposits to maxBTC pairs + Lending
 
 These vaults function identically to the LST vaults in section 2, except they deposit to maxBTC pairs instead of wBTC pairs.
@@ -209,6 +241,7 @@ These vaults function identically to the LST vaults in section 2, except they de
   </Step>
 </Steps>
 
+<a id="usdc-maxbtc-vault"></a>
 ## 6. USDC - MaxBTC Vault
 
 ### Deposits
