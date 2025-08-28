@@ -62,7 +62,8 @@ func (msg *MsgTransfer) Validate(isContract bool) error {
 }
 ```
 
-At this point, for both contracts and non-contracts IBC fees are disabled
+- **For contracts**: Fee validation is required if feerefunder `params.FeeEnabled` is set to true (see with `neutrond q feerefunder params`)
+- **For non-contracts**: Fee validation is bypassedAt this point, for both contracts and non-contracts IBC fees are disabled
 
 ### 5. Automatic Fee Operations
 

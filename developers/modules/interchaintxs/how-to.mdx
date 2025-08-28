@@ -219,6 +219,22 @@ fn submit_tx(
     // Check if the channel exists for this account
     let _channel_info = CHANNELS.load(deps.storage, interchain_account_id.clone())?;
 
+    // Create the fee for the IBC packet
+    let fee = Fee {
+        recv_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(2000u128),
+        }],
+        ack_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(1000u128),
+        }],
+        timeout_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(1000u128),
+        }],
+    };
+
     // Create the submit transaction message
     let submit_msg = MsgSubmitTx {
         from_address: env.contract.address.to_string(),
@@ -227,7 +243,7 @@ fn submit_tx(
         msgs,
         memo: memo.unwrap_or_default(),
         timeout,
-        fee: None,
+        fee: Some(fee),
     };
 
     // Alternatively, you can use the submit_tx helper from neutron-sdk
