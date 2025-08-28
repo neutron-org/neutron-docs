@@ -66,9 +66,8 @@ At this point, for both contracts and non-contracts IBC fees are disabled
 
 ### 5. Automatic Fee Operations
 
-Right now, fees are disabled. That means you can submit no fees. Even if you specify fees in MsgTransfer, they won't be charged.
-
-If fees are globally enabled (see Params of feerefunder for that: `neutrond q feerefunder params`), the module automatically:
+Right now, fees are enabled.
+If fees are globally disabled (see Params of feerefunder for that: `neutrond q feerefunder params`), contract won't be charged for fees.
 
 ```go
 // Fee locking before packet transmission

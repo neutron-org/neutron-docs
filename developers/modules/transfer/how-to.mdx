@@ -324,21 +324,21 @@ message MsgTransfer {
 
 ### Fee Validation and Locking
 
-Right now, fees are disabled. That means you can submit no fees. Even if you specify fees in MsgTransfer, contract won't be charged.
-
-If fees are globally enabled (see Params of feerefunder for that: `neutrond q feerefunder params`), the module automatically:
+Right now, fees are enabled (see `neutrond q feerefunder params`).
 
 1. **Validates Fees**: Calls `msg.Fee.Validate()` to ensure proper fee structure
 2. **Locks Fees**: Uses `FeeKeeper.LockFees()` to secure fees for packet processing
 
 Non-contract senders bypass fee validation entirely.
 
+If fees are globally disabled (see Params of feerefunder for that: ), the module won't charge fees even if specified.
+
 ### Automatic Callbacks
 
 When IBC packets are acknowledged or timeout, the Transfer module automatically:
 
 1. **Checks Contract Status**: Verifies if the original sender was a contract
-2. **If fees are enabled: Distributes Fees**: Calls appropriate fee distribution functions
+2. **Distributes Fees**: Calls appropriate fee distribution functions
 3. **Sends Callback**: Uses `sudoKeeper.Sudo()` to notify the contract
 
 ## Callback Mechanism

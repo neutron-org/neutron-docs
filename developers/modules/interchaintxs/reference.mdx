@@ -108,7 +108,7 @@ message MsgSubmitTx {
   repeated google.protobuf.Any msgs = 4;
   string memo = 5;
   uint64 timeout = 6;
-  neutron.feerefunder.Fee fee = 7; // Optional
+  neutron.feerefunder.Fee fee = 7;
 }
 ```
 
@@ -147,7 +147,20 @@ let submit_msg = NeutronMsg::SubmitTx {
     msgs: vec![/* your cosmos messages */],
     memo: "".to_string(),
     timeout: 3600,
-    fee: None,
+    fee: Some(Fee {
+        recv_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(2000u128),
+        }],
+        ack_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(1000u128),
+        }],
+        timeout_fee: vec![Coin {
+            denom: "untrn".to_string(),
+            amount: Uint128::from(1000u128),
+        }],
+    }),
 };
 ```
 
@@ -340,7 +353,7 @@ The `ICARegistrationFeeFirstCodeID` threshold is managed during chain deployment
 #### Transaction Processing
 
 1. **Registration:** The module validates the request and delegates to the ICA controller keeper for actual account creation
-2. **Transaction Submission:** The module validates the request, delegates to the ICA controller keeper for packet creation
+2. **Transaction Submission:** The module validates the request, charges fees to the fee refunder, and delegates to the ICA controller keeper for packet creation
 3. **IBC Callbacks:** The module processes acknowledgements, timeouts, and channel events by calling the appropriate contract via sudo callbacks
 
 <Info>
