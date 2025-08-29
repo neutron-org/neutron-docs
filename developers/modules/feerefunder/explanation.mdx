@@ -70,6 +70,9 @@ message Fee {
 
 ### Fee Locking
 
+Fee locking only happens if `fee_enabled` param is set to true.
+If it's set to false, it turns off min fee validation and lock fees mechanism.
+
 When a smart contract sends an IBC packet (via `MsgTransfer` or `MsgSubmitTx`), the module:
 
 1. Validates that the provided fees meet the minimum requirements
@@ -78,7 +81,7 @@ When a smart contract sends an IBC packet (via `MsgTransfer` or `MsgSubmitTx`), 
 
 **Core Logic (simplified):**
 1. Validate the channel exists
-2. Check fees meet minimum requirements  
+2. Check fees meet minimum requirements
 3. Store fee information with packet ID
 4. Transfer total fees to module account
 5. Emit lock_fees event
@@ -117,7 +120,7 @@ When an IBC timeout is received, the module:
 
 ### Minimum Fee Enforcement
 
-To prevent spam and ensure relayers are properly compensated, the module enforces minimum fees:
+To prevent spam and ensure relayers are properly compensated, the module enforces minimum fees (only if `fee_enabled` param set to true):
 
 1. Governance sets minimum required fees via the `min_fee` parameter
 2. The `checkFees` function validates that provided fees meet or exceed these minimums
@@ -146,4 +149,4 @@ The module includes several security measures:
 1. **Atomic Operations**: Fee locking and distribution use atomic operations to prevent partial state changes
 2. **Escrow Model**: Fees are locked until packet resolution, ensuring relayers can trust they'll be paid
 3. **Fee Validation**: Only allowed denominations with sufficient amounts can be used as fees
-4. **Receive Fee Prevention**: Receive fees are prohibited to prevent compatibility issues with other chains 
+4. **Receive Fee Prevention**: Receive fees are prohibited to prevent compatibility issues with other chains

@@ -61,7 +61,7 @@ When using the `MsgSubmitTx` message for Interchain Transactions, you also need 
 // Import necessary types
 use neutron_sdk::bindings::msg::NeutronMsg;
 use neutron_sdk::bindings::types::{Fee as IbcFee, Coin};
-use neutron_sdk::interchain_txs::helpers::create_submit_tx_msg;
+use neutron_sdk::interchain_txs::helpers::submit_tx;
 
 // Create the fee structure
 let fee = IbcFee {
@@ -79,15 +79,16 @@ let fee = IbcFee {
 // Create the interchain transaction message with fee
 let cosmos_msgs: Vec<cosmwasm_std::CosmosMsg> = vec![/* Your Cosmos messages here */];
 let connection_id = "connection-0";
-let interchain_account = "cosmos1...";
+let interchain_account_id = "interchain-account-id-when-created";
 
-let msg = create_submit_tx_msg(
-    cosmos_msgs,
+let msg = submit_tx(
+    env.contract.address.clone(),
     connection_id.to_string(),
-    interchain_account.to_string(),
-    Some(fee),
-    None, // memo
+    interchain_account_id.to_string(),
+    cosmos_msgs,
+    "".to_string(), // memo
     None, // timeout_timestamp
+    Some(fee),
 );
 ```
 
@@ -110,6 +111,7 @@ Remember that:
 1. Fees must be equal to or higher than the minimum required
 2. You can only use denominations allowed in the minimum fee parameters
 3. `recv_fee` must always be empty (set to zero)
+4. if `params.fee_enabled` set to false, you can pass `None` to submit tx and ibc transfer tx's, or just specify fees as before, contract won't be charged.
 
 ## For Relayers
 
@@ -137,6 +139,7 @@ Example output:
 ```json
 {
   "params": {
+    "fee_enabled": true,
     "min_fee": {
       "recv_fee": [],
       "ack_fee": [
@@ -158,13 +161,14 @@ Example output:
 
 ### Updating Minimum Fees
 
-To propose changing the minimum required fees through governance using `MsgUpdateParams`:
+To propose changing the minimum required fees and/or whether fee are enabled through governance using `MsgUpdateParams`:
 
 ```json
 {
   "@type": "/neutron.feerefunder.MsgUpdateParams",
   "authority": "neutron1...", // governance authority address
   "params": {
+    "fee_enabled": true,
     "min_fee": {
       "ack_fee": [
         {
