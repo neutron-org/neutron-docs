@@ -188,3 +188,31 @@ graph TD
 <div className="p-4 border-l-4 border-primary bg-primary/5 rounded my-6">
   <strong>Technical Implementation:</strong> Supervaults represent the cutting edge of automated market making, combining Neutron's integrated modules (Cron, Slinky Oracle, Token Factory, and Duality DEX) into a unified liquidity management system that operates trustlessly without external dependencies.
 </div> 
+
+## Vault Performance Calculations
+
+#### 30D APY/Hold
+The primary metric for calculating vault returns is APY vs Hold. This compares the returns of the vault to holding a 50/50 portfolio of the underlying assets. 
+Looking at the last 30 days we calculate total returns for the vault ignoring new deposits and withdrawals. 
+$$
+vaultReturn\_30d = (tvl\_close + value\_withdrawals) - (tvl\_open + value\_deposits)
+$$
+We then compare this to the 30 day returns for holding an equivalent value of the two underlying vault assets. The resulting value is annualized to produce the final 30D APY/Hold value. 
+$$
+\Bigg( \dfrac{1 + vault\_return\_30d}{1 + hold\_return\_30d}  \Bigg)^{\tfrac{365}{30}} - 1
+$$
+
+#### Volume (Vol)
+Volume is the total amount of trading activity for a vault. This includes...
+1. **Maker Volume** When the vault is prodiving liquidity that is traded through by other users. 
+2. **Taker Volume** When trades where the vault is trading through liquidity already on the orderbook.   
+
+#### Total Value Locked (TVL)
+TVL is the total value of tokens in the vault. This is effectively the sum of net deposits and vault revenue. 
+
+#### Vault Capacity
+Most vault have a maximum deposit capacity. When the TVL is equal or greater to the vault capacity it is not possible to deposit into the vault. This is done to promote optimal capital efficiency and ensure APYs remain high. 
+
+#### Pool Balance 
+The pool balance represents the total amount of each token currently held by the vault. When withdrawing from a vault, users will receive their pro rata share of the vault TVL in this proportion. 
+Vaults with a higher imbalance representer a greater invetory risk -- the market performance of the over supplied token will have a disproportionate effect on the vault's APY.  
