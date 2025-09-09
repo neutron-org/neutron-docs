@@ -195,7 +195,7 @@ graph TD
 The primary metric for calculating vault returns is APY vs Hold. This compares the returns of the vault to holding a 50/50 portfolio of the underlying assets. 
 Looking at the last 30 days we calculate total returns for the vault ignoring new deposits and withdrawals. 
 $$
-vaultReturn\_30d = (tvl\_close + value\_withdrawals) - (tvl\_open + value\_deposits)
+vault\_return\_30d = (tvl\_close + value\_withdrawals) - (tvl\_open + value\_deposits)
 $$
 We then compare this to the 30 day returns for holding an equivalent value of the two underlying vault assets. The resulting value is annualized to produce the final 30D APY/Hold value. 
 $$
