@@ -12,16 +12,14 @@ This page lists public endpoints for interacting with Neutron networks, includin
 
 | Provider | Endpoint | Status |
 |----------|----------|--------|
-| Neutron | https://rpc-vertexa.neutron-1.neutron.org | Available |
-| Neutron | https://rpc-solara.neutron-1.neutron.org | Available |
+| Neutron | https://rpc-lb.neutron.org | Available |
 | Cosmos Directory | https://rpc.cosmos.directory/neutron | Available |
 
 ### REST API Endpoints
 
 | Provider | Endpoint | Status |
 |----------|----------|--------|
-| Neutron | https://rest-solara.neutron-1.neutron.org | Available |
-| Neutron | https://rest-vertexa.neutron-1.neutron.org | Available |
+| Neutron | https://rest-lb.neutron.org | Available |
 | Cosmos Directory | https://rest.cosmos.directory/neutron | Available |
 
 ### GRPC Endpoints
@@ -29,14 +27,14 @@ This page lists public endpoints for interacting with Neutron networks, includin
 | Provider | Endpoint | Status |
 |----------|----------|--------|
 | Neutron | grpc-lb.neutron.org:80 | Available |
-| Neutron | grpc-kralum.neutron-1.neutron.org:80 | Available |
 
-### Public State Sync Nodes
+### Persistent Peers
 
-The following state sync node serves snapshots every 2000 blocks:
+The following persistent peers can be used to connect to the Neutron network:
 
 ```
-http://rpc-kralum.neutron-1.neutron.org:26657
+dc0dfb99add9da8f7646a66d601eeea8b9efdcd0@peer-1.neutron.org:25556
+74d2aa0ea0dbff2885596d33232284f3e7d8d891@peer-2.neutron.org:25556
 ```
 
 ## Testnet (pion-1)
@@ -45,14 +43,14 @@ http://rpc-kralum.neutron-1.neutron.org:26657
 
 | Provider | Endpoint |
 |----------|----------|
-| Neutron | https://rpc-palvus.pion-1.neutron.org |
+| Neutron | https://rpc-lb-pion.ntrn.tech |
 | Neutron | https://rpc-t.neutron.nodestake.top |
 
 ### REST API Endpoints
 
 | Provider | Endpoint |
 |----------|----------|
-| Neutron | https://rest-palvus.pion-1.neutron.org |
+| Neutron | https://rest-lb-pion.ntrn.tech |
 | Neutron | https://api-t.neutron.nodestake.top |
 
 ## Explorers
