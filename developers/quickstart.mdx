@@ -1,0 +1,276 @@
+---
+title: "Developer Quickstart"
+description: "Start building on Neutron in minutes"
+icon: "rocket"
+---
+
+This guide will help you quickly set up your development environment and start building on Neutron. You'll learn how to set up dependencies, run a local environment, and deploy your first smart contract.
+
+<Note>
+**New to Neutron development?** We recommend starting with our [Onboarding Tutorial Series](/developers/tutorials/onboarding/overview) which provides a comprehensive, step-by-step introduction to building on Neutron.
+</Note>
+
+## Environment Setup
+
+<Steps>
+  <Step title="Install Required Dependencies">
+    ```bash
+    # Install Rust
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    source $HOME/.cargo/env
+    rustup default stable
+    rustup target add wasm32-unknown-unknown
+    
+    # Install Go
+    wget https://go.dev/dl/go1.23.1.linux-amd64.tar.gz
+    sudo tar -C /usr/local -xzf go1.23.1.linux-amd64.tar.gz
+    echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> ~/.bashrc
+    source ~/.bashrc
+    
+    # Verify installations
+    rustc --version
+    go version
+    ```
+    
+    <Note>
+      Make sure to adjust the Go version and paths based on your operating system if needed.
+    </Note>
+  </Step>
+  
+  <Step title="Clone and Build Neutron">
+    ```bash
+    # Clone the Neutron repository
+    git clone https://github.com/neutron-org/neutron.git
+    cd neutron
+    
+    # Build the neutrond binary
+    make install
+    
+    # Verify installation
+    neutrond version
+    ```
+  </Step>
+</Steps>
+
+## Cosmopark Development Environment
+
+Cosmopark provides a complete local development environment with interconnected Neutron and Gaia nodes, IBC relayers, and everything you need to start developing cross-chain applications.
+
+<Steps>
+  <Step title="Clone Required Repositories">
+    ```bash
+    # Create a workspace directory
+    mkdir neutron-dev && cd neutron-dev
+    
+    # Clone repositories in the same parent directory
+    git clone -b main https://github.com/neutron-org/neutron.git
+    git clone https://github.com/neutron-org/neutron-integration-tests.git
+    git clone https://github.com/neutron-org/neutron-query-relayer.git
+    git clone https://github.com/cosmos/gaia.git
+    
+    # Checkout specific Gaia version
+    cd gaia
+    git checkout v23.1.1
+    cd ..
+    ```
+  </Step>
+  
+  <Step title="Build Docker Images">
+    ```bash
+    cd neutron-integration-tests/setup
+    make build-all
+    
+    # Download Neutron DAO contracts
+    npx @neutron-org/get-artifacts neutron-dao -b main -d contracts
+    ```
+  </Step>
+  
+  <Step title="Start Cosmopark">
+    ```bash
+    # Start the local development environment
+    make start-cosmopark
+    
+    # View logs
+    docker-compose logs -f
+    ```
+    
+    <Note>
+      The first time you run Cosmopark, it will take a few minutes to set up all the components.
+    </Note>
+  </Step>
+  
+  <Step title="Use Predefined Accounts">
+    Cosmopark creates several test accounts with tokens for both Neutron and Gaia chains:
+    
+    ```
+    # Neutron Accounts
+    - neutron1m9l358xunhhwds0568za49mzhvuxx9ux8xafx2 (demowallet1)
+    - neutron10h9stc5v6ntgeygf5xf945njqq5h32r5r2HWFc (demowallet2)
+    
+    # Gaia Accounts
+    - cosmos10h9stc5v6ntgeygf5xf945njqq5h32r54ef7kt (demowallet2)
+    - cosmos1m9l358xunhhwds0568za49mzhvuxx9uxre5tgh (demowallet1)
+    ```
+    
+    The mnemonics for these accounts are available in the Cosmopark documentation.
+  </Step>
+</Steps>
+
+For a comprehensive guide to setting up your development environment with Cosmopark, check out our [Cosmopark Tutorial](/developers/tutorials/onboarding/cosmopark).
+
+## Create and Deploy a CosmWasm Smart Contract
+
+<Steps>
+  <Step title="Initialize a New CosmWasm Project">
+    ```bash
+    # Generate a new CosmWasm project using the template
+    cargo generate --git https://github.com/CosmWasm/cw-template.git --name my-neutron-contract
+    cd my-neutron-contract
+    ```
+  </Step>
+  
+  <Step title="Build Your Contract">
+    ```bash
+    # Compile the contract to Wasm
+    cargo wasm
+    
+    # Optimize the Wasm binary (requires Docker)
+    docker run --rm -v "$(pwd)":/code \
+      --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+      --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+      cosmwasm/rust-optimizer:0.12.13
+    ```
+    
+    This will produce an optimized Wasm file in the `artifacts` directory.
+  </Step>
+  
+  <Step title="Deploy to Cosmopark">
+    With Cosmopark running, you can deploy your contract to the local Neutron network:
+    
+    ```bash
+    # Store the contract on Neutron
+    neutrond tx wasm store artifacts/my_neutron_contract.wasm \
+      --from demowallet1 \
+      --chain-id neutron-testing-1 \
+      --gas auto \
+      --gas-adjustment 1.3 \
+      --node http://localhost:26657 \
+      --yes
+    
+    # Get the code ID
+    neutrond query wasm list-code --node http://localhost:26657
+    
+    # Instantiate the contract (replace CODE_ID with the actual code ID)
+    neutrond tx wasm instantiate CODE_ID '{"count": 0}' \
+      --from demowallet1 \
+      --label "my first contract" \
+      --chain-id neutron-testing-1 \
+      --gas auto \
+      --gas-adjustment 1.3 \
+      --node http://localhost:26657 \
+      --yes
+    ```
+  </Step>
+  
+  <Step title="Interact with Your Contract">
+    ```bash
+    # Query the contract state
+    neutrond query wasm contract-state smart CONTRACT_ADDRESS '{"get_count": {}}' \
+      --node http://localhost:26657
+    
+    # Execute a contract function
+    neutrond tx wasm execute CONTRACT_ADDRESS '{"increment": {}}' \
+      --from demowallet1 \
+      --chain-id neutron-testing-1 \
+      --gas auto \
+      --gas-adjustment 1.3 \
+      --node http://localhost:26657 \
+      --yes
+    ```
+    
+    Replace `CONTRACT_ADDRESS` with your actual contract address.
+  </Step>
+</Steps>
+
+## Interchain Development with Neutron
+
+One of Neutron's most powerful features is the ability to query and interact with other blockchains. Here's a quick example using Interchain Queries (ICQ):
+
+```rust
+// In your contract's execute function
+pub fn execute_icq_query(
+    deps: DepsMut,
+    env: Env,
+    connection_id: String,
+) -> Result<Response, ContractError> {
+    // Create an ICQ request to query account balance on Cosmos Hub
+    let icq_msg = NeutronMsg::RegisterInterchainQuery {
+        query_type: QueryType::KV {
+            connection_id,
+            keys: vec![Key {
+                path: "bank/balances/cosmos1m9l358xunhhwds0568za49mzhvuxx9uxre5tgh".to_string(),
+                key: Binary::from(b"denom_key"),
+            }],
+        },
+        transactions_filter: TransactionsFilterType::None,
+        update_period: 10,
+    };
+
+    // Return the message in the response
+    Ok(Response::new()
+        .add_message(icq_msg)
+        .add_attribute("action", "register_icq"))
+}
+```
+
+## Development Tools
+
+<CardGroup cols={3}>
+  <Card title="Remix IDE Plugin" icon="browser" href="/developers/tutorials/cosmwasm_remix">
+    Build and deploy CosmWasm contracts with the familiar Remix interface.
+  </Card>
+  
+  <Card title="WasmKit" icon="toolbox" href="/developers/tutorials/cosmwasm_wasmkit">
+    Complete development toolchain for CosmWasm smart contracts.
+  </Card>
+  
+  <Card title="Neutron SDK" icon="box" href="https://github.com/neutron-org/neutron-sdk">
+    TypeScript and Go SDKs for building applications and services.
+  </Card>
+</CardGroup>
+
+## Structured Learning Path
+
+<CardGroup cols={3}>
+  <Card title="Onboarding Series" icon="graduation-cap" href="/developers/tutorials/onboarding/overview">
+    Complete 3-part tutorial series from smart contracts to web apps
+  </Card>
+  
+  <Card title="Integration Tests" icon="vial" href="/developers/tutorials/integration-tests/overview">
+    Learn to test your contracts and chain integrations
+  </Card>
+  
+  <Card title="Indexer Development" icon="database" href="/developers/tutorials/indexers/overview">
+    Build indexers for efficient data querying
+  </Card>
+</CardGroup>
+
+## What's Next?
+
+<CardGroup cols={3}>
+  <Card title="Part 1: Minimal Contract" icon="file-code" href="/developers/tutorials/onboarding/part-1-minimal-application">
+    Start with creating and deploying a simple smart contract
+  </Card>
+  
+  <Card title="CosmWasm Intro" icon="atom" href="/developers/tutorials/introduction_to_cosmwasm">
+    Deeper introduction to CosmWasm development
+  </Card>
+  
+  <Card title="Interchain Queries" icon="network-wired" href="/developers/modules/interchain-queries/overview">
+    Learn how to query other chains from your contract
+  </Card>
+</CardGroup>
+
+<div className="p-4 border-l-4 border-primary bg-primary/5 rounded my-6">
+  <strong>Need help?</strong> Join our <a href="https://discord.com/invite/bzPBzbDvWC" className="text-primary hover:underline">Discord</a> server and check out the #developers channel for support from the Neutron team and community.
+</div> 

@@ -1,0 +1,272 @@
+---
+sidebar_position: 2
+---
+
+# How-To Guide
+
+## Governance Operations
+
+### Update Global Fee Parameters
+
+<Warning>
+Only governance can update Global Fee module parameters. Individual users cannot directly modify these settings.
+</Warning>
+
+**Submit Parameter Update Proposal:**
+
+```bash
+neutrond tx gov submit-proposal proposal.json \
+  --from validator \
+  --chain-id neutron-1 \
+  --gas auto \
+  --gas-adjustment 1.5 \
+  --fees 1000untrn
+```
+
+**Example proposal.json:**
+
+```json
+{
+  "title": "Update Global Fee Parameters",
+  "description": "Adjust minimum gas prices and bypass message types",
+  "messages": [
+    {
+      "@type": "/gaia.globalfee.v1beta1.MsgUpdateParams",
+      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6zn9kn",
+      "params": {
+        "minimum_gas_prices": [
+          {
+            "denom": "untrn",
+            "amount": "0.025"
+          },
+          {
+            "denom": "ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9",
+            "amount": "0.001"
+          }
+        ],
+        "bypass_min_fee_msg_types": [
+          "/ibc.core.channel.v1.MsgRecvPacket",
+          "/ibc.core.channel.v1.MsgAcknowledgement",
+          "/ibc.core.client.v1.MsgUpdateClient",
+          "/ibc.core.channel.v1.MsgTimeout",
+          "/ibc.core.channel.v1.MsgTimeoutOnClose"
+        ],
+        "max_total_bypass_min_fee_msg_gas_usage": 1000000
+      }
+    }
+  ],
+  "deposit": "10000000untrn"
+}
+```
+
+### Add New Bypass Message Types
+
+To allow certain message types to bypass minimum fees:
+
+```json
+{
+  "title": "Add IBC Transfer to Fee Bypass",
+  "description": "Allow IBC transfers to bypass minimum fee requirements",
+  "messages": [
+    {
+      "@type": "/gaia.globalfee.v1beta1.MsgUpdateParams",
+      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6zn9kn",
+      "params": {
+        "minimum_gas_prices": [
+          {
+            "denom": "untrn",
+            "amount": "0.025"
+          }
+        ],
+        "bypass_min_fee_msg_types": [
+          "/ibc.core.channel.v1.MsgRecvPacket",
+          "/ibc.core.channel.v1.MsgAcknowledgement",
+          "/ibc.core.client.v1.MsgUpdateClient",
+          "/ibc.core.channel.v1.MsgTimeout",
+          "/ibc.core.channel.v1.MsgTimeoutOnClose",
+          "/ibc.applications.transfer.v1.MsgTransfer"
+        ],
+        "max_total_bypass_min_fee_msg_gas_usage": 1000000
+      }
+    }
+  ]
+}
+```
+
+### Update Minimum Gas Prices
+
+To adjust network-wide minimum gas prices:
+
+```json
+{
+  "title": "Update Minimum Gas Prices",
+  "description": "Adjust minimum gas prices for network security",
+  "messages": [
+    {
+      "@type": "/gaia.globalfee.v1beta1.MsgUpdateParams",
+      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j6zn9kn",
+      "params": {
+        "minimum_gas_prices": [
+          {
+            "denom": "untrn",
+            "amount": "0.050"
+          }
+        ],
+        "bypass_min_fee_msg_types": [
+          "/ibc.core.channel.v1.MsgRecvPacket",
+          "/ibc.core.channel.v1.MsgAcknowledgement",
+          "/ibc.core.client.v1.MsgUpdateClient",
+          "/ibc.core.channel.v1.MsgTimeout",
+          "/ibc.core.channel.v1.MsgTimeoutOnClose"
+        ],
+        "max_total_bypass_min_fee_msg_gas_usage": 1000000
+      }
+    }
+  ]
+}
+```
+
+## Integration Patterns
+
+### Application Integration
+
+**Check Fee Requirements:**
+
+```go
+import (
+    "github.com/neutron-org/neutron/v6/x/globalfee/keeper"
+    "github.com/neutron-org/neutron/v6/x/globalfee/types"
+)
+
+func (app *App) checkGlobalFee(ctx sdk.Context, tx sdk.Tx) error {
+    params := app.GlobalFeeKeeper.GetParams(ctx)
+    
+    // Check if transaction meets minimum fee requirements
+    if !meetsMinimumFee(tx, params.MinimumGasPrices) {
+        return types.ErrInsufficientFee
+    }
+    
+    return nil
+}
+```
+
+**Fee Calculation:**
+
+```go
+func calculateRequiredFee(gasUsed uint64, minGasPrices sdk.DecCoins) sdk.Coins {
+    requiredFees := make(sdk.Coins, len(minGasPrices))
+    
+    for i, gp := range minGasPrices {
+        fee := gp.Amount.MulInt64(int64(gasUsed)).Ceil().TruncateInt()
+        if fee.IsPositive() {
+            requiredFees[i] = sdk.NewCoin(gp.Denom, fee)
+        }
+    }
+    
+    return requiredFees
+}
+```
+
+### Client Integration
+
+**Query Current Parameters:**
+
+```javascript
+const client = await SigningCosmWasmClient.connectWithSigner(rpcUrl, signer);
+
+const params = await client.queryContractSmart(
+  "neutron1...", // Global fee module address
+  { params: {} }
+);
+
+console.log("Minimum gas prices:", params.minimum_gas_prices);
+console.log("Bypass message types:", params.bypass_min_fee_msg_types);
+```
+
+**Calculate Transaction Fees:**
+
+```javascript
+function calculateMinimumFee(gasEstimate, minGasPrices) {
+  return minGasPrices.map(price => ({
+    denom: price.denom,
+    amount: Math.ceil(gasEstimate * parseFloat(price.amount)).toString()
+  }));
+}
+
+// Usage
+const gasEstimate = 200000;
+const minFee = calculateMinimumFee(gasEstimate, params.minimum_gas_prices);
+```
+
+## Monitoring and Alerts
+
+### Fee Bypass Monitoring
+
+**Track Bypass Usage:**
+
+```bash
+# Monitor bypass message types in transactions
+neutrond query txs --events 'message.action=/ibc.core.channel.v1.MsgRecvPacket' \
+  --page 1 --limit 100
+```
+
+**Gas Usage Monitoring:**
+
+```bash
+# Check total gas usage for bypass transactions
+neutrond query block [height] | jq '.block.data.txs[] | select(.body.messages[].type_url | contains("MsgRecvPacket"))'
+```
+
+### Parameter Change Alerts
+
+**Monitor Parameter Updates:**
+
+```bash
+# Subscribe to parameter change events
+neutrond query txs --events 'message.action=/gaia.globalfee.v1beta1.MsgUpdateParams'
+```
+
+## Best Practices
+
+### Fee Setting Strategy
+
+1. **Multi-Asset Support**: Configure multiple denominations for flexibility
+2. **Economic Security**: Set fees high enough to prevent spam
+3. **User Experience**: Balance security with accessibility
+4. **Market Conditions**: Adjust based on token prices and network usage
+
+### Bypass Configuration
+
+1. **Essential Operations**: Only bypass critical IBC protocol operations by default
+2. **Gas Limits**: Set appropriate gas limits for bypass operations
+3. **Security Review**: Regularly audit bypass message types
+4. **Community Input**: Involve community in bypass decisions
+
+### Monitoring
+
+1. **Fee Revenue**: Track fee collection and distribution
+2. **Bypass Usage**: Monitor abuse of fee bypass mechanisms
+3. **Network Health**: Ensure fees maintain network security
+4. **User Impact**: Monitor transaction costs and user behavior
+
+## Troubleshooting
+
+### Common Issues
+
+**Insufficient Fee Error:**
+```
+Error: insufficient fee: got 1000untrn, required 2500untrn
+```
+**Solution**: Increase transaction fees or use bypass-eligible message types.
+
+**Bypass Not Working:**
+```
+Error: message type not in bypass list
+```
+**Solution**: Verify message type is in `bypass_min_fee_msg_types` parameter.
+
+**Gas Limit Exceeded:**
+```
+Error: total gas usage 1500000 exceeds bypass limit 1000000
+```
+**Solution**: Reduce transaction complexity or increase bypass gas limit via governance. 

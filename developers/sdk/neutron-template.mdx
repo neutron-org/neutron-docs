@@ -1,0 +1,312 @@
+---
+title: "NeutronTemplate"
+description: "Complete NextJS + CosmWasm template for building Neutron dApps"
+icon: "code"
+---
+
+NeutronTemplate is a comprehensive starting point for building NextJS applications that interact with Neutron. It includes everything needed to create a modern, full-stack dApp with wallet integration, smart contract interaction, and a polished UI.
+
+<div className="p-4 border-l-4 border-primary bg-primary/5 rounded my-6">
+  <strong>Live Demo:</strong> <a href="https://neutrontemplate.deploydon.com" target="_blank" className="text-primary hover:underline">https://NeutronTemplate.Deploydon.com</a>
+</div>
+
+## Features
+
+<CardGroup cols={2}>
+  <Card title="Modern Frontend Stack" icon="browser" iconType="duotone">
+    <ul className="mt-2 text-sm">
+      <li>NextJS 15 with App Router</li>
+      <li>Tailwind CSS for styling</li>
+      <li>Responsive, modern UI components</li>
+    </ul>
+  </Card>
+  
+  <Card title="Wallet Integration" icon="wallet" iconType="duotone">
+    <ul className="mt-2 text-sm">
+      <li>CosmosKit for wallet connections</li>
+      <li>Keplr and Leap wallet support</li>
+      <li>Mobile wallet placeholder setup</li>
+    </ul>
+  </Card>
+  
+  <Card title="Data Management" icon="database" iconType="duotone">
+    <ul className="mt-2 text-sm">
+      <li>TanStack Query for data fetching</li>
+      <li>Automatic caching and synchronization</li>
+      <li>Custom hooks for chain interactions</li>
+    </ul>
+  </Card>
+  
+  <Card title="Smart Contract" icon="file-contract" iconType="duotone">
+    <ul className="mt-2 text-sm">
+      <li>Complete CosmWasm contract included</li>
+      <li>User state management</li>
+      <li>Global counter functionality</li>
+    </ul>
+  </Card>
+</CardGroup>
+
+## Getting Started
+
+### Prerequisites
+
+```bash
+# Install Node.js (v18 or higher)
+# Install Rust and wasm-pack for contract development
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustup target add wasm32-unknown-unknown
+```
+
+### Quick Setup
+
+<Steps>
+  <Step title="Clone the Repository">
+    ```bash
+    git clone https://github.com/Deploydon/NeutronTemplate.git
+    cd NeutronTemplate
+    ```
+  </Step>
+  
+  <Step title="Setup Frontend">
+    ```bash
+    cd frontend
+    npm install
+    npm run dev
+    ```
+    Your frontend will be available at `http://localhost:3000`
+  </Step>
+  
+  <Step title="Build Contract (Optional)">
+    ```bash
+    cd ../contract
+    ./buildprod.sh
+    ```
+  </Step>
+</Steps>
+
+## Smart Contract Features
+
+The included CosmWasm contract provides several example functions that demonstrate common patterns:
+
+### User State Management
+- **Increment Value**: Users can increment a personal counter stored in their state
+- **Deposit/Withdraw NTRN**: Users can deposit and withdraw NTRN tokens with state tracking
+- **Query User Data**: Retrieve user-specific state and balances
+
+### Global State
+- **Global Counter**: A shared counter that all users can increment
+- **Admin Functions**: Only the contract admin can reset the global counter
+
+### Example Contract Functions
+
+```rust
+// Execute Messages
+pub enum ExecuteMsg {
+    IncrementUserValue {},
+    DepositNtrn {},
+    WithdrawNtrn { amount: Uint128 },
+    IncrementGlobalCounter {},
+    ResetGlobalCounter {}, // Admin only
+}
+
+// Query Messages  
+pub enum QueryMsg {
+    GetUserValue { address: String },
+    GetUserDeposit { address: String },
+    GetGlobalCounter {},
+    GetContractBalance {},
+}
+```
+
+## Frontend Architecture
+
+### Components Structure
+
+The frontend is organized with reusable components and custom hooks:
+
+```
+frontend/
+├── app/                 # NextJS 13+ app directory
+├── components/          # Reusable UI components
+├── hooks/              # Custom React hooks for chain interaction
+├── config/             # Configuration files
+└── public/             # Static assets
+```
+
+### Key Features
+
+<CardGroup cols={3}>
+  <Card title="Wallet Connection" icon="plug" iconType="duotone">
+    Seamless wallet integration with connection status, balance display, and transaction handling.
+  </Card>
+  
+  <Card title="Contract Interaction" icon="handshake" iconType="duotone">
+    Pre-built UI for all contract functions with proper error handling and transaction feedback.
+  </Card>
+  
+  <Card title="Real-time Updates" icon="refresh" iconType="duotone">
+    Automatic data refresh and caching using TanStack Query for optimal user experience.
+  </Card>
+</CardGroup>
+
+## Testing & Development
+
+### Local Testing Setup
+
+The template includes a complete testing environment in the `contract/JS/` folder:
+
+```bash
+cd contract/JS
+npm install
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your test wallet seed phrase
+
+# Deploy and test
+node deploy.js    # Deploy contract
+node migrate.js   # Handle migrations  
+node exec.js      # Execute contract functions
+node query.js     # Query contract state
+```
+
+### Testing Networks
+
+<Tabs>
+  <Tab title="Neutron Testnet (Pion-1)">
+    The template is pre-configured for Neutron's Pion-1 testnet.
+    
+    **Test Contract Address:**
+    ```
+    neutron1n9xk0jk2pznv085yevpg778kxqeq3scm6yhy332jk9cmteqlv0as5gl6p8
+    ```
+    
+    [View on Celatone](https://neutron.celat.one/pion-1/contracts/neutron1n9xk0jk2pznv085yevpg778kxqeq3scm6yhy332jk9cmteqlv0as5gl6p8)
+  </Tab>
+  
+  <Tab title="CosmoPark (Local)">
+    For local development, you can use Neutron's CosmoPark environment.
+    
+    Follow the [CosmoPark setup guide](https://docs.neutron.org/1.0/neutron/build-and-run/cosmopark/) and update the configuration in your testing scripts.
+  </Tab>
+</Tabs>
+
+## Customization Guide
+
+### Adapting the Template
+
+<Steps>
+  <Step title="Update Branding">
+    - Replace logos and icons in `frontend/public/`
+    - Update metadata in `frontend/app/layout.js`
+    - Customize color scheme in `tailwind.config.js`
+  </Step>
+  
+  <Step title="Modify Contract Logic">
+    - Edit contract functions in `contract/src/`
+    - Update message structures in `contract/src/msg.rs`
+    - Rebuild with `./buildprod.sh`
+  </Step>
+  
+  <Step title="Extend Frontend">
+    - Add new components in `frontend/components/`
+    - Create custom hooks in `frontend/hooks/`
+    - Add new pages in `frontend/app/`
+  </Step>
+  
+  <Step title="Configure Deployment">
+    - Update network configurations
+    - Set up environment variables
+    - Configure wallet connection options
+  </Step>
+</Steps>
+
+### Adding Mobile Wallet Support
+
+The template includes placeholders for mobile wallet integration:
+
+1. Get a [Reown/WalletConnect](https://cloud.reown.com/) Project Key
+2. Update the wallet configuration in `frontend/config/`
+3. Enable mobile wallet options in CosmosKit setup
+
+## Production Deployment
+
+### Frontend Deployment
+
+```bash
+cd frontend
+npm run build
+npm start
+```
+
+The frontend can be deployed to any platform supporting NextJS:
+- Vercel (recommended)
+- Netlify
+- Digital Ocean App Platform
+- Self-hosted with Docker
+
+### Contract Deployment
+
+```bash
+cd contract
+./buildprod.sh
+
+# Deploy to mainnet (update network configuration)
+node JS/deploy.js
+```
+
+## Advanced Usage
+
+### Extending Contract Functionality
+
+The contract is designed to be easily extensible. Common additions include:
+
+- **NFT Integration**: Add support for NFT minting and trading
+- **Multi-token Support**: Extend beyond NTRN to other tokens
+- **Governance Features**: Add voting and proposal mechanisms
+- **Cross-chain Integration**: Utilize Neutron's IBC capabilities
+
+### Frontend Enhancements
+
+- **Advanced UI**: Add charts, dashboards, or data visualization
+- **Real-time Features**: Implement WebSocket connections for live updates
+- **Mobile App**: Convert to React Native or create PWA
+- **Analytics**: Integrate usage tracking and user analytics
+
+## Troubleshooting
+
+<Accordion title="Common Issues">
+  <AccordionItem title="Contract Build Fails">
+    Ensure you have the correct Rust toolchain and wasm32-unknown-unknown target installed:
+    ```bash
+    rustup update
+    rustup target add wasm32-unknown-unknown
+    ```
+  </AccordionItem>
+  
+  <AccordionItem title="Wallet Connection Issues">
+    Make sure you have Keplr or Leap wallet installed and configured for Neutron testnet. Add the network manually if needed.
+  </AccordionItem>
+  
+  <AccordionItem title="Transaction Failures">
+    Check that you have sufficient testnet funds and that the contract address is correct for your target network.
+  </AccordionItem>
+</Accordion>
+
+## Resources
+
+<CardGroup cols={3}>
+  <Card title="GitHub Repository" icon="github" href="https://github.com/Deploydon/NeutronTemplate" target="_blank">
+    Source code and latest updates
+  </Card>
+  
+  <Card title="Live Demo" icon="external-link" href="https://NeutronTemplate.Deploydon.com" target="_blank">
+    Interactive demonstration
+  </Card>
+  
+  <Card title="LocalTesting Tools" icon="vial" href="https://github.com/Deploydon/LocalTesting" target="_blank">
+    Additional testing utilities
+  </Card>
+</CardGroup>
+
+This template provides a solid foundation for building production-ready Neutron applications. It incorporates best practices for both smart contract development and modern web frontend architecture, making it an ideal starting point for developers at any level. 

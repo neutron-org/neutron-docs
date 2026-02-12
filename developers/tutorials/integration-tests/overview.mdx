@@ -1,0 +1,48 @@
+---
+title: "Integration Testing Tutorials"
+description: "Learn how to write comprehensive tests for Neutron applications"
+---
+
+This section contains tutorials focused on writing integration tests for your Neutron applications. Proper testing is essential for blockchain applications to ensure security and reliability.
+
+## Available Tutorials
+
+<CardGroup cols={2}>
+  <Card title="Chain Integration Tests" icon="server" iconType="duotone" href="/developers/tutorials/integration-tests/chain">
+    Learn how to write comprehensive tests for Neutron chain modules and features
+  </Card>
+  <Card title="Smart Contract Tests" icon="file-code" iconType="duotone" href="/developers/tutorials/integration-tests/smart-contracts">
+    Test your CosmWasm smart contracts in a realistic chain environment
+  </Card>
+</CardGroup>
+
+More tutorials coming soon covering:
+- Testing cross-chain functionalities (ICA and ICQ)
+- Automating tests in CI/CD pipelines
+
+## Why Integration Testing Matters
+
+Integration testing goes beyond basic unit tests by:
+
+1. Testing how different components interact with each other
+2. Simulating realistic blockchain conditions
+3. Verifying that your application works as expected in a chain environment
+4. Catching bugs that might only appear in specific chain contexts
+
+## Recommended Tools
+
+For testing Neutron applications, we recommend:
+
+- **cw-multi-test**: A framework for testing CosmWasm contracts
+- **Rust's testing framework**: For unit testing individual functions
+- **Neutron's testing utilities**: For simulating Neutron-specific features
+- **Docker**: For setting up isolated testing environments
+
+## Prerequisites
+
+Before diving into the integration testing tutorials, you should:
+
+1. Be comfortable with Rust programming
+2. Understand the basics of CosmWasm contract development
+3. Have completed the [Onboarding Tutorials](/developers/tutorials/onboarding/overview)
+4. Have a project ready to test 

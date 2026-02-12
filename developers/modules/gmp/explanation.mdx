@@ -1,0 +1,214 @@
+---
+title: "GMP Module Technical Details"
+description: "Technical explanation of General Message Passing middleware implementation"
+---
+
+# Technical Details
+
+This document provides an in-depth technical explanation of how the GMP (General Message Passing) module works within the Neutron network's IBC stack.
+
+## Architecture Overview
+
+The GMP module is implemented as an IBC middleware that sits between the IBC core routing and the transfer application. This positioning allows it to intercept and process IBC transfer packets before they reach their final destination.
+
+```
+IBC Core → GMP Middleware → Transfer Module → Application
+```
+
+## IBC Middleware Implementation
+
+The GMP module implements the standard IBC middleware interface, providing hooks for all IBC packet lifecycle events:
+
+### Channel Lifecycle
+
+The module passes through all channel lifecycle events without modification:
+- `OnChanOpenInit`
+- `OnChanOpenTry` 
+- `OnChanOpenAck`
+- `OnChanOpenConfirm`
+- `OnChanCloseInit`
+- `OnChanCloseConfirm`
+
+This ensures that GMP doesn't interfere with channel establishment or closure processes.
+
+### Packet Processing
+
+The core functionality is implemented in the `OnRecvPacket` handler:
+
+#### Step 1: Packet Data Extraction
+```go
+var data types.FungibleTokenPacketData
+if err := types.ModuleCdc.UnmarshalJSON(packet.GetData(), &data); err != nil {
+    return channeltypes.NewErrorAcknowledgement(err)
+}
+```
+
+The module first attempts to unmarshal the packet data as a standard ICS-20 fungible token packet.
+
+#### Step 2: Memo Field Analysis
+```go
+var msg Message
+err = json.Unmarshal([]byte(data.GetMemo()), &msg)
+if err != nil || len(msg.Payload) == 0 {
+    // Not a GMP packet, pass through
+    return im.app.OnRecvPacket(ctx, packet, relayer)
+}
+```
+
+The module attempts to parse the memo field as a GMP message. If parsing fails or the payload is empty, the packet is treated as a standard transfer and passed through unchanged.
+
+#### Step 3: Message Type Processing
+
+Based on the message type, the module processes the packet differently:
+
+```go
+switch msg.Type {
+case TypeGeneralMessage:
+    fallthrough
+case TypeGeneralMessageWithToken:
+    // Extract payload and replace memo
+    data.Memo = string(msg.Payload)
+    // Re-marshal and continue processing
+    packet.Data = dataBytes
+    return im.app.OnRecvPacket(ctx, packet, relayer)
+default:
+    return channeltypes.NewErrorAcknowledgement(fmt.Errorf("unrecognized message type: %d", msg.Type))
+}
+```
+
+For recognized message types, the module:
+1. Extracts the payload from the GMP message
+2. Replaces the original memo with the extracted payload
+3. Re-marshals the packet data
+4. Passes the modified packet to the next layer
+
+## Message Structure
+
+The GMP message format is defined as:
+
+```go
+type Message struct {
+    SourceChain   string `json:"source_chain"`
+    SourceAddress string `json:"source_address"`
+    Payload       []byte `json:"payload"`
+    Type          int64  `json:"type"`
+}
+```
+
+### Field Descriptions
+
+- **SourceChain**: Identifier of the originating chain (informational)
+- **SourceAddress**: Address of the original sender (informational)  
+- **Payload**: The actual message content to be processed by the receiving application
+- **Type**: Message type indicator (1 for GeneralMessage, 2 for GeneralMessageWithToken)
+
+### Message Types
+
+```go
+const (
+    TypeUnrecognized = iota  // 0 - Invalid/unrecognized
+    TypeGeneralMessage       // 1 - Standard message
+    TypeGeneralMessageWithToken // 2 - Message with explicit token coordination
+)
+```
+
+## Processing Flow
+
+### Successful GMP Message Processing
+
+1. **Reception**: IBC packet received with GMP message in memo
+2. **Parsing**: Memo field successfully parsed as GMP message
+3. **Validation**: Message type is recognized (1 or 2)
+4. **Extraction**: Payload extracted from GMP message structure
+5. **Replacement**: Original memo replaced with extracted payload
+6. **Forwarding**: Modified packet passed to next middleware/application
+
+### Non-GMP Message Processing
+
+1. **Reception**: IBC packet received
+2. **Parsing**: Memo field parsing fails or payload is empty
+3. **Pass-through**: Packet forwarded unchanged to next layer
+
+### Error Handling
+
+The module returns error acknowledgements for:
+- Malformed ICS-20 packet data
+- Unrecognized message types
+- JSON marshaling/unmarshaling errors
+
+## Integration Points
+
+### With IBC Transfer Module
+
+The GMP module is designed to work seamlessly with the IBC transfer module:
+- Preserves all transfer semantics (amount, denom, sender, receiver)
+- Only modifies the memo field content
+- Maintains compatibility with standard IBC transfers
+
+### With Receiving Applications
+
+Applications receiving GMP-processed packets will see:
+- Standard IBC transfer with tokens
+- Memo field containing the extracted payload (not the original GMP message structure)
+- Normal IBC transfer events and acknowledgements
+
+## Security Considerations
+
+### Trust Model
+
+- **Source Fields**: The `source_chain` and `source_address` fields are informational only and should not be trusted for security decisions
+- **Payload Validation**: Receiving applications must validate payload content independently
+- **Message Authenticity**: Authentication relies on IBC's standard cryptographic guarantees
+
+### Attack Vectors
+
+- **Malformed Messages**: Invalid JSON or message structures are handled gracefully with error acknowledgements
+- **Large Payloads**: No explicit size limits beyond IBC packet size constraints
+- **Type Confusion**: Unrecognized message types result in error acknowledgements
+
+## Performance Characteristics
+
+### Processing Overhead
+
+- **Parsing Cost**: JSON unmarshaling of memo field for each packet
+- **Memory Usage**: Temporary allocation for message structure and payload
+- **Compute Cost**: Minimal - mostly string operations and type checking
+
+### Optimization Strategies
+
+- Early exit for non-GMP packets (empty payload check)
+- Single pass processing with immediate forwarding
+- No persistent state or storage requirements
+
+## Debugging and Monitoring
+
+### Error Conditions
+
+Common error scenarios and their handling:
+1. **Invalid JSON in memo**: Returns error acknowledgement, packet fails
+2. **Empty payload**: Treated as non-GMP packet, passed through
+3. **Unrecognized type**: Returns error acknowledgement with type information
+4. **Marshaling errors**: Returns error acknowledgement, packet fails
+
+### Observability
+
+The module integrates with standard IBC observability:
+- Standard IBC events are emitted
+- Error acknowledgements provide diagnostic information
+- No additional metrics or logging beyond IBC defaults
+
+## Future Considerations
+
+### Extensibility
+
+The message type system allows for future expansion:
+- Additional message types can be added
+- Backward compatibility maintained through type checking
+- New processing logic can be added per message type
+
+### Protocol Evolution
+
+The middleware design allows for:
+- Updates to message format (with versioning)
+- Additional processing steps
+- Integration with other IBC middleware 

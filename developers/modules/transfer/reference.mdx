@@ -1,0 +1,182 @@
+---
+title: "Reference"
+description: "Technical reference for the Neutron Transfer module"
+---
+
+The Neutron Transfer module is a wrapper over the standard IBC Transfer module with additional features for smart contract integration.
+
+## Key Differences from Standard IBC Transfer
+
+### 1. Enhanced Transfer Response
+
+Instead of an empty response, Neutron provides tracking information:
+
+```protobuf
+message MsgTransferResponse {
+  // channel's sequence_id for outgoing ibc packet. Unique per a channel.
+  uint64 sequence_id = 1;
+  // channel src channel on neutron side transaction was submitted from
+  string channel = 2;
+}
+```
+
+This allows contracts to correlate transfers with their acknowledgements.
+
+### 2. Contract Detection and Callbacks
+
+The Transfer module automatically detects smart contract senders using `HasContractInfo()` and provides Sudo callbacks for transfer results.
+
+Callback messages are prepared using the Contract Manager module's `PrepareSudoCallbackMessage()` function.
+
+### 3. Fee Integration
+
+```protobuf
+message MsgTransfer {
+  // Standard IBC Transfer fields...
+  string source_port = 1;
+  string source_channel = 2;
+  cosmos.base.v1beta1.Coin token = 3;
+  string sender = 4;
+  string receiver = 5;
+  ibc.core.client.v1.Height timeout_height = 6;
+  uint64 timeout_timestamp = 7;
+  string memo = 8;
+  
+  // Neutron addition: fees for IBC packet processing
+  neutron.feerefunder.Fee fee = 9;
+}
+```
+
+### 4. Contract-Specific Validation
+
+The Transfer module includes conditional validation:
+
+```go
+func (msg *MsgTransfer) Validate(isContract bool) error {
+    if isContract {
+        if err := msg.Fee.Validate(); err != nil {
+            return err
+        }
+    }
+    // ... standard IBC validation
+}
+```
+
+- **For contracts**: Fee validation is required
+- **For non-contracts**: Fee validation is bypassed
+
+### 5. Automatic Fee Operations
+
+For contract senders, the module automatically:
+
+```go
+// Fee locking before packet transmission
+if err := k.FeeKeeper.LockFees(ctx, senderAddr, packetID, msg.Fee); err != nil {
+    return nil, errors.Wrapf(err, "failed to lock fees")
+}
+
+// Fee distribution on acknowledgement
+im.wrappedKeeper.FeeKeeper.DistributeAcknowledgementFee(ctx, relayer, packetID)
+
+// Fee distribution on timeout
+im.wrappedKeeper.FeeKeeper.DistributeTimeoutFee(ctx, relayer, packetID)
+```
+
+## Module Implementation
+
+### Wrapper Architecture
+
+The module implements a wrapper pattern around the standard IBC Transfer module:
+
+```go
+type IBCModule struct {
+    wrappedKeeper      wrapkeeper.KeeperTransferWrapper
+    keeper             keeper.Keeper
+    sudoKeeper         neutrontypes.WasmKeeper
+    tokenfactoryKeeper neutrontypes.TokenfactoryKeeper
+    transfer.IBCModule
+}
+```
+
+### Method Overrides
+
+Key methods are overridden to add contract functionality:
+
+- **OnAcknowledgementPacket()**: Adds callback processing after standard IBC handling
+- **OnTimeoutPacket()**: Adds callback processing after standard IBC handling
+- **Transfer()**: Adds contract detection, fee validation/locking, and enhanced response
+
+### Standard IBC Delegation
+
+All standard IBC Transfer functionality is delegated to the underlying implementation:
+
+```protobuf
+service Query {
+  // Delegated to ibc.applications.transfer.v1
+  rpc DenomTrace(ibc.applications.transfer.v1.QueryDenomTraceRequest) returns (ibc.applications.transfer.v1.QueryDenomTraceResponse);
+  rpc DenomTraces(ibc.applications.transfer.v1.QueryDenomTracesRequest) returns (ibc.applications.transfer.v1.QueryDenomTracesResponse);
+  rpc Params(ibc.applications.transfer.v1.QueryParamsRequest) returns (ibc.applications.transfer.v1.QueryParamsResponse);
+  rpc DenomHash(ibc.applications.transfer.v1.QueryDenomHashRequest) returns (ibc.applications.transfer.v1.QueryDenomHashResponse);
+}
+```
+
+## Error Handling
+
+### Sudo Call Error Handling
+
+The Transfer module's callback error handling:
+
+```go
+_, err = im.sudoKeeper.Sudo(ctx, senderAddress, msg)
+if err != nil {
+    im.keeper.Logger(ctx).Debug("HandleAcknowledgement: failed to Sudo contract on packet acknowledgement", "error", err)
+}
+// Processing continues regardless of callback success/failure
+```
+
+Failed Sudo calls are logged but do not block IBC packet processing.
+
+### Fee Processing Independence
+
+Fee operations occur independently of callback success:
+- Fee locking happens before packet transmission
+- Fee distribution occurs regardless of callback outcomes
+- IBC processing continues even if contracts fail to handle callbacks
+
+## Integration Dependencies
+
+The Transfer module relies on external modules for specific functionality:
+
+### Contract Manager Module
+
+- **PrepareSudoCallbackMessage()**: Determines callback message format and structure
+- **Request ID handling**: Manages correlation between transfers and callbacks
+- **Sudo message specifications**: Defines contract interface requirements
+
+### Fee Refunder Module
+
+- **Fee structure**: Defines `neutron.feerefunder.Fee` type and validation
+- **Fee operations**: Implements `LockFees()`, `DistributeAcknowledgementFee()`, `DistributeTimeoutFee()`
+- **Balance requirements**: Manages fee payment and distribution logic
+
+## Key Concepts
+
+### Transfer Flow for Contracts
+
+1. **Contract Detection**: Module checks `HasContractInfo(ctx, senderAddress)`
+2. **Fee Validation**: Calls `msg.Fee.Validate()` for contracts only
+3. **Fee Locking**: Uses `FeeKeeper.LockFees()` before packet transmission
+4. **Standard IBC Processing**: Delegates to underlying IBC Transfer module
+5. **Enhanced Response**: Returns `sequence_id` and `channel` information
+6. **Callback Preparation**: Uses Contract Manager's `PrepareSudoCallbackMessage()`
+7. **Sudo Callback**: Calls `sudoKeeper.Sudo()` with prepared message
+8. **Fee Distribution**: Distributes fees to relayers regardless of callback success
+
+### Non-Contract Processing
+
+For non-contract senders:
+- Fee validation is skipped
+- Fee locking is bypassed
+- No callbacks are sent
+- Standard IBC processing applies
+- Standard (empty) response is returned 

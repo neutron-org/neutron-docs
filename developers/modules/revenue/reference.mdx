@@ -1,0 +1,113 @@
+---
+title: "Reference"
+description: "Basic reference for the Revenue module"
+---
+
+The Revenue module manages validator compensation based on performance metrics and payment schedules.
+
+## Parameters
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `reward_asset` | string | Token denomination used for compensation payments |
+| `reward_quote` | object | Quotation of the reward asset with amount and asset fields |
+| `blocks_performance_requirement` | object | Performance thresholds for block signing |
+| `oracle_votes_performance_requirement` | object | Performance thresholds for oracle vote submissions |
+| `payment_schedule_type` | object | Type of payment schedule (monthly, block-based, or empty) |
+| `twap_window` | int64 | Time window in seconds for calculating asset price averages |
+
+### Reward Quote
+- `amount`: USD value of compensation for validators with 100% performance
+- `asset`: The name of the quote asset (e.g., "USD")
+
+### Performance Requirements
+- `allowed_to_miss`: Maximum miss rate for full rewards (0.0-1.0)
+- `required_at_least`: Minimum performance threshold (0.0-1.0)
+
+## Queries
+
+### QueryParams
+Retrieve the current module parameters.
+
+**Response:**
+- `params`: Current Revenue parameters
+
+### QueryValidatorStats
+Retrieve performance metrics and expected revenue for a specific validator.
+
+**Parameters:**
+- `val_oper_address`: Validator operator address to query
+
+**Response:**
+- `stats`: Performance metrics and revenue calculation for the validator
+
+### QueryValidatorsStats
+Retrieve performance metrics for all validators.
+
+**Response:**
+- `stats`: Array of validator performance metrics
+
+### QueryPaymentInfo
+Retrieve the current payment schedule and revenue calculation information.
+
+**Response:**
+- `payment_schedule`: Current payment schedule with period tracking
+- `effective_period_progress`: Revenue amount multiplier for current period
+- `reward_asset_twap`: Current TWAP of the reward asset
+- `base_revenue_amount`: Maximum validator compensation in current price conditions
+
+## Messages
+
+### MsgUpdateParams
+Update module parameters through governance.
+
+**Authority Required**: Governance only
+
+**Fields:**
+- `authority`: Governance authority address
+- `params`: New module parameters
+
+### MsgFundTreasury
+Fund the treasury for validator compensation.
+
+**Fields:**
+- `sender`: Address sending funds
+- `amount`: Coins to send to treasury (must match reward asset denom)
+
+## Events
+
+### revenue_distribution
+Emitted when revenue is successfully distributed to a validator.
+
+**Attributes:**
+- `validator`: Validator operator address
+- `revenue_amount`: Amount of revenue distributed
+- `performance_rating`: Validator's performance rating
+- `in_active_valset_for_blocks_in_period`: Number of blocks validator was in active set
+- `committed_blocks_in_period`: Number of blocks committed by validator
+- `committed_oracle_votes_in_period`: Number of oracle votes provided by validator
+- `total_block_in_period`: Total number of blocks in the payment period
+- `effective_period_progress`: Current payment period progress
+
+### revenue_distribution_error
+Emitted when revenue distribution fails for a validator.
+
+**Attributes:**
+- `validator`: Validator operator address
+- `payment_failure`: Error message describing the failure
+- `revenue_amount`: Amount that failed to be distributed
+
+### revenue_distribution_none
+Emitted when no revenue is distributed due to zero period revenue.
+
+**Attributes:**
+- `revenue_amount`: Zero revenue amount
+- `effective_period_progress`: Current payment period progress
+
+## Key Concepts
+
+- **Performance-Based**: Compensation based on validator performance metrics
+- **Payment Schedules**: Configurable payment periods (monthly or block-based)
+- **TWAP Calculation**: Uses Time-Weighted Average Price for asset valuation
+- **Treasury Funding**: Requires funding for validator compensation
+- **Governance Updates**: Parameters can only be updated through governance proposals 

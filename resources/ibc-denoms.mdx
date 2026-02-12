@@ -1,0 +1,64 @@
+---
+title: "IBC Denominations"
+description: "IBC token denominations available on Neutron"
+icon: "arrow-right-arrow-left"
+---
+
+This page lists the IBC denominations available on Neutron networks. These tokens have been bridged from other chains in the Cosmos ecosystem through IBC (Inter-Blockchain Communication) channels.
+
+## Mainnet (neutron-1)
+
+| Symbol | IBC Denom |
+|--------|-----------|
+| ATOM | `ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9` |
+| TIA | `ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7` |
+| stTIA | `ibc/6569E05DEE32B339D9286A52BE33DFCEFC97267F23EF9CFDE0C055140967A9A5` |
+| AXL | `ibc/C0E66D1C81D8AAF0E6896E05190FDFBC222367148F86AC3EA679C28327A763CD` |
+| axlUSDC | `ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349` |
+| axlWETH | `ibc/A585C2D15DCD3B010849B453A2CFCB5E213208A5AB665691792684C26274304D` |
+| USDC | `ibc/B559A80D62249C8AA07A380E2A2BEA6E5CA9A6F079C912C3A9E9B494105E4F81` |
+| DYDX | `ibc/2CB87BCE0937B1D1DFCEE79BE4501AAF3C265E923509AEAC410AD85D27F35130` |
+| OSMO | `ibc/376222D6D9DAE23092E29740E56B758580935A6D77C24C2ABD57A6A78A1F3955` |
+| NLS | `ibc/6C9E6701AC217C0FC7D74B0F7A6265B9B4E3C3CDA6E80AADE5F950A8F52F9972` |
+
+## Testnet (pion-1)
+
+| Symbol | IBC Denom |
+|--------|-----------|
+| axlWETH | `ibc/CC8B40E3F3536D003C6ED7C65421067215453AECE1517A6F0935470C634A036B` |
+
+## Using IBC Denoms
+
+To specify an IBC token in transactions or queries, use the full IBC denom format. For example:
+
+```bash
+# Query ATOM balance
+neutrond query bank balances neutron123... --denom=ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9
+
+# Send TIA tokens
+neutrond tx bank send \
+  my-wallet recipient-address \
+  1000000ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7 \
+  --chain-id neutron-1 \
+  --gas auto \
+  --gas-adjustment 1.3
+```
+
+## IBC Relayers
+
+IBC tokens are transferred and maintained by IBC relayers that process packet data between Neutron and other chains. The primary relayers for Neutron include:
+
+1. Neutron Foundation relayers
+2. Community relayers (Lavenderfive, Notional, Polkachu, etc.)
+3. Third-party commercial relayers
+
+## Fee Tokens
+
+Some IBC tokens can be used to pay for transaction fees on Neutron. The current list of supported fee tokens includes:
+
+- `untrn` (Native NTRN)
+- `ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9` (ATOM)
+- `ibc/F082B65C88E4B6D5EF1DB243CDA1D331D002759E938A0F5CD3FFDC5D53B3E349` (axlUSDC)
+- `ibc/2CB87BCE0937B1D1DFCEE79BE4501AAF3C265E923509AEAC410AD85D27F35130` (DYDX)
+- `ibc/773B4D0A3CD667B2275D5A4A7A2F0909C0BA0F4059C0B9181E680DDF4965DCC7` (TIA)
+- `factory/neutron1ug740qrkquxzrk2hh29qrlx3sktkfml3je7juusc2te7xmvsscns0n2wry/wstETH` (wstETH) 

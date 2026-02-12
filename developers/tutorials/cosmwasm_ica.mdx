@@ -1,0 +1,961 @@
+---
+title: "Interchain Accounts with CosmWasm"
+description: "Learn how to build smart contracts that utilize interchain accounts to execute transactions on other chains"
+---
+
+This tutorial walks through building a smart contract that uses Neutron's Interchain Accounts (ICA) module to execute transactions on remote chains from within your contract.
+
+## Overview
+
+Interchain Accounts are a powerful IBC feature that allows a smart contract on Neutron to control accounts on other IBC-connected chains. This enables a wide range of cross-chain applications, from managing assets across chains to controlling governance on remote chains.
+
+In this tutorial, you'll learn how to:
+
+1. Set up the necessary dependencies
+2. Register an Interchain Account
+3. Execute a transaction on a remote chain
+4. Handle IBC response packets (acknowledgments, errors, timeouts)
+
+## Prerequisites
+
+Before starting this tutorial, you should:
+
+- Have a basic understanding of CosmWasm smart contract development
+- Be familiar with [Neutron's architecture](/developers/overview)
+- Have completed the [Introduction to CosmWasm](/developers/tutorials/introduction_to_cosmwasm) tutorial
+
+## Setting Up Your Project
+
+Start by creating a new CosmWasm project using cargo-generate:
+
+```bash
+cargo generate --git https://github.com/CosmWasm/cw-template.git --name neutron-ica-example
+cd neutron-ica-example
+```
+
+### Adding Dependencies
+
+Update your `Cargo.toml` file to include the necessary dependencies:
+
+```toml
+[package]
+name = "neutron-ica-example"
+version = "0.1.0"
+authors = ["Your Name <your.email@example.com>"]
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = "abort"
+incremental = false
+overflow-checks = true
+
+[features]
+backtraces = ["cosmwasm-std/backtraces"]
+library = []
+
+[dependencies]
+cosmwasm-std = "1.5.0"
+cosmwasm-schema = "1.5.0"
+cw-storage-plus = "1.1.0"
+schemars = "0.8.12"
+serde = { version = "1.0.171", default-features = false, features = ["derive"] }
+thiserror = "1.0.40"
+
+# Neutron-specific dependencies
+neutron-sdk = "0.10.0"
+cosmos-sdk-proto = { version = "0.19.0", default-features = false }
+protobuf = { version = "3.2.0", features = ["with-bytes"] }
+serde_json = "1.0"
+```
+
+### Project Structure
+
+Create the following file structure:
+
+```
+src/
+  bin/
+    schema.rs
+  contract.rs
+  error.rs
+  helpers.rs
+  lib.rs
+  msg.rs
+  state.rs
+```
+
+## Implementing the Contract
+
+### State Management
+
+First, let's define our state structure in `state.rs`:
+
+```rust
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
+use cosmwasm_std::Addr;
+use cw_storage_plus::{Item, Map};
+
+// Store registered interchain accounts
+// Maps from interchain_account_id -> (host_address, connection_id)
+pub const INTERCHAIN_ACCOUNTS: Map<String, Option<(String, String)>> = Map::new("interchain_accounts");
+
+// Store IBC packet information
+pub const SUDO_PAYLOAD: Map<(String, u64), Vec<u8>> = Map::new("sudo_payload");
+
+// Store a queue for reply payloads
+pub const REPLY_ID_STORAGE: Item<Vec<u8>> = Item::new("reply_queue_id");
+
+// Store results of acknowledgements
+pub const ACKNOWLEDGEMENT_RESULTS: Map<(String, u64), AcknowledgementResult> = Map::new("acknowledgement_results");
+
+// Store any errors that occur during processing
+pub const ERRORS_QUEUE: Map<u32, String> = Map::new("errors_queue");
+
+// Define possible acknowledgement results
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, JsonSchema, Debug)]
+#[serde(rename_all = "snake_case")]
+pub enum AcknowledgementResult {
+    // Success - message item types that succeeded
+    Success(Vec<String>),
+    // Error - (message type, error details)
+    Error((String, String)),
+    // Timeout - message type
+    Timeout(String),
+}
+```
+
+### Message Definitions
+
+Next, let's define our messages in `msg.rs`:
+
+```rust
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct InstantiateMsg {}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ExecuteMsg {
+    // Register a new interchain account
+    Register {
+        connection_id: String,
+        interchain_account_id: String,
+    },
+    // Send a delegation transaction to the remote chain
+    Delegate {
+        interchain_account_id: String,
+        validator: String,
+        amount: u128,
+        denom: String,
+        timeout: Option<u64>,
+    },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum QueryMsg {
+    // Get the address of a registered interchain account
+    GetInterchainAccount {
+        interchain_account_id: String,
+    },
+    // Get the result of a transaction by port_id and sequence
+    GetAcknowledgementResult {
+        port_id: String,
+        sequence: u64,
+    },
+}
+
+// Response types
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct InterchainAccountResponse {
+    pub interchain_account_id: String,
+    pub address: Option<String>,
+    pub connection_id: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct AcknowledgementResponse {
+    pub result: Option<String>,
+}
+
+// Payload for sudo callbacks
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct SudoPayload {
+    pub message: String,
+    pub port_id: String,
+}
+```
+
+### Contract Implementation
+
+Now, let's implement the main contract logic in `contract.rs`:
+
+```rust
+use cosmwasm_std::{
+    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response, StdError,
+    StdResult, SubMsg, from_binary, Coin, CosmosMsg,
+};
+
+use cosmos_sdk_proto::cosmos::staking::v1beta1::{MsgDelegate, MsgDelegateResponse};
+
+use neutron_sdk::{
+    bindings::{
+        msg::{IbcFee, MsgSubmitTxResponse, NeutronMsg},
+        query::{NeutronQuery, QueryInterchainAccountAddressResponse},
+        types::ProtobufAny,
+    },
+    interchain_txs::helpers::{
+        decode_acknowledgement_response, decode_message_response, get_port_id,
+    },
+    sudo::msg::{RequestPacket, SudoMsg},
+    NeutronResult,
+};
+
+use crate::error::ContractError;
+use crate::msg::{
+    AcknowledgementResponse, ExecuteMsg, InstantiateMsg, InterchainAccountResponse, QueryMsg, SudoPayload,
+};
+use crate::state::{
+    AcknowledgementResult, ACKNOWLEDGEMENT_RESULTS, ERRORS_QUEUE, INTERCHAIN_ACCOUNTS,
+    REPLY_ID_STORAGE, SUDO_PAYLOAD,
+};
+
+// Default timeout for SubmitTX is two weeks
+const DEFAULT_TIMEOUT_SECONDS: u64 = 60 * 60 * 24 * 7 * 2;
+
+// Reply ID for sudo callbacks
+const SUDO_PAYLOAD_REPLY_ID: u64 = 1;
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn instantiate(
+    _deps: DepsMut,
+    _env: Env,
+    _info: MessageInfo,
+    _msg: InstantiateMsg,
+) -> StdResult<Response> {
+    Ok(Response::new().add_attribute("method", "instantiate"))
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn execute(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: ExecuteMsg,
+) -> StdResult<Response> {
+    match msg {
+        ExecuteMsg::Register {
+            connection_id,
+            interchain_account_id,
+        } => execute_register_ica(deps, env, connection_id, interchain_account_id),
+        ExecuteMsg::Delegate {
+            interchain_account_id,
+            validator,
+            amount,
+            denom,
+            timeout,
+        } => execute_delegate(
+            deps,
+            env,
+            interchain_account_id,
+            validator,
+            amount,
+            denom,
+            timeout,
+        ),
+    }
+}
+
+fn execute_register_ica(
+    deps: DepsMut,
+    env: Env,
+    connection_id: String,
+    interchain_account_id: String,
+) -> StdResult<Response> {
+    // Create the register message for the interchaintxs module
+    let register_msg = NeutronMsg::register_interchain_account(connection_id, interchain_account_id.clone());
+
+    // Get the port ID that will be generated for this account
+    let port_id = get_port_id(env.contract.address.as_str(), &interchain_account_id);
+
+    // Initialize storage for this account with None values
+    // They will be populated when we receive the OpenAck message
+    INTERCHAIN_ACCOUNTS.save(deps.storage, interchain_account_id, &None)?;
+
+    Ok(Response::new()
+        .add_message(register_msg)
+        .add_attribute("action", "register_interchain_account")
+        .add_attribute("port_id", port_id))
+}
+
+fn execute_delegate(
+    deps: DepsMut,
+    env: Env,
+    interchain_account_id: String,
+    validator: String,
+    amount: u128,
+    denom: String,
+    timeout: Option<u64>,
+) -> StdResult<Response> {
+    // Get the ICA information from storage
+    let port_id = get_port_id(env.contract.address.as_str(), &interchain_account_id);
+    
+    // Get the delegator address and connection_id
+    let ica_info = INTERCHAIN_ACCOUNTS.load(deps.storage, interchain_account_id.clone())?;
+    
+    let (delegator, connection_id) = match ica_info {
+        Some((address, connection)) => (address, connection),
+        None => return Err(StdError::generic_err("Interchain account not registered or not confirmed yet")),
+    };
+
+    // Create the delegation message
+    let delegate_msg = MsgDelegate {
+        delegator_address: delegator,
+        validator_address: validator,
+        amount: Some(cosmos_sdk_proto::cosmos::base::v1beta1::Coin {
+            denom,
+            amount: amount.to_string(),
+        }),
+    };
+
+    // Serialize the message
+    let mut buf = Vec::new();
+    buf.reserve(delegate_msg.encoded_len());
+
+    if let Err(e) = delegate_msg.encode(&mut buf) {
+        return Err(StdError::generic_err(format!("Encode error: {}", e)));
+    }
+
+    // Create the Any message
+    let any_msg = ProtobufAny {
+        type_url: "/cosmos.staking.v1beta1.MsgDelegate".to_string(),
+        value: Binary::from(buf),
+    };
+
+    // Set up the IBC fee for relayers
+    let fee = IbcFee {
+        recv_fee: vec![], // Must be empty
+        ack_fee: vec![Coin::new(100000, "untrn")],
+        timeout_fee: vec![Coin::new(100000, "untrn")],
+    };
+
+    // Create the SubmitTx message
+    let submit_msg = NeutronMsg::submit_tx(
+        connection_id,
+        interchain_account_id.clone(),
+        vec![any_msg],
+        "", // Memo
+        timeout.unwrap_or(DEFAULT_TIMEOUT_SECONDS),
+        fee,
+    );
+
+    // Create a submessage with a reply to save the packet data
+    let submsg = msg_with_sudo_callback(
+        deps.branch(),
+        submit_msg,
+        SudoPayload {
+            port_id,
+            message: "interchain_delegate".to_string(),
+        },
+    )?;
+
+    Ok(Response::new()
+        .add_submessage(submsg)
+        .add_attribute("action", "delegate")
+        .add_attribute("interchain_account_id", interchain_account_id))
+}
+
+// Helper to create submessages with sudo callbacks
+fn msg_with_sudo_callback<C: Into<CosmosMsg<NeutronMsg>>>(
+    deps: DepsMut,
+    msg: C,
+    payload: SudoPayload,
+) -> StdResult<SubMsg<NeutronMsg>> {
+    save_reply_payload(deps.storage, payload)?;
+    Ok(SubMsg::reply_on_success(msg, SUDO_PAYLOAD_REPLY_ID))
+}
+
+// Save the payload for the reply handler
+fn save_reply_payload(store: &mut dyn cosmwasm_std::Storage, payload: SudoPayload) -> StdResult<()> {
+    REPLY_ID_STORAGE.save(store, &serde_json::to_vec(&payload)?)
+}
+
+// Handle the reply from submessages
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> StdResult<Response> {
+    match msg.id {
+        SUDO_PAYLOAD_REPLY_ID => prepare_sudo_payload(deps, msg),
+        _ => Err(StdError::generic_err(format!(
+            "Unknown reply id: {}",
+            msg.id
+        ))),
+    }
+}
+
+// Process the reply and save the packet information
+fn prepare_sudo_payload(deps: DepsMut, msg: Reply) -> StdResult<Response> {
+    // Get payload we saved when sending the message
+    let payload_data = REPLY_ID_STORAGE.load(deps.storage)?;
+    let payload: SudoPayload = serde_json::from_slice(&payload_data)
+        .map_err(|e| StdError::generic_err(format!("Failed to deserialize payload: {}", e)))?;
+
+    // Parse the response from the SubmitTx message
+    let data = msg
+        .result
+        .into_result()
+        .map_err(|e| StdError::generic_err(format!("Reply error: {}", e)))?
+        .data
+        .ok_or_else(|| StdError::generic_err("No data in reply"))?;
+
+    let response: MsgSubmitTxResponse = serde_json::from_slice(&data)
+        .map_err(|e| StdError::generic_err(format!("Failed to parse response: {}", e)))?;
+
+    // Save the packet data for later reference when we receive acknowledgements
+    let channel_id = response.channel.clone();
+    let seq_id = response.sequence_id;
+
+    SUDO_PAYLOAD.save(
+        deps.storage,
+        (channel_id, seq_id),
+        &serde_json::to_vec(&payload)?,
+    )?;
+
+    Ok(Response::new()
+        .add_attribute("action", "prepare_sudo_payload")
+        .add_attribute("sequence_id", seq_id.to_string())
+        .add_attribute("channel", response.channel))
+}
+
+// Handle sudo callbacks from the Neutron blockchain
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn sudo(deps: DepsMut, env: Env, msg: SudoMsg) -> StdResult<Response> {
+    match msg {
+        // Handle successful acknowledgements (non-error)
+        SudoMsg::Response { request, data } => sudo_response(deps, request, data),
+        
+        // Handle error acknowledgements
+        SudoMsg::Error { request, details } => sudo_error(deps, request, details),
+        
+        // Handle timeouts
+        SudoMsg::Timeout { request } => sudo_timeout(deps, env, request),
+        
+        // Handle channel open acknowledgement
+        SudoMsg::OpenAck {
+            port_id,
+            channel_id,
+            counterparty_channel_id,
+            counterparty_version,
+        } => sudo_open_ack(
+            deps,
+            env,
+            port_id,
+            channel_id,
+            counterparty_channel_id,
+            counterparty_version,
+        ),
+        
+        // Ignore other messages
+        _ => Ok(Response::default()),
+    }
+}
+
+// Process the OpenAck message when a channel is established
+fn sudo_open_ack(
+    deps: DepsMut,
+    _env: Env,
+    port_id: String,
+    _channel_id: String,
+    _counterparty_channel_id: String,
+    counterparty_version: String,
+) -> StdResult<Response> {
+    // Parse the version string to get the account address
+    #[derive(serde::Deserialize)]
+    struct OpenAckVersion {
+        address: String,
+        controller_connection_id: String,
+    }
+
+    let parsed_version: Result<OpenAckVersion, _> = serde_json::from_str(&counterparty_version);
+
+    // Extract the interchain_account_id from the port_id
+    let parts: Vec<&str> = port_id.split('.').collect();
+    let interchain_account_id = if parts.len() > 1 {
+        parts[1].to_string()
+    } else {
+        return Err(StdError::generic_err("Invalid port_id format"));
+    };
+
+    // Update storage with the account address
+    match parsed_version {
+        Ok(version) => {
+            // Update the account information with address and connection_id
+            INTERCHAIN_ACCOUNTS.save(
+                deps.storage,
+                interchain_account_id.clone(),
+                &Some((version.address.clone(), version.controller_connection_id.clone())),
+            )?;
+
+            Ok(Response::new()
+                .add_attribute("action", "open_ack")
+                .add_attribute("interchain_account_id", interchain_account_id)
+                .add_attribute("address", version.address)
+                .add_attribute("connection_id", version.controller_connection_id))
+        }
+        Err(_) => Err(StdError::generic_err("Failed to parse counterparty_version")),
+    }
+}
+
+// Handle successful (non-error) acknowledgements
+fn sudo_response(deps: DepsMut, request: RequestPacket, data: Binary) -> StdResult<Response> {
+    // Get the channel and sequence IDs to identify the transaction
+    let seq_id = request
+        .sequence
+        .ok_or_else(|| StdError::generic_err("sequence not found"))?;
+
+    let channel_id = request
+        .source_channel
+        .ok_or_else(|| StdError::generic_err("channel_id not found"))?;
+
+    // Get the saved information about this transaction
+    let payload_data = SUDO_PAYLOAD.may_load(deps.storage, (channel_id.clone(), seq_id))?;
+    let payload: Option<SudoPayload> = match payload_data {
+        Some(data) => Some(
+            serde_json::from_slice(&data)
+                .map_err(|e| StdError::generic_err(format!("Failed to deserialize payload: {}", e)))?,
+        ),
+        None => {
+            add_error_to_queue(deps.storage, "Unable to read sudo payload".to_string());
+            None
+        }
+    };
+
+    // Parse the acknowledgement data
+    let parsed_data = decode_acknowledgement_response(data)?;
+
+    // Process each message in the acknowledgement
+    let mut item_types = vec![];
+    for item in parsed_data {
+        let item_type = item.msg_type.as_str();
+        item_types.push(item_type.to_string());
+
+        // Process specific message types
+        match item_type {
+            "/cosmos.staking.v1beta1.MsgDelegate" => {
+                let _resp: MsgDelegateResponse = decode_message_response(&item.data)?;
+                // You can add custom logic here to handle the successful delegation
+            }
+            _ => {
+                // Log unimplemented acknowledgement types
+                deps.api.debug(format!("Unimplemented acknowledgement type: {}", item_type).as_str());
+            }
+        }
+    }
+
+    // Save the result to storage
+    if let Some(payload) = payload {
+        ACKNOWLEDGEMENT_RESULTS.update(
+            deps.storage,
+            (payload.port_id.clone(), seq_id),
+            |existing| match existing {
+                Some(_) => Err(StdError::generic_err("Acknowledgement already processed")),
+                None => Ok(AcknowledgementResult::Success(item_types.clone())),
+            },
+        )?;
+
+        Ok(Response::new()
+            .add_attribute("action", "sudo_response")
+            .add_attribute("port_id", payload.port_id)
+            .add_attribute("sequence", seq_id.to_string())
+            .add_attribute("message_types", item_types.join(",")))
+    } else {
+        Ok(Response::new()
+            .add_attribute("action", "sudo_response")
+            .add_attribute("result", "payload_not_found"))
+    }
+}
+
+// Handle error acknowledgements
+fn sudo_error(deps: DepsMut, request: RequestPacket, details: String) -> StdResult<Response> {
+    // Get the channel and sequence IDs to identify the transaction
+    let seq_id = request
+        .sequence
+        .ok_or_else(|| StdError::generic_err("sequence not found"))?;
+
+    let channel_id = request
+        .source_channel
+        .ok_or_else(|| StdError::generic_err("channel_id not found"))?;
+
+    // Get the saved information about this transaction
+    let payload_data = SUDO_PAYLOAD.may_load(deps.storage, (channel_id.clone(), seq_id))?;
+    let payload: Option<SudoPayload> = match payload_data {
+        Some(data) => Some(
+            serde_json::from_slice(&data)
+                .map_err(|e| StdError::generic_err(format!("Failed to deserialize payload: {}", e)))?,
+        ),
+        None => {
+            add_error_to_queue(deps.storage, "Unable to read sudo payload".to_string());
+            None
+        }
+    };
+
+    // Save the error to storage
+    if let Some(payload) = payload {
+        ACKNOWLEDGEMENT_RESULTS.update(
+            deps.storage,
+            (payload.port_id.clone(), seq_id),
+            |existing| match existing {
+                Some(_) => Err(StdError::generic_err("Acknowledgement already processed")),
+                None => Ok(AcknowledgementResult::Error((payload.message.clone(), details.clone()))),
+            },
+        )?;
+
+        Ok(Response::new()
+            .add_attribute("action", "sudo_error")
+            .add_attribute("port_id", payload.port_id)
+            .add_attribute("sequence", seq_id.to_string())
+            .add_attribute("error", details))
+    } else {
+        Ok(Response::new()
+            .add_attribute("action", "sudo_error")
+            .add_attribute("result", "payload_not_found")
+            .add_attribute("error", details))
+    }
+}
+
+// Handle timeout acknowledgements
+fn sudo_timeout(deps: DepsMut, _env: Env, request: RequestPacket) -> StdResult<Response> {
+    // Get the channel and sequence IDs to identify the transaction
+    let seq_id = request
+        .sequence
+        .ok_or_else(|| StdError::generic_err("sequence not found"))?;
+
+    let channel_id = request
+        .source_channel
+        .ok_or_else(|| StdError::generic_err("channel_id not found"))?;
+
+    // Get the saved information about this transaction
+    let payload_data = SUDO_PAYLOAD.may_load(deps.storage, (channel_id.clone(), seq_id))?;
+    let payload: Option<SudoPayload> = match payload_data {
+        Some(data) => Some(
+            serde_json::from_slice(&data)
+                .map_err(|e| StdError::generic_err(format!("Failed to deserialize payload: {}", e)))?,
+        ),
+        None => {
+            add_error_to_queue(deps.storage, "Unable to read sudo payload".to_string());
+            None
+        }
+    };
+
+    // Save the timeout to storage
+    if let Some(payload) = payload {
+        ACKNOWLEDGEMENT_RESULTS.update(
+            deps.storage,
+            (payload.port_id.clone(), seq_id),
+            |existing| match existing {
+                Some(_) => Err(StdError::generic_err("Acknowledgement already processed")),
+                None => Ok(AcknowledgementResult::Timeout(payload.message.clone())),
+            },
+        )?;
+
+        // IMPORTANT: When a timeout occurs, the channel is closed!
+        // You may want to trigger re-registration of the interchain account
+
+        Ok(Response::new()
+            .add_attribute("action", "sudo_timeout")
+            .add_attribute("port_id", payload.port_id)
+            .add_attribute("sequence", seq_id.to_string())
+            .add_attribute("message", payload.message))
+    } else {
+        Ok(Response::new()
+            .add_attribute("action", "sudo_timeout")
+            .add_attribute("result", "payload_not_found"))
+    }
+}
+
+// Helper to add an error to the queue
+fn add_error_to_queue(store: &mut dyn cosmwasm_std::Storage, error_msg: String) -> Option<()> {
+    let result = ERRORS_QUEUE
+        .keys(store, None, None, cosmwasm_std::Order::Descending)
+        .next()
+        .and_then(|data| data.ok())
+        .map(|c| c + 1)
+        .or(Some(0));
+
+    result.and_then(|idx| ERRORS_QUEUE.save(store, idx, &error_msg).ok())
+}
+
+// Query handler
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    match msg {
+        QueryMsg::GetInterchainAccount { interchain_account_id } => {
+            query_interchain_account(deps, env, interchain_account_id)
+        }
+        QueryMsg::GetAcknowledgementResult { port_id, sequence } => {
+            query_acknowledgement_result(deps, port_id, sequence)
+        }
+    }
+}
+
+// Query to get an interchain account's address
+fn query_interchain_account(
+    deps: Deps<NeutronQuery>,
+    env: Env,
+    interchain_account_id: String,
+) -> StdResult<Binary> {
+    let port_id = get_port_id(env.contract.address.as_str(), &interchain_account_id);
+    
+    // First check storage for the account
+    let ica_info = INTERCHAIN_ACCOUNTS.may_load(deps.storage, interchain_account_id.clone())?;
+    
+    let (address, connection_id) = match ica_info {
+        Some(Some((addr, conn))) => (Some(addr), Some(conn)),
+        _ => (None, None),
+    };
+
+    Ok(to_binary(&InterchainAccountResponse {
+        interchain_account_id,
+        address,
+        connection_id,
+    })?)
+}
+
+// Query to get the result of a transaction
+fn query_acknowledgement_result(
+    deps: Deps,
+    port_id: String,
+    sequence: u64,
+) -> StdResult<Binary> {
+    let result = ACKNOWLEDGEMENT_RESULTS.may_load(deps.storage, (port_id, sequence))?;
+    
+    let result_str = match result {
+        Some(ack_result) => match ack_result {
+            AcknowledgementResult::Success(types) => {
+                Some(format!("Success: {}", types.join(", ")))
+            }
+            AcknowledgementResult::Error((msg, details)) => {
+                Some(format!("Error in '{}': {}", msg, details))
+            }
+            AcknowledgementResult::Timeout(msg) => {
+                Some(format!("Timeout for '{}'", msg))
+            }
+        },
+        None => None,
+    };
+
+    Ok(to_binary(&AcknowledgementResponse { result: result_str })?)
+}
+```
+
+### Error Handling
+
+Create an `error.rs` file:
+
+```rust
+use cosmwasm_std::StdError;
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum ContractError {
+    #[error("{0}")]
+    Std(#[from] StdError),
+
+    #[error("Unauthorized")]
+    Unauthorized {},
+
+    #[error("Interchain account not found")]
+    InterchainAccountNotFound {},
+    
+    #[error("Channel not established yet")]
+    ChannelNotEstablished {},
+    
+    #[error("Custom Error: {msg}")]
+    CustomError { msg: String },
+}
+```
+
+### Helpers and Schema
+
+Create a `helpers.rs` file:
+
+```rust
+use crate::state::{INTERCHAIN_ACCOUNTS};
+use cosmwasm_std::{Deps, Env, StdError, StdResult};
+
+// Helper to get the ICA address and connection ID
+pub fn get_ica(deps: Deps, env: &Env, interchain_account_id: &str) -> StdResult<(String, String)> {
+    let ica_info = INTERCHAIN_ACCOUNTS.load(deps.storage, interchain_account_id.to_string())?;
+    
+    match ica_info {
+        Some((address, connection_id)) => Ok((address, connection_id)),
+        None => Err(StdError::generic_err(format!("Interchain account '{}' not found or not confirmed yet", interchain_account_id))),
+    }
+}
+```
+
+Finally, update the `lib.rs` to include all modules:
+
+```rust
+pub mod contract;
+pub mod error;
+pub mod helpers;
+pub mod msg;
+pub mod state;
+
+pub use crate::error::ContractError;
+```
+
+## Testing the Contract
+
+After implementing the contract, you can test it using Neutron's local testnet. Here's how to set up a simple test:
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+    use cosmwasm_std::{from_binary, SubMsg, CosmosMsg};
+
+    #[test]
+    fn proper_initialization() {
+        let mut deps = mock_dependencies();
+        let env = mock_env();
+        let info = mock_info("creator", &[]);
+        
+        // Instantiate the contract
+        let res = instantiate(deps.as_mut(), env, info, InstantiateMsg {}).unwrap();
+        assert_eq!(0, res.messages.len());
+    }
+
+    #[test]
+    fn register_ica() {
+        let mut deps = mock_dependencies();
+        let env = mock_env();
+        let info = mock_info("creator", &[]);
+        
+        // Instantiate the contract
+        let _ = instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {}).unwrap();
+        
+        // Register an ICA
+        let register_msg = ExecuteMsg::Register {
+            connection_id: "connection-0".to_string(),
+            interchain_account_id: "my-account".to_string(),
+        };
+        
+        let res = execute(deps.as_mut(), env.clone(), info, register_msg).unwrap();
+        
+        // Check that we're sending the correct message
+        assert_eq!(1, res.messages.len());
+        
+        // Check that the account was saved (but not yet established)
+        let ica = INTERCHAIN_ACCOUNTS.load(&deps.storage, "my-account".to_string()).unwrap();
+        assert_eq!(None, ica);
+    }
+}
+```
+
+## Deploying to Neutron
+
+To deploy your contract to Neutron:
+
+1. Compile your contract:
+
+```bash
+cargo wasm
+```
+
+2. Optimize the Wasm binary:
+
+```bash
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.14.0
+```
+
+3. Upload and instantiate the contract:
+
+```bash
+# Store code
+neutrond tx wasm store artifacts/neutron_ica_example.wasm \
+  --from wallet \
+  --chain-id neutron-1 \
+  --gas-prices 0.025untrn \
+  --gas auto \
+  --gas-adjustment 1.3 \
+  -b block
+
+# Get the code ID
+CODE_ID=$(neutrond query wasm list-code --output json | jq -r '.code_infos[-1].code_id')
+
+# Instantiate
+neutrond tx wasm instantiate $CODE_ID '{}' \
+  --from wallet \
+  --chain-id neutron-1 \
+  --label "Neutron ICA Example" \
+  --admin $(neutrond keys show wallet -a) \
+  --gas-prices 0.025untrn \
+  --gas auto \
+  --gas-adjustment 1.3 \
+  -b block
+
+# Get contract address
+CONTRACT_ADDR=$(neutrond query wasm list-contract-by-code $CODE_ID --output json | jq -r '.contracts[0]')
+
+# Register an interchain account
+neutrond tx wasm execute $CONTRACT_ADDR \
+  '{"register":{"connection_id":"connection-0","interchain_account_id":"my-account"}}' \
+  --from wallet \
+  --chain-id neutron-1 \
+  --gas-prices 0.025untrn \
+  --gas auto \
+  --gas-adjustment 1.3 \
+  -b block
+```
+
+## Security Considerations
+
+When working with interchain accounts, keep the following security considerations in mind:
+
+1. **Channel Security**: ICA channels are ordered channels, meaning transactions must be processed in the order they were sent. If a transaction fails, no further transactions will be processed until the issue is resolved.
+
+2. **Timeouts**: Set appropriate timeouts for your transactions. If a timeout occurs, the channel will be closed and you'll need to re-register the interchain account.
+
+3. **Fee Management**: Ensure your contract has sufficient funds to pay for the IBC fees. These fees are used to incentivize relayers to deliver acknowledgements and timeout packets.
+
+4. **Error Handling**: Implement robust error handling for all IBC-related callbacks to prevent your contract from getting stuck.
+
+5. **Access Control**: Implement proper access controls to determine who can register interchain accounts and send transactions through them.
+
+## Advanced Use Cases
+
+Beyond simple delegations, interchain accounts can be used for:
+
+1. **Cross-chain governance**: Vote in governance proposals on remote chains.
+2. **Managing a diversified DeFi portfolio**: Interact with DeFi protocols across multiple chains.
+3. **Cross-chain NFT management**: Transfer or manage NFTs on remote chains.
+4. **Interchain DEX trading**: Execute trades on DEXes across multiple chains.
+
+## Conclusion
+
+In this tutorial, you've learned how to build a smart contract that uses Neutron's Interchain Accounts module to execute transactions on remote chains. This powerful capability enables a wide range of cross-chain applications and is a key feature of Neutron's interchain functionality.
+
+For more information, check out:
+
+- [Interchain Txs Module Documentation](/developers/modules/interchain-txs/overview) 
+- [Full source code for this tutorial](https://github.com/neutron-org/neutron-sdk/tree/main/contracts/neutron_interchain_txs)
+- [Neutron SDK documentation](https://github.com/neutron-org/neutron-sdk) 

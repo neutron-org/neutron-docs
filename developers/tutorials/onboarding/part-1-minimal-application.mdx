@@ -1,0 +1,297 @@
+---
+title: "Part 1: Minimal Smart Contract"
+description: "Create and deploy a simple yet functional CosmWasm smart contract on Neutron"
+---
+
+This tutorial will guide you through creating your first smart contract on Neutron. You'll learn the basics of CosmWasm development and deploy a working application.
+
+## What You'll Build
+
+A simple counter contract that:
+- Stores a `Uint128` value in persistent storage
+- Allows anyone to increase the value (with a limit of 100 per transaction)
+- Provides a query interface to read the current value
+
+## Prerequisites
+
+- [Rust](https://rustup.rs/) installed with `wasm32-unknown-unknown` target
+- Basic understanding of Rust syntax
+- [Docker](https://docs.docker.com/get-docker/) for contract optimization
+
+## Understanding Neutron Smart Contracts
+
+<Note>
+Neutron is a Cosmos SDK chain that uses CosmWasm for smart contracts. Contracts are WebAssembly modules that can store state and process messages.
+</Note>
+
+### Contract Lifecycle
+
+1. **Compile**: Build your Rust code into a WebAssembly binary
+2. **Upload**: Store the binary on-chain with `MsgStoreCode` (receives a `code_id`)
+3. **Instantiate**: Create a contract instance with `MsgInstantiateContract` (receives a contract address)
+4. **Execute**: Send messages to the contract using `MsgExecuteContract`
+
+### Entry Points
+
+Every CosmWasm contract has three main entry points:
+
+- **`instantiate`**: Called when the contract is first created
+- **`execute`**: Handles incoming messages that modify state
+- **`query`**: Handles read-only queries (doesn't modify state)
+
+## Creating the Contract
+
+### 1. Initialize the Project
+
+```bash
+# Create a new Rust project
+cargo new --lib minimal-contract
+cd minimal-contract
+
+# Add the required dependencies to Cargo.toml
+```
+
+### 2. Set Up Dependencies
+
+Add to your `Cargo.toml`:
+
+```toml
+[package]
+name = "minimal-contract"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+cosmwasm-std = "1.0"
+cw-storage-plus = "1.0"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+```
+
+### 3. Define Storage
+
+In `src/state.rs`:
+
+```rust
+use cosmwasm_std::Uint128;
+use cw_storage_plus::Item;
+
+// Storage for our counter value
+pub const COUNTER: Item<Uint128> = Item::new("counter");
+```
+
+### 4. Define Messages
+
+In `src/msg.rs`:
+
+```rust
+use cosmwasm_std::Uint128;
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct InstantiateMsg {
+    pub initial_count: Uint128,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub enum ExecuteMsg {
+    Increment { amount: Uint128 },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub enum QueryMsg {
+    GetCount {},
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct CountResponse {
+    pub count: Uint128,
+}
+```
+
+### 5. Implement Contract Logic
+
+In `src/contract.rs`:
+
+```rust
+use cosmwasm_std::{
+    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, 
+    Response, StdResult, Uint128,
+};
+
+use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, CountResponse};
+use crate::state::COUNTER;
+
+#[entry_point]
+pub fn instantiate(
+    deps: DepsMut,
+    _env: Env,
+    _info: MessageInfo,
+    msg: InstantiateMsg,
+) -> StdResult<Response> {
+    // Save the initial count to storage
+    COUNTER.save(deps.storage, &msg.initial_count)?;
+    
+    Ok(Response::new().add_attribute("action", "instantiate"))
+}
+
+#[entry_point]
+pub fn execute(
+    deps: DepsMut,
+    _env: Env,
+    _info: MessageInfo,
+    msg: ExecuteMsg,
+) -> StdResult<Response> {
+    match msg {
+        ExecuteMsg::Increment { amount } => {
+            // Enforce business logic: max increment is 100
+            if amount > Uint128::from(100u128) {
+                return Err(cosmwasm_std::StdError::generic_err(
+                    "Cannot increment by more than 100"
+                ));
+            }
+            
+            // Load current count, add amount, save back
+            let current = COUNTER.load(deps.storage)?;
+            let new_count = current + amount;
+            COUNTER.save(deps.storage, &new_count)?;
+            
+            Ok(Response::new()
+                .add_attribute("action", "increment")
+                .add_attribute("amount", amount.to_string()))
+        }
+    }
+}
+
+#[entry_point]
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    match msg {
+        QueryMsg::GetCount {} => {
+            let count = COUNTER.load(deps.storage)?;
+            let response = CountResponse { count };
+            to_binary(&response)
+        }
+    }
+}
+```
+
+### 6. Wire Everything Together
+
+In `src/lib.rs`:
+
+```rust
+pub mod contract;
+pub mod msg;
+pub mod state;
+
+pub use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+```
+
+## Building and Optimizing
+
+### 1. Compile the Contract
+
+```bash
+# Build the contract
+cargo wasm
+
+# Optimize for deployment (requires Docker)
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.12.13
+```
+
+The optimized binary will be in `artifacts/minimal_contract.wasm`.
+
+## Deploying to Neutron
+
+### 1. Set Up Environment
+
+Ensure you have a local Neutron node running (see [Cosmopark Setup](/developers/tutorials/onboarding/cosmopark)) or access to a testnet.
+
+### 2. Store the Contract
+
+```bash
+# Store the contract binary
+neutrond tx wasm store artifacts/minimal_contract.wasm \
+  --from your-key \
+  --chain-id neutron-testing-1 \
+  --gas auto \
+  --gas-adjustment 1.3 \
+  --node http://localhost:26657 \
+  --yes
+
+# Get the code ID from the transaction
+neutrond query wasm list-code --node http://localhost:26657
+```
+
+### 3. Instantiate the Contract
+
+```bash
+# Instantiate with initial count of 0
+neutrond tx wasm instantiate CODE_ID \
+  '{"initial_count":"0"}' \
+  --from your-key \
+  --label "my-counter" \
+  --chain-id neutron-testing-1 \
+  --gas auto \
+  --gas-adjustment 1.3 \
+  --node http://localhost:26657 \
+  --yes
+```
+
+### 4. Interact with the Contract
+
+```bash
+# Query the current count
+neutrond query wasm contract-state smart CONTRACT_ADDRESS \
+  '{"get_count":{}}' \
+  --node http://localhost:26657
+
+# Increment the counter
+neutrond tx wasm execute CONTRACT_ADDRESS \
+  '{"increment":{"amount":"5"}}' \
+  --from your-key \
+  --chain-id neutron-testing-1 \
+  --gas auto \
+  --gas-adjustment 1.3 \
+  --node http://localhost:26657 \
+  --yes
+```
+
+## Key Concepts Learned
+
+- **Storage**: Using `cw-storage-plus::Item` for persistent data
+- **Entry Points**: Implementing `instantiate`, `execute`, and `query`
+- **Message Handling**: Pattern matching on message types
+- **Error Handling**: Using `StdResult` for operations that can fail
+- **Deployment Flow**: Store → Instantiate → Execute/Query
+
+## Next Steps
+
+Now that you have a working contract, proceed to [Part 2](/developers/tutorials/onboarding/part-2-modules-contracts) to learn how to interact with Neutron's unique modules and other contracts.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Compilation Errors">
+    Ensure you have the `wasm32-unknown-unknown` target installed:
+    ```bash
+    rustup target add wasm32-unknown-unknown
+    ```
+  </Accordion>
+  
+  <Accordion title="Gas Estimation Failed">
+    Try using a fixed gas amount instead of `auto`:
+    ```bash
+    --gas 2000000
+    ```
+  </Accordion>
+  
+  <Accordion title="Contract Not Found">
+    Make sure you're using the correct contract address from the instantiation transaction.
+  </Accordion>
+</AccordionGroup> 

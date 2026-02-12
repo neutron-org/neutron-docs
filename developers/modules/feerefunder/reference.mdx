@@ -1,0 +1,69 @@
+---
+title: "Reference"  
+description: "Complete technical reference for the Fee Refunder module"
+---
+
+The Fee Refunder module manages fee distribution for IBC packet acknowledgements and timeouts, ensuring relayers are compensated for successful packet delivery.
+
+## Parameters
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `min_fee` | Fee | Minimum required fees for IBC operations |
+
+### Fee Structure
+- `recv_fee`: Must be zero in Neutron (no receive fees)
+- `ack_fee`: Fees paid for acknowledgement delivery  
+- `timeout_fee`: Fees paid for timeout delivery
+
+## Messages
+
+### MsgUpdateParams
+Update module parameters through governance.
+
+**Authority Required**: Governance only
+
+**Fields:**
+- `authority`: Governance authority address
+- `params`: New module parameters
+
+## Queries
+
+### QueryParams
+Retrieve the current module parameters.
+
+**CLI:** `neutrond query feerefunder params`
+**REST:** `GET /neutron-org/neutron/feerefunder/params`
+
+**Response:**
+- `params`: Current Fee Refunder parameters including min_fee
+
+### QueryFeeInfo  
+Retrieve fee information for a specific IBC packet.
+
+**CLI:** `neutrond query feerefunder fee-info [port_id] [channel_id] [sequence]`
+**REST:** `GET /neutron-org/neutron/feerefunder/info`
+
+**Parameters:**
+- `port_id`: IBC port identifier
+- `channel_id`: IBC channel identifier  
+- `sequence`: Packet sequence number
+
+**Response:**
+- `fee_info`: Fee information containing payer, packet_id, and fee details
+
+## Events
+
+The module emits the following events:
+
+- `lock_fees`: When fees are locked for a new IBC packet
+- `distribute_ack_fee`: When acknowledgement fees are distributed to relayers
+- `distribute_timeout_fee`: When timeout fees are distributed to relayers
+
+## Key Concepts
+
+- **Automatic Distribution**: Fees are automatically distributed when packets are acknowledged or timeout
+- **Relayer Compensation**: Ensures relayers are paid for successful packet delivery
+- **Fee Escrow**: Fees are locked when packets are sent and released upon completion
+- **Query-Only for Users**: Users can only query fee information and parameters
+- **IBC Integration**: Automatically handles fee distribution for IBC packets 

@@ -1,0 +1,251 @@
+---
+title: "How-to"
+---
+
+This guide provides practical examples for interacting with the Revenue module, focusing on monitoring validator performance, treasury management, and parameter updates.
+
+## Checking Validator Performance
+
+You can query a validator's current performance metrics to understand their reward eligibility status.
+
+### Using CLI
+
+```bash
+neutron query revenue validator-stats [val-oper-addr]
+```
+
+### Using REST
+
+```
+GET /neutron/revenue/validator_stats?val_oper_address=neutronvaloper1...
+```
+
+Example response:
+```json
+{
+  "stats": {
+    "validator_info": {
+      "val_oper_address": "neutronvaloper1...",
+      "committed_blocks_in_period": 980,
+      "committed_oracle_votes_in_period": 950,
+      "in_active_valset_for_blocks_in_period": 1000
+    },
+    "total_produced_blocks_in_period": 1000,
+    "performance_rating": "0.950000000000000000",
+    "expected_revenue": {
+      "denom": "untrn",
+      "amount": "1900000000"
+    }
+  }
+}
+```
+
+### Using a Contract
+
+CosmWasm contracts can query validator performance through the Neutron bindings:
+
+```rust
+// Set up the message
+let msg = QueryRequest::Custom(RevenueQuery::ValidatorStats { 
+    val_oper_address: "neutronvaloper1...".to_string() 
+});
+
+// Send the query
+let result: ValidatorStatsResponse = deps.querier.query(&msg)?;
+```
+
+## Funding the Treasury
+
+The treasury needs to be funded to ensure there are sufficient tokens for validator compensation.
+
+### Using CLI
+
+```bash
+neutron tx revenue fund-treasury [amount] \
+  --from=<sender> \
+  --chain-id=<chain-id>
+```
+
+Example:
+```bash
+neutron tx revenue fund-treasury 1000000untrn \
+  --from=mykey \
+  --chain-id=neutron-1
+```
+
+### Using a Contract
+
+Contracts with appropriate permissions can fund the treasury:
+
+```rust
+// Create the message
+let fund_msg = CosmosMsg::Custom(RevenueMsg::FundTreasury { 
+    amount: vec![Coin {
+        denom: "untrn".to_string(),
+        amount: Uint128::from(1000000u128),
+    }]
+});
+
+// Send the transaction
+let res = Response::new().add_message(fund_msg);
+```
+
+## Querying Payment Information
+
+Check the current payment schedule and revenue calculation details.
+
+### Using CLI
+
+```bash
+neutron query revenue payment-info
+```
+
+### Using REST
+
+```
+GET /neutron/revenue/payment_info
+```
+
+Example response:
+```json
+{
+  "payment_schedule": {
+    "monthly_payment_schedule": {
+      "current_month_start_block": "12345",
+      "current_month_start_block_ts": "1698768000"
+    }
+  },
+  "effective_period_progress": "0.650000000000000000",
+  "reward_asset_twap": "0.125000000000000000",
+  "base_revenue_amount": {
+    "denom": "untrn",
+    "amount": "16000000000"
+  }
+}
+```
+
+## Checking Module Parameters
+
+View the current configuration parameters of the Revenue module.
+
+### Using CLI
+
+```bash
+neutron query revenue params
+```
+
+### Using REST
+
+```
+GET /neutron/revenue/params
+```
+
+Example response:
+```json
+{
+  "params": {
+    "reward_asset": "untrn",
+    "reward_quote": {
+      "amount": "2000",
+      "asset": "USD"
+    },
+    "blocks_performance_requirement": {
+      "allowed_to_miss": "0.050000000000000000",
+      "required_at_least": "0.800000000000000000"
+    },
+    "oracle_votes_performance_requirement": {
+      "allowed_to_miss": "0.050000000000000000",
+      "required_at_least": "0.800000000000000000"
+    },
+    "payment_schedule_type": {
+      "monthly_payment_schedule_type": {}
+    },
+    "twap_window": "1800"
+  }
+}
+```
+
+## Updating Module Parameters
+
+Parameters can be updated through governance proposals using MsgUpdateParams.
+
+### Using CLI to Submit a Parameter Update Proposal
+
+```bash
+neutron tx gov submit-proposal proposal.json --from=<key_name> --chain-id=<chain-id>
+```
+
+Example proposal.json:
+```json
+{
+  "title": "Revenue Parameter Update",
+  "description": "Update reward quote amount",
+  "authority": "neutron1...",
+  "params": {
+    "reward_asset": "untrn",
+    "reward_quote": {
+      "amount": "2500",
+      "asset": "USD"
+    },
+    "blocks_performance_requirement": {
+      "allowed_to_miss": "0.050000000000000000",
+      "required_at_least": "0.800000000000000000"
+    },
+    "oracle_votes_performance_requirement": {
+      "allowed_to_miss": "0.050000000000000000",
+      "required_at_least": "0.800000000000000000"
+    },
+    "payment_schedule_type": {
+      "monthly_payment_schedule_type": {}
+    },
+    "twap_window": "1800"
+  }
+}
+```
+
+## Monitoring Revenue Distribution
+
+Track when and how much compensation validators receive.
+
+### Using Event Monitoring
+
+The Revenue module emits events when distributing rewards. You can monitor these events through your node logs or event subscriptions:
+
+```
+EVENT revenue_distribution
+    validator: neutronvaloper1...
+    revenue_amount: 1900000000untrn
+    performance_rating: 0.950000000000000000
+    in_active_valset_for_blocks_in_period: 1000
+    committed_blocks_in_period: 980
+    committed_oracle_votes_in_period: 950
+    total_block_in_period: 1000
+    effective_period_progress: 1.000000000000000000
+```
+
+## Understanding Performance Rating
+
+If a validator is receiving partial rewards, you can calculate their expected rewards based on performance rating.
+
+### Example Calculation
+
+If the reward quote is 2000 USD, and a validator has:
+- 95% blocks signed (allowed to miss is 5%)
+- 85% oracle votes provided (allowed to miss is 5%, required at least is 80%)
+
+Their performance rating would be:
+```
+missedBlocksPerfQuo = 0 (meeting the allowed to miss threshold)
+missedOracleVotesPerfQuo = (0.95 - 0.85) / (0.95 - 0.80) = 0.67
+
+rating = 0.5 * ((1 - 0²) + (1 - 0.67²))
+       = 0.5 * (1 + 0.55)
+       = 0.775
+```
+
+Expected compensation: Based on current TWAP and rating of 0.775
+```
+Final reward = 2000 USD × 0.775 = 1550 USD
+```
+
+The validator would receive 1550 USD worth of the reward asset (converted using the current TWAP price). 

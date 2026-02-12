@@ -1,0 +1,127 @@
+---
+title: "Validator Penalties"
+description: "Understanding Neutron's no-slashing model and validator accountability"
+---
+
+Neutron implements a unique approach to validator accountability that differs significantly from traditional Proof of Stake networks. Following the Mercury upgrade, this model has been formalized and enhanced.
+
+## Neutron's No-Slashing Model
+
+Unlike most Cosmos chains, Neutron implements a **no-slashing model**. This means:
+
+- Validators and delegators are **not penalized with stake reduction** for downtime
+- Double-signing does not result in automatic stake slashing
+- Missing blocks does not trigger automatic financial penalties
+
+Instead, Neutron uses alternative mechanisms to ensure network security and validator performance.
+
+## Jailing and Tombstoning Mechanisms
+
+While Neutron doesn't slash, it employs other protective measures:
+
+### Jailing
+
+Validators may be jailed (temporarily suspended from the active set) for:
+
+- **Excessive Downtime**: Missing too many blocks in a defined window
+- **Upgrade Failures**: Not implementing upgrades correctly or promptly
+- **Performance Issues**: Consistently failing to meet performance thresholds
+
+Jailed validators:
+- Cannot participate in consensus
+- Cannot earn rewards
+- Must undergo an unjailing process to resume validation
+
+### Tombstoning
+
+For more serious offenses, validators may be tombstoned:
+
+- **Double-Signing**: Signing conflicting blocks at the same height
+- **Repeated Jailing**: Multiple jailing events in a short timeframe
+- **Security Breaches**: Compromised validator keys or infrastructure
+
+Tombstoned validators:
+- Are permanently removed from the current active set
+- Must establish a new validator identity to participate again
+- Are flagged for potential rotation in the validator set
+
+## Performance-Based Offboarding
+
+Post-Mercury upgrade, Neutron implements formal offboarding criteria:
+
+### Performance-Based Criteria
+
+A validator is considered for offboarding if:
+- They receive no compensation from x/revenue for two consecutive months
+- They receive no compensation from x/revenue for three months in a 6-month period
+- They are tombstoned
+
+### Downtime-Based Criteria
+
+A validator is considered for offboarding if:
+- They fail to resume signing within 60 minutes of the first finalized block after an upgrade
+- They fail to begin precommitting within 2 hours of the distribution of upgrade instructions
+
+## Warning and Notification System
+
+The offboarding process includes a structured warning system:
+
+1. **First Notification**: Validators are notified about performance issues
+2. **Assistance Phase**: Core teams assist in troubleshooting any issues
+3. **Final Warning**: Clear communication about impending offboarding if issues persist
+4. **Offboarding Decision**: Final determination through the DAO governance process
+
+## Validator Rotation Process
+
+When validators are offboarded, new validators may join through a structured process:
+
+1. **Eligibility Assessment**: Validators must run both mainnet and testnet nodes
+2. **Initial Delegation**: Selected validators receive a small initial delegation
+3. **Probation Period**: Three-month period to demonstrate adequate performance
+4. **Full Delegation**: Successful validators receive a full delegation from the DAO
+
+## Why No Slashing?
+
+Neutron's approach offers several advantages:
+
+1. **Lower Risk for Delegators**: Delegators don't face the risk of losing funds due to validator mistakes
+2. **Broader Participation**: Lower risk encourages greater staking participation
+3. **Focus on Quality**: Selection based on quality rather than penalty avoidance
+4. **Delegator Protection**: Reduces the risk that delegators lose funds due to validator errors
+5. **Upgrade Safety**: Encourages validators to be more responsive during network upgrades
+
+## Comparison with Traditional Slashing
+
+| Aspect | Traditional Slashing | Neutron's Model |
+|--------|----------------------|----------------|
+| Downtime Penalty | Loss of stake (e.g., 0.01-1%) | Jailing without stake loss |
+| Double-Sign Penalty | Severe stake loss (e.g., 5-100%) | Tombstoning without stake loss |
+| Recovery | Difficult to recover after slashing | Focus on improvement or validator rotation |
+| Delegator Risk | Delegators lose funds for validator mistakes | Delegators protected from direct losses |
+| Security Model | Cryptoeconomic penalties | Curation, incentives, and rotation |
+
+## Validator Responsibilities
+
+Despite the absence of slashing, validators still have important responsibilities:
+
+- **Maintain High Performance**: Meet or exceed the required block signing (99.5%) and price update (98%) thresholds
+- **Prevent Double-Signing**: Implement proper key management and signer redundancy
+- **Upgrade Readiness**: Prepare for and execute network upgrades promptly
+- **Security Best Practices**: Follow security recommendations to protect the network
+
+## Delegator Considerations
+
+For delegators, Neutron's approach means:
+
+- **Reduced Risk**: No direct financial loss from validator mistakes
+- **Consistent Returns**: Target 3% APR regardless of validator selection
+- **Importance of Research**: Still valuable to choose validators with strong technical capabilities
+
+## Governance and Evolution
+
+The validator accountability system falls under DAO governance and may evolve:
+
+- **Parameter Changes**: Modifying jailing thresholds or performance requirements
+- **New Mechanisms**: Introducing additional quality assurance systems
+- **Validator Set Size**: Potential changes to the number of active validators
+- **Performance Metrics**: Refinement of what metrics are used to evaluate validators 

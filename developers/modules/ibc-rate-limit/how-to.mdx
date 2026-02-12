@@ -1,0 +1,169 @@
+---
+title: "How-to"
+---
+
+This guide provides instructions for configuring and managing the IBC Rate Limit module. The module itself only manages the contract address parameter - all rate limiting functionality is handled by the CosmWasm contract.
+
+## Module Configuration
+
+The IBC Rate Limit module has a single parameter that specifies which CosmWasm contract handles rate limiting decisions.
+
+<Warning>
+**CLI Implementation Issue**: The current CLI implementation has a bug that prevents the `neutron query rate-limited-ibc params` command from working. Use the REST endpoint instead: `GET /neutron/ibc-rate-limit/v1beta1/params`
+</Warning>
+
+### Checking Current Parameters
+
+To check the current contract address parameter via REST:
+
+```bash
+curl https://rpc.neutron.org/neutron/ibc-rate-limit/v1beta1/params
+```
+
+Sample response:
+```json
+{
+  "params": {
+    "contract_address": "neutron1abcdef..."
+  }
+}
+```
+
+### Updating the Contract Address
+
+To update the contract address, governance must submit an update-params proposal:
+
+```bash
+neutron tx gov submit-proposal update-params proposal.json --from=<key> --chain-id=<chain-id>
+```
+
+Example proposal.json:
+```json
+{
+  "title": "IBC Rate Limit Contract Address Update",
+  "description": "Update the contract address for the IBC Rate Limit module",
+  "messages": [
+    {
+      "@type": "/neutron.ibcratelimit.v1beta1.MsgUpdateParams",
+      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j7g7ejq",
+      "params": {
+        "contract_address": "neutron1newaddress..."
+      }
+    }
+  ],
+  "deposit": "10000000untrn"
+}
+```
+
+### Clearing the Contract Address
+
+To disable rate limiting by clearing the contract address:
+
+```json
+{
+  "title": "Disable IBC Rate Limiting",
+  "description": "Clear the contract address to disable rate limiting",
+  "messages": [
+    {
+      "@type": "/neutron.ibcratelimit.v1beta1.MsgUpdateParams",
+      "authority": "neutron10d07y265gmmuvt4z0w9aw880jnsr700j7g7ejq",
+      "params": {
+        "contract_address": ""
+      }
+    }
+  ],
+  "deposit": "10000000untrn"
+}
+```
+
+## Module Behavior
+
+### When Contract Address is Set
+
+When a valid contract address is configured:
+
+1. **Send Operations**: The module forwards packet information to the contract via `send_packet` message
+2. **Receive Operations**: The module forwards packet information to the contract via `recv_packet` message
+3. **Failed Packets**: The module automatically calls the contract's `undo_send` function
+4. **Rate Limit Exceeded**: If the contract returns an error containing "rate limit exceeded", the transfer is blocked
+
+### When Contract Address is Empty
+
+When no contract address is configured:
+
+- All IBC transfers proceed normally without any rate limiting
+- The module acts as a pass-through middleware with no additional functionality
+
+## Error Handling
+
+The module handles various error scenarios:
+
+### Rate Limit Exceeded
+```
+Error: rate limit exceeded for channel-0 and denom untrn
+```
+This error occurs when the contract rejects a transfer due to rate limit constraints.
+
+### Contract Error
+```
+Error: contract error: <contract-specific message>
+```
+This error occurs when the contract returns an error that doesn't contain "rate limit exceeded".
+
+### Bad Revert Events
+If the module fails to call the contract's undo function for failed packets, it emits a `bad_revert` event:
+
+```json
+{
+  "type": "bad_revert",
+  "attributes": [
+    {"key": "module", "value": "rate-limited-ibc"},
+    {"key": "failure_type", "value": "acknowledgment"},
+    {"key": "packet", "value": "<packet-data>"},
+    {"key": "acknowledgement", "value": "<ack-data>"}
+  ]
+}
+```
+
+## Contract Requirements
+
+For a CosmWasm contract to work with this module, it must implement the following sudo message handlers:
+
+### Required Sudo Messages
+
+1. **send_packet**: Handle outgoing packet information
+2. **recv_packet**: Handle incoming packet information  
+3. **undo_send**: Handle failed packet reversals
+
+The contract should return an error containing "rate limit exceeded" to block transfers.
+
+<Info>
+**Rate Limiting Implementation**: The actual rate limiting logic (quotas, time periods, flow tracking, etc.) is entirely contract-specific. The module only provides the packet forwarding mechanism and standardized message interface.
+</Info>
+
+## Monitoring and Debugging
+
+### Module Events
+
+Monitor these events for module-specific issues:
+
+- **bad_revert**: Indicates the module failed to notify the contract about a failed packet
+
+### Contract Logs
+
+Monitor contract logs for rate limiting decisions and any contract-specific events.
+
+### Parameter Changes
+
+Monitor governance proposals for contract address updates:
+
+```bash
+neutron query gov proposals --status voting_period
+```
+
+## Best Practices
+
+1. **Test Contract Integration**: Always test contract behavior in a test environment before governance updates
+2. **Monitor Events**: Set up monitoring for `bad_revert` events to detect contract communication issues
+3. **Governance Coordination**: Coordinate contract address updates with contract deployments
+4. **Emergency Procedures**: Have procedures ready to clear the contract address if needed to restore transfer functionality 
