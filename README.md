@@ -88,7 +88,6 @@ Documentation is automatically deployed when changes are pushed to the default b
 - **GitHub**: [github.com/neutron-org](https://github.com/neutron-org)
 
 ### Community
-- **Discord**: [Join our community](https://discord.com/invite/bzPBzbDvWC)
 - **Twitter**: [@neutron_org](https://twitter.com/neutron_org)
 - **Forum**: [Neutron Governance](https://forum.neutron.org)
 
