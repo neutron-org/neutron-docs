@@ -1,0 +1,272 @@
+---
+title: "Vaults"
+description: "Detailed technical overview of BTC Summer vault categories and their behavior"
+icon: "vault"
+---
+
+This document provides detailed, semi-technical behavior of the different vault categories. Throughout this section, we use "`xBTC`" as a placeholder for any of the BTC LSTs (e.g. Lombard, Solv, Etherfi, Pump or Bedrock BTC).
+
+"Amber Protocol" refers to the isolated deployment of Mars protocol dedicated to BTC derivatives. Visit [amberfi.io](https://www.amberfi.io/) for more information.
+
+## Vault Overview
+
+<CardGroup cols={2}>
+  <Card title="Structured KYC Vaults" icon="shield-check" href="#structured-kyc-vaults">
+    **Just Mint** and **Just LP** vaults for maxBTC exposure and liquidity provision. KYC required, deposit caps apply.
+  </Card>
+
+  <Card title="LST Vaults (wBTC pairs)" icon="coins" href="#lst-vaults-wbtc">
+    Single-sided deposits of BTC LSTs to wBTC pairs, split between Amber lending and Supervault liquidity.
+  </Card>
+
+  <Card title="wBTC Vaults" icon="bitcoin" href="#3-wbtc-vaults">
+    Direct wBTC deposits with allocation split between Amber lending and Supervault liquidity provision.
+  </Card>
+
+  <Card title="wBTC Just Lend" icon="hand-holding-dollar" href="#wbtc-just-lend">
+    Simplified lending-only exposure for risk-averse LPs. Routes 100% to Amber or Mars lending.
+  </Card>
+
+  <Card title="LST Vaults (maxBTC pairs)" icon="layer-group" href="#lst-vaults-maxbtc">
+    Single-sided BTC LST deposits to maxBTC pairs, combining Amber lending with maxBTC liquidity.
+  </Card>
+
+  <Card title="USDC - MaxBTC Vault" icon="dollar-sign" href="#usdc-maxbtc-vault">
+    Single-sided USDC deposits to the maxBTC-USDC Supervault for stablecoin exposure.
+  </Card>
+</CardGroup>
+
+# What are the vaults and how do they behave?
+
+<a id="structured-kyc-vaults"></a>
+## 1. Structured's KYC Vaults
+
+### A. Just Mint
+
+This vault allows LPs who only want exposure to maxBTC to get it. Due to limited ecosystem value, this vault receives no incentives and is subject to deposit caps.
+
+The wBTC : maxBTC exchange rate will be 1:1 initially and stay fixed until the Structured team manually collects user deposits and deploys them to the JLP strategy.
+
+**Deposits**:
+<Steps>
+  <Step title="Deposit wBTC">
+    Users deposit wBTC token on Ethereum
+  </Step>
+  <Step title="Bridge Assets">
+    Bridge deposit wBTC token via Eureka
+  </Step>
+  <Step title="Convert to maxBTC">
+    wBTC is converted to maxBTC via the Structured minting contract
+  </Step>
+</Steps>
+
+**Withdrawals**:
+<Steps>
+  <Step title="Burn Vault Share">
+    User burns Ethereum vault share to create wBTC-denominated voucher
+  </Step>
+  <Step title="Receive maxBTC">
+    Voucher is sent over ZK bridge and the user receives the pro-rata amount of maxBTC
+  </Step>
+</Steps>
+
+### B. Just LP
+
+This vault is critical to the campaign: since most users won't be able to *mint or redeem* maxBTC, this vault ensures they can *buy and sell* maxBTC via the Duality orderbook.
+
+Funds are locked into the vault until the full launch of the Structured protocol (expected in Q4).
+
+**Deposits**:
+<Steps>
+  <Step title="Deposit wBTC">
+    Users deposit wBTC token on Ethereum
+  </Step>
+  <Step title="Bridge Assets">
+    Bridge deposit wBTC token via Eureka
+  </Step>
+  <Step title="Convert to maxBTC">
+    Converts the wBTC to MaxBTC via the Structured minting contract
+  </Step>
+  <Step title="Provide Liquidity">
+    Provides 100% of the MaxBTC as single sided liquidity deposit to the MaxBTC - wBTC Supervault
+  </Step>
+</Steps>
+
+**Withdrawals (after maxBTC protocol launch only)**:
+<Steps>
+  <Step title="Burn Vault Share">
+    User burns Ethereum vault share to create wBTC-denominated voucher
+  </Step>
+  <Step title="Receive LP Shares">
+    Voucher is sent over ZK bridge and the user receives the pro-rata amount of maxBTC - wBTC Supervault LP shares
+  </Step>
+</Steps>
+
+<a id="lst-vaults-wbtc"></a>
+## 2. LST Vaults: Single-Sided Deposits to wBTC pairs + Lending
+
+These vaults provide single-sided deposits to wBTC pairs combined with lending opportunities.
+
+### Deposits
+<Steps>
+  <Step title="Deposit xBTC">
+    Users deposit `xBTC` token on Ethereum
+  </Step>
+  <Step title="Bridge Assets">
+    Bridge deposit `xBTC` token via Eureka
+  </Step>
+  <Step title="Route to Protocols">
+    Route X% to Amber, X% to Supervaults:
+    - Lend `xBTC` on Amber
+    - Single-sided LP the `xBTC` on Supervault to `xBTC` - wBTC pool
+  </Step>
+</Steps>
+
+### Withdrawals
+<Note>
+When withdrawing from vaults with lending positions on Mars or Amber, users receive underlying assets directly to their wallet, not credit accounts.
+</Note>
+
+<Steps>
+  <Step title="Burn Vault Share">
+    User burns Ethereum vault share to create `xBTC`-denominated voucher
+  </Step>
+  <Step title="Receive Assets">
+    Voucher is sent over ZK bridge and the user receives:
+    - **Amber portion**: `voucher_amount * x = AmberLP_payout` sent to user account
+    - **Supervault portion**: Calculated via reverse simulation of Supervault deposit to determine `xBTC`:SupervaultLP ratio
+  </Step>
+  <Step title="Assets to Wallet">
+    Users receive underlying from Amber + Supervault LP shares
+  </Step>
+</Steps>
+
+## 3. wBTC Vaults
+
+These vaults provide wBTC deposits with split allocation between lending and liquidity provision.
+
+### Deposits
+<Steps>
+  <Step title="Deposit wBTC">
+    Users deposit wBTC token on Ethereum
+  </Step>
+  <Step title="Bridge Assets">
+    Bridge deposited wBTC token via Eureka
+  </Step>
+  <Step title="Route to Protocols">
+    Route X% to Amber, X% to Supervaults:
+    - Lend wBTC on Amber
+    - Single-sided LP the wBTC on Supervault to wBTC - `xBTC` pool
+  </Step>
+</Steps>
+
+### Withdrawals
+<Steps>
+  <Step title="Burn Vault Share">
+    User burns Ethereum vault share to create wBTC-denominated voucher
+  </Step>
+  <Step title="Receive Assets">
+    Voucher is sent over ZK bridge and the user receives:
+    - **Amber portion**: `voucher_amount * x = AmberLP_payout` sent to user account
+    - **Supervault portion**: Calculated via reverse simulation to determine wBTC:SupervaultLP ratio
+  </Step>
+  <Step title="Assets to Wallet">
+    Users receive underlying from Amber (wBTC) + Supervault LP shares
+  </Step>
+</Steps>
+
+<a id="wbtc-just-lend"></a>
+## 4. wBTC "Just Lend" Vaults
+
+These vaults are simplified options for risk-averse liquidity providers who prefer lending-only exposure.
+
+### Deposits
+<Steps>
+  <Step title="Deposit wBTC">
+    Users deposit wBTC token on Ethereum
+  </Step>
+  <Step title="Bridge Assets">
+    Bridge deposit wBTC token via Eureka
+  </Step>
+  <Step title="Route to Lending">
+    Route 100% to Amber or Mars depending on the vault
+  </Step>
+</Steps>
+
+### Withdrawals
+<Steps>
+  <Step title="Burn Vault Share">
+    User burns Ethereum vault share to create wBTC-denominated voucher
+  </Step>
+  <Step title="Clear with Protocol">
+    Voucher is sent over ZK bridge and cleared by Amber or Mars
+  </Step>
+  <Step title="Receive wBTC">
+    Users receive wBTC directly to their wallet
+  </Step>
+</Steps>
+
+<a id="lst-vaults-maxbtc"></a>
+## 5. LST Vaults: Single Sided Deposits to maxBTC pairs + Lending
+
+These vaults function identically to the LST vaults in section 2, except they deposit to maxBTC pairs instead of wBTC pairs.
+
+### Deposits
+<Steps>
+  <Step title="Deposit xBTC">
+    Users deposit `xBTC` token on Ethereum
+  </Step>
+  <Step title="Bridge Assets">
+    Bridge deposit `xBTC` token via Eureka
+  </Step>
+  <Step title="Route to Protocols">
+    Route `x%` to Amber, `y%` to Supervaults:
+    - Lend `xBTC` on Amber
+    - Single-sided LP the `xBTC` on Supervault to `xBTC` - maxBTC pool
+  </Step>
+</Steps>
+
+### Withdrawals
+<Steps>
+  <Step title="Burn Vault Share">
+    User burns Ethereum vault share to create `xBTC`-denominated voucher
+  </Step>
+  <Step title="Receive Assets">
+    Voucher is sent over ZK bridge and the user receives:
+    - **Amber portion**: `voucher_amount * x = AmberLP_payout` sent to user account
+    - **Supervault portion**: Calculated via reverse simulation to determine `xBTC`:SupervaultLP ratio
+  </Step>
+  <Step title="Assets to Wallet">
+    Users receive underlying from Amber (`xBTC`) + Supervault LP shares
+  </Step>
+</Steps>
+
+<a id="usdc-maxbtc-vault"></a>
+## 6. USDC - MaxBTC Vault
+
+### Deposits
+<Steps>
+  <Step title="Deposit USDC">
+    Users deposit USDC token on Ethereum
+  </Step>
+  <Step title="Bridge Assets">
+    Bridge deposit USDC token via Noble
+  </Step>
+  <Step title="Route to Strategy">
+    Route 100% to single-sided provide to the maxBTC-USDC Supervault
+  </Step>
+</Steps>
+
+### Withdrawals
+<Steps>
+  <Step title="Burn Vault Share">
+    User burns Ethereum vault share to create USDC-denominated voucher
+  </Step>
+  <Step title="Receive Assets">
+    Voucher is sent over ZK bridge and the user receives the pro-rata amount of Supervault LP shares to the user account
+  </Step>
+</Steps>
+
+## Learn More
+
+Ready to explore the underlying technology? Check out [Supervaults](/defi/supervaults) to understand the automated market-making infrastructure powering these vaults.

@@ -4,6 +4,9 @@ description: "Next-generation liquidity management vaults with automated rebalan
 icon: "vault"
 ---
 
+<Note> Supervaults <a href="https://app.neutron.org/supervaults" target="_blank" className="text-primary hover:underline font-bold">are now live</a>! Start earning optimized yields with automated liquidity management. Ready to get started? Check out the <a href="#how-to-deposit-into-supervaults" className="text-primary hover:underline">how-to deposit section</a> below for step-by-step instructions.</Note>
+
+
 Supervaults (mmvault contracts) are Neutron's flagship DeFi innovation that manage liquidity on behalf of users by efficiently allocating deposits into the Neutron DEX (Duality). Using Neutron's integrated infrastructure, they automatically rebalance positions across different price ranges and fee tiers, achieving maximal capital efficiency and improving outcomes for both traders and liquidity providers.
 
 The vault contract abstracts away direct DEX interactions from end users, allowing users to interact through standardized deposit and withdrawal flows while the vault autonomously manages liquidity provisioning via Cron-triggered rebalancing logic.
@@ -138,21 +141,50 @@ The complete rebalancing flow works as follows:
 3. **Strategic Positioning**: Based on fee tier allocation, token imbalance, and configured parameters, liquidity is deployed across multiple price ranges
 4. **Full Custody**: The vault maintains complete custody of all funds throughout the process
 
-## Get Started with Supervaults
 
-<CardGroup cols={3}>
-  <Card title="Deposit Assets" icon="wallet" iconType="duotone">
-    Provide paired token liquidity to earn optimized yields with fully automated management
-  </Card>
-  
-  <Card title="View Analytics" icon="chart-column" iconType="duotone">
-    Monitor performance metrics, yield statistics, and rebalancing activity
-  </Card>
-  
-  <Card title="Trade with Low Slippage" icon="bolt" iconType="duotone">
-    Execute large trades with minimal price impact thanks to concentrated liquidity
-  </Card>
-</CardGroup>
+## How to Deposit Into Supervaults
+
+Follow these simple steps to start earning optimized yields with Supervaults:
+
+<Steps>
+  <Step title="Connect Your Wallet">
+    Navigate to the [Neutron Web Application](https://app.neutron.org/supervaults) and click the **Connect** button at the top right to connect your preferred wallet.
+  </Step>
+  <Step title="Access Supervaults">
+    Select the **Supervaults** tab from the left side menu to view all available vault pairs.
+  </Step>
+  <Step title="Choose Your Vault">
+    Select from the list of available Supervaults. Each vault shows:
+    - Current TVL (Total Value Locked)
+    - APY (Annual Percentage Yield)
+    - Deposit cap status
+    - Asset pair information
+  </Step>
+  <Step title="Deposit Assets">
+    Supervaults support both single-sided and double-sided liquidity provision:
+    - **Single-sided**: Deposit only one asset (e.g., just ATOM or just USDC)
+    - **Double-sided**: Deposit both assets in the pair proportionally
+
+    Select the amount of each asset you want to deposit and click **Deposit**.
+  </Step>
+  <Step title="Monitor Your Position">
+    Once deposited, you can:
+    - Track your position's TVL in the "My Position TVL" chart
+    - Monitor vault performance and rebalancing activity
+    - View your proportional share of vault rewards
+  </Step>
+  <Step title="Withdraw When Ready">
+    To withdraw funds:
+    1. Navigate to your deposited vault pair
+    2. Select **Withdraw**
+    3. Choose the amount to withdraw
+    4. Confirm the transaction
+  </Step>
+</Steps>
+
+<div className="p-4 border-l-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 rounded my-6">
+  <strong>Note:</strong> Withdrawals are on a pro-rata basis from the total vault value and will return proportional amounts of both assets in the pair.
+</div>
 
 ## Technical Architecture
 
@@ -178,11 +210,18 @@ graph TD
     B --> O[Burn LP Shares]
     O --> P[Return Proportional Assets]
     
-    classDef depositFlow fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef withdrawalFlow fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef default fill:#fafafa,stroke:#525252,stroke-width:1px,color:#262626
+    classDef depositFlow fill:#f0f9ff,stroke:#0ea5e9,stroke-width:2px,color:#0c4a6e
+    classDef withdrawalFlow fill:#fdf2f8,stroke:#ec4899,stroke-width:2px,color:#9d174d
+    classDef coreContract fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#1e40af
+    classDef oracle fill:#fffbeb,stroke:#f59e0b,stroke-width:1px,color:#78350f
+    classDef dex fill:#f8fafc,stroke:#64748b,stroke-width:1px,color:#334155
     
     class A,C,D depositFlow
     class N,O,P withdrawalFlow
+    class B coreContract
+    class I oracle
+    class E,F,G,H,J,K,L,M dex
 ```
 
 <div className="p-4 border-l-4 border-primary bg-primary/5 rounded my-6">

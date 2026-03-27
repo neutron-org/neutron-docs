@@ -1,0 +1,212 @@
+---
+title: "Technical Implementation"
+description: "Technical architecture and implementation details of the BTC Summer points system"
+icon: "code"
+---
+
+The essence of the points program is to collect information about the size and duration of user deposits made on Neutron. This page covers the technical architecture and implementation details of the BTC Summer points system.
+
+## System Architecture
+
+The points program consists of two main components:
+
+### 1. Points Crawler Script
+A modified version of the Drop team's script that gathers data on deposit size and duration and publishes it on-chain to a smart contract. The crawler consists of several deposit crawler modules:
+
+- **Mars Crawler**: Already implemented by the Drop team, modified to only consider `lend` type deposits (excludes `borrowed` amounts)
+- **Supervault Crawler**: Implemented by the team, it retrieves the deposit in the form of vault shares, which are native Neutron tokens issued via the token factory module
+- **Timewave Crawler**: They provided us with the indexer interface and the logic behind how it works. When a user changes the deposit size: (1) The old position (if present) is closed, (2) A new position (if any balance remains) is opened
+
+### 2. Points Contract
+A smart contract that allows users to view the amount of rewards earned through participation in the program. Serves as the entry point for processed data and the backend for the UI.
+
+## Points Crawler Implementation
+
+### Processing Logic
+The system uses snapshotting at random block heights (following the Cosmos chain approach) rather than computing true weighted values. This provides consistency across ecosystems while being simple and low-cost.
+
+### Explanation of Crawler
+Since we use snapshots (which are later time-averaged) to track deposit activity, it's important that users cannot predict when a snapshot will be taken and exploit that knowledge. To address this, we select a random block height slightly behind the current time and proceed as follows:
+
+<Steps>
+<Step title="Data Collection">
+Fetch deposit amounts for each relevant user and store them in a local table. (Exclude TM contract deposits from consideration.) Fetch share prices for all vault tokens at the selected block height and store them.
+</Step>
+
+<Step title="Process Ethereum Deposits">
+**For Ethereum-based deposits**: Retrieve all ETH deposits from the indexer. (We assume that a deposit made on Ethereum is instantly reflected in the Neutron protocol.) Query the number of vault shares held by the TM contract in each protocol/asset. Allocate vault shares proportionally to each user based on their ETH deposit share.
+</Step>
+
+<Step title="Points Calculation">
+We now have: A per-user deposit by asset, USD(C) prices for those assets at a specific block height. Steps: Retrieve the target reward period (by name) from the points contract. Get the period's time range and the amount of rewards (in USD) allocated per asset. For each asset, calculate rewards for users proportionally to their share of the total points. Sum rewards across all assets for each user.
+</Step>
+
+<Step title="Update User Reward Balances">
+The computed rewards for the selected period are then published to the on-chain points contract. All three steps can be executed in sequence to regularly update user balances. However, they are also independent tasks: multiple snapshots (step 1) can be collected and processed later in batch.
+</Step>
+</Steps>
+
+## Points Publisher Rules
+
+The Points Publisher processes data collected by crawlers, calculates points based on deposit sizes and asset prices (obtained via the price registry), and publishes results to the points contract.
+
+### Specific Rules for Point Calculation
+
+- **No Decrease Allowed**: No decrease in deposit is allowed at any time during the period
+- **Proportional Forfeiture**: A decrease (partial withdrawal or transferring funds to another account) results in the **loss of pro-rata portion of points** accumulated during that ongoing period
+- **Protected Previous Periods**: Points earned in already closed periods remain unaffected
+
+**Motivation**: Encourage users to keep deposits untouched throughout the program.
+
+
+
+### Forfeiture Examples
+
+1. **Complete Loss**: User deposits, then deposit drops to zero → **lost all accumulated points** for current period
+2. **Proportional Loss**: User withdraws 25% of deposited assets → lost 25% of points (proportional to withdrawal)
+3. **LIFO Accounting**: User deposits 10 at day zero, adds 5 more at day 3, then withdraws 5 → loses portion of points accumulated with the latest 5 deposit only
+
+## Points Contract Design
+
+### On-Chain Data Storage
+
+Points are recorded for **all users** at each data pull. With `N` users, each update requires `N` writes to the contract.
+
+**Gas Cost Estimates**:
+- ~200k gas per transaction
+- 1,000 users → 10 NTRN per pull
+- 2 pulls per day × 30 days = 600 NTRN/month (~\$70)
+
+<Info>
+Costs can be significantly reduced through more efficient batching.
+</Info>
+
+### Campaign Phase Separation
+
+To separate **Limited** and **Full Steam** phases in the points program, two approaches are possible:
+
+1. Use two contracts
+2. The UI fetches balances at two block heights: `limited_end` and `current`, and calculates how many points belong to each phase
+
+### Address Type Support
+
+The contract supports two types of balances:
+
+1. **Native Neutron**: Uses the Neutron address as key, which will later receive vesting rewards
+2. **Ethereum**: Uses the ETH address as key. Upon a `bind` command, the system links the ETH address to a Neutron address, zeros out the ETH balance, and creates a new Neutron balance
+
+### Contract vs Off-Chain Alternatives
+
+**Advantages of On-Chain Contract**:
+- All data is on-chain
+- No separate backend required for UI — balances are queried directly from the contract
+- With optimized design, no separate database or backups needed. The points calculator script can be mostly stateless
+- On-chain data verification possible using a state verifier
+- Follows established patterns from similar programs
+
+**Disadvantages**:
+- Gas costs for writing data on-chain (relatively small but present)
+
+### Query Interface
+
+- Return list of all periods, with type and APR
+- Return user balance in USD, queried by either ETH or Neutron address. The balance is split into:
+  - `non_forfeitable_balance` – rewards from finished periods
+  - `forfeitable_balance` – points from the current, open period
+
+### Execute Interface
+
+- **SetBalances**: Sets user balances for a specific period
+- **BindAddresses**: Links Ethereum and Neutron addresses. Handles the scenario where a user has deposits on both Ethereum and Neutron, ensuring rewards are not lost during the binding process
+- **AddPeriod**: Creates a schedule for a new period. Only the start time is set; the end time is either the start of the next period or the end of the campaign
+- **EditPeriod**: Updates an existing period (start time, reward amount)
+- **DeletePeriod**: Removes a period
+- **CloseCampaign**: Sets the end time for the campaign
+
+### Alternative: Off-Chain Backend with Database
+
+An alternative approach involves running a backend that handles data and verification, optionally deploying a smart contract that verifies user data using a merkle tree.
+
+**Advantages**:
+- No gas costs for uploading data to the chain
+
+**Disadvantages**:
+- Requires backend infrastructure (hosting, monitoring, backups)
+- Still requires contract development
+
+**Conclusion**: The on-chain contract approach is preferred for transparency and decentralization.
+
+## Address Binding System
+
+The system supports both Ethereum and Neutron addresses:
+
+### Native Neutron Users
+- Points accumulate directly to Neutron address
+- Rewards vest to the same address
+
+### Ethereum Users  
+- Points accumulate to Ethereum address initially
+- Must bind to Neutron address for reward distribution
+- Binding preserves all accumulated points
+
+<Warning>
+Users with deposits on both Ethereum and Neutron should bind addresses carefully to avoid losing rewards during the consolidation process.
+</Warning>
+
+## Price Registry
+
+All deposit balances are stored in the database in terms of the underlying asset used by the pool/vault/protocol where funds were deposited. The price registry converts those asset values into USDC equivalents.
+
+**Implementation Approach**: Multiple registry adapters conforming to a common interface, as different assets require different conversion strategies.
+
+### Price Providers by Asset Type
+
+- **xBTC Assets (Mars)**: `oracle-lst` contract for Bitcoin derivative pricing
+- **Supervault Shares**: 
+  - `oracle-lst` to query underlying xBTC asset price
+  - `supervault` contract to query share value via virtual balance
+- **Timewave Shares**: Pricing methodology to be confirmed based on their reporting format
+
+<Note>
+Previous implementations used **Pyth** for asset-to-USDC conversion. This implementation requires multiple adapters due to diverse asset types across different protocols.
+</Note>
+
+## Reward Period Management
+
+Vault reward distribution is defined using three parameters:
+
+1. **Total Rewards**: Amount to be distributed for the vault
+2. **Period Duration**: Length of the reward period
+3. **Deposit Cap (Optional)**: TVL limit for the vault
+
+If only parameters 1 and 2 are set, the vault has no lower APR bound (APR approaches zero as deposits approach infinity).
+
+If all three parameters are set, the vault has a minimum APR proportional to `rewards / cap` ratio. Smaller caps result in higher minimum APRs when fully utilized.
+
+## Integration with Vesting Contract
+
+Users receive rewards via the vesting contract. Two implementation options for permissionless vesting schedule creation:
+
+### Option 1: Points Contract Creates Schedules
+The points contract has an `execute` method that creates vesting schedules based on its state. Since vesting is in NTRN, the contract must know the USDC → NTRN rate. This requires:
+- Method to create a schedule for a user
+- Method to set NTRN price
+
+### Option 2: Vesting Contract Fetches Data
+The vesting contract fetches data from the points contract and creates schedules itself.
+
+## System Advantages
+
+### On-Chain Transparency
+- All data stored on-chain for full transparency
+- No separate backend infrastructure required
+- State verification possible using on-chain data
+- Complete audit trail of all operations
+
+### Manipulation Prevention
+- **Random Snapshot Timing**: Users cannot predict when snapshots occur
+- **Time-Averaged Calculations**: Reduces impact of temporary manipulations
+- **Cross-Protocol Validation**: Multiple data sources ensure accuracy
+- **Proportional Accounting**: Fair distribution across all participants
+
+For implementation details and code references, see the [GitHub repository](https://github.com/neutron-org/neutron-points-crawler/tree/feat/maxbtc-points-contract).

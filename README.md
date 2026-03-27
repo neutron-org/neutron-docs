@@ -1,16 +1,16 @@
 # Neutron Documentation
 
-The comprehensive documentation hub for the Neutron blockchain - the first Consumer Chain of the Cosmos Hub. This repository contains detailed guides, tutorials, and references for developers, validators, and users of the Neutron ecosystem.
+The comprehensive documentation hub for the Neutron blockchain - a fully sovereign Cosmos chain. This repository contains detailed guides, tutorials, and references for developers, validators, and users of the Neutron ecosystem.
 
 ## 🌟 What is Neutron?
 
-Neutron is a permissionless smart contract platform that leverages Interchain Security (ICS) from Cosmos Hub, enabling secure cross-chain DeFi applications with native integrations to 50+ Cosmos chains and beyond.
+Neutron is a permissionless smart contract platform and fully sovereign Cosmos chain, enabling secure cross-chain DeFi applications with native integrations to 50+ Cosmos chains and beyond.
 
 ## 📖 Documentation Structure
 
 ### 🏠 **Home & Core Concepts**
 - **Introduction & Quickstart**: Get started with Neutron basics
-- **Integrated Architecture**: Understanding Neutron's unique Consumer Chain design
+- **Integrated Architecture**: Understanding Neutron's unique sovereign chain design
 - **Opinionated Blockchains**: How Neutron enables focused blockchain applications
 - **Proof of Liquid Staking**: Neutron's innovative consensus and security model
 - **Modular Governance**: Decentralized decision-making mechanisms
@@ -105,3 +105,4 @@ This documentation is open source and available under the [MIT License](LICENSE)
 ---
 
 *Neutron: Secure, interoperable, and developer-friendly blockchain infrastructure for the next generation of DeFi.*
+# Force refresh
