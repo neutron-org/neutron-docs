@@ -100,7 +100,7 @@ type TrackBeforeSendMsg struct {
 }
 ```
 - Used for monitoring/tracking transfers
-- Has gas limit of 500,000 gas
+- Has gas limit defined by the module's `track_before_send_gas_limit` param
 - Errors are suppressed (don't block transfers)
 
 **BlockBeforeSend:**
@@ -161,7 +161,7 @@ type BlockBeforeSendMsg struct {
 
 **Gas Consumption:**
 - Additional gas cost via `denom_creation_gas_consume` parameter
-- TrackBeforeSend hooks have 500,000 gas limit
+- TrackBeforeSend hooks have a gas limit defined by the module's `track_before_send_gas_limit` param
 - Gas consumption prevents infinite contract calls
 
 ## Force Transfer Capability

@@ -99,6 +99,7 @@ message Params {
   uint64 denom_creation_gas_consume = 2;
   string fee_collector_address = 3;
   repeated WhitelistedHook whitelisted_hooks = 4;
+  uint64 track_before_send_gas_limit = 5;
 }
 
 message WhitelistedHook {
@@ -113,6 +114,7 @@ message WhitelistedHook {
 | `denom_creation_gas_consume` | uint64 | Additional gas cost for denomination creation |
 | `fee_collector_address` | string | Address receiving creation fees |
 | `whitelisted_hooks` | []WhitelistedHook | Approved contracts for before-send hooks |
+| `track_before_send_gas_limit` | uint64 | Sets a limit on the gas that can be consumed by the before_send hook |
 
 ## Before-Send Hooks
 
@@ -124,7 +126,7 @@ Before-send hooks allow token admins to implement custom logic that executes bef
 - Provides security against malicious hook contracts
 
 ### Hook Types
-- **TrackBeforeSend**: Monitoring hooks with gas limits (500,000 gas limit)
+- **TrackBeforeSend**: Monitoring hooks with gas limits (defined by the module's `track_before_send_gas_limit` param, default vaule is 500,000)
 - **BlockBeforeSend**: Blocking hooks that can prevent transfers
 
 ## Administrative Model
@@ -139,4 +141,4 @@ Before-send hooks allow token admins to implement custom logic that executes bef
 - **Admin Controls**: Only token admin can perform privileged operations
 - **Hook Restrictions**: Governance-controlled hook whitelisting  
 - **Module Account Protection**: Burning from module accounts is prevented
-- **Gas Limits**: Before-send hooks have gas consumption limits 
+- **Gas Limits**: Before-send hooks have gas consumption limits defined by the module's `track_before_send_gas_limit` param
