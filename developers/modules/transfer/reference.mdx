@@ -62,12 +62,13 @@ func (msg *MsgTransfer) Validate(isContract bool) error {
 }
 ```
 
-- **For contracts**: Fee validation is required
-- **For non-contracts**: Fee validation is bypassed
+- **For contracts**: Fee validation is required if feerefunder `params.FeeEnabled` is set to true (see with `neutrond q feerefunder params`)
+- **For non-contracts**: Fee validation is bypassedAt this point, for both contracts and non-contracts IBC fees are disabled
 
 ### 5. Automatic Fee Operations
 
-For contract senders, the module automatically:
+Right now, fees are enabled.
+If fees are globally disabled (see Params of feerefunder for that: `neutrond q feerefunder params`), contract won't be charged for fees.
 
 ```go
 // Fee locking before packet transmission
@@ -179,4 +180,4 @@ For non-contract senders:
 - Fee locking is bypassed
 - No callbacks are sent
 - Standard IBC processing applies
-- Standard (empty) response is returned 
+- Standard (empty) response is returned

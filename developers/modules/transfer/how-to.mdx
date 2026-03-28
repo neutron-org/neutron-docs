@@ -334,12 +334,14 @@ message MsgTransfer {
 
 ### Fee Validation and Locking
 
-For contract senders, the Transfer module:
+Right now, fees are enabled (see `neutrond q feerefunder params`).
 
 1. **Validates Fees**: Calls `msg.Fee.Validate()` to ensure proper fee structure
 2. **Locks Fees**: Uses `FeeKeeper.LockFees()` to secure fees for packet processing
 
 Non-contract senders bypass fee validation entirely.
+
+If fees are globally disabled (see Params of feerefunder for that: ), the module won't charge contract even if specified.
 
 ### Automatic Callbacks
 

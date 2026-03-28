@@ -147,7 +147,7 @@ let submit_msg = NeutronMsg::SubmitTx {
     msgs: vec![/* your cosmos messages */],
     memo: "".to_string(),
     timeout: 3600,
-    fee: Fee {
+    fee: Some(Fee {
         recv_fee: vec![Coin {
             denom: "untrn".to_string(),
             amount: Uint128::from(2000u128),
@@ -160,7 +160,7 @@ let submit_msg = NeutronMsg::SubmitTx {
             denom: "untrn".to_string(),
             amount: Uint128::from(1000u128),
         }],
-    },
+    }),
 };
 ```
 
@@ -331,7 +331,7 @@ The module stores minimal state in the blockchain:
 
 Stores the code ID threshold for determining fee requirements during ICA registration.
 
-**Key:** `ICARegistrationFeeFirstCodeID`  
+**Key:** `ICARegistrationFeeFirstCodeID`
 **Value:** `uint64` (code ID threshold)
 
 <Info>
